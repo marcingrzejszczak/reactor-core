@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -186,19 +187,22 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 				.subscribeOn(scheduler)
 				.doOnNext(v -> System.out.println("published " + v));
 
-		for (int i = 0; i < maxQueue * maxThreads; i++) {
+		for (int i = 0; i < maxQueue * maxThreads - 1; i++) {
 			flux = flux.publishOn(scheduler, false, 1 + i % 2);
 		}
 
+		AtomicReference<Throwable> errorRef = new AtomicReference<>();
 		flux.doFinally(sig -> latch.countDown())
-		    .subscribe();
+		    .subscribe(s -> {}, errorRef::set);
 
 		assertThat(scheduler.estimateSize()).as("all 3 threads created").isEqualTo(3);
 
 		assertThat(latch.await(11, TimeUnit.SECONDS)).as("completed").isTrue();
 
+		assertThat(errorRef).as("no error").hasValue(null);
+
 		Awaitility.with().pollDelay(1, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
-		          .await().atMost(2, TimeUnit.SECONDS)
+		          .await().atMost(3, TimeUnit.SECONDS)
 		          .untilAsserted(() -> assertThat(scheduler.estimateSize()).as("post eviction").isZero());
 	}
 
