@@ -50,10 +50,12 @@ public class JdkLoggerTest {
 					}
 
 					@Override
-					public void flush() { }
+					public void flush() {
+					}
 
 					@Override
-					public void close() throws SecurityException { }
+					public void close() throws SecurityException {
+					}
 				});
 
 		Loggers.JdkLogger jdkLogger = new Loggers.JdkLogger(underlyingLogger);
@@ -65,7 +67,7 @@ public class JdkLoggerTest {
 
 	@Test
 	public void formatNullVararg() {
-		Loggers.JdkLogger jdkLogger= new Loggers.JdkLogger(Mockito.mock(java.util.logging.Logger.class));
+		Loggers.JdkLogger jdkLogger = new Loggers.JdkLogger(Mockito.mock(java.util.logging.Logger.class));
 
 		assertThat(jdkLogger.format("test {} is {}", (Object[]) null))
 				.as("format should be returned as is")
@@ -74,7 +76,7 @@ public class JdkLoggerTest {
 
 	@Test
 	public void formatNullParamInVararg() {
-		Loggers.JdkLogger jdkLogger= new Loggers.JdkLogger(Mockito.mock(java.util.logging.Logger.class));
+		Loggers.JdkLogger jdkLogger = new Loggers.JdkLogger(Mockito.mock(java.util.logging.Logger.class));
 
 		assertThat(jdkLogger.format("test {} is {}", null, null))
 				.as("placeholders should be replaced by null")

@@ -30,7 +30,7 @@ import reactor.util.annotation.Nullable;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
 final class MonoIgnorePublisher<T> extends Mono<T> implements Scannable,
-                                                              OptimizableOperator<T, T> {
+		OptimizableOperator<T, T> {
 
 	final Publisher<? extends T> source;
 

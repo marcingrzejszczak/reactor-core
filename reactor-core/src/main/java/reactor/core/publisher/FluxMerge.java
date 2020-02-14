@@ -31,21 +31,21 @@ import reactor.core.CoreSubscriber;
 final class FluxMerge<T> extends Flux<T> implements SourceProducer<T> {
 
 	final Publisher<? extends T>[] sources;
-	
+
 	final boolean delayError;
-	
+
 	final int maxConcurrency;
-	
+
 	final Supplier<? extends Queue<T>> mainQueueSupplier;
 
 	final int prefetch;
-	
+
 	final Supplier<? extends Queue<T>> innerQueueSupplier;
-	
+
 	FluxMerge(Publisher<? extends T>[] sources,
-			boolean delayError, int maxConcurrency, 
-			Supplier<? extends Queue<T>> mainQueueSupplier, 
-					int prefetch, Supplier<? extends Queue<T>> innerQueueSupplier) {
+			boolean delayError, int maxConcurrency,
+			Supplier<? extends Queue<T>> mainQueueSupplier,
+			int prefetch, Supplier<? extends Queue<T>> innerQueueSupplier) {
 		if (prefetch <= 0) {
 			throw new IllegalArgumentException("prefetch > 0 required but it was " + prefetch);
 		}
@@ -59,22 +59,22 @@ final class FluxMerge<T> extends Flux<T> implements SourceProducer<T> {
 		this.mainQueueSupplier = Objects.requireNonNull(mainQueueSupplier, "mainQueueSupplier");
 		this.innerQueueSupplier = Objects.requireNonNull(innerQueueSupplier, "innerQueueSupplier");
 	}
-	
+
 	@Override
 	public void subscribe(CoreSubscriber<? super T> actual) {
 		FluxFlatMap.FlatMapMain<Publisher<? extends T>, T> merger = new FluxFlatMap.FlatMapMain<>(
 				actual, identityFunction(), delayError, maxConcurrency, mainQueueSupplier, prefetch,
 				innerQueueSupplier);
-		
+
 		merger.onSubscribe(new FluxArray.ArraySubscription<>(merger, sources));
 	}
-	
+
 	/**
 	 * Returns a new instance which has the additional source to be merged together with
 	 * the current array of sources.
 	 * <p>
 	 * This operation doesn't change the current FluxMerge instance.
-	 * 
+	 *
 	 * @param source the new source to merge with the others
 	 * @param newQueueSupplier a function that should return a new queue supplier based on the change in the maxConcurrency value
 	 * @return the new FluxMerge instance
@@ -85,17 +85,18 @@ final class FluxMerge<T> extends Flux<T> implements SourceProducer<T> {
 		Publisher<? extends T>[] newArray = new Publisher[n + 1];
 		System.arraycopy(sources, 0, newArray, 0, n);
 		newArray[n] = source;
-		
+
 		// increase the maxConcurrency because if merged separately, it would have run concurrently anyway
 		Supplier<? extends Queue<T>> newMainQueue;
 		int mc = maxConcurrency;
 		if (mc != Integer.MAX_VALUE) {
 			mc++;
 			newMainQueue = newQueueSupplier.apply(mc);
-		} else {
+		}
+		else {
 			newMainQueue = mainQueueSupplier;
 		}
-		
+
 		return new FluxMerge<>(newArray, delayError, mc, newMainQueue, prefetch, innerQueueSupplier);
 	}
 

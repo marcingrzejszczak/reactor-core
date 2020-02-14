@@ -28,7 +28,7 @@ public class FluxSwitchIfEmptyTest {
 	@Test(expected = NullPointerException.class)
 	public void otherNull() {
 		Flux.never()
-		    .switchIfEmpty(null);
+				.switchIfEmpty(null);
 	}
 
 	@Test
@@ -36,12 +36,12 @@ public class FluxSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.just(1, 2, 3, 4, 5)
-		    .switchIfEmpty(Flux.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Flux.just(10))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -49,24 +49,24 @@ public class FluxSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.just(1, 2, 3, 4, 5)
-		    .switchIfEmpty(Flux.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Flux.just(10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -74,12 +74,12 @@ public class FluxSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.<Integer>empty()
-		    .switchIfEmpty(Flux.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Flux.just(10))
+				.subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -87,18 +87,18 @@ public class FluxSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.<Integer>empty()
-		    .switchIfEmpty(Flux.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Flux.just(10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 }

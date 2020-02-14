@@ -30,10 +30,14 @@ public class DisposablesTest {
 
 	//==== PUBLIC API TESTS ====
 
+	static final AtomicReferenceFieldUpdater<TestDisposable, Disposable>
+			DISPOSABLE_UPDATER =
+			AtomicReferenceFieldUpdater.newUpdater(TestDisposable.class, Disposable.class, "disp");
+
 	@Test
 	public void sequentialEmpty() {
 		assertThat(Disposables.swap()
-		                      .get()).isNull();
+				.get()).isNull();
 	}
 
 	@Test
@@ -53,6 +57,8 @@ public class DisposablesTest {
 		assertThat(cd.isDisposed()).isFalse();
 	}
 
+	//==== PRIVATE API TESTS ====
+
 	@Test
 	public void compositeFromCollection() {
 		Disposable d1 = new FakeDisposable();
@@ -62,29 +68,6 @@ public class DisposablesTest {
 		assertThat(cd.size()).isEqualTo(2);
 		assertThat(cd.isDisposed()).isFalse();
 	}
-
-	//==== PRIVATE API TESTS ====
-
-	static final AtomicReferenceFieldUpdater<TestDisposable, Disposable>
-			DISPOSABLE_UPDATER =
-			AtomicReferenceFieldUpdater.newUpdater(TestDisposable.class, Disposable.class, "disp");
-
-	private static class TestDisposable implements Runnable {
-		volatile Disposable disp;
-
-		public TestDisposable() {
-		}
-
-		public TestDisposable(Disposable disp) {
-			this.disp = disp;
-		}
-
-		@Override
-		public void run() {
-			//NO-OP by default
-		}
-	}
-
 
 	@Test
 	public void singletonIsDisposed() {
@@ -156,6 +139,22 @@ public class DisposablesTest {
 		Disposables.dispose(DISPOSABLE_UPDATER, r);
 
 		assertThat(u.isDisposed()).isTrue();
+	}
+
+	private static class TestDisposable implements Runnable {
+		volatile Disposable disp;
+
+		public TestDisposable() {
+		}
+
+		public TestDisposable(Disposable disp) {
+			this.disp = disp;
+		}
+
+		@Override
+		public void run() {
+			//NO-OP by default
+		}
 	}
 
 }

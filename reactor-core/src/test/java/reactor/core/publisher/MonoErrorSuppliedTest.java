@@ -18,8 +18,8 @@ package reactor.core.publisher;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import java.util.function.Supplier;
+
 import org.junit.Test;
 import reactor.test.StepVerifier;
 
@@ -31,7 +31,7 @@ public class MonoErrorSuppliedTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Mono.error(() -> new Exception("test")))
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -69,7 +69,7 @@ public class MonoErrorSuppliedTest {
 		assertThat(count).as("no op before subscribe").hasValue(0);
 
 		StepVerifier.create(error.retry(3))
-		            .verifyErrorMessage("boom4");
+				.verifyErrorMessage("boom4");
 	}
 
 	@Test

@@ -41,24 +41,19 @@ import reactor.util.annotation.Nullable;
  */
 final class ColdTestPublisher<T> extends TestPublisher<T> {
 
-	@SuppressWarnings("rawtypes")
-	private static final ColdTestPublisherSubscription[] EMPTY = new ColdTestPublisherSubscription[0];
-
-	final List<T> values;
-	Throwable     error;
-
-	volatile boolean wasRequested;
-
-	@SuppressWarnings("unchecked")
-	volatile ColdTestPublisherSubscription<T>[] subscribers = EMPTY;
-
-	volatile int cancelCount;
 	static final AtomicIntegerFieldUpdater<ColdTestPublisher> CANCEL_COUNT =
 			AtomicIntegerFieldUpdater.newUpdater(ColdTestPublisher.class, "cancelCount");
-
-	volatile long subscribeCount;
 	static final AtomicLongFieldUpdater<ColdTestPublisher> SUBSCRIBED_COUNT =
 			AtomicLongFieldUpdater.newUpdater(ColdTestPublisher.class, "subscribeCount");
+	@SuppressWarnings("rawtypes")
+	private static final ColdTestPublisherSubscription[] EMPTY = new ColdTestPublisherSubscription[0];
+	final List<T> values;
+	Throwable error;
+	volatile boolean wasRequested;
+	@SuppressWarnings("unchecked")
+	volatile ColdTestPublisherSubscription<T>[] subscribers = EMPTY;
+	volatile int cancelCount;
+	volatile long subscribeCount;
 
 	ColdTestPublisher() {
 		this.values = Collections.synchronizedList(new ArrayList<>());
@@ -86,11 +81,13 @@ final class ColdTestPublisher<T> extends TestPublisher<T> {
 			else if (error != null) {
 				p.onError(error);
 			}
-		} else {
+		}
+		else {
 			Throwable e = error;
 			if (e != null) {
 				s.onError(e);
-			} else {
+			}
+			else {
 				s.onComplete();
 			}
 		}
@@ -152,82 +149,6 @@ final class ColdTestPublisher<T> extends TestPublisher<T> {
 		}
 	}
 
-	static final class ColdTestPublisherSubscription<T> implements Subscription {
-
-		final Subscriber<? super T>                     actual;
-		final Fuseable.ConditionalSubscriber<? super T> actualConditional;
-
-		final ColdTestPublisher<T> parent;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
-
-		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<ColdTestPublisherSubscription>
-				REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(ColdTestPublisherSubscription.class, "requested");
-
-		@SuppressWarnings("unchecked")
-		ColdTestPublisherSubscription(Subscriber<? super T> actual, ColdTestPublisher<T> parent) {
-			this.actual = actual;
-			if(actual instanceof Fuseable.ConditionalSubscriber){
-				this.actualConditional = (Fuseable.ConditionalSubscriber<? super T>) actual;
-			}
-			else {
-				this.actualConditional = null;
-			}
-			this.parent = parent;
-		}
-
-		@Override
-		public void request(long n) {
-			if (Operators.validate(n)) {
-				Operators.addCap(REQUESTED, this, n);
-				parent.wasRequested = true;
-			}
-		}
-
-		@Override
-		public void cancel() {
-			if (!cancelled) {
-				ColdTestPublisher.CANCEL_COUNT.incrementAndGet(parent);
-				cancelled = true;
-				parent.remove(this);
-			}
-		}
-
-		void onNext(T value) {
-			long r = requested;
-			if (r != 0L) {
-				boolean sent;
-				if(actualConditional != null){
-					sent = actualConditional.tryOnNext(value);
-				}
-				else {
-					sent = true;
-					actual.onNext(value);
-				}
-				if (sent && r != Long.MAX_VALUE) {
-					REQUESTED.decrementAndGet(this);
-				}
-				return;
-			}
-			parent.remove(this);
-			actual.onError(new IllegalStateException("Can't deliver value due to lack of requests"));
-		}
-
-		void onError(Throwable e) {
-			parent.remove(this);
-			actual.onError(e);
-		}
-
-		void onComplete() {
-			parent.remove(this);
-			actual.onComplete();
-		}
-	}
-
 	@Override
 	public Flux<T> flux() {
 		return Flux.from(this);
@@ -262,9 +183,9 @@ final class ColdTestPublisher<T> extends TestPublisher<T> {
 	public ColdTestPublisher<T> assertMinRequested(long n) {
 		ColdTestPublisherSubscription<T>[] subs = subscribers;
 		long minRequest = Stream.of(subs)
-		                        .mapToLong(s -> s.requested)
-		                        .min()
-		                        .orElse(0);
+				.mapToLong(s -> s.requested)
+				.min()
+				.orElse(0);
 		if (minRequest < n) {
 			throw new AssertionError("Expected smallest requested amount to be >= " + n + "; got " + minRequest);
 		}
@@ -275,9 +196,9 @@ final class ColdTestPublisher<T> extends TestPublisher<T> {
 	public ColdTestPublisher<T> assertMaxRequested(long n) {
 		ColdTestPublisherSubscription<T>[] subs = subscribers;
 		long maxRequest = Stream.of(subs)
-		                        .mapToLong(s -> s.requested)
-		                        .max()
-		                        .orElse(0);
+				.mapToLong(s -> s.requested)
+				.max()
+				.orElse(0);
 		if (maxRequest > n) {
 			throw new AssertionError("Expected largest requested amount to be <= " + n + "; got " + maxRequest);
 		}
@@ -380,6 +301,78 @@ final class ColdTestPublisher<T> extends TestPublisher<T> {
 			s.onComplete();
 		}
 		return this;
+	}
+
+	static final class ColdTestPublisherSubscription<T> implements Subscription {
+
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<ColdTestPublisherSubscription>
+				REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(ColdTestPublisherSubscription.class, "requested");
+		final Subscriber<? super T> actual;
+		final Fuseable.ConditionalSubscriber<? super T> actualConditional;
+		final ColdTestPublisher<T> parent;
+		volatile boolean cancelled;
+		volatile long requested;
+
+		@SuppressWarnings("unchecked")
+		ColdTestPublisherSubscription(Subscriber<? super T> actual, ColdTestPublisher<T> parent) {
+			this.actual = actual;
+			if (actual instanceof Fuseable.ConditionalSubscriber) {
+				this.actualConditional = (Fuseable.ConditionalSubscriber<? super T>) actual;
+			}
+			else {
+				this.actualConditional = null;
+			}
+			this.parent = parent;
+		}
+
+		@Override
+		public void request(long n) {
+			if (Operators.validate(n)) {
+				Operators.addCap(REQUESTED, this, n);
+				parent.wasRequested = true;
+			}
+		}
+
+		@Override
+		public void cancel() {
+			if (!cancelled) {
+				ColdTestPublisher.CANCEL_COUNT.incrementAndGet(parent);
+				cancelled = true;
+				parent.remove(this);
+			}
+		}
+
+		void onNext(T value) {
+			long r = requested;
+			if (r != 0L) {
+				boolean sent;
+				if (actualConditional != null) {
+					sent = actualConditional.tryOnNext(value);
+				}
+				else {
+					sent = true;
+					actual.onNext(value);
+				}
+				if (sent && r != Long.MAX_VALUE) {
+					REQUESTED.decrementAndGet(this);
+				}
+				return;
+			}
+			parent.remove(this);
+			actual.onError(new IllegalStateException("Can't deliver value due to lack of requests"));
+		}
+
+		void onError(Throwable e) {
+			parent.remove(this);
+			actual.onError(e);
+		}
+
+		void onComplete() {
+			parent.remove(this);
+			actual.onComplete();
+		}
 	}
 
 }

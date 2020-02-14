@@ -23,6 +23,6 @@ public class FluxEmptyTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.empty())
-	                .verifyComplete();
+				.verifyComplete();
 	}
 }

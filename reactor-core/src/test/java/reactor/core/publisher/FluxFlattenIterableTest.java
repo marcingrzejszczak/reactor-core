@@ -16,8 +16,6 @@
 
 package reactor.core.publisher;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +27,6 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.core.Scannable;
@@ -41,14 +38,16 @@ import reactor.test.subscriber.AssertSubscriber;
 import reactor.util.concurrent.Queues;
 import reactor.util.context.Context;
 
+import static org.assertj.core.api.Java6Assertions.assertThat;
+
 public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
 		return defaultOptions.fusionMode(Fuseable.SYNC)
-		                     .fusionModeThreadBarrier(Fuseable.ANY)
-		                     .prefetch(Queues.SMALL_BUFFER_SIZE)
-		                     .shouldHitDropNextHookAfterTerminate(false);
+				.fusionModeThreadBarrier(Fuseable.ANY)
+				.prefetch(Queues.SMALL_BUFFER_SIZE)
+				.shouldHitDropNextHookAfterTerminate(false);
 	}
 
 	@Override
@@ -92,9 +91,10 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 
 				scenario(f -> f.flatMapIterable(s -> () -> new Iterator<String>() {
 					boolean invoked;
+
 					@Override
 					public boolean hasNext() {
-						if(!invoked){
+						if (!invoked) {
 							return true;
 						}
 						throw exception();
@@ -125,9 +125,9 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 
 				scenario(f -> f.flatMapIterable(s -> Arrays.asList(s, s + s)))
 						.receiveValues(
-								item(0), item(0)+item(0),
-								item(1), item(1)+item(1),
-								item(2), item(2)+item(2))
+								item(0), item(0) + item(0),
+								item(1), item(1) + item(1),
+								item(2), item(2) + item(2))
 		);
 	}
 
@@ -138,10 +138,10 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		);
 	}
 
-	@Test(expected=IllegalArgumentException.class)
-	public void failPrefetch(){
+	@Test(expected = IllegalArgumentException.class)
+	public void failPrefetch() {
 		Flux.never()
-		    .flatMapIterable(t -> null, -1);
+				.flatMapIterable(t -> null, -1);
 	}
 
 	@Test
@@ -149,12 +149,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .subscribe(ts);
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -162,8 +162,8 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .subscribe(ts);
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.subscribe(ts);
 
 		ts.assertNoEvents();
 
@@ -178,8 +178,8 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		ts.request(7);
 
 		ts.assertValues(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -187,13 +187,13 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .hide()
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .subscribe(ts);
+				.hide()
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -201,9 +201,9 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .hide()
-		    .concatMapIterable(v -> Arrays.asList(v, v + 10))
-		    .subscribe(ts);
+				.hide()
+				.concatMapIterable(v -> Arrays.asList(v, v + 10))
+				.subscribe(ts);
 
 		ts.assertNoEvents();
 
@@ -218,8 +218,8 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		ts.request(7);
 
 		ts.assertValues(1, 11, 2, 12, 3, 13, 4, 14, 5, 15)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -229,12 +229,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		int n = 1_000_000;
 
 		Flux.range(1, n)
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .subscribe(ts);
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.subscribe(ts);
 
 		ts.assertValueCount(n * 2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -244,13 +244,13 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		int n = 1_000_000;
 
 		Flux.range(1, n)
-		    .hide()
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .subscribe(ts);
+				.hide()
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.subscribe(ts);
 
 		ts.assertValueCount(n * 2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -260,13 +260,13 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		int n = 1_000_000;
 
 		Flux.range(1, n)
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .concatMap(Flux::just)
-		    .subscribe(ts);
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.concatMap(Flux::just)
+				.subscribe(ts);
 
 		ts.assertValueCount(n * 2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -274,12 +274,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.just(1)
-		    .concatMapIterable(v -> Arrays.asList(v, v + 1))
-		    .subscribe(ts);
+				.concatMapIterable(v -> Arrays.asList(v, v + 1))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -287,11 +287,11 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.<Integer>empty().concatMapIterable(v -> Arrays.asList(v, v + 1))
-		                     .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	/**
@@ -301,12 +301,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 	public void testDrainSyncCompletesSeveralBatches() {
 		//both hide and just with 2 elements are necessary to go into SYNC mode
 		StepVerifier.create(Flux.just(1, 2)
-		                        .flatMapIterable(t -> IntStream.rangeClosed(0, 35).boxed().collect(Collectors.toList()))
-		                        .hide()
-		                        .zipWith(Flux.range(1000, 100))
-		                        .count())
-		            .expectNext(72L)
-		            .verifyComplete();
+				.flatMapIterable(t -> IntStream.rangeClosed(0, 35).boxed().collect(Collectors.toList()))
+				.hide()
+				.zipWith(Flux.range(1000, 100))
+				.count())
+				.expectNext(72L)
+				.verifyComplete();
 	}
 
 	/**
@@ -315,12 +315,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void testDrainAsyncCompletesSeveralBatches() {
 		StepVerifier.create(Flux.range(0, 72)
-		                        .collectList()
-		                        .flatMapIterable(Function.identity())
-		                        .zipWith(Flux.range(1000, 100))
-		                        .count())
-		            .expectNext(72L)
-		            .verifyComplete();
+				.collectList()
+				.flatMapIterable(Function.identity())
+				.zipWith(Flux.range(1000, 100))
+				.count())
+				.expectNext(72L)
+				.verifyComplete();
 	}
 
 	/**
@@ -329,12 +329,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void testPublishingTwice() {
 		StepVerifier.create(Flux.just(Flux.range(0, 300).toIterable(), Flux.range(0, 300).toIterable())
-		                        .flatMapIterable(x -> x)
-		                        .share()
-		                        .share()
-		                        .count())
-		            .expectNext(600L)
-		            .verifyComplete();
+				.flatMapIterable(x -> x)
+				.share()
+				.share()
+				.count())
+				.expectNext(600L)
+				.verifyComplete();
 	}
 
 	@Test
@@ -349,7 +349,8 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxFlattenIterable.FlattenIterableSubscriber<Integer, Integer> test =
 				new FluxFlattenIterable.FlattenIterableSubscriber<>(actual, i -> new ArrayList<>(i), 123, Queues.<Integer>one());
 		Subscription s = Operators.emptySubscription();
@@ -378,24 +379,28 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 
 	public void asyncDrainWithPollFailure() {
 		Flux<Integer> p = Flux.range(1, 3)
-		                      .collectList()
-		                      .filter(l -> { throw new IllegalStateException("boom"); })
-		                      .flatMapIterable(Function.identity());
+				.collectList()
+				.filter(l -> {
+					throw new IllegalStateException("boom");
+				})
+				.flatMapIterable(Function.identity());
 
 		StepVerifier.create(p)
-		            .expectErrorMessage("boom")
-		            .verify(Duration.ofSeconds(1));
+				.expectErrorMessage("boom")
+				.verify(Duration.ofSeconds(1));
 	}
 
 	@Test
 	public void syncDrainWithPollFailure() {
 		Flux<Integer> p = Mono.just(Arrays.asList(1, 2, 3))
-		                      .filter(l -> { throw new IllegalStateException("boom"); })
-		                      .flatMapIterable(Function.identity());
+				.filter(l -> {
+					throw new IllegalStateException("boom");
+				})
+				.flatMapIterable(Function.identity());
 
 		StepVerifier.create(p)
-		            .expectErrorMessage("boom")
-		            .verify(Duration.ofSeconds(1));
+				.expectErrorMessage("boom")
+				.verify(Duration.ofSeconds(1));
 	}
 
 	@Test
@@ -412,12 +417,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectNoFusionSupport()
-		            .expectNext(2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasDroppedErrors(1);
+				.expectNoFusionSupport()
+				.expectNext(2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasDroppedErrors(1);
 	}
 
 	@Test
@@ -434,12 +439,12 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectNoFusionSupport()
-		            .expectNext(2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasDroppedErrors(1);
+				.expectNoFusionSupport()
+				.expectNext(2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasDroppedErrors(1);
 	}
 
 	@Test
@@ -456,11 +461,11 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectNoFusionSupport()
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasDroppedErrors(1);
+				.expectNoFusionSupport()
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasDroppedErrors(1);
 	}
 
 	@Test
@@ -476,11 +481,11 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectNext(2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasDroppedErrors(1);
+				.expectNext(2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasDroppedErrors(1);
 	}
 
 	@Test
@@ -496,11 +501,11 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectNext(2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasDroppedErrors(1);
+				.expectNext(2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasDroppedErrors(1);
 	}
 
 	@Test
@@ -516,10 +521,10 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasDroppedErrors(1);
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasDroppedErrors(1);
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1925
@@ -530,16 +535,16 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		ReferenceCounted referenceCounted3 = new ReferenceCounted(3);
 
 		Flux<ReferenceCounted> source = Flux.just(1, 2) //drain sync
-		                                    .concatMapIterable(i -> Arrays.asList(
-				                                    referenceCounted1,
-				                                    referenceCounted2,
-				                                    referenceCounted3))
-		                                    .doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
+				.concatMapIterable(i -> Arrays.asList(
+						referenceCounted1,
+						referenceCounted2,
+						referenceCounted3))
+				.doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
 
 		StepVerifier.create(source)
-		            .consumeNextWith(ReferenceCounted::release)
-		            .thenCancel()
-		            .verify();
+				.consumeNextWith(ReferenceCounted::release)
+				.thenCancel()
+				.verify();
 
 		assertThat(referenceCounted1.getRefCount()).as("ref1").isEqualTo(0);
 		assertThat(referenceCounted2.getRefCount()).as("ref2").isEqualTo(0);
@@ -554,17 +559,17 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		ReferenceCounted referenceCounted3 = new ReferenceCounted(3);
 
 		Flux<ReferenceCounted> source = Flux.just(1, 2)
-		                                    .publishOn(Schedulers.immediate()) //drain async
-		                                    .concatMapIterable(i -> Arrays.asList(
-				                                    referenceCounted1,
-				                                    referenceCounted2,
-				                                    referenceCounted3))
-		                                    .doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
+				.publishOn(Schedulers.immediate()) //drain async
+				.concatMapIterable(i -> Arrays.asList(
+						referenceCounted1,
+						referenceCounted2,
+						referenceCounted3))
+				.doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
 
 		StepVerifier.create(source)
-		            .consumeNextWith(ReferenceCounted::release)
-		            .thenCancel()
-		            .verify();
+				.consumeNextWith(ReferenceCounted::release)
+				.thenCancel()
+				.verify();
 
 		assertThat(referenceCounted1.getRefCount()).as("ref1").isEqualTo(0);
 		assertThat(referenceCounted2.getRefCount()).as("ref2").isEqualTo(0);
@@ -579,16 +584,16 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		ReferenceCounted referenceCounted3 = new ReferenceCounted(3);
 
 		Flux<ReferenceCounted> source = Flux.just(1) //callable
-		                                    .concatMapIterable(i -> Arrays.asList(
-				                                    referenceCounted1,
-				                                    referenceCounted2,
-				                                    referenceCounted3))
-		                                    .doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
+				.concatMapIterable(i -> Arrays.asList(
+						referenceCounted1,
+						referenceCounted2,
+						referenceCounted3))
+				.doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
 
 		StepVerifier.create(source)
-		            .consumeNextWith(ReferenceCounted::release)
-		            .thenCancel()
-		            .verify();
+				.consumeNextWith(ReferenceCounted::release)
+				.thenCancel()
+				.verify();
 
 		assertThat(referenceCounted1.getRefCount()).as("ref1").isEqualTo(0);
 		assertThat(referenceCounted2.getRefCount()).as("ref2").isEqualTo(0);
@@ -603,16 +608,16 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 		ReferenceCounted referenceCounted3 = new ReferenceCounted(3);
 
 		Flux<ReferenceCounted> source = Mono.just(1) //callable
-		                                    .flatMapIterable(i -> Arrays.asList(
-				                                    referenceCounted1,
-				                                    referenceCounted2,
-				                                    referenceCounted3))
-		                                    .doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
+				.flatMapIterable(i -> Arrays.asList(
+						referenceCounted1,
+						referenceCounted2,
+						referenceCounted3))
+				.doOnDiscard(ReferenceCounted.class, ReferenceCounted::release);
 
 		StepVerifier.create(source)
-		            .consumeNextWith(ReferenceCounted::release)
-		            .thenCancel()
-		            .verify();
+				.consumeNextWith(ReferenceCounted::release)
+				.thenCancel()
+				.verify();
 
 		assertThat(referenceCounted1.getRefCount()).as("ref1").isEqualTo(0);
 		assertThat(referenceCounted2.getRefCount()).as("ref2").isEqualTo(0);
@@ -650,14 +655,14 @@ public class FluxFlattenIterableTest extends FluxOperatorTest<String, String> {
 
 		assertThat(referenceCounted2.refCount).as("ref2 is released by the clear").isZero();
 		assertThat(test.current).as("current nulled out")
-		                        .isNull();
+				.isNull();
 		assertThat(test.currentKnownToBeFinite).as("knownFinite reset").isFalse();
 	}
 
 	static class ReferenceCounted {
 
-		int refCount = 1;
 		final int index;
+		int refCount = 1;
 
 		ReferenceCounted(int index) {
 			this.index = index;

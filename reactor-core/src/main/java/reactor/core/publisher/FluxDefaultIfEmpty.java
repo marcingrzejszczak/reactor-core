@@ -96,7 +96,8 @@ final class FluxDefaultIfEmpty<T> extends InternalFluxOperator<T, T> {
 		public void onComplete() {
 			if (hasValue) {
 				actual.onComplete();
-			} else {
+			}
+			else {
 				complete(value);
 			}
 		}

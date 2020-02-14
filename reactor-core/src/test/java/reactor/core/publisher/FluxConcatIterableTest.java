@@ -24,12 +24,12 @@ import reactor.test.subscriber.AssertSubscriber;
 
 public class FluxConcatIterableTest {
 
+	final Publisher<Integer> source = Flux.range(1, 3);
+
 	@Test(expected = NullPointerException.class)
 	public void arrayNull() {
-		Flux.concat((Iterable<? extends Publisher<?>>)null);
+		Flux.concat((Iterable<? extends Publisher<?>>) null);
 	}
-
-	final Publisher<Integer> source = Flux.range(1, 3);
 
 	@Test
 	public void normal() {
@@ -38,8 +38,8 @@ public class FluxConcatIterableTest {
 		Flux.concat(Arrays.asList(source, source, source)).subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 1, 2, 3, 1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -49,26 +49,26 @@ public class FluxConcatIterableTest {
 		Flux.concat(Arrays.asList(source, source, source)).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(4);
 
 		ts.assertValues(1, 2, 3, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 1, 2, 3, 1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -78,8 +78,8 @@ public class FluxConcatIterableTest {
 		Flux.concat(Arrays.asList(source, null, source)).subscribe(ts);
 
 		ts.assertValues(1, 2, 3)
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -89,8 +89,8 @@ public class FluxConcatIterableTest {
 		Flux.concat(Arrays.asList((Publisher<Integer>) null)).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 }

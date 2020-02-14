@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-if (project.name == 'benchmarks')
+if (project.name == 'benchmarks') {
 	return
+}
 
 apply plugin: 'maven-publish'
 apply plugin: "com.jfrog.artifactory"
@@ -49,7 +50,8 @@ publishing {
 					name = project.description
 					description = project.description
 				}
-				packaging = 'jar' //if not explicitly set, end up as `pom` in output. omitted in output if set as `jar`...
+				packaging = 'jar'
+				//if not explicitly set, end up as `pom` in output. omitted in output if set as `jar`...
 				url = 'https://github.com/reactor/reactor-core'
 				organization {
 					name = 'reactor'

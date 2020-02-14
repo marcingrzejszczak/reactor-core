@@ -49,6 +49,20 @@ import static reactor.core.publisher.FluxReplay.ReplaySubscriber.TERMINATED;
 public final class ReplayProcessor<T> extends FluxProcessor<T, T>
 		implements Fuseable {
 
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<ReplayProcessor, FluxReplay.ReplaySubscription[]>
+			SUBSCRIBERS = AtomicReferenceFieldUpdater.newUpdater(ReplayProcessor.class,
+			FluxReplay.ReplaySubscription[].class,
+			"subscribers");
+	final FluxReplay.ReplayBuffer<T> buffer;
+	Subscription subscription;
+	volatile FluxReplay.ReplaySubscription<T>[] subscribers;
+
+	ReplayProcessor(FluxReplay.ReplayBuffer<T> buffer) {
+		this.buffer = buffer;
+		SUBSCRIBERS.lazySet(this, EMPTY);
+	}
+
 	/**
 	 * Create a {@link ReplayProcessor} that caches the last element it has pushed,
 	 * replaying it to late subscribers. This is a buffer-based ReplayProcessor with
@@ -69,7 +83,7 @@ public final class ReplayProcessor<T> extends FluxProcessor<T, T>
 	/**
 	 * Create a {@link ReplayProcessor} that caches the last element it has pushed,
 	 * replaying it to late subscribers. If a {@link Subscriber} comes in <b>before</b>
-	 * any value has been pushed, then the {@code defaultValue} is emitted instead. 
+	 * any value has been pushed, then the {@code defaultValue} is emitted instead.
 	 * This is a buffer-based ReplayProcessor with a history size of 1.
 	 * <p>
 	 * <img class="marble" src="https://raw.githubusercontent.com/reactor/reactor-core/v3.1.3.RELEASE/src/docs/marble/replaylastd.png"
@@ -93,7 +107,7 @@ public final class ReplayProcessor<T> extends FluxProcessor<T, T>
 	/**
 	 * Create a new {@link ReplayProcessor} that replays an unbounded number of elements,
 	 * using a default internal {@link Queues#SMALL_BUFFER_SIZE Queue}.
-	 * 
+	 *
 	 * @param <E> the type of the pushed elements
 	 *
 	 * @return a new {@link ReplayProcessor} that replays the whole history to each new
@@ -293,22 +307,6 @@ public final class ReplayProcessor<T> extends FluxProcessor<T, T>
 				scheduler));
 	}
 
-	final FluxReplay.ReplayBuffer<T> buffer;
-
-	Subscription subscription;
-
-	volatile FluxReplay.ReplaySubscription<T>[] subscribers;
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<ReplayProcessor, FluxReplay.ReplaySubscription[]>
-			SUBSCRIBERS = AtomicReferenceFieldUpdater.newUpdater(ReplayProcessor.class,
-			FluxReplay.ReplaySubscription[].class,
-			"subscribers");
-
-	ReplayProcessor(FluxReplay.ReplayBuffer<T> buffer) {
-		this.buffer = buffer;
-		SUBSCRIBERS.lazySet(this, EMPTY);
-	}
-
 	@Override
 	public void subscribe(CoreSubscriber<? super T> actual) {
 		Objects.requireNonNull(actual, "subscribe");
@@ -333,7 +331,7 @@ public final class ReplayProcessor<T> extends FluxProcessor<T, T>
 	@Override
 	@Nullable
 	public Object scanUnsafe(Attr key) {
-		if (key == Attr.PARENT){
+		if (key == Attr.PARENT) {
 			return subscription;
 		}
 		if (key == Attr.CAPACITY) return buffer.capacity();
@@ -480,30 +478,22 @@ public final class ReplayProcessor<T> extends FluxProcessor<T, T>
 	static final class ReplayInner<T>
 			implements FluxReplay.ReplaySubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final ReplayProcessor<T> parent;
-
-		final FluxReplay.ReplayBuffer<T> buffer;
-
-		int index;
-
-		int tailIndex;
-
-		Object node;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ReplayInner> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ReplayInner.class,
 						"wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ReplayInner> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ReplayInner.class,
 						"requested");
-
+		final CoreSubscriber<? super T> actual;
+		final ReplayProcessor<T> parent;
+		final FluxReplay.ReplayBuffer<T> buffer;
+		int index;
+		int tailIndex;
+		Object node;
+		volatile int wip;
+		volatile long requested;
 		int fusionMode;
 
 		ReplayInner(CoreSubscriber<? super T> actual,

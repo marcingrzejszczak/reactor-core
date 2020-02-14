@@ -57,15 +57,12 @@ final class FluxRetryPredicate<T> extends InternalFluxOperator<T, T> {
 	static final class RetryPredicateSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final CorePublisher<? extends T> source;
-
-		final Predicate<? super Throwable> predicate;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RetryPredicateSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(RetryPredicateSubscriber.class, "wip");
-
+				AtomicIntegerFieldUpdater.newUpdater(RetryPredicateSubscriber.class, "wip");
+		final CorePublisher<? extends T> source;
+		final Predicate<? super Throwable> predicate;
+		volatile int wip;
 		long produced;
 
 		RetryPredicateSubscriber(CorePublisher<? extends T> source,
@@ -85,26 +82,28 @@ final class FluxRetryPredicate<T> extends InternalFluxOperator<T, T> {
 		@Override
 		public void onError(Throwable t) {
 			boolean b;
-			
+
 			try {
 				b = predicate.test(t);
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				Throwable _t = Operators.onOperatorError(e, actual.currentContext());
 				_t = Exceptions.addSuppressed(_t, t);
 				actual.onError(_t);
 				return;
 			}
-			
+
 			if (b) {
 				resubscribe();
-			} else {
+			}
+			else {
 				actual.onError(t);
 			}
 		}
-		
+
 		@Override
 		public void onComplete() {
-			
+
 			actual.onComplete();
 		}
 
@@ -123,7 +122,8 @@ final class FluxRetryPredicate<T> extends InternalFluxOperator<T, T> {
 
 					source.subscribe(this);
 
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 		}
 	}

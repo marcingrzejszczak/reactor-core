@@ -60,8 +60,8 @@ public class FluxSubscribeOnTest {
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertValueCount(1000)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -73,24 +73,24 @@ public class FluxSubscribeOnTest {
 		Thread.sleep(100);
 
 		ts.assertNoValues()
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(500);
 
 		Thread.sleep(1000);
 
 		ts.assertValueCount(500)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(500);
 
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertValueCount(1000)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -102,8 +102,8 @@ public class FluxSubscribeOnTest {
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertValues(1)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -115,16 +115,16 @@ public class FluxSubscribeOnTest {
 		Thread.sleep(100);
 
 		ts.assertNoValues()
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(500);
 
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertValues(1)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -136,8 +136,8 @@ public class FluxSubscribeOnTest {
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertNoValues()
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -149,8 +149,8 @@ public class FluxSubscribeOnTest {
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertNoValues()
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 
@@ -169,22 +169,23 @@ public class FluxSubscribeOnTest {
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSubscribeOn.SubscribeOnSubscriber<Integer> test =
-        		new FluxSubscribeOn.SubscribeOnSubscriber<>(Flux.just(1), actual, Schedulers.single().createWorker(), true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSubscribeOn.SubscribeOnSubscriber<Integer> test =
+				new FluxSubscribeOn.SubscribeOnSubscriber<>(Flux.just(1), actual, Schedulers.single().createWorker(), true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
 	public void scheduleRequestsByDefault() {
@@ -200,14 +201,14 @@ public class FluxSubscribeOnTest {
 			}
 			sink.complete();
 		}, DROP)
-		        .map(Flux.identityFunction()) //note the create is away from subscribeOn
+				.map(Flux.identityFunction()) //note the create is away from subscribeOn
 				.subscribeOn(Schedulers.newSingle("test")) //note there's no explicit parameter
 				.publishOn(Schedulers.elastic());
 
 		StepVerifier.create(test)
-		            .expectNextCount(Queues.SMALL_BUFFER_SIZE)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.expectNextCount(Queues.SMALL_BUFFER_SIZE)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
 	@Test
@@ -230,9 +231,9 @@ public class FluxSubscribeOnTest {
 
 		AtomicInteger count = new AtomicInteger();
 		StepVerifier.create(test)
-		            .thenConsumeWhile(t -> count.incrementAndGet() != -1)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.thenConsumeWhile(t -> count.incrementAndGet() != -1)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 
 		assertThat(count.get()).isGreaterThan(Queues.SMALL_BUFFER_SIZE);
 	}
@@ -257,9 +258,9 @@ public class FluxSubscribeOnTest {
 
 		AtomicInteger count = new AtomicInteger();
 		StepVerifier.create(test)
-		            .thenConsumeWhile(t -> count.incrementAndGet() != -1)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.thenConsumeWhile(t -> count.incrementAndGet() != -1)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 
 		assertThat(count.get()).isEqualTo(Queues.SMALL_BUFFER_SIZE);
 	}
@@ -294,25 +295,25 @@ public class FluxSubscribeOnTest {
 					}
 				});
 			})
-			    .subscribeOn(s)
-			    .limitRate(10)
-			    .doOnNext(d -> {
-				    CountDownLatch latch = new CountDownLatch(1);
-				    Mono.fromCallable(() -> d)
-				        .subscribeOn(s2)
-				        .doFinally(it -> latch.countDown())
-				        .subscribe();
+					.subscribeOn(s)
+					.limitRate(10)
+					.doOnNext(d -> {
+						CountDownLatch latch = new CountDownLatch(1);
+						Mono.fromCallable(() -> d)
+								.subscribeOn(s2)
+								.doFinally(it -> latch.countDown())
+								.subscribe();
 
-				    try {
-					    if (!latch.await(5, TimeUnit.SECONDS)) {
-					    	timedOut.set(true);
-					    }
-				    }
-				    catch (InterruptedException e) {
-					    interrupted.set(true);
-				    }
-			    })
-			    .blockLast(Duration.ofSeconds(2));
+						try {
+							if (!latch.await(5, TimeUnit.SECONDS)) {
+								timedOut.set(true);
+							}
+						}
+						catch (InterruptedException e) {
+							interrupted.set(true);
+						}
+					})
+					.blockLast(Duration.ofSeconds(2));
 
 			assertThat(interrupted).as("interrupted").isFalse();
 			assertThat(timedOut).as("latch timeout").isFalse();

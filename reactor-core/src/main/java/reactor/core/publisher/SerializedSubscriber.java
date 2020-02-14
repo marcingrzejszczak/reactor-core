@@ -161,7 +161,7 @@ final class SerializedSubscriber<T> implements InnerOperator<T, T> {
 				LinkedArrayNode<T> n = new LinkedArrayNode<>(value);
 
 				t.next = n;
-				tail = n ;
+				tail = n;
 			}
 			else {
 				t.array[t.count++] = value;
@@ -252,7 +252,7 @@ final class SerializedSubscriber<T> implements InnerOperator<T, T> {
 
 	int producerCapacity() {
 		LinkedArrayNode<T> node = tail;
-		if(node != null){
+		if (node != null) {
 			return node.count;
 		}
 		return 0;

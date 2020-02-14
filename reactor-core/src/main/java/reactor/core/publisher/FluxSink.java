@@ -34,9 +34,9 @@ import reactor.util.context.Context;
 public interface FluxSink<T> {
 
 	/**
-     * @see Subscriber#onComplete()
-     */
-    void complete();
+	 * @see Subscriber#onComplete()
+	 */
+	void complete();
 
 	/**
 	 * Return the current subscriber {@link Context}.
@@ -49,18 +49,18 @@ public interface FluxSink<T> {
 	 */
 	Context currentContext();
 
-    /**
-     * @see Subscriber#onError(Throwable)
-     * @param e the exception to signal, not null
-     */
-    void error(Throwable e);
+	/**
+	 * @see Subscriber#onError(Throwable)
+	 * @param e the exception to signal, not null
+	 */
+	void error(Throwable e);
 
-    /**
-     * Try emitting, might throw an unchecked exception.
-     * @see Subscriber#onNext(Object)
-     * @param t the value to emit, not null
-     */
-    FluxSink<T> next(T t);
+	/**
+	 * Try emitting, might throw an unchecked exception.
+	 * @see Subscriber#onNext(Object)
+	 * @param t the value to emit, not null
+	 */
+	FluxSink<T> next(T t);
 
 	/**
 	 * The current outstanding request amount.

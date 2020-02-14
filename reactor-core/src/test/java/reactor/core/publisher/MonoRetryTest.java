@@ -32,7 +32,7 @@ public class MonoRetryTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void timesInvalid() {
 		Mono.never()
-		    .retry(-1);
+				.retry(-1);
 	}
 
 	@Test
@@ -40,12 +40,12 @@ public class MonoRetryTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .retry(0)
-		    .subscribe(ts);
+				.retry(0)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -53,12 +53,12 @@ public class MonoRetryTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.<Integer>error(new RuntimeException("forced failure")).retry(0)
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -73,12 +73,12 @@ public class MonoRetryTest {
 			}
 			return _i;
 		})
-		    .retry(1)
-		    .subscribe(ts);
+				.retry(1)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -92,29 +92,29 @@ public class MonoRetryTest {
 			}
 			return _i;
 		})
-		    .retry()
-		    .subscribe(ts);
+				.retry()
+				.subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
 	public void doOnNextFails() {
 		Mono.just(1)
-		    .doOnNext(new Consumer<Integer>() {
-			    int i;
+				.doOnNext(new Consumer<Integer>() {
+					int i;
 
-			    @Override
-			    public void accept(Integer t) {
-				    if (i++ < 2) {
-					    throw new RuntimeException("test");
-				    }
-			    }
-		    })
-		    .retry(2)
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertValues(1);
+					@Override
+					public void accept(Integer t) {
+						if (i++ < 2) {
+							throw new RuntimeException("test");
+						}
+					}
+				})
+				.retry(2)
+				.subscribeWith(AssertSubscriber.create())
+				.assertValues(1);
 	}
 }

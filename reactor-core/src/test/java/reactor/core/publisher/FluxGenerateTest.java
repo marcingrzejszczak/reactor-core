@@ -24,14 +24,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 import reactor.core.CoreSubscriber;
-import reactor.core.Exceptions;
 import reactor.core.Fuseable;
 import reactor.core.Scannable;
 import reactor.test.StepVerifier;
 import reactor.test.subscriber.AssertSubscriber;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class FluxGenerateTest {
 
@@ -54,16 +52,18 @@ public class FluxGenerateTest {
 
 	@Test
 	public void sinkNotUsed() {
-		StepVerifier.create(Flux.generate(sink -> {}))
-		            .expectFusion(Fuseable.NONE)
-		            .verifyErrorMessage("The generator didn't call any of the SynchronousSink method");
+		StepVerifier.create(Flux.generate(sink -> {
+		}))
+				.expectFusion(Fuseable.NONE)
+				.verifyErrorMessage("The generator didn't call any of the SynchronousSink method");
 	}
 
 	@Test
 	public void sinkNotUsedFusion() {
-		StepVerifier.create(Flux.generate(sink -> {}))
-		            .expectFusion(Fuseable.SYNC)
-		            .verifyErrorMessage("The generator didn't call any of the SynchronousSink method");
+		StepVerifier.create(Flux.generate(sink -> {
+		}))
+				.expectFusion(Fuseable.SYNC)
+				.verifyErrorMessage("The generator didn't call any of the SynchronousSink method");
 	}
 
 	@Test
@@ -75,8 +75,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -89,8 +89,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -102,9 +102,9 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -117,14 +117,14 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -142,8 +142,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -161,20 +161,20 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -190,8 +190,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class);
+				.assertNotComplete()
+				.assertError(RuntimeException.class);
 	}
 
 	@Test
@@ -203,18 +203,20 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
 	public void generatorThrowsFusion() {
 		StepVerifier.create(
-				Flux.<Integer>generate(o -> { throw new IllegalStateException("forced failure"); }))
-		            .expectFusion(Fuseable.SYNC)
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("forced failure"));
+				Flux.<Integer>generate(o -> {
+					throw new IllegalStateException("forced failure");
+				}))
+				.expectFusion(Fuseable.SYNC)
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("forced failure"));
 	}
 
 	@Test
@@ -227,9 +229,9 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -242,8 +244,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -256,8 +258,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertError(IllegalStateException.class);
+				.assertNotComplete()
+				.assertError(IllegalStateException.class);
 	}
 
 	@Test
@@ -272,8 +274,8 @@ public class FluxGenerateTest {
 		}, stateConsumer::set).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		Assert.assertEquals(1, stateConsumer.get());
 	}
@@ -295,8 +297,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertValueSequence(list)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -316,25 +318,25 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 		ts.assertValueSequence(list)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -355,8 +357,8 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertFuseableSource()
-		  .assertFusionMode(Fuseable.SYNC)
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+				.assertFusionMode(Fuseable.SYNC)
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 	}
 
 	@Test
@@ -377,57 +379,63 @@ public class FluxGenerateTest {
 		}).subscribe(ts);
 
 		ts.assertFuseableSource()
-		  .assertFusionMode(Fuseable.NONE)
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+				.assertFusionMode(Fuseable.NONE)
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 	}
 
 
-    @Test
-    public void scanSubscription() {
-        CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxGenerate.GenerateSubscription<Integer, Integer> test =
-                new FluxGenerate.GenerateSubscription<>(subscriber, 1, (s, o) -> null, s -> {});
+	@Test
+	public void scanSubscription() {
+		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxGenerate.GenerateSubscription<Integer, Integer> test =
+				new FluxGenerate.GenerateSubscription<>(subscriber, 1, (s, o) -> null, s -> {
+				});
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
-        test.request(5);
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(5L);
-        assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
+		test.request(5);
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(5L);
+		assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+	}
 
-    @Test
-    public void scanSubscriptionError() {
-        CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxGenerate.GenerateSubscription<Integer, Integer> test =
-                new FluxGenerate.GenerateSubscription<>(subscriber, 1, (s, o) -> null, s -> {});
+	@Test
+	public void scanSubscriptionError() {
+		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxGenerate.GenerateSubscription<Integer, Integer> test =
+				new FluxGenerate.GenerateSubscription<>(subscriber, 1, (s, o) -> null, s -> {
+				});
 
-        test.error(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-        assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-    }
+		test.error(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+	}
 
-    @Test
-    public void scanSubscriptionCancelled() {
-        CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxGenerate.GenerateSubscription<Integer, Integer> test =
-                new FluxGenerate.GenerateSubscription<>(subscriber, 1, (s, o) -> null, s -> {});
+	@Test
+	public void scanSubscriptionCancelled() {
+		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxGenerate.GenerateSubscription<Integer, Integer> test =
+				new FluxGenerate.GenerateSubscription<>(subscriber, 1, (s, o) -> null, s -> {
+				});
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
 	public void contextTest() {
 		StepVerifier.create(Flux.generate(s -> s.next(s.currentContext()
-		                                               .get(AtomicInteger.class)
-		                                               .incrementAndGet()))
-		                        .take(10)
-		                        .subscriberContext(ctx -> ctx.put(AtomicInteger.class,
-				                        new AtomicInteger())))
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.get(AtomicInteger.class)
+				.incrementAndGet()))
+				.take(10)
+				.subscriberContext(ctx -> ctx.put(AtomicInteger.class,
+						new AtomicInteger())))
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1685
@@ -438,12 +446,12 @@ public class FluxGenerateTest {
 					sink.next("foo");
 					sink.error(new IllegalStateException("boom"));
 				}))
-		            .expectFusion(Fuseable.SYNC)
-		            .expectNext("foo")
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("boom")
-		            );
+				.expectFusion(Fuseable.SYNC)
+				.expectNext("foo")
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom")
+				);
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1685
@@ -453,11 +461,11 @@ public class FluxGenerateTest {
 				Flux.<String>generate(sink -> {
 					sink.error(new IllegalStateException("boom"));
 				}))
-		            .expectFusion(Fuseable.SYNC)
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("boom")
-		            );
+				.expectFusion(Fuseable.SYNC)
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom")
+				);
 	}
 
 }

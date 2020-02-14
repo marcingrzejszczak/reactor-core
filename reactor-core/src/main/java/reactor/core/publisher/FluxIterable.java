@@ -23,7 +23,6 @@ import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.util.annotation.Nullable;
@@ -40,6 +39,18 @@ import reactor.util.function.Tuple2;
  */
 final class FluxIterable<T> extends Flux<T> implements Fuseable, SourceProducer<T> {
 
+	final Iterable<? extends T> iterable;
+	@Nullable
+	private final Runnable onClose;
+	FluxIterable(Iterable<? extends T> iterable, @Nullable Runnable onClose) {
+		this.iterable = Objects.requireNonNull(iterable, "iterable");
+		this.onClose = onClose;
+	}
+
+	FluxIterable(Iterable<? extends T> iterable) {
+		this(iterable, null);
+	}
+
 	/**
 	 * Utility method to check that a given {@link Iterable} can be positively identified as
 	 * finite, which implies forEachRemaining type of iteration can be done to discard unemitted
@@ -54,45 +65,6 @@ final class FluxIterable<T> extends Flux<T> implements Fuseable, SourceProducer<
 	 */
 	static <T> boolean checkFinite(Iterable<T> iterable) {
 		return iterable instanceof Collection || iterable.spliterator().hasCharacteristics(Spliterator.SIZED);
-	}
-
-	final Iterable<? extends T> iterable;
-	@Nullable
-	private final Runnable      onClose;
-
-	FluxIterable(Iterable<? extends T> iterable, @Nullable Runnable onClose) {
-		this.iterable = Objects.requireNonNull(iterable, "iterable");
-		this.onClose = onClose;
-	}
-
-	FluxIterable(Iterable<? extends T> iterable) {
-		this(iterable, null);
-	}
-
-	@Override
-	public void subscribe(CoreSubscriber<? super T> actual) {
-		boolean knownToBeFinite;
-		Iterator<? extends T> it;
-
-		try {
-			knownToBeFinite = FluxIterable.checkFinite(iterable);
-			it = iterable.iterator();
-		}
-		catch (Throwable e) {
-			Operators.error(actual, Operators.onOperatorError(e, actual.currentContext()));
-			return;
-		}
-
-		subscribe(actual, it, knownToBeFinite, onClose);
-	}
-
-	@Override
-	public Object scanUnsafe(Attr key) {
-		if (key == Attr.BUFFERED) {
-			if (iterable instanceof Collection) return ((Collection) iterable).size();
-			if (iterable instanceof Tuple2) return ((Tuple2) iterable).size();
-		}
-		return null;
 	}
 
 	/**
@@ -162,30 +134,44 @@ final class FluxIterable<T> extends Flux<T> implements Fuseable, SourceProducer<
 		}
 	}
 
+	@Override
+	public void subscribe(CoreSubscriber<? super T> actual) {
+		boolean knownToBeFinite;
+		Iterator<? extends T> it;
+
+		try {
+			knownToBeFinite = FluxIterable.checkFinite(iterable);
+			it = iterable.iterator();
+		}
+		catch (Throwable e) {
+			Operators.error(actual, Operators.onOperatorError(e, actual.currentContext()));
+			return;
+		}
+
+		subscribe(actual, it, knownToBeFinite, onClose);
+	}
+
+	@Override
+	public Object scanUnsafe(Attr key) {
+		if (key == Attr.BUFFERED) {
+			if (iterable instanceof Collection) return ((Collection) iterable).size();
+			if (iterable instanceof Tuple2) return ((Tuple2) iterable).size();
+		}
+		return null;
+	}
+
 	static final class IterableSubscription<T>
 			implements InnerProducer<T>, SynchronousSubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Iterator<? extends T> iterator;
-		final boolean               knownToBeFinite;
-		final Runnable              onClose;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<IterableSubscription> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(IterableSubscription.class,
 						"requested");
-
-		int state;
-
 		/**
 		 * Indicates that the iterator's hasNext returned true before but the value is not
 		 * yet retrieved.
 		 */
-		static final int STATE_HAS_NEXT_NO_VALUE  = 0;
+		static final int STATE_HAS_NEXT_NO_VALUE = 0;
 		/**
 		 * Indicates that there is a value available in current.
 		 */
@@ -193,12 +179,18 @@ final class FluxIterable<T> extends Flux<T> implements Fuseable, SourceProducer<
 		/**
 		 * Indicates that there are no more values available.
 		 */
-		static final int STATE_NO_NEXT            = 2;
+		static final int STATE_NO_NEXT = 2;
 		/**
 		 * Indicates that the value has been consumed and a new value should be retrieved.
 		 */
-		static final int STATE_CALL_HAS_NEXT      = 3;
-
+		static final int STATE_CALL_HAS_NEXT = 3;
+		final CoreSubscriber<? super T> actual;
+		final Iterator<? extends T> iterator;
+		final boolean knownToBeFinite;
+		final Runnable onClose;
+		volatile boolean cancelled;
+		volatile long requested;
+		int state;
 		T current;
 
 		IterableSubscription(CoreSubscriber<? super T> actual,
@@ -441,27 +433,15 @@ final class FluxIterable<T> extends Flux<T> implements Fuseable, SourceProducer<
 	static final class IterableSubscriptionConditional<T>
 			implements InnerProducer<T>, SynchronousSubscription<T> {
 
-		final ConditionalSubscriber<? super T> actual;
-
-		final Iterator<? extends T> iterator;
-		final boolean               knownToBeFinite;
-		final Runnable              onClose;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<IterableSubscriptionConditional> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(IterableSubscriptionConditional.class,
 						"requested");
-
-		int state;
-
 		/**
 		 * Indicates that the iterator's hasNext returned true before but the value is not
 		 * yet retrieved.
 		 */
-		static final int STATE_HAS_NEXT_NO_VALUE  = 0;
+		static final int STATE_HAS_NEXT_NO_VALUE = 0;
 		/**
 		 * Indicates that there is a value available in current.
 		 */
@@ -469,12 +449,18 @@ final class FluxIterable<T> extends Flux<T> implements Fuseable, SourceProducer<
 		/**
 		 * Indicates that there are no more values available.
 		 */
-		static final int STATE_NO_NEXT            = 2;
+		static final int STATE_NO_NEXT = 2;
 		/**
 		 * Indicates that the value has been consumed and a new value should be retrieved.
 		 */
-		static final int STATE_CALL_HAS_NEXT      = 3;
-
+		static final int STATE_CALL_HAS_NEXT = 3;
+		final ConditionalSubscriber<? super T> actual;
+		final Iterator<? extends T> iterator;
+		final boolean knownToBeFinite;
+		final Runnable onClose;
+		volatile boolean cancelled;
+		volatile long requested;
+		int state;
 		T current;
 
 		IterableSubscriptionConditional(ConditionalSubscriber<? super T> actual,

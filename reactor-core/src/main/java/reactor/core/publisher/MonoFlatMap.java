@@ -62,18 +62,15 @@ final class MonoFlatMap<T, R> extends InternalMonoOperator<T, R> implements Fuse
 
 	static final class FlatMapMain<T, R> extends Operators.MonoSubscriber<T, R> {
 
-		final Function<? super T, ? extends Mono<? extends R>> mapper;
-
-		final FlatMapInner<R> second;
-
-		boolean done;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FlatMapMain, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(FlatMapMain.class,
 						Subscription.class,
 						"s");
+		final Function<? super T, ? extends Mono<? extends R>> mapper;
+		final FlatMapInner<R> second;
+		boolean done;
+		volatile Subscription s;
 
 		FlatMapMain(CoreSubscriber<? super R> subscriber,
 				Function<? super T, ? extends Mono<? extends R>> mapper) {
@@ -192,15 +189,13 @@ final class MonoFlatMap<T, R> extends InternalMonoOperator<T, R> implements Fuse
 
 	static final class FlatMapInner<R> implements InnerConsumer<R> {
 
-		final FlatMapMain<?, R> parent;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FlatMapInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(FlatMapInner.class,
 						Subscription.class,
 						"s");
-
+		final FlatMapMain<?, R> parent;
+		volatile Subscription s;
 		boolean done;
 
 		FlatMapInner(FlatMapMain<?, R> parent) {

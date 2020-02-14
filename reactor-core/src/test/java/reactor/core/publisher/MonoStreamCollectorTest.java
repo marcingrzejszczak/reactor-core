@@ -44,44 +44,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MonoStreamCollectorTest {
 
 
-	static class TestCollector<T, A, R> implements Collector<T, A, R> {
-
-		private final Supplier<A>      supplier;
-		private final BiConsumer<A, T> accumulator;
-		private final Function<A, R>   finisher;
-
-		TestCollector(Supplier<A> supplier, BiConsumer<A, T> accumulator, Function<A, R> finisher) {
-			this.supplier = supplier;
-			this.accumulator = accumulator;
-			this.finisher = finisher;
-		}
-
-		@Override
-		public Supplier<A> supplier() {
-			return this.supplier;
-		}
-
-		@Override
-		public BiConsumer<A, T> accumulator() {
-			return this.accumulator;
-		}
-
-		@Override
-		public BinaryOperator<A> combiner() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Function<A, R> finisher() {
-			return this.finisher;
-		}
-
-		@Override
-		public Set<Characteristics> characteristics() {
-			return Collections.emptySet();
-		}
-	}
-
 	@Test
 	public void collectToList() {
 		Mono<List<Integer>> source = Flux.range(1, 5).collect(Collectors.toList());
@@ -91,8 +53,8 @@ public class MonoStreamCollectorTest {
 			source.subscribe(ts);
 
 			ts.assertValues(Arrays.asList(1, 2, 3, 4, 5))
-			.assertNoError()
-			.assertComplete();
+					.assertNoError()
+					.assertComplete();
 		}
 	}
 
@@ -105,15 +67,16 @@ public class MonoStreamCollectorTest {
 			source.subscribe(ts);
 
 			ts.assertValues(Collections.singleton(1))
-			.assertNoError()
-			.assertComplete();
+					.assertNoError()
+					.assertComplete();
 		}
 	}
 
 	@Test
 	public void scanStreamCollectorSubscriber() {
 		CoreSubscriber<List<String>>
-				actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+				actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		Collector<String, ?, List<String>> collector = Collectors.toList();
 		@SuppressWarnings("unchecked")
 		BiConsumer<Integer, String> accumulator = (BiConsumer<Integer, String>) collector.accumulator();
@@ -148,11 +111,11 @@ public class MonoStreamCollectorTest {
 		}, HashSet::new);
 
 		Flux.range(1, 4)
-		    .collect(collector)
-		    .as(StepVerifier::create)
-		    .expectErrorMessage("accumulator: boom")
-		    .verifyThenAssertThat()
-		    .hasDiscardedExactly(1, 2);
+				.collect(collector)
+				.as(StepVerifier::create)
+				.expectErrorMessage("accumulator: boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2);
 	}
 
 	@Test
@@ -163,11 +126,11 @@ public class MonoStreamCollectorTest {
 		}, Map::keySet);
 
 		Flux.range(1, 4)
-		    .collect(collector)
-		    .as(StepVerifier::create)
-		    .expectErrorMessage("accumulator: boom")
-		    .verifyThenAssertThat()
-		    .hasDiscardedExactly(Collections.singletonMap(1, "1"), 2);
+				.collect(collector)
+				.as(StepVerifier::create)
+				.expectErrorMessage("accumulator: boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(Collections.singletonMap(1, "1"), 2);
 	}
 
 	@Test
@@ -176,19 +139,19 @@ public class MonoStreamCollectorTest {
 
 		Mono<Collection<Integer>> test =
 				Flux.range(1, 10)
-				    .hide()
-				    .map(i -> {
-					    if (i == 5) {
-						    throw new IllegalStateException("boom");
-					    }
-					    return i;
-				    })
-				    .collect(collector);
+						.hide()
+						.map(i -> {
+							if (i == 5) {
+								throw new IllegalStateException("boom");
+							}
+							return i;
+						})
+						.collect(collector);
 
 		StepVerifier.create(test)
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3, 4);
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3, 4);
 	}
 
 	@Test
@@ -197,29 +160,31 @@ public class MonoStreamCollectorTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Flux.interval(Duration.ofMillis(100))
-				    .take(10)
-				    .collect(collector)
+						.take(10)
+						.collect(collector)
 		)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(210))
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(0L, 1L);
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(210))
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(0L, 1L);
 	}
 
 	@Test
 	public void discardIntermediateListElementsOnFinisherFailure() {
-		Collector<Integer, List<Integer>, Set<Integer>> collector = new TestCollector<>(ArrayList::new, List::add, m -> { throw new IllegalStateException("finisher: boom"); });
+		Collector<Integer, List<Integer>, Set<Integer>> collector = new TestCollector<>(ArrayList::new, List::add, m -> {
+			throw new IllegalStateException("finisher: boom");
+		});
 
 		Mono<Set<Integer>> test =
 				Flux.range(1, 4)
-				    .hide()
-				    .collect(collector);
+						.hide()
+						.collect(collector);
 
 		StepVerifier.create(test)
-		            .expectErrorMessage("finisher: boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3, 4);
+				.expectErrorMessage("finisher: boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3, 4);
 	}
 
 	@Test
@@ -229,23 +194,23 @@ public class MonoStreamCollectorTest {
 
 		Mono<Map<Integer, String>> test =
 				Flux.range(1, 10)
-				    .hide()
-				    .map(i -> {
-					    if (i == 5) {
-						    throw new IllegalStateException("boom");
-					    }
-					    return i;
-				    })
-				    .collect(collector)
-				    .doOnDiscard(Object.class, discarded::add);
+						.hide()
+						.map(i -> {
+							if (i == 5) {
+								throw new IllegalStateException("boom");
+							}
+							return i;
+						})
+						.collect(collector)
+						.doOnDiscard(Object.class, discarded::add);
 
 		StepVerifier.create(test)
-		            .expectErrorMessage("boom")
-		            .verify();
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertThat(discarded).doesNotHaveAnyElementsOfTypes(Integer.class)
-		                     .hasOnlyElementsOfType(Map.class)
-		                     .hasSize(1);
+				.hasOnlyElementsOfType(Map.class)
+				.hasSize(1);
 		//noinspection unchecked
 		assertThat(((Map) discarded.get(0)).keySet()).containsExactly(1, 2, 3, 4);
 	}
@@ -258,17 +223,17 @@ public class MonoStreamCollectorTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Flux.interval(Duration.ofMillis(100))
-				    .take(10)
-				    .collect(collector)
-				    .doOnDiscard(Object.class, discarded::add))
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(210))
-		            .thenCancel()
-		            .verify();
+						.take(10)
+						.collect(collector)
+						.doOnDiscard(Object.class, discarded::add))
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(210))
+				.thenCancel()
+				.verify();
 
 		assertThat(discarded).doesNotHaveAnyElementsOfTypes(Long.class)
-		                     .hasOnlyElementsOfType(Map.class)
-		                     .hasSize(1);
+				.hasOnlyElementsOfType(Map.class)
+				.hasSize(1);
 		//noinspection unchecked
 		assertThat((Map) discarded.get(0)).containsOnlyKeys(0L, 1L);
 	}
@@ -276,24 +241,64 @@ public class MonoStreamCollectorTest {
 	@Test
 	public void discardIntermediateMapOnFinisherFailure() {
 		Collector<Integer, Map<Integer, String>, Set<Integer>> collector = new TestCollector<>(HashMap::new,
-				(m, i) -> m.put(i, String.valueOf(i)), m -> { throw new IllegalStateException("finisher: boom"); });
+				(m, i) -> m.put(i, String.valueOf(i)), m -> {
+			throw new IllegalStateException("finisher: boom");
+		});
 		List<Object> discarded = new ArrayList<>();
 
 		Mono<Set<Integer>> test =
 				Flux.range(1, 4)
-				    .hide()
-				    .collect(collector)
-				    .doOnDiscard(Object.class, discarded::add);
+						.hide()
+						.collect(collector)
+						.doOnDiscard(Object.class, discarded::add);
 
 		StepVerifier.create(test)
-		            .expectErrorMessage("finisher: boom")
-		            .verify();
+				.expectErrorMessage("finisher: boom")
+				.verify();
 
 		assertThat(discarded).doesNotHaveAnyElementsOfTypes(Integer.class, Set.class)
-		                     .hasOnlyElementsOfType(Map.class)
-		                     .hasSize(1);
+				.hasOnlyElementsOfType(Map.class)
+				.hasSize(1);
 		//noinspection unchecked
 		assertThat(((Map) discarded.get(0))).containsOnlyKeys(1, 2, 3, 4);
+	}
+
+	static class TestCollector<T, A, R> implements Collector<T, A, R> {
+
+		private final Supplier<A> supplier;
+		private final BiConsumer<A, T> accumulator;
+		private final Function<A, R> finisher;
+
+		TestCollector(Supplier<A> supplier, BiConsumer<A, T> accumulator, Function<A, R> finisher) {
+			this.supplier = supplier;
+			this.accumulator = accumulator;
+			this.finisher = finisher;
+		}
+
+		@Override
+		public Supplier<A> supplier() {
+			return this.supplier;
+		}
+
+		@Override
+		public BiConsumer<A, T> accumulator() {
+			return this.accumulator;
+		}
+
+		@Override
+		public BinaryOperator<A> combiner() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Function<A, R> finisher() {
+			return this.finisher;
+		}
+
+		@Override
+		public Set<Characteristics> characteristics() {
+			return Collections.emptySet();
+		}
 	}
 
 }

@@ -40,12 +40,12 @@ public class MonoOnErrorResumeTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .onErrorResume(v -> Mono.just(2))
-		    .subscribe(ts);
+				.onErrorResume(v -> Mono.just(2))
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -53,18 +53,18 @@ public class MonoOnErrorResumeTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.just(1)
-		    .onErrorResume(v -> Mono.just(2))
-		    .subscribe(ts);
+				.onErrorResume(v -> Mono.just(2))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -73,11 +73,11 @@ public class MonoOnErrorResumeTest {
 
 		Mono.<Integer>error(new RuntimeException("forced failure")).onErrorResume(v -> Mono.just(
 				2))
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -85,11 +85,11 @@ public class MonoOnErrorResumeTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.<Integer>error(new RuntimeException("forced failure")).onErrorReturn(2)
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -101,8 +101,8 @@ public class MonoOnErrorResumeTest {
 				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -114,8 +114,8 @@ public class MonoOnErrorResumeTest {
 				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -127,8 +127,8 @@ public class MonoOnErrorResumeTest {
 				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -138,12 +138,12 @@ public class MonoOnErrorResumeTest {
 		Mono.<Integer>error(new Exception()).onErrorMap(d -> new RuntimeException("forced" +
 				" " +
 				"failure"))
-		                                    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError()
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError()
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -152,16 +152,16 @@ public class MonoOnErrorResumeTest {
 
 		Mono.<Integer>error(new RuntimeException("forced failure")).onErrorResume(v -> Mono.just(
 				2))
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(2)
-		  .assertComplete();
+				.assertComplete();
 	}
 
 	@Test
@@ -171,13 +171,13 @@ public class MonoOnErrorResumeTest {
 		Mono.<Integer>error(new RuntimeException("forced failure")).onErrorResume(v -> {
 			throw new RuntimeException("forced failure 2");
 		})
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith(e -> Assert.assertTrue(e.getMessage()
-		                                           .contains("forced failure 2")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage()
+						.contains("forced failure 2")));
 	}
 
 	@Test
@@ -185,14 +185,12 @@ public class MonoOnErrorResumeTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.<Integer>error(new RuntimeException("forced failure")).onErrorResume(v -> null)
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
-
-	static final class TestException extends Exception {}
 
 	@Test
 	public void mapError() {
@@ -200,10 +198,10 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorMap(TestException.class, e -> new Exception("test"))
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isTrue())
-		            .then(() -> assertThat(mp.isSuccess()).isFalse())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .verifyErrorMessage("test");
+				.then(() -> assertThat(mp.isError()).isTrue())
+				.then(() -> assertThat(mp.isSuccess()).isFalse())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -212,11 +210,11 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorResume(TestException.class, e -> Mono.just(1))
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isFalse())
-		            .then(() -> assertThat(mp.isSuccess()).isTrue())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .expectNext(1)
-		            .verifyComplete();
+				.then(() -> assertThat(mp.isError()).isFalse())
+				.then(() -> assertThat(mp.isSuccess()).isTrue())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -225,10 +223,10 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorResume(RuntimeException.class, e -> Mono.just(1))
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isTrue())
-		            .then(() -> assertThat(mp.isSuccess()).isFalse())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .verifyError(TestException.class);
+				.then(() -> assertThat(mp.isError()).isTrue())
+				.then(() -> assertThat(mp.isSuccess()).isFalse())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.verifyError(TestException.class);
 	}
 
 	@Test
@@ -237,13 +235,12 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorReturn(TestException.class, 1)
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isFalse())
-		            .then(() -> assertThat(mp.isSuccess()).isTrue())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .expectNext(1)
-		            .verifyComplete();
+				.then(() -> assertThat(mp.isError()).isFalse())
+				.then(() -> assertThat(mp.isSuccess()).isTrue())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.expectNext(1)
+				.verifyComplete();
 	}
-
 
 	@Test
 	public void otherwiseReturnErrorFilter2() {
@@ -251,11 +248,11 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorReturn(TestException.class::isInstance, 1)
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isFalse())
-		            .then(() -> assertThat(mp.isSuccess()).isTrue())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .expectNext(1)
-		            .verifyComplete();
+				.then(() -> assertThat(mp.isError()).isFalse())
+				.then(() -> assertThat(mp.isSuccess()).isTrue())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -264,10 +261,10 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorReturn(RuntimeException.class, 1)
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isTrue())
-		            .then(() -> assertThat(mp.isSuccess()).isFalse())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .verifyError(TestException.class);
+				.then(() -> assertThat(mp.isError()).isTrue())
+				.then(() -> assertThat(mp.isSuccess()).isFalse())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.verifyError(TestException.class);
 	}
 
 	@Test
@@ -276,9 +273,11 @@ public class MonoOnErrorResumeTest {
 		StepVerifier.create(Mono.<Integer>error(new TestException())
 				.onErrorReturn(RuntimeException.class::isInstance, 1)
 				.subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isTrue())
-		            .then(() -> assertThat(mp.isSuccess()).isFalse())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .verifyError(TestException.class);
+				.then(() -> assertThat(mp.isError()).isTrue())
+				.then(() -> assertThat(mp.isSuccess()).isFalse())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.verifyError(TestException.class);
 	}
+
+	static final class TestException extends Exception { }
 }

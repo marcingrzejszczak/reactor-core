@@ -74,20 +74,15 @@ class MonoFilterWhen<T> extends InternalMonoOperator<T, T> {
 		 *  - COMPLETE*
 		 */
 
-		final Function<? super T, ? extends Publisher<Boolean>> asyncPredicate;
-
-		//this is only touched by onNext and read by onComplete, so no need for volatile
-		boolean sourceValued;
-
-		Subscription upstream;
-
-		volatile FilterWhenInner asyncFilter;
-
 		static final AtomicReferenceFieldUpdater<MonoFilterWhenMain, FilterWhenInner> ASYNC_FILTER =
 				AtomicReferenceFieldUpdater.newUpdater(MonoFilterWhenMain.class, FilterWhenInner.class, "asyncFilter");
-
 		@SuppressWarnings("ConstantConditions")
 		static final FilterWhenInner INNER_CANCELLED = new FilterWhenInner(null, false);
+		final Function<? super T, ? extends Publisher<Boolean>> asyncPredicate;
+		//this is only touched by onNext and read by onComplete, so no need for volatile
+		boolean sourceValued;
+		Subscription upstream;
+		volatile FilterWhenInner asyncFilter;
 
 		MonoFilterWhenMain(CoreSubscriber<? super T> actual, Function<? super T, ?
 				extends Publisher<Boolean>> asyncPredicate) {
@@ -227,16 +222,13 @@ class MonoFilterWhen<T> extends InternalMonoOperator<T, T> {
 
 	static final class FilterWhenInner implements InnerConsumer<Boolean> {
 
-		final MonoFilterWhenMain<?> main;
-		/** should the filter publisher be cancelled once we received the first value? */
-		final boolean               cancelOnNext;
-
-		boolean done;
-
-		volatile Subscription sub;
-
 		static final AtomicReferenceFieldUpdater<FilterWhenInner, Subscription> SUB =
 				AtomicReferenceFieldUpdater.newUpdater(FilterWhenInner.class, Subscription.class, "sub");
+		final MonoFilterWhenMain<?> main;
+		/** should the filter publisher be cancelled once we received the first value? */
+		final boolean cancelOnNext;
+		boolean done;
+		volatile Subscription sub;
 
 		FilterWhenInner(MonoFilterWhenMain<?> main, boolean cancelOnNext) {
 			this.main = main;
@@ -266,7 +258,8 @@ class MonoFilterWhen<T> extends InternalMonoOperator<T, T> {
 			if (!done) {
 				done = true;
 				main.innerError(t);
-			} else {
+			}
+			else {
 				Operators.onErrorDropped(t, main.currentContext());
 			}
 		}

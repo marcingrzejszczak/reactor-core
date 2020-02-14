@@ -54,24 +54,19 @@ final class MonoFlatMapMany<T, R> extends FluxFromMonoOperator<T, R> {
 
 	static final class FlatMapManyMain<T, R> implements InnerOperator<T, R> {
 
-		final CoreSubscriber<? super R> actual;
-
-		final Function<? super T, ? extends Publisher<? extends R>> mapper;
-
-		Subscription main;
-
-		volatile Subscription inner;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FlatMapManyMain, Subscription> INNER =
 				AtomicReferenceFieldUpdater.newUpdater(FlatMapManyMain.class,
 						Subscription.class,
 						"inner");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<FlatMapManyMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(FlatMapManyMain.class, "requested");
-
+		final CoreSubscriber<? super R> actual;
+		final Function<? super T, ? extends Publisher<? extends R>> mapper;
+		Subscription main;
+		volatile Subscription inner;
+		volatile long requested;
 		boolean hasValue;
 
 		FlatMapManyMain(CoreSubscriber<? super R> actual,

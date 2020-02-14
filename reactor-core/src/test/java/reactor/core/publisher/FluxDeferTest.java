@@ -37,8 +37,8 @@ public class FluxDeferTest {
 		Flux.<Integer>defer(() -> null).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -50,9 +50,9 @@ public class FluxDeferTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -62,13 +62,13 @@ public class FluxDeferTest {
 		Flux.defer(() -> Flux.just(1)).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 
 	@Test
-	public void deferStream(){
+	public void deferStream() {
 		AtomicInteger i = new AtomicInteger();
 
 		Flux<Integer> source =

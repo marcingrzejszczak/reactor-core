@@ -2,16 +2,16 @@
 @import url(https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.6.2/semantic.min.css);
 
 
-#header .details br+span.author:before {
+#header .details br + span.author:before {
     content: "\00a0\0026\00a0";
-    color: rgba(0,0,0,.85);
+    color: rgba(0, 0, 0, .85);
 }
 
-#header .details br+span.email:before {
+#header .details br + span.email:before {
     content: "(";
 }
 
-#header .details br+span.email:after {
+#header .details br + span.email:after {
     content: ")";
 }
 
@@ -286,7 +286,7 @@ body {
 }
 
 #content li p {
-  margin-top: 0.25em;
+    margin-top: 0.25em;
 }
 
 a:hover {
@@ -942,6 +942,7 @@ p a > code:hover {
     body.head-show #toc.toc2 {
         top: 75px;
     }
+
     body.head-show #reactor-header {
         top: 0;
     }
@@ -1221,10 +1222,10 @@ table.tableblock #preamble > .sectionbody > .paragraph:first-of-type p {
 }
 
 /*.literalblock .content pre.highlight, .listingblock .content pre.highlight {*/
-    /*background-color: #f1f8ec;*/
+/*background-color: #f1f8ec;*/
 /*}*/
 /*.literalblock pre:not([class]), .listingblock pre:not([class]) {*/
-    /*background-color: #f1f8ec;*/
+/*background-color: #f1f8ec;*/
 /*}*/
 
 .literalblock pre, .literalblock pre[class], .listingblock pre, .listingblock pre[class] {
@@ -1934,6 +1935,7 @@ body {
 #toc.toc2 ul ul {
     padding-left: 1em;
 }
+
 #toc.toc2 ul ul.sectlevel2 {
 }
 
@@ -1989,11 +1991,10 @@ table.tableblock.grid-all {
 }
 
 
-
-
 @import url(https://fonts.googleapis.com/css?family=Montserrat:400,700|Karla:400,700);
 body {
 }
+
 #reactor-header {
     background: #34302d;
     border-top: 4px solid #6db33f;
@@ -2017,10 +2018,12 @@ body {
     text-indent: -6000em;
     margin: 8px 0;
 }
+
 #reactor-header h1#logo a:hover strong {
     filter: progid:DXImageTransform.Microsoft.Alpha(enabled=false);
     opacity: 1;
 }
+
 #reactor-header h1#logo a strong {
     display: block;
     background: url(images/logo-2x.png) no-repeat 0 0;
@@ -2047,10 +2050,12 @@ body {
     margin: 0;
     padding: 0;
 }
+
 #nav {
     float: right;
     margin-right: 10px;
 }
+
 #nav ul li {
     display: block;
     float: left;
@@ -2058,6 +2063,7 @@ body {
     margin: 0;
     padding: 0;
 }
+
 #nav ul li a {
     color: white;
     text-decoration: none;
@@ -2077,9 +2083,11 @@ body {
     -webkit-transition-duration: 0.2s;
     transition-duration: 0.2s;
 }
+
 #nav ul li a:hover {
     background: #6db33f;
 }
+
 #nav ul li a.active {
     background: #6db33f;
 }

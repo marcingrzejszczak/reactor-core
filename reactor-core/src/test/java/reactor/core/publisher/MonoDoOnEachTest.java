@@ -47,15 +47,16 @@ public class MonoDoOnEachTest {
 	@Test
 	public void nullSource() {
 		Assertions.assertThatNullPointerException()
-		          .isThrownBy(() -> new MonoDoOnEach<>(null, s -> {}))
-		          .withMessage(null);
+				.isThrownBy(() -> new MonoDoOnEach<>(null, s -> {
+				}))
+				.withMessage(null);
 	}
 
 	@Test
 	public void nullConsumer() {
 		Assertions.assertThatNullPointerException()
-		          .isThrownBy(() -> new MonoDoOnEach<>(Mono.just("foo"), null))
-		          .withMessage("onSignal");
+				.isThrownBy(() -> new MonoDoOnEach<>(Mono.just("foo"), null))
+				.withMessage("onSignal");
 	}
 
 	@Test
@@ -67,7 +68,8 @@ public class MonoDoOnEachTest {
 		Mono<String> source = Mockito.mock(Mono.class);
 
 		final MonoDoOnEach<String> test =
-				new MonoDoOnEach<>(source, s -> { });
+				new MonoDoOnEach<>(source, s -> {
+				});
 
 		test.subscribe();
 		Mockito.verify(source).subscribe(argumentCaptor.capture());
@@ -79,15 +81,16 @@ public class MonoDoOnEachTest {
 	public void usesFluxDoOnEachConditionalSubscriber() {
 		AtomicReference<Scannable> ref = new AtomicReference<>();
 		Mono<String> source = Mono.just("foo")
-		                          .doOnSubscribe(sub -> ref.set(Scannable.from(sub)))
-		                          .hide()
-		                          .filter(t -> true);
+				.doOnSubscribe(sub -> ref.set(Scannable.from(sub)))
+				.hide()
+				.filter(t -> true);
 
 		final MonoDoOnEach<String> test =
-				new MonoDoOnEach<>(source, s -> { });
+				new MonoDoOnEach<>(source, s -> {
+				});
 
 		test.filter(t -> true)
-		    .subscribe();
+				.subscribe();
 
 		Class<?> expected = FluxDoOnEach.DoOnEachConditionalSubscriber.class;
 		Stream<Class<?>> streamOfClasses = ref.get().actuals().map(Object::getClass);
@@ -104,19 +107,19 @@ public class MonoDoOnEachTest {
 		AtomicBoolean onComplete = new AtomicBoolean();
 
 		Mono.just(1)
-		    .hide()
-		    .doOnEach(s -> {
-			    if (s.isOnNext()) {
-				    onNext.incrementAndGet();
-			    }
-			    else if (s.isOnError()) {
-				    onError.set(s.getThrowable());
-			    }
-			    else if (s.isOnComplete()) {
-				    onComplete.set(true);
-			    }
-		    })
-		    .subscribe(ts);
+				.hide()
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.incrementAndGet();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						onComplete.set(true);
+					}
+				})
+				.subscribe(ts);
 
 		assertThat(onNext.get()).isEqualTo(1);
 		assertThat(onError.get()).isNull();
@@ -147,7 +150,7 @@ public class MonoDoOnEachTest {
 
 		assertThat(onNext.get()).isZero();
 		assertThat(onError.get()).isInstanceOf(RuntimeException.class)
-		                         .hasMessage("forced failure");
+				.hasMessage("forced failure");
 		assertThat(onComplete.get()).isFalse();
 	}
 
@@ -212,14 +215,14 @@ public class MonoDoOnEachTest {
 
 		StepVerifier.create(
 				Mono.just(1)
-				    .doOnEach(s -> {
-					    if (s.isOnNext()) {
-						    state.increment();
-						    throw Exceptions.propagate(err);
-					    }
-				    }))
-		            .expectErrorMessage("test")
-		            .verify();
+						.doOnEach(s -> {
+							if (s.isOnNext()) {
+								state.increment();
+								throw Exceptions.propagate(err);
+							}
+						}))
+				.expectErrorMessage("test")
+				.verify();
 
 		assertThat(state.intValue()).isEqualTo(1);
 	}
@@ -232,14 +235,14 @@ public class MonoDoOnEachTest {
 		assertThatThrownBy(() ->
 				StepVerifier.create(
 						Mono.just(1)
-						    .doOnEach(s -> {
-							    if (s.isOnNext()) {
-								    state.increment();
-								    throw Exceptions.bubble(err);
-							    }
-						    }))
-				            .expectErrorMessage("test")
-				            .verify())
+								.doOnEach(s -> {
+									if (s.isOnNext()) {
+										state.increment();
+										throw Exceptions.bubble(err);
+									}
+								}))
+						.expectErrorMessage("test")
+						.verify())
 				.isInstanceOf(RuntimeException.class)
 				.matches(Exceptions::isBubbling, "bubbling")
 				.hasCause(err); //equivalent to unwrap for this case
@@ -250,10 +253,10 @@ public class MonoDoOnEachTest {
 	public void nextComplete() {
 		List<Tuple2<Signal, Context>> signalsAndContext = new ArrayList<>();
 		Mono.just(1)
-		    .hide()
-		    .doOnEach(s -> signalsAndContext.add(Tuples.of(s, s.getContext())))
-		    .subscriberContext(Context.of("foo", "bar"))
-		    .subscribe();
+				.hide()
+				.doOnEach(s -> signalsAndContext.add(Tuples.of(s, s.getContext())))
+				.subscriberContext(Context.of("foo", "bar"))
+				.subscribe();
 
 		assertThat(signalsAndContext)
 				.hasSize(2)
@@ -272,10 +275,10 @@ public class MonoDoOnEachTest {
 	public void nextError() {
 		List<Tuple2<Signal, Context>> signalsAndContext = new ArrayList<>();
 		Mono.just(0)
-		    .map(i -> 10 / i)
-		    .doOnEach(s -> signalsAndContext.add(Tuples.of(s,s.getContext())))
-		    .subscriberContext(Context.of("foo", "bar"))
-		    .subscribe();
+				.map(i -> 10 / i)
+				.doOnEach(s -> signalsAndContext.add(Tuples.of(s, s.getContext())))
+				.subscriberContext(Context.of("foo", "bar"))
+				.subscribe();
 
 		assertThat(signalsAndContext)
 				.hasSize(1)
@@ -296,13 +299,13 @@ public class MonoDoOnEachTest {
 		CopyOnWriteArrayList<String> eventOrder = new CopyOnWriteArrayList<>();
 
 		Mono.just("parent").hide()
-		    .flatMap(v -> Mono.just("child").hide()
-				    .doOnEach(sig -> eventOrder.add("childEach" + sig))
-				    .doOnSuccess(it -> eventOrder.add("childSuccess"))
-		    )
-		    .doOnEach(sig -> eventOrder.add("parentEach" + sig))
-		    .doOnSuccess(it -> eventOrder.add("parentSuccess"))
-		    .block();
+				.flatMap(v -> Mono.just("child").hide()
+						.doOnEach(sig -> eventOrder.add("childEach" + sig))
+						.doOnSuccess(it -> eventOrder.add("childSuccess"))
+				)
+				.doOnEach(sig -> eventOrder.add("parentEach" + sig))
+				.doOnSuccess(it -> eventOrder.add("parentSuccess"))
+				.block();
 
 		assertThat(eventOrder).containsExactly(
 				"childEachdoOnEach_onNext(child)",
@@ -319,13 +322,13 @@ public class MonoDoOnEachTest {
 		CopyOnWriteArrayList<String> eventOrder = new CopyOnWriteArrayList<>();
 
 		Mono.just("parent")
-		    .flatMap(v -> Mono.just("child")
-				    .doOnEach(sig -> eventOrder.add("childEach" + sig))
-				    .doOnSuccess(it -> eventOrder.add("childSuccess"))
-		    )
-		    .doOnEach(sig -> eventOrder.add("parentEach" + sig))
-		    .doOnSuccess(it -> eventOrder.add("parentSuccess"))
-		    .block();
+				.flatMap(v -> Mono.just("child")
+						.doOnEach(sig -> eventOrder.add("childEach" + sig))
+						.doOnSuccess(it -> eventOrder.add("childSuccess"))
+				)
+				.doOnEach(sig -> eventOrder.add("parentEach" + sig))
+				.doOnSuccess(it -> eventOrder.add("parentSuccess"))
+				.block();
 
 		assertThat(eventOrder).containsExactly(
 				"childEachdoOnEach_onNext(child)",
@@ -343,16 +346,16 @@ public class MonoDoOnEachTest {
 		CopyOnWriteArrayList<String> eventOrder = new CopyOnWriteArrayList<>();
 
 		Mono.just("parent").hide()
-		    .filter(it -> true)
-		    .flatMap(v -> Mono.just("child").hide()
-		                      .doOnEach(sig -> eventOrder.add("childEach" + sig))
-		                      .doOnSuccess(it -> eventOrder.add("childSuccess"))
-		                      .filter(it -> true)
-		    )
-		    .doOnEach(sig -> eventOrder.add("parentEach" + sig))
-		    .doOnSuccess(it -> eventOrder.add("parentSuccess"))
-		    .filter(it -> true)
-		    .block();
+				.filter(it -> true)
+				.flatMap(v -> Mono.just("child").hide()
+						.doOnEach(sig -> eventOrder.add("childEach" + sig))
+						.doOnSuccess(it -> eventOrder.add("childSuccess"))
+						.filter(it -> true)
+				)
+				.doOnEach(sig -> eventOrder.add("parentEach" + sig))
+				.doOnSuccess(it -> eventOrder.add("parentSuccess"))
+				.filter(it -> true)
+				.block();
 
 		assertThat(eventOrder).containsExactly(
 				"childEachdoOnEach_onNext(child)",
@@ -370,15 +373,15 @@ public class MonoDoOnEachTest {
 		CopyOnWriteArrayList<String> eventOrder = new CopyOnWriteArrayList<>();
 
 		Mono.just("parent")
-		    .flatMap(v -> Mono.just("child")
-		                      .doOnEach(sig -> eventOrder.add("childEach" + sig))
-		                      .doOnSuccess(it -> eventOrder.add("childSuccess"))
-		                      .filter(it -> true)
-		    )
-		    .doOnEach(sig -> eventOrder.add("parentEach" + sig))
-		    .doOnSuccess(it -> eventOrder.add("parentSuccess"))
-		    .filter(it -> true)
-		    .block();
+				.flatMap(v -> Mono.just("child")
+						.doOnEach(sig -> eventOrder.add("childEach" + sig))
+						.doOnSuccess(it -> eventOrder.add("childSuccess"))
+						.filter(it -> true)
+				)
+				.doOnEach(sig -> eventOrder.add("parentEach" + sig))
+				.doOnSuccess(it -> eventOrder.add("parentSuccess"))
+				.filter(it -> true)
+				.block();
 
 		assertThat(eventOrder).containsExactly(
 				"childEachdoOnEach_onNext(child)",
@@ -394,25 +397,25 @@ public class MonoDoOnEachTest {
 		CopyOnWriteArrayList<String> eventOrder = new CopyOnWriteArrayList<>();
 
 		Mono.fromSupplier(() -> "parent").hide()
-		    .flatMap(ignored -> Mono.fromSupplier(() -> "child").hide()
-				    .doOnEach(sig -> {
-				    	eventOrder.add("childEach" + sig);
-				    	if (sig.isOnNext()) {
-				    		throw new IllegalStateException("boomChild");
-					    }
-				    })
-				    .doOnSuccessOrError((v, e) -> {
-					    if (e == null) eventOrder.add("childSuccess");
-					    else eventOrder.add("childError");
-				    })
-		    )
-		    .doOnEach(sig -> eventOrder.add("parentEach" + sig))
-		    .doOnSuccessOrError((v, e) -> {
-			    if (e == null) eventOrder.add("parentSuccess");
-			    else eventOrder.add("parentError");
-		    })
-		    .onErrorReturn("boom expected")
-		    .block();
+				.flatMap(ignored -> Mono.fromSupplier(() -> "child").hide()
+						.doOnEach(sig -> {
+							eventOrder.add("childEach" + sig);
+							if (sig.isOnNext()) {
+								throw new IllegalStateException("boomChild");
+							}
+						})
+						.doOnSuccessOrError((v, e) -> {
+							if (e == null) eventOrder.add("childSuccess");
+							else eventOrder.add("childError");
+						})
+				)
+				.doOnEach(sig -> eventOrder.add("parentEach" + sig))
+				.doOnSuccessOrError((v, e) -> {
+					if (e == null) eventOrder.add("parentSuccess");
+					else eventOrder.add("parentError");
+				})
+				.onErrorReturn("boom expected")
+				.block();
 
 		assertThat(eventOrder).containsExactly(
 				"childEachdoOnEach_onNext(child)",
@@ -427,25 +430,25 @@ public class MonoDoOnEachTest {
 		CopyOnWriteArrayList<String> eventOrder = new CopyOnWriteArrayList<>();
 
 		Mono.fromSupplier(() -> "parent")
-		    .flatMap(ignored -> Mono.fromSupplier(() -> "child")
-		                            .doOnEach(sig -> {
-			                            eventOrder.add("childEach" + sig);
-			                            if (sig.isOnNext()) {
-				                            throw new IllegalStateException("boomChild");
-			                            }
-		                            })
-		                            .doOnSuccessOrError((v, e) -> {
-			                            if (e == null) eventOrder.add("childSuccess");
-			                            else eventOrder.add("childError");
-		                            })
-		    )
-		    .doOnEach(sig -> eventOrder.add("parentEach" + sig))
-		    .doOnSuccessOrError((v, e) -> {
-			    if (e == null) eventOrder.add("parentSuccess");
-			    else eventOrder.add("parentError");
-		    })
-		    .onErrorReturn("boom expected")
-		    .block();
+				.flatMap(ignored -> Mono.fromSupplier(() -> "child")
+						.doOnEach(sig -> {
+							eventOrder.add("childEach" + sig);
+							if (sig.isOnNext()) {
+								throw new IllegalStateException("boomChild");
+							}
+						})
+						.doOnSuccessOrError((v, e) -> {
+							if (e == null) eventOrder.add("childSuccess");
+							else eventOrder.add("childError");
+						})
+				)
+				.doOnEach(sig -> eventOrder.add("parentEach" + sig))
+				.doOnSuccessOrError((v, e) -> {
+					if (e == null) eventOrder.add("parentSuccess");
+					else eventOrder.add("parentError");
+				})
+				.onErrorReturn("boom expected")
+				.block();
 
 		assertThat(eventOrder).containsExactly(
 				"childEachdoOnEach_onNext(child)",
@@ -460,13 +463,13 @@ public class MonoDoOnEachTest {
 		AtomicInteger completeHandlerCount = new AtomicInteger();
 
 		Mono.just("foo")
-		    .hide()
-		    .doOnEach(sig -> {
-		    	if (sig.isOnComplete()) {
-		    		completeHandlerCount.incrementAndGet();
-			    }
-		    })
-		    .block();
+				.hide()
+				.doOnEach(sig -> {
+					if (sig.isOnComplete()) {
+						completeHandlerCount.incrementAndGet();
+					}
+				})
+				.block();
 
 		assertThat(completeHandlerCount).hasValue(1);
 	}
@@ -476,12 +479,12 @@ public class MonoDoOnEachTest {
 		AtomicInteger completeHandlerCount = new AtomicInteger();
 
 		Mono.just("foo")
-		    .doOnEach(sig -> {
-		    	if (sig.isOnComplete()) {
-		    		completeHandlerCount.incrementAndGet();
-			    }
-		    })
-		    .block();
+				.doOnEach(sig -> {
+					if (sig.isOnComplete()) {
+						completeHandlerCount.incrementAndGet();
+					}
+				})
+				.block();
 
 		assertThat(completeHandlerCount).hasValue(1);
 	}
@@ -492,17 +495,17 @@ public class MonoDoOnEachTest {
 
 		StepVerifier.create(
 				Mono.just("foo")
-				    .hide()
-				    .doOnEach(sig -> {
-					    if (sig.isOnComplete()) {
-						    throw new IllegalStateException("boom");
-					    }
-					    if (sig.isOnError()) {
-						    errorHandlerCount.incrementAndGet();
-					    }
-				    })
+						.hide()
+						.doOnEach(sig -> {
+							if (sig.isOnComplete()) {
+								throw new IllegalStateException("boom");
+							}
+							if (sig.isOnError()) {
+								errorHandlerCount.incrementAndGet();
+							}
+						})
 		)
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 
 		assertThat(errorHandlerCount).as("error handler invoked on top on complete").hasValue(1);
 	}
@@ -513,16 +516,16 @@ public class MonoDoOnEachTest {
 
 		StepVerifier.create(
 				Mono.just("foo")
-				    .doOnEach(sig -> {
-					    if (sig.isOnComplete()) {
-						    throw new IllegalStateException("boom");
-					    }
-					    if (sig.isOnError()) {
-						    errorHandlerCount.incrementAndGet();
-					    }
-				    })
+						.doOnEach(sig -> {
+							if (sig.isOnComplete()) {
+								throw new IllegalStateException("boom");
+							}
+							if (sig.isOnError()) {
+								errorHandlerCount.incrementAndGet();
+							}
+						})
 		)
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 
 		assertThat(errorHandlerCount).as("error handler invoked on top on complete").hasValue(1);
 	}

@@ -37,8 +37,8 @@ public class MonoCountTest {
 		Flux.range(1, 10).count().subscribe(ts);
 
 		ts.assertValues(10L)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	public void normalBackpressured() {
@@ -47,19 +47,20 @@ public class MonoCountTest {
 		Flux.range(1, 10).count().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(10L)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
 	public void scanCountSubscriber() {
-		CoreSubscriber<Long> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Long> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoCount.CountSubscriber<String> test = new MonoCount.CountSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

@@ -26,7 +26,8 @@ public class BlockingSingleSubscriberTest {
 
 	BlockingSingleSubscriber<Object> test = new BlockingSingleSubscriber<Object>() {
 		@Override
-		public void onNext(Object o) { }
+		public void onNext(Object o) {
+		}
 
 		@Override
 		public void onError(Throwable t) {

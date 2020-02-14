@@ -80,7 +80,8 @@ final class FluxTakeUntil<T> extends InternalFluxOperator<T, T> {
 
 			try {
 				b = predicate.test(t);
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
 
 				return;
@@ -132,7 +133,7 @@ final class FluxTakeUntil<T> extends InternalFluxOperator<T, T> {
 		public void request(long n) {
 			s.request(n);
 		}
-		
+
 		@Override
 		public void cancel() {
 			s.cancel();

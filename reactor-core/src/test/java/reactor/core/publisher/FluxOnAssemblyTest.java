@@ -36,6 +36,10 @@ import static org.junit.Assert.assertTrue;
 
 public class FluxOnAssemblyTest {
 
+	private static int getBaseline() {
+		return new Exception().getStackTrace()[1].getLineNumber();
+	}
+
 	@After
 	public void tearDown() {
 		Hooks.resetOnOperatorDebug();
@@ -77,13 +81,13 @@ public class FluxOnAssemblyTest {
 		StringWriter sw = new StringWriter();
 
 		Flux<Integer> tested = Flux.range(1, 10)
-		                           .map(i -> i < 3 ? i : null)
-		                           .filter(i -> i % 2 == 0)
-		                           .checkpoint()
-		                           .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.map(i -> i < 3 ? i : null)
+				.filter(i -> i % 2 == 0)
+				.checkpoint()
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 		StepVerifier.create(tested)
-		            .expectNext(2)
-		            .verifyError();
+				.expectNext(2)
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -98,14 +102,14 @@ public class FluxOnAssemblyTest {
 
 		try {
 			Flux<Integer> tested = Flux.range(1, 10)
-			                           .map(i -> i < 3 ? i : null)
-			                           .filter(i -> i % 2 == 0)
-			                           .checkpoint()
-			                           .doOnError(t -> t.printStackTrace(new PrintWriter(
-					                           sw)));
+					.map(i -> i < 3 ? i : null)
+					.filter(i -> i % 2 == 0)
+					.checkpoint()
+					.doOnError(t -> t.printStackTrace(new PrintWriter(
+							sw)));
 			StepVerifier.create(tested)
-			            .expectNext(2)
-			            .verifyError();
+					.expectNext(2)
+					.verifyError();
 
 			String debugStack = sw.toString();
 
@@ -121,14 +125,14 @@ public class FluxOnAssemblyTest {
 	public void checkpointDescriptionAndForceStack() {
 		StringWriter sw = new StringWriter();
 		Flux<Integer> tested = Flux.range(1, 10)
-		                           .map(i -> i < 3 ? i : null)
-		                           .filter(i -> i % 2 == 0)
-		                           .checkpoint("foo", true)
-		                           .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.map(i -> i < 3 ? i : null)
+				.filter(i -> i % 2 == 0)
+				.checkpoint("foo", true)
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .expectNext(2)
-		            .verifyError();
+				.expectNext(2)
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -139,14 +143,14 @@ public class FluxOnAssemblyTest {
 	public void checkpointWithDescriptionIsLight() {
 		StringWriter sw = new StringWriter();
 		Flux<Integer> tested = Flux.range(1, 10)
-		                           .map(i -> i < 3 ? i : null)
-		                           .filter(i -> i % 2 == 0)
-		                           .checkpoint("foo")
-		                           .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.map(i -> i < 3 ? i : null)
+				.filter(i -> i % 2 == 0)
+				.checkpoint("foo")
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .expectNext(2)
-		            .verifyError();
+				.expectNext(2)
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -161,13 +165,13 @@ public class FluxOnAssemblyTest {
 	public void monoCheckpointEmpty() {
 		StringWriter sw = new StringWriter();
 		Mono<Object> tested = Mono.just(1)
-		                          .map(i -> null)
-		                          .filter(Objects::nonNull)
-		                          .checkpoint()
-		                          .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.map(i -> null)
+				.filter(Objects::nonNull)
+				.checkpoint()
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -178,13 +182,13 @@ public class FluxOnAssemblyTest {
 	public void monoCheckpointDescriptionAndForceStack() {
 		StringWriter sw = new StringWriter();
 		Mono<Object> tested = Mono.just(1)
-		                          .map(i -> null)
-		                          .filter(Objects::nonNull)
-		                          .checkpoint("foo", true)
-		                          .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.map(i -> null)
+				.filter(Objects::nonNull)
+				.checkpoint("foo", true)
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -195,13 +199,13 @@ public class FluxOnAssemblyTest {
 	public void monoCheckpointWithDescriptionIsLight() {
 		StringWriter sw = new StringWriter();
 		Mono<Object> tested = Mono.just(1)
-		                          .map(i -> null)
-		                          .filter(Objects::nonNull)
-		                          .checkpoint("foo")
-		                          .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.map(i -> null)
+				.filter(Objects::nonNull)
+				.checkpoint("foo")
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -216,14 +220,14 @@ public class FluxOnAssemblyTest {
 	public void parallelFluxCheckpointEmpty() {
 		StringWriter sw = new StringWriter();
 		Flux<Integer> tested = Flux.range(1, 10)
-		                         .parallel(2)
-		                         .transformGroups(g -> g.map(i -> (Integer) null))
-		                         .checkpoint()
-		                         .sequential()
-		                         .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.parallel(2)
+				.transformGroups(g -> g.map(i -> (Integer) null))
+				.checkpoint()
+				.sequential()
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -235,14 +239,14 @@ public class FluxOnAssemblyTest {
 		StringWriter sw = new StringWriter();
 		int baseline = getBaseline();
 		Flux<Integer> tested = Flux.range(1, 10)
-		                           .parallel(2)
-		                           .transformGroups(g -> g.map(i -> (Integer) null))
-		                           .checkpoint("descriptionCorrelation1234", true)
-		                           .sequential()
-		                           .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.parallel(2)
+				.transformGroups(g -> g.map(i -> (Integer) null))
+				.checkpoint("descriptionCorrelation1234", true)
+				.sequential()
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -263,14 +267,14 @@ public class FluxOnAssemblyTest {
 	public void parallelFluxCheckpointDescriptionIsLight() {
 		StringWriter sw = new StringWriter();
 		Flux<Integer> tested = Flux.range(1, 10)
-		                           .parallel(2)
-		                           .transformGroups(g -> g.map(i -> (Integer) null))
-		                           .checkpoint("light checkpoint identifier")
-		                           .sequential()
-		                           .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.parallel(2)
+				.transformGroups(g -> g.map(i -> (Integer) null))
+				.checkpoint("light checkpoint identifier")
+				.sequential()
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -292,17 +296,18 @@ public class FluxOnAssemblyTest {
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		AssemblySnapshot snapshot = new AssemblySnapshot(null, Traces.callSiteSupplierFactory.get());
 		FluxOnAssembly.OnAssemblySubscriber<Integer> test =
-        		new FluxOnAssembly.OnAssemblySubscriber<>(actual, snapshot, Flux.just(1));
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+				new FluxOnAssembly.OnAssemblySubscriber<>(actual, snapshot, Flux.just(1));
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+	}
 
 	@Test
 	public void scanOperator() {
@@ -329,12 +334,12 @@ public class FluxOnAssemblyTest {
 		Hooks.onOperatorDebug();
 		StringWriter sw = new StringWriter();
 		Mono<Integer> tested = Flux.just(1, 2)
-		                           .single()
-		                           .checkpoint("single")
-		                           .doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
+				.single()
+				.checkpoint("single")
+				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -362,7 +367,7 @@ public class FluxOnAssemblyTest {
 				.doOnError(t -> t.printStackTrace(new PrintWriter(sw)));
 
 		StepVerifier.create(tested)
-		            .verifyError();
+				.verifyError();
 
 		String debugStack = sw.toString();
 
@@ -390,8 +395,8 @@ public class FluxOnAssemblyTest {
 
 	private Iterator<String> seekToSupressedAssembly(String debugStack) {
 		Iterator<String> lines = Stream.of(debugStack.split("\n"))
-		                               .map(String::trim)
-		                               .iterator();
+				.map(String::trim)
+				.iterator();
 		while (lines.hasNext()) {
 			String line = lines.next();
 			if (line.endsWith("Suppressed: reactor.core.publisher.FluxOnAssembly$OnAssemblyException:")) {
@@ -399,9 +404,5 @@ public class FluxOnAssemblyTest {
 			}
 		}
 		throw new IllegalStateException("Not found!");
-	}
-
-	private static int getBaseline() {
-		return new Exception().getStackTrace()[1].getLineNumber();
 	}
 }

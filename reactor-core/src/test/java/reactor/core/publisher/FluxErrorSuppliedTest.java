@@ -33,8 +33,8 @@
 package reactor.core.publisher;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
 import java.util.function.Supplier;
+
 import org.junit.Test;
 import reactor.test.StepVerifier;
 
@@ -46,7 +46,7 @@ public class FluxErrorSuppliedTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.error(() -> new Exception("test")))
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -66,7 +66,7 @@ public class FluxErrorSuppliedTest {
 		assertThat(count).as("no op before subscribe").hasValue(0);
 
 		StepVerifier.create(error.retry(3))
-		            .verifyErrorMessage("boom4");
+				.verifyErrorMessage("boom4");
 	}
 
 	@Test

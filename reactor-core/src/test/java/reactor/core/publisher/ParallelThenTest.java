@@ -31,15 +31,15 @@ public class ParallelThenTest {
 	@Test
 	public void thenFull() {
 		for (int i = 1;
-		     i <= Runtime.getRuntime()
-		                 .availableProcessors() * 2;
-		     i++) {
+			 i <= Runtime.getRuntime()
+					 .availableProcessors() * 2;
+			 i++) {
 
 			Flux.range(1, 10)
-			    .parallel(i)
-			    .then()
-			    .as(StepVerifier::create)
-			    .verifyComplete();
+					.parallel(i)
+					.then()
+					.as(StepVerifier::create)
+					.verifyComplete();
 		}
 	}
 
@@ -49,21 +49,21 @@ public class ParallelThenTest {
 		for (int n = 1; n <= m; n *= 10) {
 //            System.out.println(n);
 			for (int i = 1;
-			     i <= Runtime.getRuntime()
-			                 .availableProcessors();
-			     i++) {
+				 i <= Runtime.getRuntime()
+						 .availableProcessors();
+				 i++) {
 //                System.out.println("  " + i);
 
 				Scheduler scheduler = Schedulers.newParallel("test", i);
 
 				try {
 					Flux.range(1, n)
-					    .map(v -> (long) v)
-					    .parallel(i)
-					    .runOn(scheduler)
-					    .then()
-					    .as(StepVerifier::create)
-					    .verifyComplete();
+							.map(v -> (long) v)
+							.parallel(i)
+							.runOn(scheduler)
+							.then()
+							.as(StepVerifier::create)
+							.verifyComplete();
 				}
 				finally {
 					scheduler.dispose();
@@ -82,7 +82,8 @@ public class ParallelThenTest {
 
 	@Test
 	public void scanMainSubscriber() {
-		CoreSubscriber<? super Void> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		CoreSubscriber<? super Void> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(2));
 		ParallelThen.ThenMain test = new ParallelThen.ThenMain(subscriber, 2);
 
@@ -105,7 +106,8 @@ public class ParallelThenTest {
 
 	@Test
 	public void scanMainSubscriberError() {
-		CoreSubscriber<? super Void> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		CoreSubscriber<? super Void> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(2));
 		ParallelThen.ThenMain test = new ParallelThen.ThenMain(subscriber, 2);
 
@@ -118,7 +120,8 @@ public class ParallelThenTest {
 
 	@Test
 	public void scanInnerSubscriber() {
-		CoreSubscriber<? super Void> subscriber = new LambdaSubscriber<>(null, e -> { }, null, null);
+		CoreSubscriber<? super Void> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		ParallelThen.ThenMain main = new ParallelThen.ThenMain(subscriber, 2);
 		ParallelThen.ThenInner test = new ParallelThen.ThenInner(main);
 

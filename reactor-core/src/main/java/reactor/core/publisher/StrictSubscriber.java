@@ -33,32 +33,27 @@ import reactor.util.context.Context;
  */
 final class StrictSubscriber<T> implements Scannable, CoreSubscriber<T>, Subscription {
 
-	final Subscriber<? super T> actual;
-
-	volatile Subscription s;
 	@SuppressWarnings("rawtypes")
 	static final AtomicReferenceFieldUpdater<StrictSubscriber, Subscription> S =
 			AtomicReferenceFieldUpdater.newUpdater(StrictSubscriber.class,
 					Subscription.class,
 					"s");
-
-	volatile long requested;
 	@SuppressWarnings("rawtypes")
 	static final AtomicLongFieldUpdater<StrictSubscriber> REQUESTED =
 			AtomicLongFieldUpdater.newUpdater(StrictSubscriber.class, "requested");
-
-	volatile int wip;
 	@SuppressWarnings("rawtypes")
 	static final AtomicIntegerFieldUpdater<StrictSubscriber> WIP =
 			AtomicIntegerFieldUpdater.newUpdater(StrictSubscriber.class, "wip");
-
-	volatile Throwable error;
 	@SuppressWarnings("rawtypes")
 	static final AtomicReferenceFieldUpdater<StrictSubscriber, Throwable> ERROR =
 			AtomicReferenceFieldUpdater.newUpdater(StrictSubscriber.class,
 					Throwable.class,
 					"error");
-
+	final Subscriber<? super T> actual;
+	volatile Subscription s;
+	volatile long requested;
+	volatile int wip;
+	volatile Throwable error;
 	volatile boolean done;
 
 	StrictSubscriber(Subscriber<? super T> actual) {
@@ -91,7 +86,8 @@ final class StrictSubscriber<T> implements Scannable, CoreSubscriber<T>, Subscri
 				Throwable ex = Exceptions.terminate(ERROR, this);
 				if (ex != null) {
 					actual.onError(ex);
-				} else {
+				}
+				else {
 					actual.onComplete();
 				}
 			}
@@ -151,7 +147,7 @@ final class StrictSubscriber<T> implements Scannable, CoreSubscriber<T>, Subscri
 
 	@Override
 	public void cancel() {
-		if(!done) {
+		if (!done) {
 			Operators.terminate(S, this);
 		}
 	}

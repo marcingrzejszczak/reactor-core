@@ -32,9 +32,8 @@ public abstract class AbstractFluxVerification
 		extends org.reactivestreams.tck.PublisherVerification<Integer> {
 
 
-	private final Map<Thread, AtomicLong> counters = new ConcurrentHashMap<>();
-
 	final int batch = 1024;
+	private final Map<Thread, AtomicLong> counters = new ConcurrentHashMap<>();
 
 	AbstractFluxVerification() {
 		super(new TestEnvironment(false));
@@ -46,17 +45,17 @@ public abstract class AbstractFluxVerification
 	public Publisher<Integer> createPublisher(long elements) {
 		if (elements <= Integer.MAX_VALUE) {
 			return Flux.range(1, (int) elements)
-			           .filter(integer -> true)
-			           .map(integer -> integer)
-			           .transform(this::transformFlux);
+					.filter(integer -> true)
+					.map(integer -> integer)
+					.transform(this::transformFlux);
 		}
 		else {
 			final Random random = new Random();
 
 			return Mono.fromCallable(random::nextInt)
-			           .repeat()
-			           .map(Math::abs)
-			           .transform(this::transformFlux);
+					.repeat()
+					.map(Math::abs)
+					.transform(this::transformFlux);
 		}
 	}
 

@@ -34,7 +34,7 @@ import reactor.util.context.Context;
  */
 final class FluxDistinctUntilChanged<T, K> extends InternalFluxOperator<T, T> {
 
-	final Function<? super T, K>            keyExtractor;
+	final Function<? super T, K> keyExtractor;
 	final BiPredicate<? super K, ? super K> keyComparator;
 
 	FluxDistinctUntilChanged(Flux<? extends T> source,
@@ -60,7 +60,7 @@ final class FluxDistinctUntilChanged<T, K> extends InternalFluxOperator<T, T> {
 	static final class DistinctUntilChangedSubscriber<T, K>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T> {
 		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
+		final Context ctx;
 
 		final Function<? super T, K> keyExtractor;
 		final BiPredicate<? super K, ? super K> keyComparator;
@@ -108,7 +108,7 @@ final class FluxDistinctUntilChanged<T, K> extends InternalFluxOperator<T, T> {
 
 			try {
 				k = Objects.requireNonNull(keyExtractor.apply(t),
-				"The distinct extractor returned a null value.");
+						"The distinct extractor returned a null value.");
 			}
 			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, ctx));
@@ -243,7 +243,7 @@ final class FluxDistinctUntilChanged<T, K> extends InternalFluxOperator<T, T> {
 
 			try {
 				k = Objects.requireNonNull(keyExtractor.apply(t),
-				"The distinct extractor returned a null value.");
+						"The distinct extractor returned a null value.");
 			}
 			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, ctx));

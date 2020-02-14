@@ -52,12 +52,12 @@ final class FluxElapsed<T> extends InternalFluxOperator<T, Tuple2<Long, T>> impl
 
 	static final class ElapsedSubscriber<T>
 			implements InnerOperator<T, Tuple2<Long, T>>,
-			           QueueSubscription<Tuple2<Long, T>> {
+			QueueSubscription<Tuple2<Long, T>> {
 
 		final CoreSubscriber<? super Tuple2<Long, T>> actual;
-		final Scheduler                               scheduler;
+		final Scheduler scheduler;
 
-		Subscription      s;
+		Subscription s;
 		QueueSubscription<T> qs;
 
 		long lastTime;
@@ -93,7 +93,7 @@ final class FluxElapsed<T> extends InternalFluxOperator<T, Tuple2<Long, T>> impl
 
 		@Override
 		public void onNext(T t) {
-			if(t == null){
+			if (t == null) {
 				actual.onNext(null);
 				return;
 			}
@@ -130,7 +130,7 @@ final class FluxElapsed<T> extends InternalFluxOperator<T, Tuple2<Long, T>> impl
 			return Fuseable.NONE;
 		}
 
-		Tuple2<Long, T> snapshot(T data){
+		Tuple2<Long, T> snapshot(T data) {
 			long now = scheduler.now(TimeUnit.MILLISECONDS);
 			long last = lastTime;
 			lastTime = now;
@@ -142,7 +142,7 @@ final class FluxElapsed<T> extends InternalFluxOperator<T, Tuple2<Long, T>> impl
 		@Nullable
 		public Tuple2<Long, T> poll() {
 			T data = qs.poll();
-			if(data != null){
+			if (data != null) {
 				return snapshot(data);
 			}
 			return null;

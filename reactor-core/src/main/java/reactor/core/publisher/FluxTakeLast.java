@@ -121,19 +121,15 @@ final class FluxTakeLast<T> extends InternalFluxOperator<T, T> {
 	static final class TakeLastManySubscriber<T> extends ArrayDeque<T>
 			implements BooleanSupplier, InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final int n;
-
-		volatile boolean cancelled;
-
-		Subscription s;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<TakeLastManySubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(TakeLastManySubscriber.class,
 						"requested");
+		final CoreSubscriber<? super T> actual;
+		final int n;
+		volatile boolean cancelled;
+		Subscription s;
+		volatile long requested;
 
 		TakeLastManySubscriber(CoreSubscriber<? super T> actual, int n) {
 			this.actual = actual;

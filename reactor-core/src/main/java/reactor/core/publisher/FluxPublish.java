@@ -45,24 +45,21 @@ import reactor.util.context.Context;
  */
 final class FluxPublish<T> extends ConnectableFlux<T> implements Scannable {
 
-	/**
-	 * The source observable.
-	 */
-	final Flux<? extends T> source;
-
-	/**
-	 * The size of the prefetch buffer.
-	 */
-	final int prefetch;
-
-	final Supplier<? extends Queue<T>> queueSupplier;
-
-	volatile PublishSubscriber<T> connection;
 	@SuppressWarnings("rawtypes")
 	static final AtomicReferenceFieldUpdater<FluxPublish, PublishSubscriber> CONNECTION =
 			AtomicReferenceFieldUpdater.newUpdater(FluxPublish.class,
 					PublishSubscriber.class,
 					"connection");
+	/**
+	 * The source observable.
+	 */
+	final Flux<? extends T> source;
+	/**
+	 * The size of the prefetch buffer.
+	 */
+	final int prefetch;
+	final Supplier<? extends Queue<T>> queueSupplier;
+	volatile PublishSubscriber<T> connection;
 
 	FluxPublish(Flux<? extends T> source,
 			int prefetch,
@@ -150,58 +147,46 @@ final class FluxPublish<T> extends ConnectableFlux<T> implements Scannable {
 	static final class PublishSubscriber<T>
 			implements InnerConsumer<T>, Disposable {
 
-		final int prefetch;
-
-		final FluxPublish<T> parent;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<PublishSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(PublishSubscriber.class,
 						Subscription.class,
 						"s");
-
-		volatile PubSubInner<T>[] subscribers;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<PublishSubscriber, PubSubInner[]> SUBSCRIBERS =
 				AtomicReferenceFieldUpdater.newUpdater(PublishSubscriber.class,
 						PubSubInner[].class,
 						"subscribers");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<PublishSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(PublishSubscriber.class, "wip");
-
-		volatile int connected;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<PublishSubscriber> CONNECTED =
 				AtomicIntegerFieldUpdater.newUpdater(PublishSubscriber.class,
 						"connected");
-
 		//notes: FluxPublish needs to distinguish INIT from CANCELLED in order to correctly
 		//drop values in case of an early connect() without any subscribers.
 		@SuppressWarnings("rawtypes")
-		static final PubSubInner[] INIT       = new PublishInner[0];
+		static final PubSubInner[] INIT = new PublishInner[0];
 		@SuppressWarnings("rawtypes")
-		static final PubSubInner[] CANCELLED  = new PublishInner[0];
+		static final PubSubInner[] CANCELLED = new PublishInner[0];
 		@SuppressWarnings("rawtypes")
 		static final PubSubInner[] TERMINATED = new PublishInner[0];
-
-		volatile Queue<T> queue;
-
-		int sourceMode;
-
-		volatile boolean   done;
-
-		volatile Throwable error;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<PublishSubscriber, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(PublishSubscriber.class,
 						Throwable.class,
 						"error");
+		final int prefetch;
+		final FluxPublish<T> parent;
+		volatile Subscription s;
+		volatile PubSubInner<T>[] subscribers;
+		volatile int wip;
+		volatile int connected;
+		volatile Queue<T> queue;
+		int sourceMode;
+		volatile boolean done;
+		volatile Throwable error;
 
 		@SuppressWarnings("unchecked")
 		PublishSubscriber(int prefetch, FluxPublish<T> parent) {
@@ -210,7 +195,7 @@ final class FluxPublish<T> extends ConnectableFlux<T> implements Scannable {
 			SUBSCRIBERS.lazySet(this, INIT);
 		}
 
-		boolean isTerminated(){
+		boolean isTerminated() {
 			return subscribers == TERMINATED;
 		}
 
@@ -474,9 +459,9 @@ final class FluxPublish<T> extends ConnectableFlux<T> implements Scannable {
 
 						for (PubSubInner<T> inner : a) {
 							inner.actual.onNext(v);
-							if(Operators.producedCancellable(PubSubInner.REQUESTED,
-									inner,1) ==
-									Long.MIN_VALUE){
+							if (Operators.producedCancellable(PubSubInner.REQUESTED,
+									inner, 1) ==
+									Long.MIN_VALUE) {
 								cancel = Integer.MIN_VALUE;
 							}
 						}
@@ -565,12 +550,11 @@ final class FluxPublish<T> extends ConnectableFlux<T> implements Scannable {
 
 	static abstract class PubSubInner<T> implements InnerProducer<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<PubSubInner> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(PubSubInner.class, "requested");
+		final CoreSubscriber<? super T> actual;
+		volatile long requested;
 
 		PubSubInner(CoreSubscriber<? super T> actual) {
 			this.actual = actual;
@@ -614,6 +598,7 @@ final class FluxPublish<T> extends ConnectableFlux<T> implements Scannable {
 		}
 
 		abstract void drainParent();
+
 		abstract void removeAndDrainParent();
 	}
 

@@ -40,6 +40,14 @@ final class MonoName<T> extends InternalMonoOperator<T, T> {
 
 	final Set<Tuple2<String, String>> tags;
 
+	MonoName(Mono<? extends T> source,
+			@Nullable String name,
+			@Nullable Set<Tuple2<String, String>> tags) {
+		super(source);
+		this.name = name;
+		this.tags = tags;
+	}
+
 	@SuppressWarnings("unchecked")
 	static <T> Mono<T> createOrAppend(Mono<T> source, String name) {
 		Objects.requireNonNull(name, "name");
@@ -67,7 +75,7 @@ final class MonoName<T> extends InternalMonoOperator<T, T> {
 
 		if (source instanceof MonoName) {
 			MonoName<T> s = (MonoName<T>) source;
-			if(s.tags != null) {
+			if (s.tags != null) {
 				tags = new HashSet<>(tags);
 				tags.addAll(s.tags);
 			}
@@ -85,14 +93,6 @@ final class MonoName<T> extends InternalMonoOperator<T, T> {
 			return new MonoNameFuseable<>(source, null, tags);
 		}
 		return new MonoName<>(source, null, tags);
-	}
-
-	MonoName(Mono<? extends T> source,
-			@Nullable String name,
-			@Nullable Set<Tuple2<String, String>> tags) {
-		super(source);
-		this.name = name;
-		this.tags = tags;
 	}
 
 	@Override
@@ -113,6 +113,5 @@ final class MonoName<T> extends InternalMonoOperator<T, T> {
 
 		return super.scanUnsafe(key);
 	}
-
 
 }

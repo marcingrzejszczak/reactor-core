@@ -17,7 +17,6 @@
 package reactor.test;
 
 import org.junit.rules.ExternalResource;
-
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 

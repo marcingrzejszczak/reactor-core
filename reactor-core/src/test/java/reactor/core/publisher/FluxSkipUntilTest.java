@@ -41,7 +41,7 @@ public class FluxSkipUntilTest extends FluxOperatorTest<String, String> {
 	protected List<Scenario<String, String>> scenarios_operatorSuccess() {
 		return Arrays.asList(
 				scenario(f -> f.skipUntil(item(1)::equals))
-				.receiveValues(item(1), item(2))
+						.receiveValues(item(1), item(2))
 		);
 	}
 
@@ -53,32 +53,33 @@ public class FluxSkipUntilTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void normalHidden() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .hide()
-		                        .skipUntil(v -> v > 4))
-		            .expectNext(5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.hide()
+				.skipUntil(v -> v > 4))
+				.expectNext(5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .skipUntil(v -> v > 4))
-		            .expectNext(5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.skipUntil(v -> v > 4))
+				.expectNext(5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSkipUntil.SkipUntilSubscriber<Integer> test = new FluxSkipUntil.SkipUntilSubscriber<>(actual, i -> true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSkipUntil.SkipUntilSubscriber<Integer> test = new FluxSkipUntil.SkipUntilSubscriber<>(actual, i -> true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 }

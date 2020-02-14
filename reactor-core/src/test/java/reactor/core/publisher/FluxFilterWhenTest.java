@@ -34,48 +34,48 @@ public class FluxFilterWhenTest {
 	@Test
 	public void normal() {
 		StepVerifier.withVirtualTime(() -> Flux.range(1, 10)
-		                                       .filterWhen(v -> Mono.just(v % 2 == 0)
-		                                                            .delayElement(Duration.ofMillis(100))))
-		            .thenAwait(Duration.ofSeconds(5))
-		            .expectNext(2, 4, 6, 8, 10)
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(v % 2 == 0)
+						.delayElement(Duration.ofMillis(100))))
+				.thenAwait(Duration.ofSeconds(5))
+				.expectNext(2, 4, 6, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalSync() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .filterWhen(v -> Mono.just(v % 2 == 0).hide()))
-		            .expectNext(2, 4, 6, 8, 10)
-	                .verifyComplete();
+				.filterWhen(v -> Mono.just(v % 2 == 0).hide()))
+				.expectNext(2, 4, 6, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalSyncFused() {
 		StepVerifier.create(Flux.range(1, 10)
-		        .filterWhen(v -> Mono.just(v % 2 == 0)))
-		            .expectNext(2, 4, 6, 8, 10)
-	                .verifyComplete();
+				.filterWhen(v -> Mono.just(v % 2 == 0)))
+				.expectNext(2, 4, 6, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void allEmpty() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .filterWhen(v -> Mono.<Boolean>empty().hide()))
-		            .verifyComplete();
+				.filterWhen(v -> Mono.<Boolean>empty().hide()))
+				.verifyComplete();
 	}
 
 	@Test
 	public void allEmptyFused() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .filterWhen(v -> Mono.empty()))
-		            .verifyComplete();
+				.filterWhen(v -> Mono.empty()))
+				.verifyComplete();
 	}
 
 	@Test
 	public void empty() {
 		StepVerifier.create(Flux.<Integer>empty()
-								.filterWhen(v -> Mono.just(true)))
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(true)))
+				.verifyComplete();
 	}
 
 	@Test
@@ -102,88 +102,92 @@ public class FluxFilterWhenTest {
 	@Test
 	public void backpressureExactlyOne() {
 		StepVerifier.create(Flux.just(1)
-		                        .filterWhen(v -> Mono.just(true)), 1L)
-		            .expectNext(1)
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(true)), 1L)
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void longSourceSingleStep() {
 		StepVerifier.create(Flux.range(1, 1000)
-		                        .filterWhen(v -> Flux.just(true).limitRate(1)))
-		            .expectNextCount(1000)
-		            .verifyComplete();
+				.filterWhen(v -> Flux.just(true).limitRate(1)))
+				.expectNextCount(1000)
+				.verifyComplete();
 	}
 
 	@Test
 	public void longSource() {
 		StepVerifier.create(Flux.range(1, 1000)
-		                        .filterWhen(v -> Mono.just(true).hide()))
-		            .expectNextCount(1000)
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(true).hide()))
+				.expectNextCount(1000)
+				.verifyComplete();
 	}
 
 	@Test
 	public void longSourceFused() {
 		StepVerifier.create(Flux.range(1, 1000)
-		                        .filterWhen(v -> Mono.just(true)))
-		            .expectNextCount(1000)
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(true)))
+				.expectNextCount(1000)
+				.verifyComplete();
 	}
 
 	@Test
 	public void oneAndErrorInner() {
 		StepVerifier.create(Flux.just(1)
-		                        .filterWhen(v -> s -> {
-			                        s.onSubscribe(Operators.emptySubscription());
-			                        s.onNext(true);
-			                        s.onError(new IllegalStateException());
-		                        },16))
-		            .expectNext(1)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorsSatisfying(
-				            c -> assertThat(c)
-						            .hasSize(1)
-						            .element(0).isInstanceOf(IllegalStateException.class)
-		            );
+				.filterWhen(v -> s -> {
+					s.onSubscribe(Operators.emptySubscription());
+					s.onNext(true);
+					s.onError(new IllegalStateException());
+				}, 16))
+				.expectNext(1)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrorsSatisfying(
+						c -> assertThat(c)
+								.hasSize(1)
+								.element(0).isInstanceOf(IllegalStateException.class)
+				);
 	}
 
 	@Test
 	public void predicateThrows() {
 		StepVerifier.create(Flux.just(1)
-		                        .filterWhen(v -> { throw new IllegalStateException(); }))
-		            .verifyError(IllegalStateException.class);
+				.filterWhen(v -> {
+					throw new IllegalStateException();
+				}))
+				.verifyError(IllegalStateException.class);
 	}
 
 	@Test
 	public void predicateNull() {
 		StepVerifier.create(Flux.just(1).filterWhen(v -> null))
-		            .verifyError(NullPointerException.class);
+				.verifyError(NullPointerException.class);
 	}
 
 	@Test
 	public void predicateError() {
 		StepVerifier.create(Flux.just(1)
-		                        .filterWhen(v -> Mono.<Boolean>error(new IllegalStateException()).hide()))
-		            .verifyError(IllegalStateException.class);
+				.filterWhen(v -> Mono.<Boolean>error(new IllegalStateException()).hide()))
+				.verifyError(IllegalStateException.class);
 	}
 
 
 	@Test
 	public void predicateErrorFused() {
 		StepVerifier.create(Flux.just(1)
-		                        .filterWhen(v -> Mono.fromCallable(() -> { throw new IllegalStateException(); })))
-		            .verifyError(IllegalStateException.class);
+				.filterWhen(v -> Mono.fromCallable(() -> {
+					throw new IllegalStateException();
+				})))
+				.verifyError(IllegalStateException.class);
 	}
 
 	@Test
 	public void take() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .filterWhen(v -> Mono.just(v % 2 == 0).hide())
-		                        .take(1))
-		            .expectNext(2)
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(v % 2 == 0).hide())
+				.take(1))
+				.expectNext(2)
+				.verifyComplete();
 	}
 
 	@Test
@@ -211,8 +215,8 @@ public class FluxFilterWhenTest {
 		};
 
 		Flux.range(1, 1000)
-		    .filterWhen(v -> Mono.just(true).hide())
-		    .subscribe(bs);
+				.filterWhen(v -> Mono.just(true).hide())
+				.subscribe(bs);
 
 		assertThat(onNextCount.get()).isEqualTo(1);
 		assertThat(endSignal.get()).isEqualTo(SignalType.CANCEL);
@@ -243,8 +247,8 @@ public class FluxFilterWhenTest {
 		};
 
 		Flux.range(1, 1000)
-		        .filterWhen(v -> Mono.just(true).hide())
-		        .subscribe(bs);
+				.filterWhen(v -> Mono.just(true).hide())
+				.subscribe(bs);
 
 		assertThat(onNextCount.get()).isEqualTo(1);
 		assertThat(endSignal.get()).isEqualTo(SignalType.CANCEL);
@@ -256,8 +260,8 @@ public class FluxFilterWhenTest {
 		final EmitterProcessor<Boolean> pp = EmitterProcessor.create();
 
 		StepVerifier.create(Flux.range(1, 5)
-		                        .filterWhen(v -> pp, 16))
-		            .thenCancel();
+				.filterWhen(v -> pp, 16))
+				.thenCancel();
 
 		assertThat(pp.hasDownstreams()).isFalse();
 	}
@@ -267,10 +271,10 @@ public class FluxFilterWhenTest {
 		AtomicInteger cancelCount = new AtomicInteger();
 
 		StepVerifier.create(Flux.range(1, 3)
-		                        .filterWhen(v -> Flux.just(true, false, false)
-		                                             .doOnCancel(cancelCount::incrementAndGet)))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.filterWhen(v -> Flux.just(true, false, false)
+						.doOnCancel(cancelCount::incrementAndGet)))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 
 		assertThat(cancelCount.get()).isEqualTo(3);
 	}
@@ -278,8 +282,8 @@ public class FluxFilterWhenTest {
 	@Test
 	public void innerFluxOnlyConsidersFirstValue() {
 		StepVerifier.create(Flux.range(1, 3)
-		                        .filterWhen(v -> Flux.just(false, true, true)))
-		            .verifyComplete();
+				.filterWhen(v -> Flux.just(false, true, true)))
+				.verifyComplete();
 	}
 
 	@Test
@@ -287,10 +291,10 @@ public class FluxFilterWhenTest {
 		AtomicInteger cancelCount = new AtomicInteger();
 
 		StepVerifier.create(Flux.range(1, 3)
-		                        .filterWhen(v -> Mono.just(true)
-		                                             .doOnCancel(cancelCount::incrementAndGet)))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.filterWhen(v -> Mono.just(true)
+						.doOnCancel(cancelCount::incrementAndGet)))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 
 		assertThat(cancelCount.get()).isEqualTo(0);
 	}
@@ -300,10 +304,10 @@ public class FluxFilterWhenTest {
 		AtomicLong requested = new AtomicLong();
 
 		Flux.range(1, 10)
-		    .hide()
-		    .doOnRequest(r -> requested.compareAndSet(0, r))
-		    .filterWhen(v -> Mono.just(v % 2 == 0), 5)
-		    .subscribe().dispose();
+				.hide()
+				.doOnRequest(r -> requested.compareAndSet(0, r))
+				.filterWhen(v -> Mono.just(v % 2 == 0), 5)
+				.subscribe().dispose();
 
 		assertThat(requested.get()).isEqualTo(5);
 	}
@@ -314,20 +318,20 @@ public class FluxFilterWhenTest {
 		AtomicLong requested = new AtomicLong();
 
 		Flux.range(1, 10)
-		    .hide()
-		    .doOnRequest(r -> requested.compareAndSet(0, r))
-		    .filterWhen(v -> Mono.just(v % 2 == 0), bufferSize)
-		    .subscribe().dispose();
+				.hide()
+				.doOnRequest(r -> requested.compareAndSet(0, r))
+				.filterWhen(v -> Mono.just(v % 2 == 0), bufferSize)
+				.subscribe().dispose();
 
 		assertThat(requested.get()).isEqualTo(bufferSize);
 
 		bufferSize = bufferSize + 1; //assert even if above it is still fine
 		requested.set(0);
 		Flux.range(1, 10)
-		    .hide()
-		    .doOnRequest(r -> requested.compareAndSet(0, r))
-		    .filterWhen(v -> Mono.just(v % 2 == 0), bufferSize)
-		    .subscribe().dispose();
+				.hide()
+				.doOnRequest(r -> requested.compareAndSet(0, r))
+				.filterWhen(v -> Mono.just(v % 2 == 0), bufferSize)
+				.subscribe().dispose();
 
 		assertThat(requested.get()).isEqualTo(bufferSize);
 	}
@@ -337,38 +341,38 @@ public class FluxFilterWhenTest {
 		AtomicReference<Scannable> scannable = new AtomicReference<>();
 
 		Flux<Integer> flux = Flux.range(1, 10)
-		                         .filterWhen(i -> Mono.just(i % 2 == 0), 3)
-		                         .doOnSubscribe(sub -> {
-			                         assertThat(sub).isInstanceOf(Scannable.class);
-			                         scannable.set((Scannable) sub);
-		                         });
+				.filterWhen(i -> Mono.just(i % 2 == 0), 3)
+				.doOnSubscribe(sub -> {
+					assertThat(sub).isInstanceOf(Scannable.class);
+					scannable.set((Scannable) sub);
+				});
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .expectNext(2)
-		            .then(() -> {
-			            assertThat(scannable.get().scan(Scannable.Attr.PARENT)).isInstanceOf(FluxRange.RangeSubscription.class);
-			            assertThat(scannable.get().scan(Scannable.Attr.ACTUAL)).isInstanceOf(FluxPeek.PeekSubscriber.class);
-			            assertThat(scannable.get().scan(Scannable.Attr.PREFETCH)).isEqualTo(3);
-			            assertThat(scannable.get().scan(Scannable.Attr.CAPACITY)).isEqualTo(4);
-			            assertThat(scannable.get().scan(Scannable.Attr.ERROR)).isNull();
-			            assertThat(scannable.get().scan(Scannable.Attr.BUFFERED )).isEqualTo(1);
-			            assertThat(scannable.get().scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(1L);
-			            assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(false);
-			            assertThat(scannable.get().scan(Scannable.Attr.TERMINATED)).isEqualTo(false);
-		            })
-	                .thenRequest(1)
-	                .expectNext(4)
-	                .then(() -> {
-		                assertThat(scannable.get().scan(Scannable.Attr.ERROR)).isNull();
-		                assertThat(scannable.get().scan(Scannable.Attr.BUFFERED )).isEqualTo(2);
-		                assertThat(scannable.get().scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(2L);
-		                assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(false);
-		                assertThat(scannable.get().scan(Scannable.Attr.TERMINATED)).isEqualTo(false);
-	                })
-	                .thenRequest(3)
-	                .expectNext(6, 8, 10)
-	                .verifyComplete();
+				.thenRequest(1)
+				.expectNext(2)
+				.then(() -> {
+					assertThat(scannable.get().scan(Scannable.Attr.PARENT)).isInstanceOf(FluxRange.RangeSubscription.class);
+					assertThat(scannable.get().scan(Scannable.Attr.ACTUAL)).isInstanceOf(FluxPeek.PeekSubscriber.class);
+					assertThat(scannable.get().scan(Scannable.Attr.PREFETCH)).isEqualTo(3);
+					assertThat(scannable.get().scan(Scannable.Attr.CAPACITY)).isEqualTo(4);
+					assertThat(scannable.get().scan(Scannable.Attr.ERROR)).isNull();
+					assertThat(scannable.get().scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+					assertThat(scannable.get().scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(1L);
+					assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(false);
+					assertThat(scannable.get().scan(Scannable.Attr.TERMINATED)).isEqualTo(false);
+				})
+				.thenRequest(1)
+				.expectNext(4)
+				.then(() -> {
+					assertThat(scannable.get().scan(Scannable.Attr.ERROR)).isNull();
+					assertThat(scannable.get().scan(Scannable.Attr.BUFFERED)).isEqualTo(2);
+					assertThat(scannable.get().scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(2L);
+					assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(false);
+					assertThat(scannable.get().scan(Scannable.Attr.TERMINATED)).isEqualTo(false);
+				})
+				.thenRequest(3)
+				.expectNext(6, 8, 10)
+				.verifyComplete();
 
 		assertThat(scannable.get().scan(Scannable.Attr.BUFFERED)).isEqualTo(6);
 		assertThat(scannable.get().scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(5);
@@ -382,113 +386,117 @@ public class FluxFilterWhenTest {
 		AtomicReference<Scannable> scannable = new AtomicReference<>();
 
 		Flux<Integer> flux = Flux.range(1, 10).concatWith(Mono.error(new IllegalStateException("boom")))
-		                         .filterWhen(i -> Mono.just(i % 2 == 0), 3)
-		                         .doOnSubscribe(sub -> {
-		                         	assertThat(sub).isInstanceOf(Scannable.class);
-			                         scannable.set((Scannable) sub);
-		                         });
+				.filterWhen(i -> Mono.just(i % 2 == 0), 3)
+				.doOnSubscribe(sub -> {
+					assertThat(sub).isInstanceOf(Scannable.class);
+					scannable.set((Scannable) sub);
+				});
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .expectNext(2)
-		            .then(() -> assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(false))
-		            .thenCancel()
-		            .verify();
+				.thenRequest(1)
+				.expectNext(2)
+				.then(() -> assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(false))
+				.thenCancel()
+				.verify();
 
 		assertThat(scannable.get().scan(Scannable.Attr.CANCELLED)).isEqualTo(true);
 	}
 
-    @Test
-    public void scanSubscriber() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxFilterWhen.FluxFilterWhenSubscriber<String> test = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxFilterWhen.FluxFilterWhenSubscriber<String> test = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(Long.MAX_VALUE);
-        assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(1024); // next power of 2 of 789
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0);
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(789);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(Long.MAX_VALUE);
+		assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(1024); // next power of 2 of 789
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(789);
 
-        test.error = new IllegalStateException("boom");
-        assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-    }
+		test.error = new IllegalStateException("boom");
+		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+	}
 
-    @Test
-    public void scanSmallBuffered() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxFilterWhen.FluxFilterWhenSubscriber<String> test = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
+	@Test
+	public void scanSmallBuffered() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxFilterWhen.FluxFilterWhenSubscriber<String> test = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
 
-        test.producerIndex = Integer.MAX_VALUE + 5L;
-        test.consumerIndex = Integer.MAX_VALUE + 2L;
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(3);
-        assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(3L);
-    }
+		test.producerIndex = Integer.MAX_VALUE + 5L;
+		test.consumerIndex = Integer.MAX_VALUE + 2L;
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(3);
+		assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(3L);
+	}
 
-    @Test
-    public void scanLargeBuffered() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxFilterWhen.FluxFilterWhenSubscriber<String> test = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
+	@Test
+	public void scanLargeBuffered() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxFilterWhen.FluxFilterWhenSubscriber<String> test = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
 
-        test.producerIndex = Integer.MAX_VALUE + 5L;
-        test.consumerIndex = 2L;
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(Integer.MIN_VALUE);
-        assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(Integer.MAX_VALUE + 3L);
-    }
+		test.producerIndex = Integer.MAX_VALUE + 5L;
+		test.consumerIndex = 2L;
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(Integer.MIN_VALUE);
+		assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(Integer.MAX_VALUE + 3L);
+	}
 
-    @Test
-    public void scanInner() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxFilterWhen.FluxFilterWhenSubscriber<String> main = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
+	@Test
+	public void scanInner() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxFilterWhen.FluxFilterWhenSubscriber<String> main = new FluxFilterWhen.FluxFilterWhenSubscriber<>(actual, t -> Mono.just(true), 789);
 
-        FluxFilterWhen.FilterWhenInner test = new FluxFilterWhen.FilterWhenInner(main, true);
-        Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
+		FluxFilterWhen.FilterWhenInner test = new FluxFilterWhen.FilterWhenInner(main, true);
+		Subscription sub = Operators.emptySubscription();
+		test.onSubscribe(sub);
 
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(sub);
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(1L);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(sub);
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(1L);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onNext(false);
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(0L);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onNext(false);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(0L);
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
 	public void filterAllOut() {
-		final int[] calls = { 0 };
+		final int[] calls = {0};
 
 		StepVerifier.create(
 				Flux.range(1, 1000)
-				    .doOnNext(v -> calls[0]++)
-				    .filterWhen(v -> Mono.just(false), 16)
-				    .flatMap(ignore -> Flux.just(0)))
-		            .verifyComplete();
+						.doOnNext(v -> calls[0]++)
+						.filterWhen(v -> Mono.just(false), 16)
+						.flatMap(ignore -> Flux.just(0)))
+				.verifyComplete();
 
 		assertThat(calls[0]).isEqualTo(1000);
 	}
 
 	@Test
 	public void filterAllOutHidden() {
-		final int[] calls = { 0 };
+		final int[] calls = {0};
 
 		StepVerifier.create(
 				Flux.range(1, 1000)
-		        .doOnNext(v -> calls[0]++)
-		        .filterWhen(v -> Mono.just(false).hide(), 16)
-		        .flatMap(ignore -> Flux.just(0)))
-		            .verifyComplete();
+						.doOnNext(v -> calls[0]++)
+						.filterWhen(v -> Mono.just(false).hide(), 16)
+						.flatMap(ignore -> Flux.just(0)))
+				.verifyComplete();
 
 		assertThat(calls[0]).isEqualTo(1000);
 	}

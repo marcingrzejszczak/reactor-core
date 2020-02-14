@@ -43,7 +43,7 @@ final class FluxHide<T> extends InternalFluxOperator<T, T> {
 		final CoreSubscriber<? super T> actual;
 
 		Subscription s;
-		
+
 		HideSubscriber(CoreSubscriber<? super T> actual) {
 			this.actual = actual;
 		}

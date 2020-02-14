@@ -29,20 +29,21 @@ public class MonoIgnoreEmptyTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.just(1)
-		                        .thenEmpty(Flux.empty()))
-		            .verifyComplete();
+				.thenEmpty(Flux.empty()))
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal3() {
 		StepVerifier.create(Flux.just(1)
-		                        .then())
-		            .verifyComplete();
+				.then())
+				.verifyComplete();
 	}
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoIgnoreElements.IgnoreElementsSubscriber<String> test = new
 				MonoIgnoreElements.IgnoreElementsSubscriber<>(actual);
 		Subscription sub = Operators.emptySubscription();

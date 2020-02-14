@@ -33,8 +33,13 @@ import reactor.test.StepVerifier;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-import static reactor.core.Fuseable.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertThat;
+import static reactor.core.Fuseable.ASYNC;
+import static reactor.core.Fuseable.NONE;
+import static reactor.core.Fuseable.SYNC;
+import static reactor.core.Fuseable.THREAD_BARRIER;
 
 public class FluxDoFinallyTest implements Consumer<SignalType> {
 
@@ -56,10 +61,10 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalJust() {
 		StepVerifier.create(Flux.just(1).hide().doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -68,9 +73,9 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalEmpty() {
 		StepVerifier.create(Flux.empty().doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectComplete()
-		            .verify();
+				.expectNoFusionSupport()
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -79,9 +84,9 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalError() {
 		StepVerifier.create(Flux.error(new IllegalArgumentException()).doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectError(IllegalArgumentException.class)
-		            .verify();
+				.expectNoFusionSupport()
+				.expectError(IllegalArgumentException.class)
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_ERROR, signalType);
@@ -90,10 +95,10 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalCancel() {
 		StepVerifier.create(Flux.range(1, 10).hide().doFinally(this).take(5))
-		            .expectNoFusionSupport()
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.expectNoFusionSupport()
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.CANCEL, signalType);
@@ -102,12 +107,12 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalTake() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .hide()
-		                        .doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.hide()
+				.doFinally(this))
+				.expectNoFusionSupport()
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -116,21 +121,22 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void syncFused() {
 		StepVerifier.create(Flux.range(1, 5).doFinally(this))
-		            .expectFusion(SYNC)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(SYNC)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
-		assertEquals(1, calls); assertEquals(SignalType.ON_COMPLETE, signalType);
+		assertEquals(1, calls);
+		assertEquals(SignalType.ON_COMPLETE, signalType);
 	}
 
 	@Test
 	public void syncFusedThreadBarrier() {
 		StepVerifier.create(Flux.range(1, 5).doFinally(this))
-		            .expectFusion(SYNC | THREAD_BARRIER , NONE)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(SYNC | THREAD_BARRIER, NONE)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -147,10 +153,10 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		up.onComplete();
 
 		StepVerifier.create(up.doFinally(this))
-		            .expectFusion(ASYNC)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(ASYNC)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -167,10 +173,10 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		up.onComplete();
 
 		StepVerifier.create(up.doFinally(this))
-		            .expectFusion(ASYNC | THREAD_BARRIER, NONE)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(ASYNC | THREAD_BARRIER, NONE)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -179,13 +185,13 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalJustConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.hide()
+				.doFinally(this)
+				.filter(i -> true))
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -194,12 +200,12 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalEmptyConditional() {
 		StepVerifier.create(Flux.empty()
-		                        .hide()
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectNoFusionSupport()
-		            .expectComplete()
-		            .verify();
+				.hide()
+				.doFinally(this)
+				.filter(i -> true))
+				.expectNoFusionSupport()
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -208,12 +214,12 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalErrorConditional() {
 		StepVerifier.create(Flux.error(new IllegalArgumentException())
-		                        .hide()
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectNoFusionSupport()
-		            .expectError(IllegalArgumentException.class)
-		            .verify();
+				.hide()
+				.doFinally(this)
+				.filter(i -> true))
+				.expectNoFusionSupport()
+				.expectError(IllegalArgumentException.class)
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_ERROR, signalType);
@@ -222,14 +228,14 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalCancelConditional() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .hide()
-		                        .doFinally(this)
-		                        .filter(i -> true)
-		                        .take(5))
-		            .expectNoFusionSupport()
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.hide()
+				.doFinally(this)
+				.filter(i -> true)
+				.take(5))
+				.expectNoFusionSupport()
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.CANCEL, signalType);
@@ -238,13 +244,13 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalTakeConditional() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .hide()
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectNoFusionSupport()
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.hide()
+				.doFinally(this)
+				.filter(i -> true))
+				.expectNoFusionSupport()
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -253,12 +259,12 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void syncFusedConditional() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectFusion(SYNC)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.doFinally(this)
+				.filter(i -> true))
+				.expectFusion(SYNC)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -267,12 +273,12 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void syncFusedThreadBarrierConditional() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectFusion(SYNC | THREAD_BARRIER, NONE)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.doFinally(this)
+				.filter(i -> true))
+				.expectFusion(SYNC | THREAD_BARRIER, NONE)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -289,11 +295,11 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		up.onComplete();
 
 		StepVerifier.create(up.doFinally(this)
-		                      .filter(i -> true))
-		            .expectFusion(ASYNC)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.filter(i -> true))
+				.expectFusion(ASYNC)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -310,11 +316,11 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		up.onComplete();
 
 		StepVerifier.create(up.doFinally(this)
-		                      .filter(i -> true))
-		            .expectFusion(ASYNC | THREAD_BARRIER, NONE)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify();
+				.filter(i -> true))
+				.expectFusion(ASYNC | THREAD_BARRIER, NONE)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -329,12 +335,12 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	public void callbackThrows() {
 		try {
 			StepVerifier.create(Flux.just(1)
-			                        .doFinally(signal -> {
-				                        throw new IllegalStateException();
-			                        }))
-			            .expectNext(1)
-			            .expectComplete()
-			            .verify();
+					.doFinally(signal -> {
+						throw new IllegalStateException();
+					}))
+					.expectNext(1)
+					.expectComplete()
+					.verify();
 		}
 		catch (Throwable e) {
 			Throwable _e = Exceptions.unwrap(e);
@@ -347,13 +353,13 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	public void callbackThrowsConditional() {
 		try {
 			StepVerifier.create(Flux.just(1)
-			                        .doFinally(signal -> {
-				                        throw new IllegalStateException();
-			                        })
-			                        .filter(i -> true))
-			            .expectNext(1)
-			            .expectComplete()
-			            .verify();
+					.doFinally(signal -> {
+						throw new IllegalStateException();
+					})
+					.filter(i -> true))
+					.expectNext(1)
+					.expectComplete()
+					.verify();
 		}
 		catch (Throwable e) {
 			Throwable _e = Exceptions.unwrap(e);
@@ -367,19 +373,21 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		Queue<String> finallyOrder = new ConcurrentLinkedDeque<>();
 
 		Flux.just("b")
-		    .hide()
-		    .doFinally(s -> finallyOrder.offer("FIRST"))
-		    .doFinally(s -> finallyOrder.offer("SECOND"))
-		    .blockLast();
+				.hide()
+				.doFinally(s -> finallyOrder.offer("FIRST"))
+				.doFinally(s -> finallyOrder.offer("SECOND"))
+				.blockLast();
 
 		Assertions.assertThat(finallyOrder)
-		          .containsExactly("SECOND", "FIRST");
+				.containsExactly("SECOND", "FIRST");
 	}
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-		FluxDoFinally.DoFinallySubscriber<String> test = new FluxDoFinally.DoFinallySubscriber<>(actual, st -> {});
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxDoFinally.DoFinallySubscriber<String> test = new FluxDoFinally.DoFinallySubscriber<>(actual, st -> {
+		});
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 
@@ -400,36 +408,36 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 	public void gh951_withoutConsumerInSubscribe() {
 		List<String> events = new ArrayList<>();
 		Mono.just(true)
-		    .map(this::throwError)
-		    .doOnError(e -> events.add("doOnError"))
-		    .doFinally(any -> events.add("doFinally " + any.toString()))
-		    .subscribe();
+				.map(this::throwError)
+				.doOnError(e -> events.add("doOnError"))
+				.doFinally(any -> events.add("doFinally " + any.toString()))
+				.subscribe();
 
 		Assertions.assertThat(events)
-		          .as("subscribe without consumer: map_doOnError_doFinally")
-		          .containsExactly("doOnError", "doFinally onError");
+				.as("subscribe without consumer: map_doOnError_doFinally")
+				.containsExactly("doOnError", "doFinally onError");
 
 		events.clear();
 		Mono.just(true)
-		    .doFinally(any -> events.add("doFinally " + any.toString()))
-		    .map(this::throwError)
-		    .doOnError(e -> events.add("doOnError"))
-		    .subscribe();
+				.doFinally(any -> events.add("doFinally " + any.toString()))
+				.map(this::throwError)
+				.doOnError(e -> events.add("doOnError"))
+				.subscribe();
 
 		Assertions.assertThat(events)
-		          .as("subscribe without consumer: doFinally_map_doOnError")
-		          .containsExactly("doFinally cancel", "doOnError");
+				.as("subscribe without consumer: doFinally_map_doOnError")
+				.containsExactly("doFinally cancel", "doOnError");
 
 		events.clear();
 		Mono.just(true)
-		    .map(this::throwError)
-		    .doFinally(any -> events.add("doFinally " + any.toString()))
-		    .doOnError(e -> events.add("doOnError"))
-		    .subscribe();
+				.map(this::throwError)
+				.doFinally(any -> events.add("doFinally " + any.toString()))
+				.doOnError(e -> events.add("doOnError"))
+				.subscribe();
 
 		Assertions.assertThat(events)
-		          .as("subscribe without consumer:  map_doFinally_doOnError")
-		          .containsExactly("doOnError", "doFinally onError");
+				.as("subscribe without consumer:  map_doFinally_doOnError")
+				.containsExactly("doOnError", "doFinally onError");
 	}
 
 	@Test
@@ -438,36 +446,42 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		List<String> events = new ArrayList<>();
 
 		Mono.just(true)
-		    .map(this::throwError)
-		    .doOnError(e -> events.add("doOnError"))
-		    .doFinally(any -> events.add("doFinally " + any.toString()))
-		    .subscribe(v -> { }, e -> { });
+				.map(this::throwError)
+				.doOnError(e -> events.add("doOnError"))
+				.doFinally(any -> events.add("doFinally " + any.toString()))
+				.subscribe(v -> {
+				}, e -> {
+				});
 
 		Assertions.assertThat(events)
-		          .as("subscribe with consumer: map_doOnError_doFinally")
-		          .containsExactly("doOnError", "doFinally onError");
+				.as("subscribe with consumer: map_doOnError_doFinally")
+				.containsExactly("doOnError", "doFinally onError");
 
 		events.clear();
 		Mono.just(true)
-		    .doFinally(any -> events.add("doFinally " + any.toString()))
-		    .map(this::throwError)
-		    .doOnError(e -> events.add("doOnError"))
-		    .subscribe(v -> { }, e -> { });
+				.doFinally(any -> events.add("doFinally " + any.toString()))
+				.map(this::throwError)
+				.doOnError(e -> events.add("doOnError"))
+				.subscribe(v -> {
+				}, e -> {
+				});
 
 		Assertions.assertThat(events)
-		          .as("subscribe with consumer: doFinally_map_doOnError")
-		          .containsExactly("doFinally cancel", "doOnError");
+				.as("subscribe with consumer: doFinally_map_doOnError")
+				.containsExactly("doFinally cancel", "doOnError");
 
 		events.clear();
 		Mono.just(true)
-		    .map(this::throwError)
-		    .doFinally(any -> events.add("doFinally " + any.toString()))
-		    .doOnError(e -> events.add("doOnError"))
-		    .subscribe(v -> { }, e -> { });
+				.map(this::throwError)
+				.doFinally(any -> events.add("doFinally " + any.toString()))
+				.doOnError(e -> events.add("doOnError"))
+				.subscribe(v -> {
+				}, e -> {
+				});
 
 		Assertions.assertThat(events)
-		          .as("subscribe with consumer: map_doFinally_doOnError")
-		          .containsExactly("doOnError", "doFinally onError");
+				.as("subscribe with consumer: map_doFinally_doOnError")
+				.containsExactly("doOnError", "doFinally onError");
 	}
 
 	@Test
@@ -476,15 +490,15 @@ public class FluxDoFinallyTest implements Consumer<SignalType> {
 		List<String> events = new ArrayList<>();
 
 		Assertions.assertThatExceptionOfType(UnsupportedOperationException.class)
-		          .isThrownBy(Mono.just(true)
-		                          .map(this::throwError)
-		                          .doFinally(any -> events.add("doFinally " + any.toString()))
-		                          ::subscribe)
-		          .withMessage("java.lang.IllegalStateException: boom");
+				.isThrownBy(Mono.just(true)
+						.map(this::throwError)
+						.doFinally(any -> events.add("doFinally " + any.toString()))
+						::subscribe)
+				.withMessage("java.lang.IllegalStateException: boom");
 
 		Assertions.assertThat(events)
-		          .as("withoutDoOnError")
-		          .containsExactly("doFinally onError");
+				.as("withoutDoOnError")
+				.containsExactly("doFinally onError");
 	}
 
 	private Boolean throwError(Boolean x) {

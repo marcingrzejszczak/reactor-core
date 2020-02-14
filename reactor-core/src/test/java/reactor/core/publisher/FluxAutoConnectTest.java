@@ -39,15 +39,15 @@ public class FluxAutoConnectTest {
 		
 		ctb.test();
 	}*/
-	
+
 	@Test
 	public void connectImmediately() {
 		EmitterProcessor<Integer> e = EmitterProcessor.create();
 
 		AtomicReference<Disposable> cancel = new AtomicReference<>();
-		
+
 		e.publish().autoConnect(0, cancel::set);
-		
+
 		Assert.assertNotNull(cancel.get());
 		Assert.assertTrue("sp has no subscribers?", e.downstreamCount() != 0);
 
@@ -60,14 +60,14 @@ public class FluxAutoConnectTest {
 		EmitterProcessor<Integer> e = EmitterProcessor.create();
 
 		AtomicReference<Disposable> cancel = new AtomicReference<>();
-		
+
 		Flux<Integer> p = e.publish().autoConnect(2, cancel::set);
-		
+
 		Assert.assertNull(cancel.get());
 		Assert.assertFalse("sp has subscribers?", e.downstreamCount() != 0);
-		
+
 		p.subscribe(AssertSubscriber.create());
-		
+
 		Assert.assertNull(cancel.get());
 		Assert.assertFalse("sp has subscribers?", e.downstreamCount() != 0);
 
@@ -75,7 +75,7 @@ public class FluxAutoConnectTest {
 
 		Assert.assertNotNull(cancel.get());
 		Assert.assertTrue("sp has no subscribers?", e.downstreamCount() != 0);
-		
+
 		cancel.get().dispose();
 		Assert.assertFalse("sp has subscribers?", e.downstreamCount() != 0);
 	}
@@ -85,7 +85,8 @@ public class FluxAutoConnectTest {
 		@SuppressWarnings("unchecked")
 		ConnectableFlux<String> source = Mockito.mock(MockUtils.TestScannableConnectableFlux.class);
 		Mockito.when(source.getPrefetch()).thenReturn(888);
-		FluxAutoConnect<String> test = new FluxAutoConnect<>(source, 123, d -> { });
+		FluxAutoConnect<String> test = new FluxAutoConnect<>(source, 123, d -> {
+		});
 
 		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(888);
 		assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);

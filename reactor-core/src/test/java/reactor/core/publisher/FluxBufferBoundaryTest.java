@@ -59,7 +59,7 @@ public class FluxBufferBoundaryTest
 	protected List<Scenario<String, List<String>>> scenarios_operatorSuccess() {
 		return Arrays.asList(scenario(f -> f.buffer(Mono.never()))
 						.receive(i -> assertThat(i).containsExactly(item(0), item(1), item(2)))
-				.shouldAssertPostTerminateState(false),
+						.shouldAssertPostTerminateState(false),
 
 				scenario(f -> f.buffer(Mono.just(1)))
 						.receiverEmpty()
@@ -80,30 +80,30 @@ public class FluxBufferBoundaryTest
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.buffer(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onNext(1);
 		sp1.onNext(2);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp2.onNext(1);
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp2.onNext(2);
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onNext(3);
 		sp1.onNext(4);
@@ -111,16 +111,16 @@ public class FluxBufferBoundaryTest
 		sp2.onComplete();
 
 		ts.assertValues(Arrays.asList(1, 2), Arrays.asList(3, 4))
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		sp1.onNext(5);
 		sp1.onNext(6);
 		sp1.onComplete();
 
 		ts.assertValues(Arrays.asList(1, 2), Arrays.asList(3, 4))
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -131,24 +131,24 @@ public class FluxBufferBoundaryTest
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.buffer(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onNext(1);
 		sp1.onNext(2);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp2.onNext(1);
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onError(new RuntimeException("forced failure"));
 
@@ -157,16 +157,16 @@ public class FluxBufferBoundaryTest
 		sp2.onNext(2);
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		sp2.onComplete();
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -177,24 +177,24 @@ public class FluxBufferBoundaryTest
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.buffer(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onNext(1);
 		sp1.onNext(2);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp2.onNext(1);
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onNext(3);
 
@@ -203,16 +203,16 @@ public class FluxBufferBoundaryTest
 		Assert.assertFalse("sp1 has subscribers?", sp1.hasDownstreams());
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		sp2.onComplete();
 
 		ts.assertValues(Arrays.asList(1, 2))
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -225,15 +225,15 @@ public class FluxBufferBoundaryTest
 		sp1.buffer(sp2, (Supplier<List<Integer>>) () -> {
 			throw new RuntimeException("forced failure");
 		})
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		Assert.assertFalse("sp1 has subscribers?", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers?", sp2.hasDownstreams());
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -251,7 +251,7 @@ public class FluxBufferBoundaryTest
 			}
 			throw new RuntimeException("forced failure");
 		})
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 		sp1.onNext(2);
@@ -262,9 +262,9 @@ public class FluxBufferBoundaryTest
 		Assert.assertFalse("sp2 has subscribers?", sp2.hasDownstreams());
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -275,48 +275,48 @@ public class FluxBufferBoundaryTest
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.buffer(sp2, (Supplier<List<Integer>>) () -> null)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		Assert.assertFalse("sp1 has subscribers?", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers?", sp2.hasDownstreams());
 
 		ts.assertNoValues()
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	Flux<List<Integer>> scenario_bufferWillSubdivideAnInputFluxTime() {
 		return Flux.just(1, 2, 3, 4, 5, 6, 7, 8)
-		           .delayElements(Duration.ofMillis(99))
-		           .buffer(Duration.ofMillis(200));
+				.delayElements(Duration.ofMillis(99))
+				.buffer(Duration.ofMillis(200));
 	}
 
 	@Test
 	public void bufferWillSubdivideAnInputFluxTime() {
 		StepVerifier.withVirtualTime(this::scenario_bufferWillSubdivideAnInputFluxTime)
-		            .thenAwait(Duration.ofSeconds(10))
-		            .assertNext(t -> assertThat(t).containsExactly(1, 2))
-		            .assertNext(t -> assertThat(t).containsExactly(3, 4))
-		            .assertNext(t -> assertThat(t).containsExactly(5, 6))
-		            .assertNext(t -> assertThat(t).containsExactly(7, 8))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(10))
+				.assertNext(t -> assertThat(t).containsExactly(1, 2))
+				.assertNext(t -> assertThat(t).containsExactly(3, 4))
+				.assertNext(t -> assertThat(t).containsExactly(5, 6))
+				.assertNext(t -> assertThat(t).containsExactly(7, 8))
+				.verifyComplete();
 	}
 
 	Flux<List<Integer>> scenario_bufferWillSubdivideAnInputFluxTime2() {
 		return Flux.just(1, 2, 3, 4, 5, 6, 7, 8)
-		           .delayElements(Duration.ofMillis(99))
-		           .buffer(Duration.ofMillis(200));
+				.delayElements(Duration.ofMillis(99))
+				.buffer(Duration.ofMillis(200));
 	}
 
 	@Test
 	public void bufferWillSubdivideAnInputFluxTime2() {
 		StepVerifier.withVirtualTime(this::scenario_bufferWillSubdivideAnInputFluxTime2)
-		            .thenAwait(Duration.ofSeconds(10))
-		            .assertNext(t -> assertThat(t).containsExactly(1, 2))
-		            .assertNext(t -> assertThat(t).containsExactly(3, 4))
-		            .assertNext(t -> assertThat(t).containsExactly(5, 6))
-		            .assertNext(t -> assertThat(t).containsExactly(7, 8))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(10))
+				.assertNext(t -> assertThat(t).containsExactly(1, 2))
+				.assertNext(t -> assertThat(t).containsExactly(3, 4))
+				.assertNext(t -> assertThat(t).containsExactly(5, 6))
+				.assertNext(t -> assertThat(t).containsExactly(7, 8))
+				.verifyComplete();
 	}
 
 	@Test
@@ -328,9 +328,9 @@ public class FluxBufferBoundaryTest
 		EmitterProcessor<Integer> boundaryFlux = EmitterProcessor.create();
 
 		MonoProcessor<List<List<Integer>>> res = numbers.buffer(boundaryFlux)
-		                                       .buffer()
-		                                       .publishNext()
-		                                       .toProcessor();
+				.buffer()
+				.publishNext()
+				.toProcessor();
 		res.subscribe();
 
 		numbers.onNext(1);
@@ -350,9 +350,9 @@ public class FluxBufferBoundaryTest
 //	    "flux empty buffer just"() {
 //		when:
 		List<List<Object>> ranges = Flux.empty()
-		                                .buffer(Flux.just(1))
-		                                .collectList()
-		                                .block();
+				.buffer(Flux.just(1))
+				.collectList()
+				.block();
 
 //		then:
 		assertThat(ranges).isEmpty();
@@ -363,9 +363,9 @@ public class FluxBufferBoundaryTest
 //		"flux empty buffer"
 //		when:
 		List<List<Object>> ranges = Flux.empty()
-		                                .buffer(Flux.never())
-		                                .collectList()
-		                                .block(Duration.ofMillis(100));
+				.buffer(Flux.never())
+				.collectList()
+				.block(Duration.ofMillis(100));
 
 //		then:
 		assertThat(ranges).isEmpty();
@@ -374,7 +374,8 @@ public class FluxBufferBoundaryTest
 
 	@Test
 	public void scanMain() {
-		CoreSubscriber<? super List> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super List> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		List<String> initialBuffer = Arrays.asList("foo", "bar");
 		FluxBufferBoundary.BufferBoundaryMain<String, Integer, List<String>> test = new FluxBufferBoundary.BufferBoundaryMain<>(
 				actual, initialBuffer, ArrayList::new);
@@ -432,22 +433,22 @@ public class FluxBufferBoundaryTest
 	@Test
 	public void discardOnCancel() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatWith(Mono.never())
-		                        .buffer(Mono.never()))
-		            .thenAwait(Duration.ofMillis(10))
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.concatWith(Mono.never())
+				.buffer(Mono.never()))
+				.thenAwait(Duration.ofMillis(10))
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 
 	@Test
 	public void discardOnError() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatWith(Mono.error(new IllegalStateException("boom")))
-		                        .buffer(Mono.never()))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.buffer(Mono.never()))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 
 	@Test
@@ -455,11 +456,11 @@ public class FluxBufferBoundaryTest
 		final TestPublisher<Integer> publisher = TestPublisher.createNoncompliant(TestPublisher.Violation.REQUEST_OVERFLOW);
 
 		StepVerifier.create(publisher.flux()
-		                             .buffer(Mono.never()),
-		            StepVerifierOptions.create().initialRequest(0))
-		            .then(() -> publisher.emit(1, 2, 3))
-		            .expectErrorMatches(Exceptions::isOverflow)
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+						.buffer(Mono.never()),
+				StepVerifierOptions.create().initialRequest(0))
+				.then(() -> publisher.emit(1, 2, 3))
+				.expectErrorMatches(Exceptions::isOverflow)
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 }

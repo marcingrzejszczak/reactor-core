@@ -37,7 +37,7 @@ public class MemoryUtils {
 	 */
 	public static final class RetainedDetector {
 
-		private final ReferenceQueue<Object>         referenceQueue    = new ReferenceQueue<>();
+		private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
 		private final List<PhantomReference<Object>> phantomReferences = new LinkedList<>();
 		private long finalizedSoFar = 0L;
 		private AtomicInteger trackedTotal = new AtomicInteger(0);
@@ -61,7 +61,7 @@ public class MemoryUtils {
 		 */
 		public final synchronized long finalizedCount() {
 			synchronized (this) {
-				while(referenceQueue.poll() != null) {
+				while (referenceQueue.poll() != null) {
 					finalizedSoFar++;
 				}
 			}

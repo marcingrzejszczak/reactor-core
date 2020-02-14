@@ -22,7 +22,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
-import reactor.core.Exceptions;
 import reactor.core.Scannable;
 import reactor.util.annotation.Nullable;
 import reactor.util.context.Context;
@@ -43,8 +42,8 @@ final class DelegateProcessor<IN, OUT> extends FluxProcessor<IN, OUT> {
 
 	@Override
 	public Context currentContext() {
-		if(upstream instanceof CoreSubscriber){
-			return ((CoreSubscriber)upstream).currentContext();
+		if (upstream instanceof CoreSubscriber) {
+			return ((CoreSubscriber) upstream).currentContext();
 		}
 		return Context.empty();
 	}
@@ -80,21 +79,21 @@ final class DelegateProcessor<IN, OUT> extends FluxProcessor<IN, OUT> {
 	public boolean isSerialized() {
 		return upstream instanceof SerializedSubscriber ||
 				(upstream instanceof FluxProcessor &&
-						((FluxProcessor<?, ?>)upstream).isSerialized());
+						((FluxProcessor<?, ?>) upstream).isSerialized());
 	}
 
 	@Override
 	public Stream<? extends Scannable> inners() {
 		//noinspection ConstantConditions
 		return Scannable.from(upstream)
-		                .inners();
+				.inners();
 	}
 
 	@Override
 	public int getBufferSize() {
 		//noinspection ConstantConditions
 		return Scannable.from(upstream)
-		                .scanOrDefault(Attr.CAPACITY, super.getBufferSize());
+				.scanOrDefault(Attr.CAPACITY, super.getBufferSize());
 	}
 
 	@Override
@@ -102,14 +101,14 @@ final class DelegateProcessor<IN, OUT> extends FluxProcessor<IN, OUT> {
 	public Throwable getError() {
 		//noinspection ConstantConditions
 		return Scannable.from(upstream)
-		                .scanOrDefault(Attr.ERROR, super.getError());
+				.scanOrDefault(Attr.ERROR, super.getError());
 	}
 
 	@Override
 	public boolean isTerminated() {
 		//noinspection ConstantConditions
 		return Scannable.from(upstream)
-		                .scanOrDefault(Attr.TERMINATED, super.isTerminated());
+				.scanOrDefault(Attr.TERMINATED, super.isTerminated());
 	}
 
 	@Override
@@ -120,6 +119,6 @@ final class DelegateProcessor<IN, OUT> extends FluxProcessor<IN, OUT> {
 		}
 		//noinspection ConstantConditions
 		return Scannable.from(upstream)
-		                .scanUnsafe(key);
+				.scanUnsafe(key);
 	}
 }

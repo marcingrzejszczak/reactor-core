@@ -26,7 +26,8 @@ public class SerializedSubscriberTest {
 
 	@Test
 	public void scanSerializedSubscriber() {
-		LambdaSubscriber<String> actual = new LambdaSubscriber<>(null, e -> { }, null, null);
+		LambdaSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		SerializedSubscriber<String> test = new SerializedSubscriber<>(actual);
 		Subscription subscription = Operators.emptySubscription();
 		test.onSubscribe(subscription);
@@ -52,7 +53,8 @@ public class SerializedSubscriberTest {
 
 	@Test
 	public void scanSerializedSubscriberMaxBuffered() {
-		LambdaSubscriber<String> actual = new LambdaSubscriber<>(null, e -> { }, null, null);
+		LambdaSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		SerializedSubscriber<String> test = new SerializedSubscriber<>(actual);
 
 		test.tail = new SerializedSubscriber.LinkedArrayNode<>("");

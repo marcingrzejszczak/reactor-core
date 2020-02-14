@@ -50,7 +50,7 @@ public class FluxGroupJoinTest {
 
 		Flux<Integer> m =
 				source1.groupJoin(source2, just(Flux.never()), just(Flux.never()), add2)
-				       .flatMap(t -> t);
+						.flatMap(t -> t);
 
 		m.subscribe(ts);
 
@@ -66,41 +66,8 @@ public class FluxGroupJoinTest {
 		source2.onComplete();
 
 		ts.assertValues(17, 18, 20, 33, 34, 36, 65, 66, 68)
-		  .assertComplete()
-		  .assertNoError();
-	}
-
-	class Person {
-
-		final int    id;
-		final String name;
-
-		public Person(int id, String name) {
-			this.id = id;
-			this.name = name;
-		}
-	}
-
-	class PersonFruit {
-
-		final int    personId;
-		final String fruit;
-
-		public PersonFruit(int personId, String fruit) {
-			this.personId = personId;
-			this.fruit = fruit;
-		}
-	}
-
-	class PPF {
-
-		final Person            person;
-		final Flux<PersonFruit> fruits;
-
-		public PPF(Person person, Flux<PersonFruit> fruits) {
-			this.person = person;
-			this.fruits = fruits;
-		}
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -120,18 +87,18 @@ public class FluxGroupJoinTest {
 				just2(Flux.never()),
 				just2(Flux.never()),
 				PPF::new)
-		                     .doOnNext(ppf -> ppf.fruits.filter(t1 -> ppf.person.id == t1.personId)
-		                                                .subscribe(t1 -> ts.onNext(Arrays.asList(
-				                                                ppf.person.name,
-				                                                t1.fruit))))
-		                     .ignoreElements();
+				.doOnNext(ppf -> ppf.fruits.filter(t1 -> ppf.person.id == t1.personId)
+						.subscribe(t1 -> ts.onNext(Arrays.asList(
+								ppf.person.name,
+								t1.fruit))))
+				.ignoreElements();
 
 		q.subscribe(ts);
 		ts.assertValues(Arrays.asList("Joe", "Strawberry"),
 				Arrays.asList("Joe", "Apple"),
 				Arrays.asList("Charlie", "Peach"))
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -149,8 +116,8 @@ public class FluxGroupJoinTest {
 		source1.onError(new RuntimeException("Forced failure"));
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -168,8 +135,8 @@ public class FluxGroupJoinTest {
 		source2.onError(new RuntimeException("Forced failure"));
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertValueCount(1);
+				.assertNotComplete()
+				.assertValueCount(1);
 	}
 
 	@Test
@@ -187,8 +154,8 @@ public class FluxGroupJoinTest {
 		source1.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -206,8 +173,8 @@ public class FluxGroupJoinTest {
 		source2.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -227,8 +194,8 @@ public class FluxGroupJoinTest {
 		source1.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -248,8 +215,8 @@ public class FluxGroupJoinTest {
 		source2.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -270,13 +237,14 @@ public class FluxGroupJoinTest {
 		source2.onNext(2);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
 	public void scanGroupJoinSubscription() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, sub -> sub.request(100));
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, sub -> sub.request(100));
 		FluxGroupJoin.GroupJoinSubscription<String, String, String, String, String> test =
 				new FluxGroupJoin.GroupJoinSubscription<>(actual,
 						s -> Mono.just(s),
@@ -305,7 +273,8 @@ public class FluxGroupJoinTest {
 
 	@Test
 	public void scanLeftRightSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(100));
 		FluxGroupJoin.GroupJoinSubscription<String, String, String, String, String> parent =
 				new FluxGroupJoin.GroupJoinSubscription<>(actual,
@@ -326,7 +295,8 @@ public class FluxGroupJoinTest {
 
 	@Test
 	public void scanLeftRightEndSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(100));
 		FluxGroupJoin.GroupJoinSubscription<String, String, String, String, String> parent =
 				new FluxGroupJoin.GroupJoinSubscription<>(actual,
@@ -342,5 +312,38 @@ public class FluxGroupJoinTest {
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
 		test.dispose();
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
+
+	class Person {
+
+		final int id;
+		final String name;
+
+		public Person(int id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+	}
+
+	class PersonFruit {
+
+		final int personId;
+		final String fruit;
+
+		public PersonFruit(int personId, String fruit) {
+			this.personId = personId;
+			this.fruit = fruit;
+		}
+	}
+
+	class PPF {
+
+		final Person person;
+		final Flux<PersonFruit> fruits;
+
+		public PPF(Person person, Flux<PersonFruit> fruits) {
+			this.person = person;
+			this.fruits = fruits;
+		}
 	}
 }

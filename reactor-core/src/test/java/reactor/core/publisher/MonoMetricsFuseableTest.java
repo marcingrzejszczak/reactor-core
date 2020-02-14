@@ -41,8 +41,19 @@ import reactor.core.publisher.MonoMetricsFuseable.MetricsFuseableSubscriber;
 import reactor.test.StepVerifier;
 import reactor.test.subscriber.AssertSubscriber;
 
-import static org.assertj.core.api.Assertions.*;
-import static reactor.core.publisher.FluxMetrics.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static reactor.core.publisher.FluxMetrics.METER_FLOW_DURATION;
+import static reactor.core.publisher.FluxMetrics.METER_ON_NEXT_DELAY;
+import static reactor.core.publisher.FluxMetrics.METER_REQUESTED;
+import static reactor.core.publisher.FluxMetrics.METER_SUBSCRIBED;
+import static reactor.core.publisher.FluxMetrics.REACTOR_DEFAULT_NAME;
+import static reactor.core.publisher.FluxMetrics.TAG_CANCEL;
+import static reactor.core.publisher.FluxMetrics.TAG_KEY_EXCEPTION;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_COMPLETE;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_ERROR;
+import static reactor.core.publisher.FluxMetrics.TAG_SEQUENCE_NAME;
 
 public class MonoMetricsFuseableTest {
 
@@ -155,8 +166,8 @@ public class MonoMetricsFuseableTest {
 
 		//test meters
 		Timer terminationTimer = registry.find(METER_FLOW_DURATION)
-		                          .tags(Tags.of(TAG_ON_COMPLETE))
-		                          .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		assertThat(terminationTimer).isNotNull();
 		assertThat(terminationTimer.max(TimeUnit.MILLISECONDS)).as("terminate max delay").isEqualTo(200);
@@ -188,12 +199,12 @@ public class MonoMetricsFuseableTest {
 
 		clock.add(Duration.ofMillis(123));
 		assertThatIllegalStateException().isThrownBy(fuseableSubscriber::poll)
-		                                 .withMessage("AssertQueueSubscriber poll error");
+				.withMessage("AssertQueueSubscriber poll error");
 
 		//test meters
 		Timer terminationTimer = registry.find(METER_FLOW_DURATION)
-		                          .tags(Tags.of(TAG_ON_ERROR))
-		                          .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		assertThat(terminationTimer).isNotNull();
 		assertThat(terminationTimer.max(TimeUnit.MILLISECONDS)).as("terminate max delay").isEqualTo(323);
@@ -235,8 +246,8 @@ public class MonoMetricsFuseableTest {
 	public void splitMetricsOnNameFuseable() {
 		final Mono<Integer> unnamedSource = Mono.just(0).map(v -> 100 / v);
 		final Mono<Integer> namedSource = Mono.just(0).map(v -> 100 / v)
-		                                      .name("foo");
-		
+				.name("foo");
+
 		final Mono<Integer> unnamed = new MonoMetricsFuseable<>(unnamedSource, registry)
 				.onErrorResume(e -> Mono.empty());
 		final Mono<Integer> named = new MonoMetricsFuseable<>(namedSource, registry)
@@ -268,11 +279,11 @@ public class MonoMetricsFuseableTest {
 	@Test
 	public void usesTagsFuseable() {
 		Mono<Integer> source = Mono.just(8)
-		                           .tag("tag1", "A")
-		                           .name("usesTags")
-		                           .tag("tag2", "foo");
+				.tag("tag1", "A")
+				.name("usesTags")
+				.tag("tag2", "foo");
 		new MonoMetricsFuseable<>(source, registry)
-		    .block();
+				.block();
 
 		Timer meter = registry
 				.find(METER_FLOW_DURATION)
@@ -290,7 +301,7 @@ public class MonoMetricsFuseableTest {
 	public void noOnNextTimerFuseable() {
 		Mono<Integer> source = Mono.just(123);
 		new MonoMetricsFuseable<>(source, registry)
-		    .block();
+				.block();
 
 		Timer nextMeter = registry
 				.find(METER_ON_NEXT_DELAY)
@@ -308,57 +319,57 @@ public class MonoMetricsFuseableTest {
 		});
 
 		StepVerifier.create(new MonoMetricsFuseable<>(source, registry))
-		            .expectFusion(Fuseable.ASYNC)
-		            .expectNext("foo")
-		            .verifyComplete();
+				.expectFusion(Fuseable.ASYNC)
+				.expectNext("foo")
+				.verifyComplete();
 
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer.max(TimeUnit.MILLISECONDS))
-			      .as("subscribe to complete timer")
-			      .isGreaterThanOrEqualTo(100);
+					.as("subscribe to complete timer")
+					.isGreaterThanOrEqualTo(100);
 
 			softly.assertThat(stcErrorTimer)
-			      .as("subscribe to error timer lazily registered")
-			      .isNull();
+					.as("subscribe to error timer lazily registered")
+					.isNull();
 
 			softly.assertThat(stcCancelTimer)
-			      .as("subscribe to cancel timer")
-			      .isNull();
+					.as("subscribe to cancel timer")
+					.isNull();
 		});
 	}
 
 	@Test
 	public void subscribeToErrorFuseable() {
 		Mono<Long> source = Mono.delay(Duration.ofMillis(100))
-		                        .map(v -> 100 / v);
+				.map(v -> 100 / v);
 		new MonoMetricsFuseable<>(source, registry)
-		    .onErrorReturn(-1L)
-		    .block();
+				.onErrorReturn(-1L)
+				.block();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
@@ -378,27 +389,27 @@ public class MonoMetricsFuseableTest {
 	@Test
 	public void subscribeToCancelFuseable() throws InterruptedException {
 		Mono<String> source = Mono.delay(Duration.ofMillis(200))
-		                        .map(i -> "foo");
+				.map(i -> "foo");
 		Disposable disposable = new MonoMetricsFuseable<>(source, registry).subscribe();
 		Thread.sleep(100);
 		disposable.dispose();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
-			      .as("subscribe to complete timer")
-			      .isNull();
+					.as("subscribe to complete timer")
+					.isNull();
 
 			softly.assertThat(stcErrorTimer)
 					.as("subscribe to error timer is lazily registered")
@@ -417,7 +428,7 @@ public class MonoMetricsFuseableTest {
 
 		test.subscribe();
 		Counter meter = registry.find(METER_SUBSCRIBED)
-		                        .counter();
+				.counter();
 
 		assertThat(meter).isNotNull();
 		assertThat(meter.count()).as("after 1s subscribe").isEqualTo(1);
@@ -431,18 +442,18 @@ public class MonoMetricsFuseableTest {
 	@Test
 	public void noRequestTrackingEvenForNamedSequence() {
 		Mono<Integer> source = Mono.just(10)
-		                           .name("foo");
+				.name("foo");
 		new MonoMetricsFuseable<>(source, registry)
 				.block();
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .summary();
+				.summary();
 
 		assertThat(meter).as("global find").isNull();
 
 		meter = registry.find(METER_REQUESTED)
-		                .tag(TAG_SEQUENCE_NAME, "foo")
-		                .summary();
+				.tag(TAG_SEQUENCE_NAME, "foo")
+				.summary();
 
 		assertThat(meter).as("tagged find").isNull();
 	}

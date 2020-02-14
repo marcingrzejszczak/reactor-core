@@ -29,11 +29,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
-
 import reactor.core.Disposable;
 import reactor.core.Exceptions;
 import reactor.core.Scannable;
-import reactor.util.annotation.Nullable;
 
 /**
  * A simple {@link Scheduler} which uses a backing {@link ExecutorService} to schedule
@@ -49,9 +47,17 @@ final class DelegateServiceScheduler implements Scheduler, Scannable {
 	final ScheduledExecutorService executor;
 
 	DelegateServiceScheduler(String executorName, ExecutorService executorService) {
-			this.executorName = executorName;
-			ScheduledExecutorService exec = convert(executorService);
-			this.executor = Schedulers.decorateExecutorService(this, exec);
+		this.executorName = executorName;
+		ScheduledExecutorService exec = convert(executorService);
+		this.executor = Schedulers.decorateExecutorService(this, exec);
+	}
+
+	@SuppressWarnings("unchecked")
+	static ScheduledExecutorService convert(ExecutorService executor) {
+		if (executor instanceof ScheduledExecutorService) {
+			return (ScheduledExecutorService) executor;
+		}
+		return new UnsupportedScheduledExecutorService(executor);
 	}
 
 	@Override
@@ -89,14 +95,6 @@ final class DelegateServiceScheduler implements Scheduler, Scannable {
 	@Override
 	public void dispose() {
 		executor.shutdownNow();
-	}
-
-	@SuppressWarnings("unchecked")
-	static ScheduledExecutorService convert(ExecutorService executor) {
-		if (executor instanceof ScheduledExecutorService) {
-			return (ScheduledExecutorService) executor;
-		}
-		return new UnsupportedScheduledExecutorService(executor);
 	}
 
 	@Override

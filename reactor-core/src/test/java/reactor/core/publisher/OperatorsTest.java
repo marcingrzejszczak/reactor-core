@@ -59,10 +59,9 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class OperatorsTest {
 
-	volatile long testRequest;
 	static final AtomicLongFieldUpdater<OperatorsTest> TEST_REQUEST =
 			AtomicLongFieldUpdater.newUpdater(OperatorsTest.class, "testRequest");
-
+	volatile long testRequest;
 
 	@Test
 	public void addAndGetAtomicField() {
@@ -97,8 +96,8 @@ public class OperatorsTest {
 	}
 
 	@Test
-	public void constructor(){
-		assertThat(new Operators(){}).isNotNull();
+	public void constructor() {
+		assertThat(new Operators() { }).isNotNull();
 	}
 
 	@Test
@@ -142,11 +141,11 @@ public class OperatorsTest {
 	}
 
 	@Test
-	public void cancelledSubscription(){
+	public void cancelledSubscription() {
 		Operators.CancelledSubscription es =
-				(Operators.CancelledSubscription)Operators.cancelledSubscription();
+				(Operators.CancelledSubscription) Operators.cancelledSubscription();
 
-		assertThat((Object)es).isEqualTo(Operators.CancelledSubscription.INSTANCE);
+		assertThat((Object) es).isEqualTo(Operators.CancelledSubscription.INSTANCE);
 
 		//Noop
 		es.cancel();
@@ -154,7 +153,7 @@ public class OperatorsTest {
 	}
 
 	@Test
-	public void noopFluxCancelled(){
+	public void noopFluxCancelled() {
 		OperatorDisposables.DISPOSED.dispose(); //noop
 	}
 
@@ -186,7 +185,7 @@ public class OperatorsTest {
 				s.onComplete(); //dropped
 				s.onError(new Exception("test"));
 			})
-			    .subscribe(Operators.drainSubscriber());
+					.subscribe(Operators.drainSubscriber());
 
 			assertThat(requested.get()).isTrue();
 			assertThat(errored.get()).isTrue();
@@ -249,7 +248,7 @@ public class OperatorsTest {
 			}
 		};
 		Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+		test.onSubscribe(parent);
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
 		test.request(34);
@@ -334,7 +333,7 @@ public class OperatorsTest {
 		Operators.onErrorDropped(new IllegalArgumentException("boom"), c);
 
 		assertThat(hookState.get()).isInstanceOf(IllegalArgumentException.class)
-		                           .hasMessage("boom");
+				.hasMessage("boom");
 	}
 
 	@Test
@@ -360,8 +359,8 @@ public class OperatorsTest {
 				"foo", c);
 
 		assertThat(throwable).isInstanceOf(IllegalStateException.class)
-		                     .hasMessage("boom_foo")
-		                     .hasCause(failure);
+				.hasMessage("boom_foo")
+				.hasCause(failure);
 	}
 
 	@Test
@@ -374,11 +373,11 @@ public class OperatorsTest {
 		final Throwable throwable = Operators.onRejectedExecution(failure, null, null, null, c);
 
 		assertThat(throwable).isInstanceOf(IllegalStateException.class)
-		                     .hasMessage("boom_null")
-		                     .hasNoSuppressedExceptions();
+				.hasMessage("boom_null")
+				.hasNoSuppressedExceptions();
 		assertThat(throwable.getCause()).isInstanceOf(RejectedExecutionException.class)
-		                                .hasMessage("Scheduler unavailable")
-		                                .hasCause(failure);
+				.hasMessage("Scheduler unavailable")
+				.hasCause(failure);
 	}
 
 	@Test
@@ -392,11 +391,11 @@ public class OperatorsTest {
 				null, "bar", c);
 
 		assertThat(throwable).isInstanceOf(IllegalStateException.class)
-		                     .hasMessage("boom_bar")
-		                     .hasNoSuppressedExceptions();
+				.hasMessage("boom_bar")
+				.hasNoSuppressedExceptions();
 		assertThat(throwable.getCause()).isInstanceOf(RejectedExecutionException.class)
-		                                .hasMessage("Scheduler unavailable")
-		                                .hasCause(failure);
+				.hasMessage("Scheduler unavailable")
+				.hasCause(failure);
 	}
 
 	@Test
@@ -415,11 +414,11 @@ public class OperatorsTest {
 				null, "bar", c);
 
 		assertThat(throwable).isInstanceOf(IllegalStateException.class)
-		                     .hasMessage("rejected_bar")
-		                     .hasNoSuppressedExceptions();
+				.hasMessage("rejected_bar")
+				.hasNoSuppressedExceptions();
 		assertThat(throwable.getCause()).isInstanceOf(RejectedExecutionException.class)
-		                                .hasMessage("Scheduler unavailable")
-		                                .hasCause(failure);
+				.hasMessage("Scheduler unavailable")
+				.hasCause(failure);
 	}
 
 	@Test
@@ -554,10 +553,10 @@ public class OperatorsTest {
 		Throwable t = Operators.onNextError("foo", new NullPointerException("bar"), context, s);
 
 		assertThat(t).as("exception processed")
-		             .isNotNull()
-		             .isInstanceOf(NullPointerException.class)
-		             .hasNoSuppressedExceptions()
-		             .hasNoCause();
+				.isNotNull()
+				.isInstanceOf(NullPointerException.class)
+				.hasNoSuppressedExceptions()
+				.hasNoCause();
 		assertThat(s.isCancelled()).as("subscription cancelled").isTrue();
 	}
 
@@ -580,10 +579,10 @@ public class OperatorsTest {
 		Throwable t = Operators.onNextError("foo", new NullPointerException("bar"), context, s);
 
 		assertThat(t).as("exception processed")
-		             .isNotNull()
-		             .isInstanceOf(NullPointerException.class)
-		             .hasNoSuppressedExceptions()
-		             .hasNoCause();
+				.isNotNull()
+				.isInstanceOf(NullPointerException.class)
+				.hasNoSuppressedExceptions()
+				.hasNoCause();
 		assertThat(s.isCancelled()).as("subscription cancelled").isTrue();
 	}
 
@@ -591,7 +590,8 @@ public class OperatorsTest {
 	public void liftVsLiftPublisher() {
 		Publisher<Object> notScannable = new Flux<Object>() {
 			@Override
-			public void subscribe(CoreSubscriber<? super Object> actual) { }
+			public void subscribe(CoreSubscriber<? super Object> actual) {
+			}
 		};
 
 		AtomicReference<Scannable> scannableRef = new AtomicReference<>();
@@ -617,8 +617,8 @@ public class OperatorsTest {
 		assertThat(scannableRef).hasValue(null);
 		assertThat(rawRef).hasValue(null);
 
-		lifted.subscribe(new BaseSubscriber<Object>() {});
-		liftedRaw.subscribe(new BaseSubscriber<Object>() {});
+		lifted.subscribe(new BaseSubscriber<Object>() { });
+		liftedRaw.subscribe(new BaseSubscriber<Object>() { });
 
 		assertThat(scannableRef.get())
 				.isNotNull()
@@ -633,7 +633,8 @@ public class OperatorsTest {
 	public void liftVsLiftRawWithPredicate() {
 		Publisher<Object> notScannable = new Flux<Object>() {
 			@Override
-			public void subscribe(CoreSubscriber<? super Object> actual) { }
+			public void subscribe(CoreSubscriber<? super Object> actual) {
+			}
 		};
 
 		AtomicReference<Scannable> scannableRef = new AtomicReference<>();
@@ -671,8 +672,8 @@ public class OperatorsTest {
 		assertThat(rawRef).hasValue(null);
 		assertThat(rawFilterRef).doesNotHaveValue(null);
 
-		lifted.subscribe(new BaseSubscriber<Object>() {});
-		liftedRaw.subscribe(new BaseSubscriber<Object>() {});
+		lifted.subscribe(new BaseSubscriber<Object>() { });
+		liftedRaw.subscribe(new BaseSubscriber<Object>() { });
 
 		assertThat(scannableRef.get())
 				.isNotNull()
@@ -688,12 +689,13 @@ public class OperatorsTest {
 
 	@Test
 	public void discardAdapterRejectsNull() {
-		assertThatNullPointerException().isThrownBy(() -> Operators.discardLocalAdapter(null, obj -> {}))
-		                                .as("type null check")
-		                                .withMessage("onDiscard must be based on a type");
+		assertThatNullPointerException().isThrownBy(() -> Operators.discardLocalAdapter(null, obj -> {
+		}))
+				.as("type null check")
+				.withMessage("onDiscard must be based on a type");
 		assertThatNullPointerException().isThrownBy(() -> Operators.discardLocalAdapter(String.class, null))
-		                                .as("discardHook null check")
-		                                .withMessage("onDiscard must be provided a discardHook Consumer");
+				.as("discardHook null check")
+				.withMessage("onDiscard must be provided a discardHook Consumer");
 	}
 
 	@Test
@@ -704,7 +706,8 @@ public class OperatorsTest {
 		Function<Context, Context> second = Operators.discardLocalAdapter(Integer.class, i -> discardOrder.add("SECOND"));
 
 		Context ctx = first.apply(second.apply(Context.empty()));
-		Consumer<Object> test = ctx.getOrDefault(Hooks.KEY_ON_DISCARD, o -> {});
+		Consumer<Object> test = ctx.getOrDefault(Hooks.KEY_ON_DISCARD, o -> {
+		});
 
 		assertThat(test).isNotNull();
 
@@ -723,7 +726,7 @@ public class OperatorsTest {
 			}
 		};
 		Fuseable.ConditionalSubscriber<? super Object> conditionalSubscriber =
-			Operators.toConditionalSubscriber(actual);
+				Operators.toConditionalSubscriber(actual);
 
 		Assertions.assertThat(conditionalSubscriber).isNotEqualTo(actual);
 		Assertions.assertThat(conditionalSubscriber.tryOnNext(elementToSend)).isTrue();
@@ -736,7 +739,7 @@ public class OperatorsTest {
 		Fuseable.ConditionalSubscriber<String> original = Mockito.mock(Fuseable.ConditionalSubscriber.class);
 
 		Assertions.assertThat(Operators.toConditionalSubscriber(original))
-		          .isSameAs(original);
+				.isSameAs(original);
 	}
 
 	@Test
@@ -808,10 +811,10 @@ public class OperatorsTest {
 		AtomicInteger discardedCount = new AtomicInteger();
 		@SuppressWarnings("unchecked") Queue<Integer> q = Mockito.mock(Queue.class);
 		Mockito.when(q.poll())
-		       .thenReturn(1, 2)
-		       .thenThrow(new IllegalStateException("poll boom"))
-		       .thenReturn(4, 5)
-		       .thenReturn(null);
+				.thenReturn(1, 2)
+				.thenThrow(new IllegalStateException("poll boom"))
+				.thenReturn(4, 5)
+				.thenReturn(null);
 
 		Context hookContext = Operators.discardLocalAdapter(Integer.class, i -> discardedCount.incrementAndGet()).apply(Context.empty());
 
@@ -900,7 +903,7 @@ public class OperatorsTest {
 
 		AtomicInteger discardedCount = new AtomicInteger();
 		Context hookContext = Operators.discardLocalAdapter(Integer.class, i -> discardedCount.incrementAndGet())
-		                               .apply(Context.empty());
+				.apply(Context.empty());
 
 		Operators.onDiscardMultiple(mock, hookContext);
 

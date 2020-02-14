@@ -52,9 +52,9 @@ public class RaceTestUtils {
 			BiPredicate<? super T, ? super T> terminate) {
 
 		Scheduler.Worker w1 = Schedulers.elastic()
-		                                .createWorker();
+				.createWorker();
 		Scheduler.Worker w2 = Schedulers.elastic()
-		                                .createWorker();
+				.createWorker();
 
 		try {
 
@@ -88,7 +88,7 @@ public class RaceTestUtils {
 			}
 			catch (InterruptedException e) {
 				Thread.currentThread()
-				      .interrupt();
+						.interrupt();
 			}
 
 			return terminate.test(ref1.get(), ref2.get());
@@ -120,35 +120,41 @@ public class RaceTestUtils {
 		final AtomicInteger count = new AtomicInteger(2);
 		final CountDownLatch cdl = new CountDownLatch(2);
 
-		final Throwable[] errors = { null, null };
+		final Throwable[] errors = {null, null};
 
 		s.schedule(() -> {
 			if (count.decrementAndGet() != 0) {
-				while (count.get() != 0) { }
+				while (count.get() != 0) {
+				}
 			}
 
 			try {
 				try {
 					r1.run();
-				} catch (Throwable ex) {
+				}
+				catch (Throwable ex) {
 					errors[0] = ex;
 				}
-			} finally {
+			}
+			finally {
 				cdl.countDown();
 			}
 		});
 
 		if (count.decrementAndGet() != 0) {
-			while (count.get() != 0) { }
+			while (count.get() != 0) {
+			}
 		}
 
 		try {
 			try {
 				r2.run();
-			} catch (Throwable ex) {
+			}
+			catch (Throwable ex) {
 				errors[1] = ex;
 			}
-		} finally {
+		}
+		finally {
 			cdl.countDown();
 		}
 
@@ -156,7 +162,8 @@ public class RaceTestUtils {
 			if (!cdl.await(5, TimeUnit.SECONDS)) {
 				throw new AssertionError("The wait timed out!");
 			}
-		} catch (InterruptedException ex) {
+		}
+		catch (InterruptedException ex) {
 			throw new RuntimeException(ex);
 		}
 		if (errors[0] != null && errors[1] == null) {

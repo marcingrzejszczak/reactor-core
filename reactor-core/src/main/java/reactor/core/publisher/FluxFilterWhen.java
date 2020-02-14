@@ -71,42 +71,37 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 
 	static final class FluxFilterWhenSubscriber<T> implements InnerOperator<T, T> {
 
-		final Function<? super T, ? extends Publisher<Boolean>> asyncPredicate;
-		final int                                               bufferSize;
-		final AtomicReferenceArray<T>                           toFilter;
-		final CoreSubscriber<? super T>                         actual;
-		final Context                                           ctx;
-
-		int          consumed;
-		long         consumerIndex;
-		long         emitted;
-		Boolean      innerResult;
-		long         producerIndex;
-		Subscription upstream;
-
-		volatile boolean         cancelled;
-		volatile FilterWhenInner current;
-		volatile boolean         done;
-		volatile Throwable       error;
-		volatile long            requested;
-		volatile int             state;
-		volatile int             wip;
-
-		static final AtomicReferenceFieldUpdater<FluxFilterWhenSubscriber, Throwable>      ERROR     =
+		static final AtomicReferenceFieldUpdater<FluxFilterWhenSubscriber, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(FluxFilterWhenSubscriber.class, Throwable.class, "error");
-		static final AtomicLongFieldUpdater<FluxFilterWhenSubscriber>                      REQUESTED =
+		static final AtomicLongFieldUpdater<FluxFilterWhenSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(FluxFilterWhenSubscriber.class, "requested");
-		static final AtomicIntegerFieldUpdater<FluxFilterWhenSubscriber>                   WIP       =
+		static final AtomicIntegerFieldUpdater<FluxFilterWhenSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(FluxFilterWhenSubscriber.class, "wip");
-		static final AtomicReferenceFieldUpdater<FluxFilterWhenSubscriber, FilterWhenInner>CURRENT   =
+		static final AtomicReferenceFieldUpdater<FluxFilterWhenSubscriber, FilterWhenInner> CURRENT =
 				AtomicReferenceFieldUpdater.newUpdater(FluxFilterWhenSubscriber.class, FilterWhenInner.class, "current");
-
 		@SuppressWarnings("ConstantConditions")
 		static final FilterWhenInner INNER_CANCELLED = new FilterWhenInner(null, false);
-
-		static final int STATE_FRESH   = 0;
+		static final int STATE_FRESH = 0;
 		static final int STATE_RUNNING = 1;
-		static final int STATE_RESULT  = 2;
+		static final int STATE_RESULT = 2;
+		final Function<? super T, ? extends Publisher<Boolean>> asyncPredicate;
+		final int bufferSize;
+		final AtomicReferenceArray<T> toFilter;
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		int consumed;
+		long consumerIndex;
+		long emitted;
+		Boolean innerResult;
+		long producerIndex;
+		Subscription upstream;
+		volatile boolean cancelled;
+		volatile FilterWhenInner current;
+		volatile boolean done;
+		volatile Throwable error;
+		volatile long requested;
+		volatile int state;
+		volatile int wip;
 
 		FluxFilterWhenSubscriber(CoreSubscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<Boolean>> asyncPredicate,
@@ -128,7 +123,7 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 			long pi = producerIndex;
 			int m = toFilter.length() - 1;
 
-			int offset = (int)pi & m;
+			int offset = (int) pi & m;
 			toFilter.lazySet(offset, t);
 			producerIndex = pi + 1;
 			drain();
@@ -209,7 +204,7 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 			int m = toFilter.length() - 1;
 			Subscriber<? super T> a = actual;
 
-			for (;;) {
+			for (; ; ) {
 				long r = requested;
 
 				while (e != r) {
@@ -220,7 +215,7 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 
 					boolean d = done;
 
-					int offset = (int)ci & m;
+					int offset = (int) ci & m;
 					T t = toFilter.get(offset);
 					boolean empty = t == null;
 
@@ -228,7 +223,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 						Throwable ex = Exceptions.terminate(ERROR, this);
 						if (ex == null) {
 							a.onComplete();
-						} else {
+						}
+						else {
 							a.onError(ex);
 						}
 						return;
@@ -244,7 +240,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 
 						try {
 							p = Objects.requireNonNull(asyncPredicate.apply(t), "The asyncPredicate returned a null value");
-						} catch (Throwable ex) {
+						}
+						catch (Throwable ex) {
 							Exceptions.throwIfFatal(ex);
 							Exceptions.addThrowable(ERROR, this, ex);
 							p = null; //discarded as "old" below
@@ -255,8 +252,9 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 								Boolean u;
 
 								try {
-									u = ((Callable<Boolean>)p).call();
-								} catch (Throwable ex) {
+									u = ((Callable<Boolean>) p).call();
+								}
+								catch (Throwable ex) {
 									Exceptions.throwIfFatal(ex);
 									Exceptions.addThrowable(ERROR, this, ex);
 									u = null; //triggers discard below
@@ -269,9 +267,10 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 								else {
 									Operators.onDiscard(t, ctx);
 								}
-							} else {
+							}
+							else {
 								FilterWhenInner inner = new FilterWhenInner(this, !(p instanceof Mono));
-								if (CURRENT.compareAndSet(this,null, inner)) {
+								if (CURRENT.compareAndSet(this, null, inner)) {
 									state = STATE_RUNNING;
 									p.subscribe(inner);
 									break;
@@ -286,8 +285,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 							f = 0;
 							upstream.request(limit);
 						}
-					} else
-					if (s == STATE_RESULT) {
+					}
+					else if (s == STATE_RESULT) {
 						Boolean u = innerResult;
 						innerResult = null;
 
@@ -306,7 +305,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 							upstream.request(limit);
 						}
 						state = STATE_FRESH;
-					} else {
+					}
+					else {
 						break;
 					}
 				}
@@ -319,7 +319,7 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 
 					boolean d = done;
 
-					int offset = (int)ci & m;
+					int offset = (int) ci & m;
 					T t = toFilter.get(offset);
 					boolean empty = t == null;
 
@@ -327,7 +327,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 						Throwable ex = Exceptions.terminate(ERROR, this);
 						if (ex == null) {
 							a.onComplete();
-						} else {
+						}
+						else {
 							a.onError(ex);
 						}
 						return;
@@ -343,7 +344,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 					if (missed == 0) {
 						break;
 					}
-				} else {
+				}
+				else {
 					missed = w;
 				}
 			}
@@ -406,15 +408,12 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 
 	static final class FilterWhenInner implements InnerConsumer<Boolean> {
 
-		final FluxFilterWhenSubscriber<?> parent;
-		final boolean                     cancelOnNext;
-
-		boolean done;
-
-		volatile Subscription sub;
-
 		static final AtomicReferenceFieldUpdater<FilterWhenInner, Subscription> SUB =
 				AtomicReferenceFieldUpdater.newUpdater(FilterWhenInner.class, Subscription.class, "sub");
+		final FluxFilterWhenSubscriber<?> parent;
+		final boolean cancelOnNext;
+		boolean done;
+		volatile Subscription sub;
 
 		FilterWhenInner(FluxFilterWhenSubscriber<?> parent, boolean cancelOnNext) {
 			this.parent = parent;
@@ -449,7 +448,8 @@ class FluxFilterWhen<T> extends InternalFluxOperator<T, T> {
 			if (!done) {
 				done = true;
 				parent.innerError(t);
-			} else {
+			}
+			else {
 				Operators.onErrorDropped(t, parent.currentContext());
 			}
 		}

@@ -74,53 +74,44 @@ final class FluxSampleTimeout<T, U> extends InternalFluxOperator<T, T> {
 		return main;
 	}
 
-	static final class SampleTimeoutMain<T, U>implements InnerOperator<T, T> {
-
-		final Function<? super T, ? extends Publisher<U>> throttler;
-		final Queue<SampleTimeoutOther<T, U>>             queue;
-		final CoreSubscriber<? super T>                   actual;
-		final Context                                     ctx;
-
-		volatile Subscription s;
+	static final class SampleTimeoutMain<T, U> implements InnerOperator<T, T> {
 
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleTimeoutMain, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(SampleTimeoutMain.class,
 						Subscription.class,
 						"s");
-
-		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleTimeoutMain, Subscription>
 				OTHER = AtomicReferenceFieldUpdater.newUpdater(SampleTimeoutMain.class,
 				Subscription.class,
 				"other");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SampleTimeoutMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(SampleTimeoutMain.class, "requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SampleTimeoutMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(SampleTimeoutMain.class, "wip");
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleTimeoutMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(SampleTimeoutMain.class,
 						Throwable.class,
 						"error");
-
-		volatile boolean done;
-
-		volatile boolean cancelled;
-
-		volatile long index;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SampleTimeoutMain> INDEX =
 				AtomicLongFieldUpdater.newUpdater(SampleTimeoutMain.class, "index");
+		final Function<? super T, ? extends Publisher<U>> throttler;
+		final Queue<SampleTimeoutOther<T, U>> queue;
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		volatile Subscription s;
+		volatile Subscription other;
+		volatile long requested;
+		volatile int wip;
+		volatile Throwable error;
+		volatile boolean done;
+		volatile boolean cancelled;
+		volatile long index;
 
 		SampleTimeoutMain(CoreSubscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<U>> throttler,
@@ -335,16 +326,13 @@ final class FluxSampleTimeout<T, U> extends InternalFluxOperator<T, T> {
 	static final class SampleTimeoutOther<T, U> extends Operators.DeferredSubscription
 			implements InnerConsumer<U> {
 
-		final SampleTimeoutMain<T, U> main;
-
-		final T value;
-
-		final long index;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SampleTimeoutOther> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(SampleTimeoutOther.class, "once");
+		final SampleTimeoutMain<T, U> main;
+		final T value;
+		final long index;
+		volatile int once;
 
 		SampleTimeoutOther(SampleTimeoutMain<T, U> main, T value, long index) {
 			this.main = main;

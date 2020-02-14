@@ -117,40 +117,26 @@ final class FluxPublishOn<T> extends InternalFluxOperator<T, T> implements Fusea
 	static final class PublishOnSubscriber<T>
 			implements QueueSubscription<T>, Runnable, InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Scheduler scheduler;
-
-		final Worker worker;
-
-		final boolean delayError;
-
-		final int prefetch;
-
-		final int limit;
-
-		final Supplier<? extends Queue<T>> queueSupplier;
-
-		Subscription s;
-
-		Queue<T> queue;
-
-		volatile boolean cancelled;
-
-		volatile boolean done;
-
-		Throwable error;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<PublishOnSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(PublishOnSubscriber.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<PublishOnSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(PublishOnSubscriber.class, "requested");
-
+		final CoreSubscriber<? super T> actual;
+		final Scheduler scheduler;
+		final Worker worker;
+		final boolean delayError;
+		final int prefetch;
+		final int limit;
+		final Supplier<? extends Queue<T>> queueSupplier;
+		Subscription s;
+		Queue<T> queue;
+		volatile boolean cancelled;
+		volatile boolean done;
+		Throwable error;
+		volatile int wip;
+		volatile long requested;
 		int sourceMode;
 
 		long produced;
@@ -523,8 +509,8 @@ final class FluxPublishOn<T> extends InternalFluxOperator<T, T> implements Fusea
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
-			if (key == Attr.REQUESTED_FROM_DOWNSTREAM ) return requested;
-			if (key == Attr.PARENT ) return s;
+			if (key == Attr.REQUESTED_FROM_DOWNSTREAM) return requested;
+			if (key == Attr.PARENT) return s;
 			if (key == Attr.CANCELLED) return cancelled;
 			if (key == Attr.TERMINATED) return done;
 			if (key == Attr.BUFFERED) return queue != null ? queue.size() : 0;
@@ -586,42 +572,28 @@ final class FluxPublishOn<T> extends InternalFluxOperator<T, T> implements Fusea
 	static final class PublishOnConditionalSubscriber<T>
 			implements QueueSubscription<T>, Runnable, InnerOperator<T, T> {
 
-		final ConditionalSubscriber<? super T> actual;
-
-		final Worker worker;
-
-		final Scheduler scheduler;
-
-		final boolean delayError;
-
-		final int prefetch;
-
-		final int limit;
-
-		final Supplier<? extends Queue<T>> queueSupplier;
-
-		Subscription s;
-
-		Queue<T> queue;
-
-		volatile boolean cancelled;
-
-		volatile boolean done;
-
-		Throwable error;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<PublishOnConditionalSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(PublishOnConditionalSubscriber.class,
 						"wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<PublishOnConditionalSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(PublishOnConditionalSubscriber.class,
 						"requested");
-
+		final ConditionalSubscriber<? super T> actual;
+		final Worker worker;
+		final Scheduler scheduler;
+		final boolean delayError;
+		final int prefetch;
+		final int limit;
+		final Supplier<? extends Queue<T>> queueSupplier;
+		Subscription s;
+		Queue<T> queue;
+		volatile boolean cancelled;
+		volatile boolean done;
+		Throwable error;
+		volatile int wip;
+		volatile long requested;
 		int sourceMode;
 
 		long produced;
@@ -706,7 +678,7 @@ final class FluxPublishOn<T> extends InternalFluxOperator<T, T> implements Fusea
 
 		@Override
 		public void onError(Throwable t) {
-			if(done){
+			if (done) {
 				Operators.onErrorDropped(t, actual.currentContext());
 				return;
 			}
@@ -717,7 +689,7 @@ final class FluxPublishOn<T> extends InternalFluxOperator<T, T> implements Fusea
 
 		@Override
 		public void onComplete() {
-			if(done){
+			if (done) {
 				return;
 			}
 			done = true;

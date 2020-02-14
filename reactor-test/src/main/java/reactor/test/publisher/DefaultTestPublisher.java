@@ -39,34 +39,26 @@ import reactor.util.annotation.Nullable;
  */
 class DefaultTestPublisher<T> extends TestPublisher<T> {
 
-	@SuppressWarnings("rawtypes")
-	private static final TestPublisherSubscription[] EMPTY = new TestPublisherSubscription[0];
-
-	@SuppressWarnings("rawtypes")
-	private static final TestPublisherSubscription[] TERMINATED = new TestPublisherSubscription[0];
-
-	volatile int cancelCount;
-
 	static final AtomicIntegerFieldUpdater<DefaultTestPublisher> CANCEL_COUNT =
-		AtomicIntegerFieldUpdater.newUpdater(DefaultTestPublisher.class, "cancelCount");
-
-	Throwable error;
-
-	volatile boolean hasOverflown;
-	volatile boolean wasRequested;
-
-	volatile long subscribeCount;
+			AtomicIntegerFieldUpdater.newUpdater(DefaultTestPublisher.class, "cancelCount");
 	static final AtomicLongFieldUpdater<DefaultTestPublisher> SUBSCRIBED_COUNT =
 			AtomicLongFieldUpdater.newUpdater(DefaultTestPublisher.class, "subscribeCount");
-
-	final EnumSet<Violation> violations;
-
-	@SuppressWarnings("unchecked")
-	volatile TestPublisherSubscription<T>[] subscribers = EMPTY;
-
 	@SuppressWarnings("rawtypes")
 	static final AtomicReferenceFieldUpdater<DefaultTestPublisher, TestPublisherSubscription[]> SUBSCRIBERS =
 			AtomicReferenceFieldUpdater.newUpdater(DefaultTestPublisher.class, TestPublisherSubscription[].class, "subscribers");
+	@SuppressWarnings("rawtypes")
+	private static final TestPublisherSubscription[] EMPTY = new TestPublisherSubscription[0];
+	@SuppressWarnings("rawtypes")
+	private static final TestPublisherSubscription[] TERMINATED = new TestPublisherSubscription[0];
+	final EnumSet<Violation> violations;
+	volatile int cancelCount;
+	Throwable error;
+	volatile boolean hasOverflown;
+	volatile boolean wasRequested;
+	volatile long subscribeCount;
+	@SuppressWarnings("unchecked")
+	volatile TestPublisherSubscription<T>[] subscribers = EMPTY;
+	private Consumer<TestPublisher<T>> replayOnSubscribe = null;
 
 	DefaultTestPublisher(Violation first, Violation... rest) {
 		this.violations = EnumSet.of(first, rest);
@@ -93,11 +85,13 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 				replayOnSubscribe.accept(this);
 			}
 
-		} else {
+		}
+		else {
 			Throwable e = error;
 			if (e != null) {
 				s.onError(e);
-			} else {
+			}
+			else {
 				s.onComplete();
 			}
 		}
@@ -169,88 +163,6 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 		}
 	}
 
-	static final class TestPublisherSubscription<T> implements Subscription {
-
-		final Subscriber<? super T>                     actual;
-		final Fuseable.ConditionalSubscriber<? super T> actualConditional;
-
-		final DefaultTestPublisher<T> parent;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
-
-		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<TestPublisherSubscription>
-				REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(TestPublisherSubscription.class, "requested");
-
-		@SuppressWarnings("unchecked")
-		TestPublisherSubscription(Subscriber<? super T> actual, DefaultTestPublisher<T> parent) {
-			this.actual = actual;
-			if(actual instanceof Fuseable.ConditionalSubscriber){
-				this.actualConditional = (Fuseable.ConditionalSubscriber<? super T>) actual;
-			}
-			else {
-				this.actualConditional = null;
-			}
-			this.parent = parent;
-		}
-
-		@Override
-		public void request(long n) {
-			if (Operators.validate(n)) {
-				Operators.addCap(REQUESTED, this, n);
-				parent.wasRequested = true;
-			}
-		}
-
-		@Override
-		public void cancel() {
-			if (!cancelled) {
-				DefaultTestPublisher.CANCEL_COUNT.incrementAndGet(parent);
-				if (parent.violations.contains(Violation.CLEANUP_ON_TERMINATE)||parent.violations.contains(Violation.DEFER_CANCELLATION)) {
-					return;
-				}
-				cancelled = true;
-				parent.remove(this);
-			}
-		}
-
-		void onNext(T value) {
-			long r = requested;
-			if (r != 0L || parent.violations.contains(Violation.REQUEST_OVERFLOW)) {
-				if (r == 0) {
-					parent.hasOverflown = true;
-				}
-				boolean sent;
-				if(actualConditional != null){
-					sent = actualConditional.tryOnNext(value);
-				}
-				else {
-					sent = true;
-					actual.onNext(value);
-				}
-				if (sent && r != Long.MAX_VALUE) {
-					REQUESTED.decrementAndGet(this);
-				}
-				return;
-			}
-			parent.remove(this);
-			actual.onError(new IllegalStateException("Can't deliver value due to lack of requests"));
-		}
-
-		void onError(Throwable e) {
-			actual.onError(e);
-		}
-
-		void onComplete() {
-			actual.onComplete();
-		}
-	}
-
-	private Consumer<TestPublisher<T>> replayOnSubscribe = null;
-
 	public TestPublisher<T> replayOnSubscribe(Consumer<TestPublisher<T>> replay) {
 		if (replayOnSubscribe == null) {
 			replayOnSubscribe = replay;
@@ -271,12 +183,12 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 		return subscribeCount > 0;
 	}
 
-    @Override
-    public long subscribeCount() {
-        return subscribeCount;
-    }
+	@Override
+	public long subscribeCount() {
+		return subscribeCount;
+	}
 
-    @Override
+	@Override
 	public boolean wasCancelled() {
 		return cancelCount > 0;
 	}
@@ -300,9 +212,9 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 	public DefaultTestPublisher<T> assertMinRequested(long n) {
 		TestPublisherSubscription<T>[] subs = subscribers;
 		long minRequest = Stream.of(subs)
-		                        .mapToLong(s -> s.requested)
-		                        .min()
-		                        .orElse(0);
+				.mapToLong(s -> s.requested)
+				.min()
+				.orElse(0);
 		if (minRequest < n) {
 			throw new AssertionError("Expected smallest requested amount to be >= " + n + "; got " + minRequest);
 		}
@@ -313,9 +225,9 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 	public DefaultTestPublisher<T> assertMaxRequested(long n) {
 		TestPublisherSubscription<T>[] subs = subscribers;
 		long maxRequest = Stream.of(subs)
-		                        .mapToLong(s -> s.requested)
-		                        .max()
-		                        .orElse(0);
+				.mapToLong(s -> s.requested)
+				.max()
+				.orElse(0);
 		if (maxRequest > n) {
 			throw new AssertionError("Expected largest requested amount to be <= " + n + "; got " + maxRequest);
 		}
@@ -411,7 +323,8 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 		TestPublisherSubscription<?>[] subs;
 		if (violations.contains(Violation.CLEANUP_ON_TERMINATE)) {
 			subs = subscribers;
-		} else {
+		}
+		else {
 			subs = SUBSCRIBERS.getAndSet(this, TERMINATED);
 		}
 		for (TestPublisherSubscription<?> s : subs) {
@@ -425,13 +338,90 @@ class DefaultTestPublisher<T> extends TestPublisher<T> {
 		TestPublisherSubscription<?>[] subs;
 		if (violations.contains(Violation.CLEANUP_ON_TERMINATE)) {
 			subs = subscribers;
-		} else {
+		}
+		else {
 			subs = SUBSCRIBERS.getAndSet(this, TERMINATED);
 		}
 		for (TestPublisherSubscription<?> s : subs) {
 			s.onComplete();
 		}
 		return this;
+	}
+
+	static final class TestPublisherSubscription<T> implements Subscription {
+
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<TestPublisherSubscription>
+				REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(TestPublisherSubscription.class, "requested");
+		final Subscriber<? super T> actual;
+		final Fuseable.ConditionalSubscriber<? super T> actualConditional;
+		final DefaultTestPublisher<T> parent;
+		volatile boolean cancelled;
+		volatile long requested;
+
+		@SuppressWarnings("unchecked")
+		TestPublisherSubscription(Subscriber<? super T> actual, DefaultTestPublisher<T> parent) {
+			this.actual = actual;
+			if (actual instanceof Fuseable.ConditionalSubscriber) {
+				this.actualConditional = (Fuseable.ConditionalSubscriber<? super T>) actual;
+			}
+			else {
+				this.actualConditional = null;
+			}
+			this.parent = parent;
+		}
+
+		@Override
+		public void request(long n) {
+			if (Operators.validate(n)) {
+				Operators.addCap(REQUESTED, this, n);
+				parent.wasRequested = true;
+			}
+		}
+
+		@Override
+		public void cancel() {
+			if (!cancelled) {
+				DefaultTestPublisher.CANCEL_COUNT.incrementAndGet(parent);
+				if (parent.violations.contains(Violation.CLEANUP_ON_TERMINATE) || parent.violations.contains(Violation.DEFER_CANCELLATION)) {
+					return;
+				}
+				cancelled = true;
+				parent.remove(this);
+			}
+		}
+
+		void onNext(T value) {
+			long r = requested;
+			if (r != 0L || parent.violations.contains(Violation.REQUEST_OVERFLOW)) {
+				if (r == 0) {
+					parent.hasOverflown = true;
+				}
+				boolean sent;
+				if (actualConditional != null) {
+					sent = actualConditional.tryOnNext(value);
+				}
+				else {
+					sent = true;
+					actual.onNext(value);
+				}
+				if (sent && r != Long.MAX_VALUE) {
+					REQUESTED.decrementAndGet(this);
+				}
+				return;
+			}
+			parent.remove(this);
+			actual.onError(new IllegalStateException("Can't deliver value due to lack of requests"));
+		}
+
+		void onError(Throwable e) {
+			actual.onError(e);
+		}
+
+		void onComplete() {
+			actual.onComplete();
+		}
 	}
 
 }

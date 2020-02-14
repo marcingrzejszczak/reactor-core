@@ -155,7 +155,7 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 			return;
 		}
 		if (n == 1) {
-			Function<T, R> f = t -> combiner.apply(new Object[]{t});
+			Function<T, R> f = t -> combiner.apply(new Object[] {t});
 			if (a[0] instanceof Fuseable) {
 				new FluxMapFuseable<>(from(a[0]), f).subscribe(actual);
 				return;
@@ -185,49 +185,39 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 	static final class CombineLatestCoordinator<T, R>
 			implements QueueSubscription<R>, InnerProducer<R> {
 
-		final Function<Object[], R>     combiner;
-		final CombineLatestInner<T>[]   subscribers;
-		final Queue<SourceAndArray>     queue;
-		final Object[]                  latest;
-		final CoreSubscriber<? super R> actual;
-
-		boolean outputFused;
-
-		int nonEmptySources;
-
-		int completedSources;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<CombineLatestCoordinator> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(CombineLatestCoordinator.class,
 						"requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<CombineLatestCoordinator> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(CombineLatestCoordinator.class,
 						"wip");
-
-		volatile boolean done;
-
-		volatile Throwable error;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<CombineLatestCoordinator, Throwable>
 				ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(CombineLatestCoordinator.class,
 						Throwable.class,
 						"error");
+		final Function<Object[], R> combiner;
+		final CombineLatestInner<T>[] subscribers;
+		final Queue<SourceAndArray> queue;
+		final Object[] latest;
+		final CoreSubscriber<? super R> actual;
+		boolean outputFused;
+		int nonEmptySources;
+		int completedSources;
+		volatile boolean cancelled;
+		volatile long requested;
+		volatile int wip;
+		volatile boolean done;
+		volatile Throwable error;
 
 		CombineLatestCoordinator(CoreSubscriber<? super R> actual,
 				Function<Object[], R> combiner,
 				int n,
 				Queue<SourceAndArray> queue, int prefetch) {
-		 	this.actual = actual;
+			this.actual = actual;
 			this.combiner = combiner;
 			@SuppressWarnings("unchecked") CombineLatestInner<T>[] a =
 					new CombineLatestInner[n];
@@ -243,7 +233,7 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 		public final CoreSubscriber<? super R> actual() {
 			return actual;
 		}
-		
+
 		@Override
 		public void request(long n) {
 			if (Operators.validate(n)) {
@@ -440,7 +430,7 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 						Context ctx = actual.currentContext();
 						Operators.onDiscardMultiple(Stream.of(v.array), ctx);
 
-						ex = Operators.onOperatorError(this, ex,	v.array, ctx);
+						ex = Operators.onOperatorError(this, ex, v.array, ctx);
 						Exceptions.addThrowable(ERROR, this, ex);
 						//noinspection ConstantConditions
 						ex = Exceptions.terminate(ERROR, this);
@@ -562,24 +552,19 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 	static final class CombineLatestInner<T>
 			implements InnerConsumer<T> {
 
-		final CombineLatestCoordinator<T, ?> parent;
-
-		final int index;
-
-		final int prefetch;
-
-		final int limit;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<CombineLatestInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(CombineLatestInner.class,
 						Subscription.class,
 						"s");
-
+		final CombineLatestCoordinator<T, ?> parent;
+		final int index;
+		final int prefetch;
+		final int limit;
+		volatile Subscription s;
 		int produced;
 
-		 CombineLatestInner(CombineLatestCoordinator<T, ?> parent,
+		CombineLatestInner(CombineLatestCoordinator<T, ?> parent,
 				int index,
 				int prefetch) {
 			this.parent = parent;
@@ -587,7 +572,7 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 			this.prefetch = prefetch;
 			this.limit = Operators.unboundedOrLimit(prefetch);
 		}
-		
+
 		@Override
 		public Context currentContext() {
 			return parent.actual.currentContext();
@@ -633,7 +618,7 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
-			if (key == Attr.PARENT) return  s;
+			if (key == Attr.PARENT) return s;
 			if (key == Attr.ACTUAL) return parent;
 			if (key == Attr.CANCELLED) return s == Operators.cancelledSubscription();
 			if (key == Attr.PREFETCH) return prefetch;
@@ -648,7 +633,7 @@ final class FluxCombineLatest<T, R> extends Flux<R> implements Fuseable, SourceP
 	static final class SourceAndArray {
 
 		final CombineLatestInner<?> source;
-		final Object[]              array;
+		final Object[] array;
 
 		SourceAndArray(CombineLatestInner<?> source, Object[] array) {
 			this.source = source;

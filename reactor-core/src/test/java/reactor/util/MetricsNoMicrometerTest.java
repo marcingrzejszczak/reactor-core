@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import org.assertj.core.api.Assumptions;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -43,7 +42,7 @@ public class MetricsNoMicrometerTest {
 	@BeforeClass
 	public static void assumeNoMicrometer() {
 		Assumptions.assumeThat(Metrics.isInstrumentationAvailable())
-		           .as("Micrometer on the classpath").isFalse();
+				.as("Micrometer on the classpath").isFalse();
 	}
 
 	@Test

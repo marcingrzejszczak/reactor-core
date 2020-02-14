@@ -28,34 +28,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MonoJustTest {
 
-    @Test(expected = NullPointerException.class)
-    public void nullValue() {
-        new MonoJust<Integer>(null);
-    }
+	@Test(expected = NullPointerException.class)
+	public void nullValue() {
+		new MonoJust<Integer>(null);
+	}
 
-    @Test
-    public void valueSame() {
-	    try {
-		    Assert.assertSame(1, new MonoJust<>(1).call());
-	    }
-	    catch (Exception e) {
-		    e.printStackTrace();
-	    }
-    }
+	@Test
+	public void valueSame() {
+		try {
+			Assert.assertSame(1, new MonoJust<>(1).call());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-    @Test
-    public void normal() {
-	    StepVerifier.create(Mono.just(1))
-	                .expectNext(1)
-	                .verifyComplete();
-    }
+	@Test
+	public void normal() {
+		StepVerifier.create(Mono.just(1))
+				.expectNext(1)
+				.verifyComplete();
+	}
 
-    @Test
-    public void normalOptional() {
-	    StepVerifier.create(Mono.justOrEmpty(Optional.of(1)))
-	                .expectNext(1)
-	                .verifyComplete();
-    }
+	@Test
+	public void normalOptional() {
+		StepVerifier.create(Mono.justOrEmpty(Optional.of(1)))
+				.expectNext(1)
+				.verifyComplete();
+	}
 
 	@Test
 	public void normalOptionalOfNullable() {
@@ -66,68 +66,68 @@ public class MonoJustTest {
 	@Test
 	public void normalScalarOptionalEmpty() {
 		StepVerifier.create(Mono.justOrEmpty(null))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 
 	@Test
 	public void normalScalarOptionalEmpty2() {
-		StepVerifier.create(Mono.justOrEmpty((Object)null))
-		            .verifyComplete();
+		StepVerifier.create(Mono.justOrEmpty((Object) null))
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalScalarOptional() {
 		StepVerifier.create(Mono.justOrEmpty(1))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
-    @Test
-    public void normalOptionalEmpty() {
-        StepVerifier.create(Mono.justOrEmpty(Optional.empty()))
-                    .verifyComplete();
-    }
+	@Test
+	public void normalOptionalEmpty() {
+		StepVerifier.create(Mono.justOrEmpty(Optional.empty()))
+				.verifyComplete();
+	}
 
-    @Test
-    public void normalBackpressured() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
+	@Test
+	public void normalBackpressured() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
-        Mono.just(1).subscribe(ts);
+		Mono.just(1).subscribe(ts);
 
-        ts.assertNoValues()
-          .assertNotComplete()
-          .assertNoError();
+		ts.assertNoValues()
+				.assertNotComplete()
+				.assertNoError();
 
-        ts.request(1);
+		ts.request(1);
 
-        ts.assertValues(1)
-          .assertComplete()
-          .assertNoError();
-    }
+		ts.assertValues(1)
+				.assertComplete()
+				.assertNoError();
+	}
 
-    @Test
-    public void fused() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create();
-        ts.requestedFusionMode(Fuseable.ANY);
-        
-        Mono.just(1).subscribe(ts);
-        
-        ts.assertFuseableSource()
-        .assertFusionMode(Fuseable.SYNC)
-        .assertValues(1);
-    }
+	@Test
+	public void fused() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create();
+		ts.requestedFusionMode(Fuseable.ANY);
+
+		Mono.just(1).subscribe(ts);
+
+		ts.assertFuseableSource()
+				.assertFusionMode(Fuseable.SYNC)
+				.assertValues(1);
+	}
 
 	@Test
 	public void onMonoSuccessReturnOnBlock() {
 		assertThat(Mono.just("test")
-		               .block()).isEqualToIgnoringCase("test");
+				.block()).isEqualToIgnoringCase("test");
 	}
 
 	@Test
 	public void scanOperator() {
-    	MonoJust s = new MonoJust<>("foo");
-    	assertThat(s.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		MonoJust s = new MonoJust<>("foo");
+		assertThat(s.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 	}
 
 }

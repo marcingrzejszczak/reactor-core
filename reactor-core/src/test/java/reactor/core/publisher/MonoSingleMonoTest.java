@@ -12,30 +12,30 @@ public class MonoSingleMonoTest {
 	@Test
 	public void callableEmpty() {
 		StepVerifier.create(Mono.empty().single())
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(NoSuchElementException.class)
-				            .hasMessage("Source was a (constant) empty"));
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(NoSuchElementException.class)
+						.hasMessage("Source was a (constant) empty"));
 	}
 
 	@Test
 	public void callableValued() {
 		StepVerifier.create(Mono.just("foo").single())
-		            .expectNext("foo")
-		            .verifyComplete();
+				.expectNext("foo")
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalEmpty() {
 		StepVerifier.create(Mono.empty().hide().single())
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(NoSuchElementException.class)
-				            .hasMessage("Source was empty"));
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(NoSuchElementException.class)
+						.hasMessage("Source was empty"));
 	}
 
 	@Test
 	public void normalValued() {
 		StepVerifier.create(Mono.just("foo").hide().single())
-		            .expectNext("foo")
-		            .verifyComplete();
+				.expectNext("foo")
+				.verifyComplete();
 	}
 }

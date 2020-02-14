@@ -66,16 +66,16 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 
 	static final class HandleFuseableSubscriber<T, R>
 			implements InnerOperator<T, R>,
-			           ConditionalSubscriber<T>, QueueSubscription<R>,
-			           SynchronousSink<R> {
+			ConditionalSubscriber<T>, QueueSubscription<R>,
+			SynchronousSink<R> {
 
-		final CoreSubscriber<? super R>                 actual;
+		final CoreSubscriber<? super R> actual;
 		final BiConsumer<? super T, SynchronousSink<R>> handler;
 
-		boolean   done;
-		boolean   stop;
+		boolean done;
+		boolean stop;
 		Throwable error;
-		R         data;
+		R data;
 
 		QueueSubscription<T> s;
 
@@ -189,7 +189,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 							s.request(1L);
 						}
 					}
-					else{
+					else {
 						done = true; //set done because we throw or go through `actual` directly
 						s.cancel();
 						actual.onComplete();
@@ -263,7 +263,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 						try {
 							handler.accept(v, this);
 						}
-						catch (Throwable error){
+						catch (Throwable error) {
 							RuntimeException e_ = Operators.onNextPollError(v, error, actual.currentContext());
 							if (e_ != null) {
 								throw e_;
@@ -312,7 +312,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 						try {
 							handler.accept(v, this);
 						}
-						catch (Throwable error){
+						catch (Throwable error) {
 							RuntimeException e_ = Operators.onNextPollError(v, error, actual.currentContext());
 							if (e_ != null) {
 								throw e_;
@@ -417,15 +417,15 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 
 	static final class HandleFuseableConditionalSubscriber<T, R>
 			implements ConditionalSubscriber<T>, InnerOperator<T, R>,
-			           QueueSubscription<R>, SynchronousSink<R> {
+			QueueSubscription<R>, SynchronousSink<R> {
 
-		final ConditionalSubscriber<? super R>          actual;
+		final ConditionalSubscriber<? super R> actual;
 		final BiConsumer<? super T, SynchronousSink<R>> handler;
 
-		boolean   done;
-		boolean   stop;
+		boolean done;
+		boolean stop;
 		Throwable error;
-		R         data;
+		R data;
 
 		QueueSubscription<T> s;
 
@@ -457,7 +457,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 			if (sourceMode == ASYNC) {
 				actual.onNext(null);
 			}
-			else  {
+			else {
 				if (done) {
 					Operators.onNextDropped(t, actual.currentContext());
 					return;
@@ -650,7 +650,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 						try {
 							handler.accept(v, this);
 						}
-						catch (Throwable error){
+						catch (Throwable error) {
 							RuntimeException e_ = Operators.onNextPollError(v, error, actual.currentContext());
 							if (e_ != null) {
 								throw e_;
@@ -702,7 +702,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 						try {
 							handler.accept(v, this);
 						}
-						catch (Throwable error){
+						catch (Throwable error) {
 							RuntimeException e_ = Operators.onNextPollError(v, error, actual.currentContext());
 							if (e_ != null) {
 								throw e_;
@@ -721,7 +721,7 @@ final class FluxHandleFuseable<T, R> extends InternalFluxOperator<T, R> implemen
 								if (e_ != null) {
 									throw e_;
 								}
-								else{
+								else {
 									reset();
 									continue;
 								}

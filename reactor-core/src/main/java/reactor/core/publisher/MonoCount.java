@@ -39,7 +39,7 @@ final class MonoCount<T> extends MonoFromFluxOperator<T, Long> implements Fuseab
 		return new CountSubscriber<>(actual);
 	}
 
-	static final class CountSubscriber<T> extends Operators.MonoSubscriber<T, Long>  {
+	static final class CountSubscriber<T> extends Operators.MonoSubscriber<T, Long> {
 
 		long counter;
 

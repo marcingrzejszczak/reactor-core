@@ -45,8 +45,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
 		return defaultOptions.shouldHitDropNextHookAfterTerminate(false)
-		                     .shouldHitDropErrorHookAfterTerminate(false)
-		                     .prefetch(Queues.XS_BUFFER_SIZE);
+				.shouldHitDropErrorHookAfterTerminate(false)
+				.prefetch(Queues.XS_BUFFER_SIZE);
 	}
 
 	@Override
@@ -113,7 +113,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 				})),
 
 				scenario(f -> f.concatMap(d -> null))
-					,
+				,
 
 				scenario(f -> f.concatMap(d -> {
 					throw exception();
@@ -121,7 +121,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 
 				scenario(f -> f.concatMap(d -> null, 1))
 						.prefetch(1)
-						,
+				,
 
 				scenario(f -> f.concatMapDelayError(d -> {
 					throw exception();
@@ -130,7 +130,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 
 				scenario(f -> f.concatMapDelayError(d -> null))
 						.shouldHitDropErrorHookAfterTerminate(true)
-						,
+				,
 
 				scenario(f -> f.concatMapDelayError(d -> {
 					throw exception();
@@ -148,12 +148,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .concatMap(v -> Flux.range(v, 2))
-		    .subscribe(ts);
+				.concatMap(v -> Flux.range(v, 2))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 2, 3)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -161,13 +161,13 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .hide()
-		    .concatMap(v -> Flux.range(v, 2))
-		    .subscribe(ts);
+				.hide()
+				.concatMap(v -> Flux.range(v, 2))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 2, 3)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -175,12 +175,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .concatMapDelayError(v -> Flux.range(v, 2))
-		    .subscribe(ts);
+				.concatMapDelayError(v -> Flux.range(v, 2))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 2, 3)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -188,13 +188,13 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .hide()
-		    .concatMapDelayError(v -> Flux.range(v, 2))
-		    .subscribe(ts);
+				.hide()
+				.concatMapDelayError(v -> Flux.range(v, 2))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 2, 3)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -202,12 +202,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1000)
-		    .concatMap(v -> Flux.range(v, 1000))
-		    .subscribe(ts);
+				.concatMap(v -> Flux.range(v, 1000))
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -215,12 +215,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1000_000)
-		    .concatMap(v -> Flux.just(v))
-		    .subscribe(ts);
+				.concatMap(v -> Flux.just(v))
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -228,13 +228,13 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1000)
-		    .hide()
-		    .concatMap(v -> Flux.range(v, 1000))
-		    .subscribe(ts);
+				.hide()
+				.concatMap(v -> Flux.range(v, 1000))
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -242,12 +242,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1000)
-		    .concatMapDelayError(v -> Flux.range(v, 1000))
-		    .subscribe(ts);
+				.concatMapDelayError(v -> Flux.range(v, 1000))
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -255,12 +255,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1000_000)
-		    .concatMapDelayError(v -> Flux.just(v))
-		    .subscribe(ts);
+				.concatMapDelayError(v -> Flux.just(v))
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -268,45 +268,45 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1000)
-		    .hide()
-		    .concatMapDelayError(v -> Flux.range(v, 1000))
-		    .subscribe(ts);
+				.hide()
+				.concatMapDelayError(v -> Flux.range(v, 1000))
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1302
 	@Test
 	public void boundaryFusion() {
 		Flux.range(1, 10000)
-		    .publishOn(Schedulers.single())
-		    .map(t -> Thread.currentThread().getName().contains("single-") ? "single" : ("BAD-" + t + Thread.currentThread().getName()))
-		    .concatMap(Flux::just)
-		    .publishOn(Schedulers.elastic())
-		    .distinct()
-		    .as(StepVerifier::create)
-		    .expectFusion()
-		    .expectNext("single")
-		    .expectComplete()
-		    .verify(Duration.ofSeconds(5));
+				.publishOn(Schedulers.single())
+				.map(t -> Thread.currentThread().getName().contains("single-") ? "single" : ("BAD-" + t + Thread.currentThread().getName()))
+				.concatMap(Flux::just)
+				.publishOn(Schedulers.elastic())
+				.distinct()
+				.as(StepVerifier::create)
+				.expectFusion()
+				.expectNext("single")
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1302
 	@Test
 	public void boundaryFusionDelayError() {
 		Flux.range(1, 10000)
-		    .publishOn(Schedulers.single())
-		    .map(t -> Thread.currentThread().getName().contains("single-") ? "single" : ("BAD-" + t + Thread.currentThread().getName()))
-		    .concatMapDelayError(Flux::just)
-		    .publishOn(Schedulers.elastic())
-		    .distinct()
-		    .as(StepVerifier::create)
-		    .expectFusion()
-		    .expectNext("single")
-		    .expectComplete()
-		    .verify(Duration.ofSeconds(5));
+				.publishOn(Schedulers.single())
+				.map(t -> Thread.currentThread().getName().contains("single-") ? "single" : ("BAD-" + t + Thread.currentThread().getName()))
+				.concatMapDelayError(Flux::just)
+				.publishOn(Schedulers.elastic())
+				.distinct()
+				.as(StepVerifier::create)
+				.expectFusion()
+				.expectNext("single")
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
 	@Test
@@ -319,11 +319,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> source2 = DirectProcessor.create();
 
 		source.concatMap(v -> v == 1 ? source1 : source2)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 		source.onNext(2);
@@ -341,8 +341,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source2.onComplete();
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -355,11 +355,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> source2 = DirectProcessor.create();
 
 		source.concatMapDelayError(v -> v == 1 ? source1 : source2)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 
@@ -377,8 +377,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source2.onComplete();
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		Assert.assertFalse("source1 has subscribers?", source1.hasDownstreams());
 		Assert.assertFalse("source2 has subscribers?", source2.hasDownstreams());
@@ -394,11 +394,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> source2 = DirectProcessor.create();
 
 		source.concatMap(v -> v == 1 ? source1 : source2)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 
@@ -410,9 +410,9 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source.onError(new RuntimeException("forced failure"));
 
 		ts.assertValues(1)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("source1 has subscribers?", source1.hasDownstreams());
 		Assert.assertFalse("source2 has subscribers?", source2.hasDownstreams());
@@ -428,11 +428,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> source2 = DirectProcessor.create();
 
 		source.concatMapDelayError(v -> v == 1 ? source1 : source2)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 
@@ -444,16 +444,16 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source.onError(new RuntimeException("forced failure"));
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source1.onNext(2);
 		source1.onComplete();
 
 		ts.assertValues(1, 2)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("source1 has subscribers?", source1.hasDownstreams());
 		Assert.assertFalse("source2 has subscribers?", source2.hasDownstreams());
@@ -469,11 +469,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> source2 = DirectProcessor.create();
 
 		source.concatMap(v -> v == 1 ? source1 : source2)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 
@@ -485,9 +485,9 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source1.onError(new RuntimeException("forced failure"));
 
 		ts.assertValues(1)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("source1 has subscribers?", source1.hasDownstreams());
 		Assert.assertFalse("source2 has subscribers?", source2.hasDownstreams());
@@ -504,11 +504,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 
 		//gh-1101: default changed from BOUNDARY to END
 		source.concatMapDelayError(v -> v == 1 ? source1 : source2, false, Queues.XS_BUFFER_SIZE)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 
@@ -520,9 +520,9 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source1.onError(new RuntimeException("forced failure"));
 
 		ts.assertValues(1)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("source1 has subscribers?", source1.hasDownstreams());
 		Assert.assertFalse("source2 has subscribers?", source2.hasDownstreams());
@@ -538,11 +538,11 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> source2 = DirectProcessor.create();
 
 		source.concatMapDelayError(v -> v == 1 ? source1 : source2, true, 32)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		source.onNext(1);
 
@@ -563,9 +563,9 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		source.onComplete();
 
 		ts.assertValues(1, 2)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("source1 has subscribers?", source1.hasDownstreams());
 		Assert.assertFalse("source2 has subscribers?", source2.hasDownstreams());
@@ -576,13 +576,13 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .map(v -> v == 2 ? null : v)
-		    .concatMap(Flux::just)
-		    .subscribe(ts);
+				.map(v -> v == 2 ? null : v)
+				.concatMap(Flux::just)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -590,14 +590,14 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .map(v -> v == 2 ? null : v)
-		    .filter(v -> true)
-		    .concatMap(Flux::just)
-		    .subscribe(ts);
+				.map(v -> v == 2 ? null : v)
+				.filter(v -> true)
+				.concatMap(Flux::just)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -610,12 +610,12 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		up.onComplete();
 
 		up.map(v -> v == 2 ? null : v)
-		  .concatMap(Flux::just)
-		  .subscribe(ts);
+				.concatMap(Flux::just)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -629,13 +629,13 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		up.onComplete();
 
 		up.map(v -> v == 2 ? null : v)
-		  .filter(v -> true)
-		  .concatMap(Flux::just)
-		  .subscribe(ts);
+				.filter(v -> true)
+				.concatMap(Flux::just)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -643,20 +643,20 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		@SuppressWarnings("unchecked") Publisher<Integer>[] sources =
-				new Publisher[]{Flux.just(1), Flux.range(2, 3)};
+				new Publisher[] {Flux.just(1), Flux.range(2, 3)};
 
 		Flux.range(0, 2)
-		    .concatMap(v -> sources[v])
-		    .subscribe(ts);
+				.concatMap(v -> sources[v])
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError();
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -664,106 +664,106 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(0, 10)
-		    .hide()
-		    .concatMap(v -> Flux.<Integer>empty(), 2)
-		    .subscribe(ts);
+				.hide()
+				.concatMap(v -> Flux.<Integer>empty(), 2)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
 	public void publisherOfPublisher() {
 		StepVerifier.create(Flux.concat(Flux.just(Flux.just(1, 2), Flux.just(3, 4))))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
 	public void publisherOfPublisherDelay() {
 		StepVerifier.create(Flux.concatDelayError(Flux.just(Flux.just(1, 2),
 				Flux.just(3, 4))))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
 	public void publisherOfPublisherDelayError() {
 		StepVerifier.create(Flux.concatDelayError(Flux.just(Flux.just(1, 2).concatWith(Flux.error(new Exception("test"))),
 				Flux.just(3, 4))))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void publisherOfPublisherDelayError2() {
 		StepVerifier.create(Flux.just(Flux.just(1, 2)
-		                                  .concatWith(Flux.error(new Exception("test"))),
+						.concatWith(Flux.error(new Exception("test"))),
 				Flux.just(3, 4))
-		                        .concatMap(f -> f))
-		            .expectNext(1, 2)
-		            .verifyErrorMessage("test");
+				.concatMap(f -> f))
+				.expectNext(1, 2)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void publisherOfPublisherDelayEnd3() {
 		StepVerifier.create(Flux.just(Flux.just(1, 2)
-		                                  .concatWith(Flux.error(new Exception("test"))),
+						.concatWith(Flux.error(new Exception("test"))),
 				Flux.just(3, 4))
-		                        .concatMapDelayError(f -> f, true, 128))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.concatMapDelayError(f -> f, true, 128))
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void publisherOfPublisherDelayEndNot3() {
 		StepVerifier.create(Flux.just(Flux.just(1, 2)
-		                                  .concatWith(Flux.error(new Exception("test"))),
+						.concatWith(Flux.error(new Exception("test"))),
 				Flux.just(3, 4))
-		                        .concatMapDelayError(f -> f, false, 128))
-		            .expectNext(1, 2)
-		            .verifyErrorMessage("test");
+				.concatMapDelayError(f -> f, false, 128))
+				.expectNext(1, 2)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void publisherOfPublisherDelayEnd() {
 		StepVerifier.create(Flux.concatDelayError(Flux.just(Flux.just(1, 2),
 				Flux.just(3, 4)), false, 128))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
 	public void publisherOfPublisherDelayEndError() {
 		StepVerifier.create(Flux.concatDelayError(Flux.just(Flux.just(1, 2)
-		                                                        .concatWith(Flux.error(new Exception(
-				                                                        "test"))),
+						.concatWith(Flux.error(new Exception(
+								"test"))),
 				Flux.just(3, 4)), false, 128))
-		            .expectNext(1, 2)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void publisherOfPublisherDelayEnd2() {
 		StepVerifier.create(Flux.concatDelayError(Flux.just(Flux.just(1, 2),
 				Flux.just(3, 4)), true, 128))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
 	public void publisherOfPublisherDelayEndError2() {
 		StepVerifier.create(Flux.concatDelayError(Flux.just(Flux.just(1, 2)
-		                                                        .concatWith(Flux.error(new Exception(
-				                                                        "test"))),
+						.concatWith(Flux.error(new Exception(
+								"test"))),
 				Flux.just(3, 4)), true, 128))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
-	public void issue422(){
+	public void issue422() {
 		Flux<Integer> source = Flux.create((sink) -> {
 			for (int i = 0; i < 300; i++) {
 				sink.next(i);
@@ -774,7 +774,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 
 
 		long cachedCount = cached.concatMapIterable(Collections::singleton)
-		                         .distinct().count().block();
+				.distinct().count().block();
 
 		//System.out.println("source: " + sourceCount);
 		System.out.println("cached: " + cachedCount);
@@ -785,10 +785,10 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AtomicLong requested = new AtomicLong();
 
 		StepVerifier.create(Flux.just(1, 2, 3).hide()
-		                        .doOnRequest(requested::set)
-		                        .concatMap(i -> Flux.range(0, i), Integer.MAX_VALUE))
-		            .expectNext(0, 0, 1, 0, 1, 2)
-		            .verifyComplete();
+				.doOnRequest(requested::set)
+				.concatMap(i -> Flux.range(0, i), Integer.MAX_VALUE))
+				.expectNext(0, 0, 1, 0, 1, 2)
+				.verifyComplete();
 
 		assertThat(requested.get())
 				.isNotEqualTo(Integer.MAX_VALUE)
@@ -800,10 +800,10 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		AtomicLong requested = new AtomicLong();
 
 		StepVerifier.create(Flux.just(1, 2, 3).hide()
-		                        .doOnRequest(requested::set)
-		                        .concatMapDelayError(i -> Flux.range(0, i), Integer.MAX_VALUE))
-		            .expectNext(0, 0, 1, 0, 1, 2)
-		            .verifyComplete();
+				.doOnRequest(requested::set)
+				.concatMapDelayError(i -> Flux.range(0, i), Integer.MAX_VALUE))
+				.expectNext(0, 0, 1, 0, 1, 2)
+				.verifyComplete();
 
 		assertThat(requested.get())
 				.isNotEqualTo(Integer.MAX_VALUE)
@@ -819,8 +819,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 								Flux.just(1, 2),
 								Flux.error(new Exception("test")),
 								Flux.just(3, 4))))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -832,8 +832,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 								Flux.just(1, 2),
 								Mono.error(new Exception("test")),
 								Flux.just(3, 4))))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -844,9 +844,9 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 						Flux.just(1, 2),
 						Flux.<Integer>error(new Exception("test")),
 						Flux.just(3, 4))
-				    .concatMapDelayError(f -> f, true, 32))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+						.concatMapDelayError(f -> f, true, 32))
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -857,14 +857,15 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 						Flux.just(1, 2),
 						Mono.<Integer>error(new Exception("test")),
 						Flux.just(3, 4))
-				    .concatMapDelayError(f -> f, true, 32))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+						.concatMapDelayError(f -> f, true, 32))
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void scanConcatMapDelayed() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxConcatMap.ConcatMapDelayed<String, Integer> test = new FluxConcatMap.ConcatMapDelayed<>(
 				actual, s -> Mono.just(s.length()), Queues.one(), 123, true);
 
@@ -892,7 +893,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 
 	@Test
 	public void scanConcatMapImmediate() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxConcatMap.ConcatMapImmediate<String, Integer> test = new FluxConcatMap.ConcatMapImmediate<>(
 				actual, s -> Mono.just(s.length()), Queues.one(), 123);
 
@@ -918,7 +920,8 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 
 	@Test
 	public void scanConcatMapImmediateError() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxConcatMap.ConcatMapImmediate<String, Integer> test = new FluxConcatMap.ConcatMapImmediate<>(
 				actual, s -> Mono.just(s.length()), Queues.one(), 123);
 
@@ -959,7 +962,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 				.just(1, 2)
 				.hide()
 				.concatMap(f -> {
-					if(f == 1){
+					if (f == 1) {
 						return Mono.error(new NullPointerException());
 					}
 					else {
@@ -983,7 +986,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 				.just(1, 2)
 				.hide()
 				.concatMap(f -> {
-					if(f == 1){
+					if (f == 1) {
 						return Mono.<Integer>error(new NullPointerException()).hide();
 					}
 					else {
@@ -1007,7 +1010,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 				.just(1, 2)
 				.hide()
 				.concatMap(f -> Mono.<Integer>fromRunnable(() -> {
-					if(f == 1) {
+					if (f == 1) {
 						throw new ArithmeticException("boom");
 					}
 				}))
@@ -1027,7 +1030,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 				.just(1, 2)
 				.hide()
 				.concatMapDelayError(f -> {
-					if(f == 1){
+					if (f == 1) {
 						return Mono.<Integer>error(new NullPointerException()).hide();
 					}
 					else {
@@ -1053,7 +1056,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 				.just(1, 2)
 				.hide()
 				.concatMapDelayError(f -> {
-					if(f == 1){
+					if (f == 1) {
 						return Mono.<Integer>error(new NullPointerException());
 					}
 					else {
@@ -1077,7 +1080,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		Flux<Integer> test = Flux
 				.just(0, 1)
 				.hide()
-				.concatMap(f ->  Flux.range(f, 1).map(i -> 1/i).onErrorStop())
+				.concatMap(f -> Flux.range(f, 1).map(i -> 1 / i).onErrorStop())
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
@@ -1094,7 +1097,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		Flux<Integer> test = Flux
 				.just(0, 1)
 				.hide()
-				.concatMap(f ->  Flux.range(f, 1).publishOn(Schedulers.parallel()).map(i -> 1 / i).onErrorStop())
+				.concatMap(f -> Flux.range(f, 1).publishOn(Schedulers.parallel()).map(i -> 1 / i).onErrorStop())
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
@@ -1111,7 +1114,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		Flux<Integer> test = Flux
 				.just(0, 1)
 				.hide()
-				.concatMap(f ->  Mono.just(f).map(i -> 1/i))
+				.concatMap(f -> Mono.just(f).map(i -> 1 / i))
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
@@ -1128,7 +1131,7 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 		Flux<Integer> test = Flux
 				.just(0, 1)
 				.hide()
-				.concatMap(f ->  Mono.just(f).publishOn(Schedulers.parallel()).map(i -> 1/i))
+				.concatMap(f -> Mono.just(f).publishOn(Schedulers.parallel()).map(i -> 1 / i))
 				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
@@ -1163,31 +1166,33 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 	public void discardOnError() {
 		//also tests WeakScalar
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatWith(Mono.error(new IllegalStateException("boom")))
-		                        .concatMap(i -> Mono.just("value" + i)),
+						.concatWith(Mono.error(new IllegalStateException("boom")))
+						.concatMap(i -> Mono.just("value" + i)),
 				0)
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly("value1", 2, 3); //"value1" comes from error cancelling the only inner in flight, the 2 other values are still raw in the queue
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly("value1", 2, 3); //"value1" comes from error cancelling the only inner in flight, the 2 other values are still raw in the queue
 	}
 
 	@Test
 	public void discardOnCancel() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatMap(i -> Mono.just("value" + i), 1),
+						.concatMap(i -> Mono.just("value" + i), 1),
 				0)
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 
 	@Test
 	public void discardOnDrainMapperError() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-				.concatMap(i -> { throw new IllegalStateException("boom"); }))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1);
+				.concatMap(i -> {
+					throw new IllegalStateException("boom");
+				}))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1);
 	}
 
 	@Test
@@ -1211,19 +1216,21 @@ public class FluxConcatMapTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void discardDelayedOnCancel() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatMapDelayError(i -> Mono.just("value" + i), 1),
+						.concatMapDelayError(i -> Mono.just("value" + i), 1),
 				0)
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 
 	@Test
 	public void discardDelayedOnDrainMapperError() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatMapDelayError(i -> { throw new IllegalStateException("boom"); }))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1);
+				.concatMapDelayError(i -> {
+					throw new IllegalStateException("boom");
+				}))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1);
 	}
 }

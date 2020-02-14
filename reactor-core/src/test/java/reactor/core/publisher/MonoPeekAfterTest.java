@@ -51,10 +51,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-	                .expectNext(55)
-	                .expectComplete()
-	                .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected call to onSuccess with null", hasNull.get());
 		assertEquals(1, invoked.intValue());
@@ -76,10 +76,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected call to onSuccess with null", hasNull.get());
 		assertEquals(1, invoked.intValue());
@@ -100,10 +100,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ASYNC)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ASYNC)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected call to onSuccess with null", hasNull.get());
 		assertEquals(1, invoked.intValue());
@@ -124,10 +124,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected call to onSuccess with null", hasNull.get());
 		assertEquals(1, invoked.intValue());
@@ -150,10 +150,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-	                .expectNext(55)
-	                .expectComplete()
-	                .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -178,10 +178,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -204,10 +204,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -231,10 +231,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -258,10 +258,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -286,10 +286,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -312,10 +312,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono.log())
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -339,10 +339,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertFalse("unexpected empty completion", completedEmpty.get());
 		assertEquals(1, invoked.intValue());
@@ -361,10 +361,10 @@ public class MonoPeekAfterTest {
 				.doAfterTerminate(invoked::increment);
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ANY, Fuseable.NONE)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ANY, Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 	}
@@ -379,10 +379,10 @@ public class MonoPeekAfterTest {
 				.doAfterTerminate(invoked::increment);
 
 		StepVerifier.create(mono.log())
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 	}
@@ -398,10 +398,10 @@ public class MonoPeekAfterTest {
 				.doAfterTerminate(invoked::increment);
 
 		StepVerifier.create(mono)
-		            .expectFusion()
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 	}
@@ -410,12 +410,12 @@ public class MonoPeekAfterTest {
 	public void onSuccessCallbackFailureInterruptsOnNext() {
 		LongAdder invoked = new LongAdder();
 		StepVerifier.create(Mono.just("foo")
-		                        .doOnSuccess(s -> {
-		                        	invoked.increment();
-		                        	throw new IllegalArgumentException(s);
-		                        }))
-	                .expectErrorMessage("foo")
-	                .verify();
+				.doOnSuccess(s -> {
+					invoked.increment();
+					throw new IllegalArgumentException(s);
+				}))
+				.expectErrorMessage("foo")
+				.verify();
 		assertEquals(1, invoked.intValue());
 	}
 
@@ -423,12 +423,12 @@ public class MonoPeekAfterTest {
 	public void onSuccessOrErrorCallbackFailureInterruptsOnNext() {
 		LongAdder invoked = new LongAdder();
 		StepVerifier.create(Mono.just("foo")
-		                        .doOnSuccessOrError((v, t) -> {
-			                        invoked.increment();
-			                        throw new IllegalArgumentException(v);
-		                        }))
-		            .expectErrorMessage("foo")
-		            .verify();
+				.doOnSuccessOrError((v, t) -> {
+					invoked.increment();
+					throw new IllegalArgumentException(v);
+				}))
+				.expectErrorMessage("foo")
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 	}
@@ -438,13 +438,13 @@ public class MonoPeekAfterTest {
 		LongAdder invoked = new LongAdder();
 		try {
 			StepVerifier.create(Mono.just("foo")
-			                        .doAfterSuccessOrError((v, t) -> {
-				                        invoked.increment();
-				                        throw new IllegalArgumentException(v);
-			                        }))
-			            .expectNext("bar") //irrelevant
-			            .expectErrorMessage("baz") //irrelevant
-			            .verify();
+					.doAfterSuccessOrError((v, t) -> {
+						invoked.increment();
+						throw new IllegalArgumentException(v);
+					}))
+					.expectNext("bar") //irrelevant
+					.expectErrorMessage("baz") //irrelevant
+					.verify();
 		}
 		catch (Throwable t) {
 			Throwable e = Exceptions.unwrap(t);
@@ -460,13 +460,13 @@ public class MonoPeekAfterTest {
 		LongAdder invoked = new LongAdder();
 		try {
 			StepVerifier.create(Mono.just("foo")
-			                        .doAfterTerminate(() -> {
-				                        invoked.increment();
-				                        throw new IllegalArgumentException("boom");
-			                        }))
-			            .expectNext("bar") //irrelevant
-			            .expectErrorMessage("baz") //irrelevant
-			            .verify();
+					.doAfterTerminate(() -> {
+						invoked.increment();
+						throw new IllegalArgumentException("boom");
+					}))
+					.expectNext("bar") //irrelevant
+					.expectErrorMessage("baz") //irrelevant
+					.verify();
 		}
 		catch (Throwable t) {
 			Throwable e = Exceptions.unwrap(t);
@@ -484,8 +484,8 @@ public class MonoPeekAfterTest {
 
 		StepVerifier.create(Mono.error(err)
 				.doOnSuccess(v -> invoked.increment()))
-	                .expectErrorMessage("boom")
-	                .verify();
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertEquals(0, invoked.intValue());
 	}
@@ -499,13 +499,13 @@ public class MonoPeekAfterTest {
 		IllegalArgumentException err = new IllegalArgumentException("boom");
 
 		StepVerifier.create(Mono.<String>error(err)
-		                        .doOnSuccessOrError((v, t) -> {
-			                        invoked.increment();
-			                        value.set(v);
-			                        error.set(t);
-		                        }))
-		            .expectErrorMessage("boom")
-		            .verify();
+				.doOnSuccessOrError((v, t) -> {
+					invoked.increment();
+					value.set(v);
+					error.set(t);
+				}))
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 		assertEquals(null, value.get());
@@ -526,8 +526,8 @@ public class MonoPeekAfterTest {
 					value.set(v);
 					error.set(t);
 				}))
-		            .expectErrorMessage("boom")
-		            .verify();
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 		assertEquals(null, value.get());
@@ -542,8 +542,8 @@ public class MonoPeekAfterTest {
 
 		StepVerifier.create(Mono.<String>error(err)
 				.doAfterTerminate(invoked::increment))
-		            .expectErrorMessage("boom")
-		            .verify();
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 	}
@@ -558,8 +558,8 @@ public class MonoPeekAfterTest {
 					invoked.increment();
 					value.set(v);
 				}))
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 		assertEquals(null, value.get());
@@ -577,8 +577,8 @@ public class MonoPeekAfterTest {
 					value.set(v);
 					error.set(t);
 				}))
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 		assertEquals(null, value.get());
@@ -597,8 +597,8 @@ public class MonoPeekAfterTest {
 					value.set(v);
 					error.set(t);
 				}))
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 		assertEquals(null, value.get());
@@ -613,8 +613,8 @@ public class MonoPeekAfterTest {
 				.doAfterTerminate(() -> {
 					invoked.increment();
 				}))
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, invoked.intValue());
 	}
@@ -639,10 +639,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.NONE)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.NONE)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertEquals(55, (Object) successInvocation.get());
 		assertEquals(55, (Object) afterTerminateInvocation.get());
@@ -666,10 +666,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.SYNC, Fuseable.SYNC) //TODO in 3.0.3 this doesn't work
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.SYNC, Fuseable.SYNC) //TODO in 3.0.3 this doesn't work
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertEquals(55, (Object) successInvocation.get());
 		assertEquals(55, (Object) afterTerminateInvocation.get());
@@ -695,10 +695,10 @@ public class MonoPeekAfterTest {
 				});
 
 		StepVerifier.create(mono)
-		            .expectFusion(Fuseable.ASYNC)
-		            .expectNext(55)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(Fuseable.ASYNC)
+				.expectNext(55)
+				.expectComplete()
+				.verify();
 
 		assertEquals(55, (Object) successInvocation.get());
 		assertEquals(null, errorInvocation.get());
@@ -710,15 +710,15 @@ public class MonoPeekAfterTest {
 		for (int i = 0; i < 20; i++) {
 			AtomicInteger count = new AtomicInteger();
 			Flux.range(0, 10)
-			    .flatMap(x -> Flux.range(0, 2)
-			                      .map(y -> FluxPeekFuseableTest.blockingOp(x, y))
-			                      .subscribeOn(Schedulers.parallel())
-			                      .reduce((l, r) -> l + "_" + r)
-			                      .doOnSuccess(s -> {
-				                      LOG.debug("success " + x + ": " + s);
-				                      count.incrementAndGet();
-			                      }))
-			    .blockLast();
+					.flatMap(x -> Flux.range(0, 2)
+							.map(y -> FluxPeekFuseableTest.blockingOp(x, y))
+							.subscribeOn(Schedulers.parallel())
+							.reduce((l, r) -> l + "_" + r)
+							.doOnSuccess(s -> {
+								LOG.debug("success " + x + ": " + s);
+								count.incrementAndGet();
+							}))
+					.blockLast();
 
 			assertEquals(10, count.get());
 		}

@@ -48,9 +48,9 @@ final class FluxOnBackpressureBufferTimeout<O> extends InternalFluxOperator<O, O
 	private static final Logger LOGGER =
 			Loggers.getLogger(FluxOnBackpressureBufferTimeout.class);
 
-	final Duration            ttl;
-	final Scheduler           ttlScheduler;
-	final int                 bufferSize;
+	final Duration ttl;
+	final Scheduler ttlScheduler;
+	final int bufferSize;
 	final Consumer<? super O> onBufferEviction;
 
 	FluxOnBackpressureBufferTimeout(Flux<? extends O> source,
@@ -89,31 +89,26 @@ final class FluxOnBackpressureBufferTimeout<O> extends InternalFluxOperator<O, O
 	static final class BackpressureBufferTimeoutSubscriber<T> extends ArrayDeque<Object>
 			implements InnerOperator<T, T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
-		final Duration                  ttl;
-		final Scheduler                 ttlScheduler;
-		final Scheduler.Worker          worker;
-		final int                       bufferSizeDouble;
-		final Consumer<? super T>       onBufferEviction;
-
-		Subscription s;
-
-		volatile boolean cancelled;
-
-		volatile boolean done;
-		Throwable error;
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<BackpressureBufferTimeoutSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(BackpressureBufferTimeoutSubscriber.class,
 						"wip");
-
-		volatile long requested;
 		static final AtomicLongFieldUpdater<BackpressureBufferTimeoutSubscriber>
 				REQUESTED = AtomicLongFieldUpdater.newUpdater(
 				BackpressureBufferTimeoutSubscriber.class,
 				"requested");
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		final Duration ttl;
+		final Scheduler ttlScheduler;
+		final Scheduler.Worker worker;
+		final int bufferSizeDouble;
+		final Consumer<? super T> onBufferEviction;
+		Subscription s;
+		volatile boolean cancelled;
+		volatile boolean done;
+		Throwable error;
+		volatile int wip;
+		volatile long requested;
 
 		BackpressureBufferTimeoutSubscriber(CoreSubscriber<? super T> actual,
 				Duration ttl,

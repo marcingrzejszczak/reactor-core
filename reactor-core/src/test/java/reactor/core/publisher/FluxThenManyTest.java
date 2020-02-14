@@ -27,7 +27,7 @@ public class FluxThenManyTest {
 	@Test
 	public void testThenManySameType() throws InterruptedException {
 		Flux<String> test = Flux.just("A", "B")
-		                        .thenMany(Flux.just("C", "D"));
+				.thenMany(Flux.just("C", "D"));
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 		test.subscribe(ts);
@@ -38,11 +38,11 @@ public class FluxThenManyTest {
 	@Test
 	public void testThenManyFusion() throws InterruptedException {
 		Flux<Integer> test = Flux.just("A", "B")
-		                        .thenMany(Flux.just("C", "D"))
-		                        .thenMany(Flux.just(1, 2));
+				.thenMany(Flux.just("C", "D"))
+				.thenMany(Flux.just(1, 2));
 
 		Assert.assertTrue(test instanceof FluxConcatArray);
-		FluxConcatArray<Integer> s = (FluxConcatArray<Integer>)test;
+		FluxConcatArray<Integer> s = (FluxConcatArray<Integer>) test;
 
 		Assert.assertTrue(s.array.length == 3);
 

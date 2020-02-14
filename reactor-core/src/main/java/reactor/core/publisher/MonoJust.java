@@ -24,9 +24,9 @@ import reactor.core.Fuseable;
 /**
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class MonoJust<T> 
-extends Mono<T>
-		implements Fuseable.ScalarCallable<T>, Fuseable, SourceProducer<T>  {
+final class MonoJust<T>
+		extends Mono<T>
+		implements Fuseable.ScalarCallable<T>, Fuseable, SourceProducer<T> {
 
 	final T value;
 

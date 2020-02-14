@@ -28,7 +28,6 @@ import java.util.function.Supplier;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
@@ -123,44 +122,32 @@ final class FluxFlattenIterable<T, R> extends InternalFluxOperator<T, R> impleme
 	static final class FlattenIterableSubscriber<T, R>
 			implements InnerOperator<T, R>, QueueSubscription<R> {
 
-		final CoreSubscriber<? super R> actual;
-
-		final Function<? super T, ? extends Iterable<? extends R>> mapper;
-
-		final int prefetch;
-
-		final int limit;
-
-		final Supplier<Queue<T>> queueSupplier;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<FlattenIterableSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(FlattenIterableSubscriber.class,
 						"wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<FlattenIterableSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(FlattenIterableSubscriber.class,
 						"requested");
-
-		Subscription s;
-
-		Queue<T> queue;
-
-		volatile boolean done;
-
-		volatile boolean cancelled;
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FlattenIterableSubscriber, Throwable>
 				ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(FlattenIterableSubscriber.class,
 						Throwable.class,
 						"error");
-
+		final CoreSubscriber<? super R> actual;
+		final Function<? super T, ? extends Iterable<? extends R>> mapper;
+		final int prefetch;
+		final int limit;
+		final Supplier<Queue<T>> queueSupplier;
+		volatile int wip;
+		volatile long requested;
+		Subscription s;
+		Queue<T> queue;
+		volatile boolean done;
+		volatile boolean cancelled;
+		volatile Throwable error;
 		@Nullable
 		Iterator<? extends R> current;
 		boolean currentKnownToBeFinite;
@@ -243,7 +230,7 @@ final class FluxFlattenIterable<T, R> extends InternalFluxOperator<T, R> impleme
 			if (fusionMode != Fuseable.ASYNC) {
 				if (!queue.offer(t)) {
 					Context ctx = actual.currentContext();
-					onError(Operators.onOperatorError(s,Exceptions.failWithOverflow(Exceptions.BACKPRESSURE_ERROR_QUEUE_FULL),
+					onError(Operators.onOperatorError(s, Exceptions.failWithOverflow(Exceptions.BACKPRESSURE_ERROR_QUEUE_FULL),
 							ctx));
 					Operators.onDiscard(t, ctx);
 					return;
@@ -330,7 +317,8 @@ final class FluxFlattenIterable<T, R> extends InternalFluxOperator<T, R> impleme
 
 					try {
 						t = q.poll();
-					} catch (Throwable pollEx) {
+					}
+					catch (Throwable pollEx) {
 						resetCurrent();
 						Operators.onDiscardQueueWithClear(q, actual.currentContext(), null);
 						a.onError(pollEx);
@@ -531,7 +519,8 @@ final class FluxFlattenIterable<T, R> extends InternalFluxOperator<T, R> impleme
 
 					try {
 						t = q.poll();
-					} catch (Throwable pollEx) {
+					}
+					catch (Throwable pollEx) {
 						resetCurrent();
 						Operators.onDiscardQueueWithClear(q, actual.currentContext(), null);
 						a.onError(pollEx);

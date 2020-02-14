@@ -34,7 +34,7 @@ import reactor.util.annotation.Nullable;
  * wraps other form of async-delayed execution of tasks.
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class MonoDelay extends Mono<Long> implements Scannable,  SourceProducer<Long>  {
+final class MonoDelay extends Mono<Long> implements Scannable, SourceProducer<Long> {
 
 	final Scheduler timedScheduler;
 
@@ -58,7 +58,7 @@ final class MonoDelay extends Mono<Long> implements Scannable,  SourceProducer<L
 			r.setCancel(timedScheduler.schedule(r, delay, unit));
 		}
 		catch (RejectedExecutionException ree) {
-			if(r.cancel != OperatorDisposables.DISPOSED) {
+			if (r.cancel != OperatorDisposables.DISPOSED) {
 				actual.onError(Operators.onRejectedExecution(ree, r, null, null,
 						actual.currentContext()));
 			}
@@ -73,17 +73,14 @@ final class MonoDelay extends Mono<Long> implements Scannable,  SourceProducer<L
 	}
 
 	static final class MonoDelayRunnable implements Runnable, InnerProducer<Long> {
-		final CoreSubscriber<? super Long> actual;
-
-		volatile Disposable cancel;
 		static final AtomicReferenceFieldUpdater<MonoDelayRunnable, Disposable> CANCEL =
 				AtomicReferenceFieldUpdater.newUpdater(MonoDelayRunnable.class,
 						Disposable.class,
 						"cancel");
-
-		volatile boolean requested;
-
 		static final Disposable FINISHED = Disposables.disposed();
+		final CoreSubscriber<? super Long> actual;
+		volatile Disposable cancel;
+		volatile boolean requested;
 
 		MonoDelayRunnable(CoreSubscriber<? super Long> actual) {
 			this.actual = actual;
@@ -118,10 +115,11 @@ final class MonoDelay extends Mono<Long> implements Scannable,  SourceProducer<L
 						actual.onComplete();
 					}
 				}
-				catch (Throwable t){
+				catch (Throwable t) {
 					actual.onError(Operators.onOperatorError(t, actual.currentContext()));
 				}
-			} else {
+			}
+			else {
 				actual.onError(Exceptions.failWithOverflow("Could not emit value due to lack of requests"));
 			}
 		}
@@ -130,7 +128,7 @@ final class MonoDelay extends Mono<Long> implements Scannable,  SourceProducer<L
 		public void cancel() {
 			Disposable c = cancel;
 			if (c != OperatorDisposables.DISPOSED && c != FINISHED) {
-				c =  CANCEL.getAndSet(this, OperatorDisposables.DISPOSED);
+				c = CANCEL.getAndSet(this, OperatorDisposables.DISPOSED);
 				if (c != null && c != OperatorDisposables.DISPOSED && c != FINISHED) {
 					c.dispose();
 				}

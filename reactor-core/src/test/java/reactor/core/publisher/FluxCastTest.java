@@ -24,46 +24,44 @@ public class FluxCastTest {
 	@Test(expected = NullPointerException.class)
 	public void sourceNull() {
 		Flux.just(1)
-		    .cast(null);
+				.cast(null);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void sourceNull2() {
 		Flux.just(1)
-		    .ofType(null);
+				.ofType(null);
 	}
 
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.just(1)
-		                        .cast(Number.class))
-		            .expectNext(1)
-		            .verifyComplete();
+				.cast(Number.class))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.just(1)
-		                        .cast(String.class))
-		            .verifyError(ClassCastException.class);
+				.cast(String.class))
+				.verifyError(ClassCastException.class);
 	}
-
 
 
 	@Test
 	public void normalOfType() {
 		StepVerifier.create(Flux.just(1)
-		                        .ofType(Number.class))
-		            .expectNext(1)
-		            .verifyComplete();
+				.ofType(Number.class))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void errorOfType() {
 		StepVerifier.create(Flux.just(1)
-		                        .ofType(String.class))
-		            .verifyComplete();
+				.ofType(String.class))
+				.verifyComplete();
 	}
-
 
 }

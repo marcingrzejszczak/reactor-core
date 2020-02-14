@@ -36,64 +36,67 @@ public class TimedSchedulerTest extends AbstractSchedulerTest {
 	@Test
 	public void independentWorkers() throws InterruptedException {
 		Scheduler timer = Schedulers.newSingle("test-timer");
-        
-        try {
-            Worker w1 = timer.createWorker();
-            
-            Worker w2 = timer.createWorker();
-            
-            CountDownLatch cdl = new CountDownLatch(1);
-            
-            w1.dispose();
-            
-            try {
-                w1.schedule(() -> { });
-                Assert.fail("Failed to reject task");
-            } catch (Throwable ex) {
-                // ignoring
-            }
-            
-            w2.schedule(cdl::countDown);
-            
-            if (!cdl.await(1, TimeUnit.SECONDS)) {
-                Assert.fail("Worker 2 didn't execute in time");
-            }
-            w2.dispose();
-        } finally {
-            timer.dispose();
-        }
-    }
 
-    @Test
-    public void massCancel() throws InterruptedException {
-        Scheduler timer = Schedulers.newSingle("test-timer");
-        
-        try {
-            Worker w1 = timer.createWorker();
-    
-            AtomicInteger counter = new AtomicInteger();
-            
-            Runnable task = counter::getAndIncrement;
+		try {
+			Worker w1 = timer.createWorker();
 
-	        int tasks = 10;
+			Worker w2 = timer.createWorker();
 
-	        Disposable[] c = new Disposable[tasks];
+			CountDownLatch cdl = new CountDownLatch(1);
 
-	        for (int i = 0; i < tasks; i++) {
-		        c[i] = w1.schedulePeriodically(task, 500, 500, TimeUnit.MILLISECONDS);
-	        }
-            
-            w1.dispose();
+			w1.dispose();
 
-	        for (int i = 0; i < tasks; i++) {
-		        assertThat(c[i].isDisposed()).isTrue();
-	        }
-            
-            Assert.assertEquals(0, counter.get());
-        }
-        finally {
-	        timer.dispose();
-        }
-    }
+			try {
+				w1.schedule(() -> {
+				});
+				Assert.fail("Failed to reject task");
+			}
+			catch (Throwable ex) {
+				// ignoring
+			}
+
+			w2.schedule(cdl::countDown);
+
+			if (!cdl.await(1, TimeUnit.SECONDS)) {
+				Assert.fail("Worker 2 didn't execute in time");
+			}
+			w2.dispose();
+		}
+		finally {
+			timer.dispose();
+		}
+	}
+
+	@Test
+	public void massCancel() throws InterruptedException {
+		Scheduler timer = Schedulers.newSingle("test-timer");
+
+		try {
+			Worker w1 = timer.createWorker();
+
+			AtomicInteger counter = new AtomicInteger();
+
+			Runnable task = counter::getAndIncrement;
+
+			int tasks = 10;
+
+			Disposable[] c = new Disposable[tasks];
+
+			for (int i = 0; i < tasks; i++) {
+				c[i] = w1.schedulePeriodically(task, 500, 500, TimeUnit.MILLISECONDS);
+			}
+
+			w1.dispose();
+
+			for (int i = 0; i < tasks; i++) {
+				assertThat(c[i].isDisposed()).isTrue();
+			}
+
+			Assert.assertEquals(0, counter.get());
+		}
+		finally {
+			timer.dispose();
+		}
+	}
 
 }

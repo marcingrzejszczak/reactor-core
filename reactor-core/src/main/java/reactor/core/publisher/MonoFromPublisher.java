@@ -19,7 +19,6 @@ package reactor.core.publisher;
 import java.util.Objects;
 
 import org.reactivestreams.Publisher;
-
 import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
@@ -33,7 +32,7 @@ import reactor.util.annotation.Nullable;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
 final class MonoFromPublisher<T> extends Mono<T> implements Scannable,
-                                                            OptimizableOperator<T, T> {
+		OptimizableOperator<T, T> {
 
 	final Publisher<? extends T> source;
 

@@ -80,6 +80,23 @@ import reactor.util.annotation.Nullable;
  */
 public final class DirectProcessor<T> extends FluxProcessor<T, T> {
 
+	@SuppressWarnings("rawtypes")
+	private static final DirectInner[] EMPTY = new DirectInner[0];
+	@SuppressWarnings("rawtypes")
+	private static final DirectInner[] TERMINATED = new DirectInner[0];
+	@SuppressWarnings("rawtypes")
+	private static final AtomicReferenceFieldUpdater<DirectProcessor, DirectInner[]>
+			SUBSCRIBERS =
+			AtomicReferenceFieldUpdater.newUpdater(DirectProcessor.class,
+					DirectInner[].class,
+					"subscribers");
+	Throwable error;
+	@SuppressWarnings("unchecked")
+	private volatile DirectInner<T>[] subscribers = EMPTY;
+
+	DirectProcessor() {
+	}
+
 	/**
 	 * Create a new {@link DirectProcessor}
 	 *
@@ -89,26 +106,6 @@ public final class DirectProcessor<T> extends FluxProcessor<T, T> {
 	 */
 	public static <E> DirectProcessor<E> create() {
 		return new DirectProcessor<>();
-	}
-
-	@SuppressWarnings("rawtypes")
-	private static final DirectInner[] EMPTY = new DirectInner[0];
-
-	@SuppressWarnings("rawtypes")
-	private static final DirectInner[] TERMINATED = new DirectInner[0];
-
-	@SuppressWarnings("unchecked")
-	private volatile     DirectInner<T>[] subscribers = EMPTY;
-	@SuppressWarnings("rawtypes")
-	private static final AtomicReferenceFieldUpdater<DirectProcessor, DirectInner[]>
-	                                      SUBSCRIBERS =
-			AtomicReferenceFieldUpdater.newUpdater(DirectProcessor.class,
-					DirectInner[].class,
-					"subscribers");
-
-	Throwable error;
-
-	DirectProcessor() {
 	}
 
 	@Override
@@ -283,16 +280,13 @@ public final class DirectProcessor<T> extends FluxProcessor<T, T> {
 
 	static final class DirectInner<T> implements InnerProducer<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final DirectProcessor<T> parent;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<DirectInner> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(DirectInner.class, "requested");
+		final CoreSubscriber<? super T> actual;
+		final DirectProcessor<T> parent;
+		volatile boolean cancelled;
+		volatile long requested;
 
 		DirectInner(CoreSubscriber<? super T> actual, DirectProcessor<T> parent) {
 			this.actual = actual;

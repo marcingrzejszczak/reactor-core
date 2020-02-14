@@ -46,7 +46,7 @@ final class FluxRepeat<T> extends InternalFluxOperator<T, T> {
 
 	@Override
 	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
-		RepeatSubscriber<T> parent = new RepeatSubscriber<>(source, actual, times  + 1);
+		RepeatSubscriber<T> parent = new RepeatSubscriber<>(source, actual, times + 1);
 
 		actual.onSubscribe(parent);
 
@@ -59,15 +59,12 @@ final class FluxRepeat<T> extends InternalFluxOperator<T, T> {
 	static final class RepeatSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final CorePublisher<? extends T> source;
-
-		long remaining;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RepeatSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(RepeatSubscriber.class, "wip");
-
+				AtomicIntegerFieldUpdater.newUpdater(RepeatSubscriber.class, "wip");
+		final CorePublisher<? extends T> source;
+		long remaining;
+		volatile int wip;
 		long produced;
 
 		RepeatSubscriber(CorePublisher<? extends T> source, CoreSubscriber<? super T> actual, long remaining) {
@@ -112,7 +109,8 @@ final class FluxRepeat<T> extends InternalFluxOperator<T, T> {
 
 					source.subscribe(this);
 
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 		}
 	}

@@ -18,10 +18,9 @@ package reactor.core.publisher;
 
 import java.util.Objects;
 
+import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
-
-import reactor.core.CoreSubscriber;
 
 /**
  * Emits a constant or generated Throwable instance to Subscribers.
@@ -45,8 +44,8 @@ final class FluxError<T> extends Flux<T> implements Fuseable.ScalarCallable, Sou
 
 	@Override
 	public Object call() throws Exception {
-		if(error instanceof Exception){
-			throw ((Exception)error);
+		if (error instanceof Exception) {
+			throw ((Exception) error);
 		}
 		throw Exceptions.propagate(error);
 	}

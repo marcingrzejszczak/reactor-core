@@ -35,8 +35,8 @@ public class FluxRangeTest {
 		Flux.range(1, 10).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 	}
 
 	@Test
@@ -46,20 +46,20 @@ public class FluxRangeTest {
 		Flux.range(1, 10).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5)
-		  .assertNotComplete();
+				.assertValues(1, 2, 3, 4, 5)
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 	}
 
 	@Test
@@ -69,14 +69,14 @@ public class FluxRangeTest {
 		Flux.range(1, 10).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 
 		ts.request(10);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -96,8 +96,8 @@ public class FluxRangeTest {
 		Flux.range(Integer.MAX_VALUE, 1).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(Integer.MAX_VALUE)
-		  .assertComplete();
+				.assertValues(Integer.MAX_VALUE)
+				.assertComplete();
 	}
 
 	@Test
@@ -107,8 +107,8 @@ public class FluxRangeTest {
 		Flux.range(Integer.MAX_VALUE - 1, 2).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(Integer.MAX_VALUE - 1, Integer.MAX_VALUE)
-		  .assertComplete();
+				.assertValues(Integer.MAX_VALUE - 1, Integer.MAX_VALUE)
+				.assertComplete();
 	}
 
 	@Test
@@ -118,14 +118,15 @@ public class FluxRangeTest {
 		Flux.range(-10, 2).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(-10, -9)
-		  .assertComplete();
+				.assertValues(-10, -9)
+				.assertComplete();
 
 	}
 
 	@Test
 	public void scanSubscription() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, sub -> sub.request(100));
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, sub -> sub.request(100));
 		FluxRange.RangeSubscription test = new FluxRange.RangeSubscription(actual, 1L, 10L);
 
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);

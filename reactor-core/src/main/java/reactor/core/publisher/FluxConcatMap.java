@@ -53,44 +53,6 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 
 	final ErrorMode errorMode;
 
-	/**
-	 * Indicates when an error from the main source should be reported.
-	 */
-	enum ErrorMode {
-		/**
-		 * Report the error immediately, cancelling the active inner source.
-		 */
-		IMMEDIATE, /**
-		 * Report error after an inner source terminated.
-		 */
-		BOUNDARY, /**
-		 * Report the error after all sources terminated.
-		 */
-		END
-	}
-
-	static <T, R> CoreSubscriber<T> subscriber(CoreSubscriber<? super R> s,
-			Function<? super T, ? extends Publisher<? extends R>> mapper,
-			Supplier<? extends Queue<T>> queueSupplier,
-			int prefetch, ErrorMode errorMode) {
-		switch (errorMode) {
-			case BOUNDARY:
-				return new ConcatMapDelayed<>(s,
-						mapper,
-						queueSupplier,
-						prefetch,
-						false);
-			case END:
-				return new ConcatMapDelayed<>(s,
-						mapper,
-						queueSupplier,
-						prefetch,
-						true);
-			default:
-				return new ConcatMapImmediate<>(s, mapper, queueSupplier, prefetch);
-		}
-	}
-
 	FluxConcatMap(Flux<? extends T> source,
 			Function<? super T, ? extends Publisher<? extends R>> mapper,
 			Supplier<? extends Queue<T>> queueSupplier,
@@ -104,6 +66,28 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 		this.queueSupplier = Objects.requireNonNull(queueSupplier, "queueSupplier");
 		this.prefetch = prefetch;
 		this.errorMode = Objects.requireNonNull(errorMode, "errorMode");
+	}
+
+	static <T, R> CoreSubscriber<T> subscriber(CoreSubscriber<? super R> s,
+			Function<? super T, ? extends Publisher<? extends R>> mapper,
+			Supplier<? extends Queue<T>> queueSupplier,
+			int prefetch, ErrorMode errorMode) {
+		switch (errorMode) {
+		case BOUNDARY:
+			return new ConcatMapDelayed<>(s,
+					mapper,
+					queueSupplier,
+					prefetch,
+					false);
+		case END:
+			return new ConcatMapDelayed<>(s,
+					mapper,
+					queueSupplier,
+					prefetch,
+					true);
+		default:
+			return new ConcatMapImmediate<>(s, mapper, queueSupplier, prefetch);
+		}
 	}
 
 	@Override
@@ -120,51 +104,67 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 		return subscriber(actual, mapper, queueSupplier, prefetch, errorMode);
 	}
 
+	/**
+	 * Indicates when an error from the main source should be reported.
+	 */
+	enum ErrorMode {
+		/**
+		 * Report the error immediately, cancelling the active inner source.
+		 */
+		IMMEDIATE,
+		/**
+		 * Report error after an inner source terminated.
+		 */
+		BOUNDARY,
+		/**
+		 * Report the error after all sources terminated.
+		 */
+		END
+	}
+
+	/**
+	 * @param <I> input type consumed by the InnerOperator
+	 * @param <T> output type, as forwarded by the inner this helper supports
+	 */
+	interface FluxConcatMapSupport<I, T> extends InnerOperator<I, T> {
+
+		void innerNext(T value);
+
+		void innerComplete();
+
+		void innerError(Throwable e);
+	}
+
 	static final class ConcatMapImmediate<T, R>
 			implements FluxConcatMapSupport<T, R> {
 
-		final CoreSubscriber<? super R> actual;
-		final Context ctx;
-
-		final ConcatMapInner<R> inner;
-
-		final Function<? super T, ? extends Publisher<? extends R>> mapper;
-
-		final Supplier<? extends Queue<T>> queueSupplier;
-
-		final int prefetch;
-
-		final int limit;
-
-		Subscription s;
-
-		int consumed;
-
-		volatile Queue<T> queue;
-
-		volatile boolean done;
-
-		volatile boolean cancelled;
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ConcatMapImmediate, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(ConcatMapImmediate.class,
 						Throwable.class,
 						"error");
-
-		volatile boolean active;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatMapImmediate> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ConcatMapImmediate.class, "wip");
-
-		volatile int guard;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatMapImmediate> GUARD =
 				AtomicIntegerFieldUpdater.newUpdater(ConcatMapImmediate.class, "guard");
-
+		final CoreSubscriber<? super R> actual;
+		final Context ctx;
+		final ConcatMapInner<R> inner;
+		final Function<? super T, ? extends Publisher<? extends R>> mapper;
+		final Supplier<? extends Queue<T>> queueSupplier;
+		final int prefetch;
+		final int limit;
+		Subscription s;
+		int consumed;
+		volatile Queue<T> queue;
+		volatile boolean done;
+		volatile boolean cancelled;
+		volatile Throwable error;
+		volatile boolean active;
+		volatile int wip;
+		volatile int guard;
 		int sourceMode;
 
 		ConcatMapImmediate(CoreSubscriber<? super R> actual,
@@ -291,7 +291,7 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 		@Override
 		public void innerError(Throwable e) {
 			e = Operators.onNextInnerError(e, currentContext(), s);
-			if(e != null) {
+			if (e != null) {
 				if (Exceptions.addThrowable(ERROR, this, e)) {
 					s.cancel();
 
@@ -365,7 +365,7 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 
 							try {
 								p = Objects.requireNonNull(mapper.apply(v),
-								"The mapper returned a null Publisher");
+										"The mapper returned a null Publisher");
 							}
 							catch (Throwable e) {
 								Operators.onDiscard(v, this.ctx);
@@ -453,7 +453,7 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 	static final class WeakScalarSubscription<T> implements Subscription {
 
 		final CoreSubscriber<? super T> actual;
-		final T                     value;
+		final T value;
 		boolean once;
 
 		WeakScalarSubscription(T value, CoreSubscriber<? super T> actual) {
@@ -480,44 +480,29 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 	static final class ConcatMapDelayed<T, R>
 			implements FluxConcatMapSupport<T, R> {
 
-		final CoreSubscriber<? super R> actual;
-
-		final ConcatMapInner<R> inner;
-
-		final Function<? super T, ? extends Publisher<? extends R>> mapper;
-
-		final Supplier<? extends Queue<T>> queueSupplier;
-
-		final int prefetch;
-
-		final int limit;
-
-		final boolean veryEnd;
-
-		Subscription s;
-
-		int consumed;
-
-		volatile Queue<T> queue;
-
-		volatile boolean done;
-
-		volatile boolean cancelled;
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ConcatMapDelayed, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(ConcatMapDelayed.class,
 						Throwable.class,
 						"error");
-
-		volatile boolean active;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatMapDelayed> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ConcatMapDelayed.class, "wip");
-
+		final CoreSubscriber<? super R> actual;
+		final ConcatMapInner<R> inner;
+		final Function<? super T, ? extends Publisher<? extends R>> mapper;
+		final Supplier<? extends Queue<T>> queueSupplier;
+		final int prefetch;
+		final int limit;
+		final boolean veryEnd;
+		Subscription s;
+		int consumed;
+		volatile Queue<T> queue;
+		volatile boolean done;
+		volatile boolean cancelled;
+		volatile Throwable error;
+		volatile boolean active;
+		volatile int wip;
 		int sourceMode;
 
 		ConcatMapDelayed(CoreSubscriber<? super R> actual,
@@ -638,7 +623,7 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 		@Override
 		public void innerError(Throwable e) {
 			e = Operators.onNextInnerError(e, currentContext(), s);
-			if(e != null) {
+			if (e != null) {
 				if (Exceptions.addThrowable(ERROR, this, e)) {
 					if (!veryEnd) {
 						s.cancel();
@@ -804,19 +789,6 @@ final class FluxConcatMap<T, R> extends InternalFluxOperator<T, R> {
 				}
 			}
 		}
-	}
-
-	/**
-	 * @param <I> input type consumed by the InnerOperator
-	 * @param <T> output type, as forwarded by the inner this helper supports
-	 */
-	interface FluxConcatMapSupport<I, T> extends InnerOperator<I, T> {
-
-		void innerNext(T value);
-
-		void innerComplete();
-
-		void innerError(Throwable e);
 	}
 
 	static final class ConcatMapInner<R>

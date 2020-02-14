@@ -34,24 +34,22 @@ import reactor.core.Scannable;
  * schedule with delay / periodically).
  */
 final class SingleScheduler implements Scheduler, Supplier<ScheduledExecutorService>,
-                                       Scannable {
+		Scannable {
 
-	static final AtomicLong COUNTER       = new AtomicLong();
-
-	final ThreadFactory factory;
-
-	volatile ScheduledExecutorService executor;
+	static final AtomicLong COUNTER = new AtomicLong();
 	static final AtomicReferenceFieldUpdater<SingleScheduler, ScheduledExecutorService> EXECUTORS =
 			AtomicReferenceFieldUpdater.newUpdater(SingleScheduler.class,
 					ScheduledExecutorService.class,
 					"executor");
-
 	static final ScheduledExecutorService TERMINATED;
 
 	static {
 		TERMINATED = Executors.newSingleThreadScheduledExecutor();
 		TERMINATED.shutdownNow();
 	}
+
+	final ThreadFactory factory;
+	volatile ScheduledExecutorService executor;
 
 	SingleScheduler(ThreadFactory factory) {
 		this.factory = factory;

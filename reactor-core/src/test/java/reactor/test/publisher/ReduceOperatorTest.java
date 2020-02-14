@@ -35,22 +35,106 @@ public abstract class ReduceOperatorTest<I, O>
 	public final Scenario<I, O> scenario(Function<Flux<I>, ? extends Mono<O>> scenario) {
 		if (defaultEmpty) {
 			return Scenario.create(scenario)
-			                                .applyAllOptions(defaultScenario.duplicate()
-			                                                                .receiverEmpty());
+					.applyAllOptions(defaultScenario.duplicate()
+							.receiverEmpty());
 		}
 		return Scenario.create(scenario)
-		                                .applyAllOptions(defaultScenario);
+				.applyAllOptions(defaultScenario);
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorError() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected final OperatorScenario<I, Flux<I>, O, Mono<O>> defaultScenarioOptions(
+			OperatorScenario<I, Flux<I>, O, Mono<O>> defaultOptions) {
+		Scenario<I, O> s = new Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
+				.producer(3,
+						i -> (I) (i == 0 ?
+								"test" :
+								"test" + i))
+				.receive(1,
+						i -> (O) "test")
+				.droppedError(new RuntimeException("dropped"))
+				.droppedItem((I) "dropped");
+		this.defaultScenario = s;
+		return defaultScenarioOptions(s);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected Scenario<I, O> defaultScenarioOptions(Scenario<I, O> defaultOptions) {
+		return defaultOptions;
+	}
+
+	@Override
+	final Mono<O> conditional(Mono<O> output) {
+		return output.filter(t -> true);
+	}
+
+	@Override
+	protected Mono<O> doOnSubscribe(Mono<O> output, Consumer<? super Subscription> doOnSubscribe) {
+		return output.doOnSubscribe(doOnSubscribe);
+	}
+
+	@Override
+	final Flux<I> hide(Flux<I> input) {
+		return input.hide();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	final Flux<I> sourceScalar(OperatorScenario<I, Flux<I>, O, Mono<O>>
+			scenario) {
+		if (scenario.producerCount() == 0) {
+			return (Flux<I>) Flux.empty();
+		}
+		return Flux.just(scenario.producingMapper.apply(0));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	final Flux<I> sourceCallable(OperatorScenario<I, Flux<I>, O, Mono<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return (Flux<I>) Mono.fromRunnable(() -> {
+			})
+					.flux();
+		}
+		return (Flux<I>) Mono.fromCallable(() -> scenario.producingMapper.apply(0))
+				.flux();
+	}
+
+	@Override
+	final Flux<I> withFluxSource(Flux<I> input) {
+		return input;
 	}
 
 	static public final class Scenario<I, O>
 			extends OperatorScenario<I, Flux<I>, O, Mono<O>> {
 
-		static <I, O> Scenario<I, O> create(Function<Flux<I>, ? extends Mono<O>> scenario) {
-			return new Scenario<>(scenario, new Exception("scenario:"));
-		}
-
 		Scenario(Function<Flux<I>, ? extends Mono<O>> scenario, Exception stack) {
 			super(scenario, stack);
+		}
+
+		static <I, O> Scenario<I, O> create(Function<Flux<I>, ? extends Mono<O>> scenario) {
+			return new Scenario<>(scenario, new Exception("scenario:"));
 		}
 
 		@Override
@@ -180,88 +264,5 @@ public abstract class ReduceOperatorTest<I, O>
 			super.applyAllOptions(source);
 			return this;
 		}
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorError() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected final OperatorScenario<I, Flux<I>, O, Mono<O>> defaultScenarioOptions(
-			OperatorScenario<I, Flux<I>, O, Mono<O>> defaultOptions) {
-		Scenario<I, O> s = new Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
-		                                                 .producer(3,
-				                                                 i -> (I) (i == 0 ?
-						                                                 "test" :
-						                                                 "test" + i))
-		                                                 .receive(1,
-				                                                 i -> (O) "test")
-		                                                 .droppedError(new RuntimeException("dropped"))
-		                                                 .droppedItem((I)"dropped");
-		this.defaultScenario = s;
-		return defaultScenarioOptions(s);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected Scenario<I, O> defaultScenarioOptions(Scenario<I, O> defaultOptions) {
-		return defaultOptions;
-	}
-
-	@Override
-	final Mono<O> conditional(Mono<O> output) {
-		return output.filter(t -> true);
-	}
-
-	@Override
-	protected Mono<O> doOnSubscribe(Mono<O> output, Consumer<? super Subscription> doOnSubscribe) {
-		return output.doOnSubscribe(doOnSubscribe);
-	}
-
-	@Override
-	final Flux<I> hide(Flux<I> input) {
-		return input.hide();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	final Flux<I> sourceScalar(OperatorScenario<I, Flux<I>, O, Mono<O>>
-			scenario) {
-		if(scenario.producerCount() == 0){
-			return (Flux<I>)Flux.empty();
-		}
-		return Flux.just(scenario.producingMapper.apply(0));
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	final Flux<I> sourceCallable(OperatorScenario<I, Flux<I>, O, Mono<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return (Flux<I>)Mono.fromRunnable(() -> {})
-			                            .flux();
-		}
-		return (Flux<I>)Mono.fromCallable(() -> scenario.producingMapper.apply(0))
-		                            .flux();
-	}
-
-	@Override
-	final Flux<I> withFluxSource(Flux<I> input) {
-		return input;
 	}
 }

@@ -16,12 +16,12 @@
 
 package reactor.tools.agent;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Checkpoints every method returning Mono/Flux/ParallelFlux,
@@ -42,75 +42,75 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class ReturnHandlingMethodVisitor extends MethodVisitor {
 
-    final AtomicBoolean changed;
+	final AtomicBoolean changed;
 
-    final String currentClassName;
+	final String currentClassName;
 
-    final String currentMethod;
+	final String currentMethod;
 
-    final String returnType;
+	final String returnType;
 
-    final String currentSource;
+	final String currentSource;
 
-    int currentLine = -1;
+	int currentLine = -1;
 
-    boolean checkpointed = false;
+	boolean checkpointed = false;
 
-    ReturnHandlingMethodVisitor(
-            MethodVisitor visitor,
-            String returnType,
-            String currentClassName,
-            String currentMethod,
-            String currentSource,
-            AtomicBoolean changed
-    ) {
-        super(Opcodes.ASM7, visitor);
-        this.changed = changed;
-        this.currentClassName = currentClassName;
-        this.currentMethod = currentMethod;
-        this.returnType = returnType;
-        this.currentSource = currentSource;
-    }
+	ReturnHandlingMethodVisitor(
+			MethodVisitor visitor,
+			String returnType,
+			String currentClassName,
+			String currentMethod,
+			String currentSource,
+			AtomicBoolean changed
+	) {
+		super(Opcodes.ASM7, visitor);
+		this.changed = changed;
+		this.currentClassName = currentClassName;
+		this.currentMethod = currentMethod;
+		this.returnType = returnType;
+		this.currentSource = currentSource;
+	}
 
-    @Override
-    public void visitLineNumber(int line, Label start) {
-        super.visitLineNumber(line, start);
-        currentLine = line;
-    }
+	@Override
+	public void visitLineNumber(int line, Label start) {
+		super.visitLineNumber(line, start);
+		currentLine = line;
+	}
 
-    @Override
-    public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+	@Override
+	public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+		super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
 
-        if (!checkpointed && CallSiteInfoAddingMethodVisitor.isCorePublisher(owner)) {
-            String returnType = Type.getReturnType(descriptor).getInternalName();
-            if (returnType.startsWith("reactor/core/publisher/")) {
-                checkpointed = true;
-            }
-        }
-    }
+		if (!checkpointed && CallSiteInfoAddingMethodVisitor.isCorePublisher(owner)) {
+			String returnType = Type.getReturnType(descriptor).getInternalName();
+			if (returnType.startsWith("reactor/core/publisher/")) {
+				checkpointed = true;
+			}
+		}
+	}
 
-    @Override
-    public void visitInsn(int opcode) {
-        if (!checkpointed && Opcodes.ARETURN == opcode) {
-            changed.set(true);
+	@Override
+	public void visitInsn(int opcode) {
+		if (!checkpointed && Opcodes.ARETURN == opcode) {
+			changed.set(true);
 
-            String callSite = String.format(
-                    "at %s.%s(%s:%d)",
-                    currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
-            );
-            super.visitLdcInsn(callSite);
+			String callSite = String.format(
+					"at %s.%s(%s:%d)",
+					currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
+			);
+			super.visitLdcInsn(callSite);
 
-            super.visitMethodInsn(
-                    Opcodes.INVOKESTATIC,
-                    "reactor/core/publisher/Hooks",
-                    "addReturnInfo",
-                    "(Lorg/reactivestreams/Publisher;Ljava/lang/String;)Lorg/reactivestreams/Publisher;",
-                    false
-            );
-            super.visitTypeInsn(Opcodes.CHECKCAST, returnType);
-        }
+			super.visitMethodInsn(
+					Opcodes.INVOKESTATIC,
+					"reactor/core/publisher/Hooks",
+					"addReturnInfo",
+					"(Lorg/reactivestreams/Publisher;Ljava/lang/String;)Lorg/reactivestreams/Publisher;",
+					false
+			);
+			super.visitTypeInsn(Opcodes.CHECKCAST, returnType);
+		}
 
-        super.visitInsn(opcode);
-    }
+		super.visitInsn(opcode);
+	}
 }

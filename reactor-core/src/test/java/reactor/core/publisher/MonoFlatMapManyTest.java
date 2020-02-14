@@ -30,11 +30,11 @@ public class MonoFlatMapManyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1).hide().flatMapMany(v -> Flux.just(2).hide())
-		.subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(2)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -42,11 +42,11 @@ public class MonoFlatMapManyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1).hide().flatMapMany(v -> Flux.just(2))
-		.subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(2)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -54,16 +54,17 @@ public class MonoFlatMapManyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1).hide().flatMapMany(v -> Flux.<Integer>empty())
-		.subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
 	public void scanMain() {
-		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoFlatMapMany.FlatMapManyMain<String, Integer> test = new MonoFlatMapMany.FlatMapManyMain<>
 				(actual, s -> Flux.just(1, 2, 3));
 		Subscription parent = Operators.emptySubscription();
@@ -75,8 +76,10 @@ public class MonoFlatMapManyTest {
 
 	@Test
 	public void scanInner() {
-		CoreSubscriber<Integer> mainActual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
-		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> mainActual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoFlatMapMany.FlatMapManyMain<String, Integer> main = new MonoFlatMapMany.FlatMapManyMain<>
 				(mainActual, s -> Flux.just(1, 2, 3));
 		MonoFlatMapMany.FlatMapManyInner<Integer> test = new MonoFlatMapMany.FlatMapManyInner<>(main,

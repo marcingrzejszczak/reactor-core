@@ -32,23 +32,23 @@ import reactor.util.annotation.Nullable;
  * @param <T> the input value type
  * @param <R> the output value type
  */
-final class ParallelConcatMap<T, R> extends ParallelFlux<R> implements Scannable{
+final class ParallelConcatMap<T, R> extends ParallelFlux<R> implements Scannable {
 
 	final ParallelFlux<T> source;
-	
+
 	final Function<? super T, ? extends Publisher<? extends R>> mapper;
-	
+
 	final Supplier<? extends Queue<T>> queueSupplier;
-	
+
 	final int prefetch;
-	
+
 	final ErrorMode errorMode;
 
 	ParallelConcatMap(
 			ParallelFlux<T> source,
-			Function<? super T, ? extends Publisher<? extends R>> mapper, 
-					Supplier<? extends Queue<T>> queueSupplier,
-					int prefetch, ErrorMode errorMode) {
+			Function<? super T, ? extends Publisher<? extends R>> mapper,
+			Supplier<? extends Queue<T>> queueSupplier,
+			int prefetch, ErrorMode errorMode) {
 		this.source = source;
 		this.mapper = Objects.requireNonNull(mapper, "mapper");
 		this.queueSupplier = Objects.requireNonNull(queueSupplier, "queueSupplier");
@@ -75,23 +75,23 @@ final class ParallelConcatMap<T, R> extends ParallelFlux<R> implements Scannable
 	public int parallelism() {
 		return source.parallelism();
 	}
-	
+
 	@Override
 	public void subscribe(CoreSubscriber<? super R>[] subscribers) {
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
-		
+
 		@SuppressWarnings("unchecked")
 		CoreSubscriber<T>[] parents = new CoreSubscriber[n];
-		
+
 		for (int i = 0; i < n; i++) {
 			parents[i] = FluxConcatMap.subscriber(subscribers[i], mapper,
 					queueSupplier, prefetch, errorMode);
 		}
-		
+
 		source.subscribe(parents);
 	}
 }

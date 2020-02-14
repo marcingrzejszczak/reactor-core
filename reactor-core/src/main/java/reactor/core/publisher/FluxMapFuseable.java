@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.reactivestreams.Subscription;
-import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.util.annotation.Nullable;
@@ -65,9 +64,9 @@ final class FluxMapFuseable<T, R> extends InternalFluxOperator<T, R> implements 
 
 	static final class MapFuseableSubscriber<T, R>
 			implements InnerOperator<T, R>,
-			           QueueSubscription<R> {
+			QueueSubscription<R> {
 
-		final CoreSubscriber<? super R>        actual;
+		final CoreSubscriber<? super R> actual;
 		final Function<? super T, ? extends R> mapper;
 
 		boolean done;
@@ -170,7 +169,7 @@ final class FluxMapFuseable<T, R> extends InternalFluxOperator<T, R> implements 
 		@Override
 		@Nullable
 		public R poll() {
-			for(;;) {
+			for (; ; ) {
 				T v = s.poll();
 				if (v != null) {
 					try {
@@ -221,7 +220,7 @@ final class FluxMapFuseable<T, R> extends InternalFluxOperator<T, R> implements 
 
 	static final class MapFuseableConditionalSubscriber<T, R>
 			implements ConditionalSubscriber<T>, InnerOperator<T, R>,
-			           QueueSubscription<R> {
+			QueueSubscription<R> {
 
 		final ConditionalSubscriber<? super R> actual;
 		final Function<? super T, ? extends R> mapper;
@@ -354,7 +353,7 @@ final class FluxMapFuseable<T, R> extends InternalFluxOperator<T, R> implements 
 		@Override
 		@Nullable
 		public R poll() {
-			for(;;) {
+			for (; ; ) {
 				T v = s.poll();
 				if (v != null) {
 					try {

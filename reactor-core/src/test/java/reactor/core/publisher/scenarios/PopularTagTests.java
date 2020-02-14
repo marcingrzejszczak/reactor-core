@@ -22,13 +22,12 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 import reactor.core.Disposable;
-import reactor.util.Loggers;
 import reactor.core.publisher.Flux;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.function.Tuples;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-
-import reactor.util.Logger;
 
 /**
  * @author Stephane Maldini
@@ -38,13 +37,13 @@ public class PopularTagTests extends AbstractReactorTest {
 	private static final Logger LOG = Loggers.getLogger(PopularTagTests.class);
 
 	private static final List<String> PULP_SAMPLE = Arrays.asList(
-	  "Look, ", "just because I don't be givin' no man a #foot massage don't make it right for #Marsellus #to throw " +
-		"Antwone",
-	  " ",
-	  "into a glass #motherfucker house, ", "fuckin' up the way the nigger talks. ", "#Motherfucker do that shit #to" +
-		" " +
-		"me,", " he "
-	  , "better paralyze my ass, ", "'cause I'll kill the #motherfucker , ", "know what I'm sayin'?"
+			"Look, ", "just because I don't be givin' no man a #foot massage don't make it right for #Marsellus #to throw " +
+					"Antwone",
+			" ",
+			"into a glass #motherfucker house, ", "fuckin' up the way the nigger talks. ", "#Motherfucker do that shit #to" +
+					" " +
+					"me,", " he "
+			, "better paralyze my ass, ", "'cause I'll kill the #motherfucker , ", "know what I'm sayin'?"
 	);
 
 
@@ -53,29 +52,29 @@ public class PopularTagTests extends AbstractReactorTest {
 		CountDownLatch latch = new CountDownLatch(1);
 
 		Disposable top10every1second =
-		  Flux.fromIterable(PULP_SAMPLE)
-		         .publishOn(asyncGroup)
-		         .flatMap(samuelJackson ->
-				Flux
-				  .fromArray(samuelJackson.split(" "))
-				  .publishOn(asyncGroup)
-				  .filter(w -> !w.trim().isEmpty())
-				  .doOnNext(i -> simulateLatency())
-			)
-		         .window(Duration.ofSeconds(2))
-		         .flatMap(s -> s.groupBy(w -> w)
-		                       .flatMap(w -> w.count().map(c -> Tuples.of(w.key(), c)))
-		                       .collectSortedList((a, b) -> -a.getT2().compareTo(b.getT2()))
-		                        .flatMapMany(Flux::fromIterable)
-		                       .take(10)
-		                       .doAfterTerminate(() -> LOG.info("------------------------ window terminated" +
-						      "----------------------"))
-			)
-		         .subscribe(
-			  entry -> LOG.info(entry.getT1() + ": " + entry.getT2()),
-			  error -> LOG.error("", error),
-				        latch::countDown
-			);
+				Flux.fromIterable(PULP_SAMPLE)
+						.publishOn(asyncGroup)
+						.flatMap(samuelJackson ->
+								Flux
+										.fromArray(samuelJackson.split(" "))
+										.publishOn(asyncGroup)
+										.filter(w -> !w.trim().isEmpty())
+										.doOnNext(i -> simulateLatency())
+						)
+						.window(Duration.ofSeconds(2))
+						.flatMap(s -> s.groupBy(w -> w)
+								.flatMap(w -> w.count().map(c -> Tuples.of(w.key(), c)))
+								.collectSortedList((a, b) -> -a.getT2().compareTo(b.getT2()))
+								.flatMapMany(Flux::fromIterable)
+								.take(10)
+								.doAfterTerminate(() -> LOG.info("------------------------ window terminated" +
+										"----------------------"))
+						)
+						.subscribe(
+								entry -> LOG.info(entry.getT1() + ": " + entry.getT2()),
+								error -> LOG.error("", error),
+								latch::countDown
+						);
 
 		awaitLatch(top10every1second, latch);
 	}
@@ -83,7 +82,8 @@ public class PopularTagTests extends AbstractReactorTest {
 	private void simulateLatency() {
 		try {
 			Thread.sleep(100);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}

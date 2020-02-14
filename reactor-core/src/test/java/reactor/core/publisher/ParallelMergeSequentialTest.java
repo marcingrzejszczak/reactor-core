@@ -39,7 +39,8 @@ public class ParallelMergeSequentialTest {
 
 	@Test
 	public void scanMainSubscriber() {
-		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				s -> s.request(2));
 		MergeSequentialMain<Integer>
 				test = new MergeSequentialMain<>(subscriber, 4, 123, Queues.small());
@@ -59,7 +60,8 @@ public class ParallelMergeSequentialTest {
 
 	@Test
 	public void scanMainSubscriberDoneAfterNComplete() {
-		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				s -> s.request(2));
 
 		int n = 4;
@@ -71,7 +73,7 @@ public class ParallelMergeSequentialTest {
 
 		for (int i = 0; i < n; i++) {
 			assertThat(test.scan(Scannable.Attr.TERMINATED)).as("complete " + i)
-			                                                .isFalse();
+					.isFalse();
 			test.onComplete();
 		}
 
@@ -80,7 +82,8 @@ public class ParallelMergeSequentialTest {
 
 	@Test
 	public void scanMainSubscriberError() {
-		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				s -> s.request(2));
 		MergeSequentialMain<Integer>
 				test = new MergeSequentialMain<>(subscriber, 4, 123, Queues.small());
@@ -98,8 +101,9 @@ public class ParallelMergeSequentialTest {
 	@Test
 	public void scanInnerSubscriber() {
 		CoreSubscriber<Integer>
-				mainActual = new LambdaSubscriber<>(null, e -> { }, null, null);
-		MergeSequentialMain<Integer> main = new MergeSequentialMain<>(mainActual, 2,  123, Queues.small());
+				mainActual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		MergeSequentialMain<Integer> main = new MergeSequentialMain<>(mainActual, 2, 123, Queues.small());
 		MergeSequentialInner<Integer> test = new MergeSequentialInner<>(main, 456);
 
 		Subscription subscription = Operators.emptySubscription();

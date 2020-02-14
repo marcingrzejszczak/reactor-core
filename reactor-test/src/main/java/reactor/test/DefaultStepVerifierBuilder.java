@@ -59,7 +59,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
-import reactor.core.publisher.ParallelFlux;
 import reactor.core.publisher.Signal;
 import reactor.test.scheduler.VirtualTimeScheduler;
 import reactor.util.Logger;
@@ -80,89 +79,53 @@ final class DefaultStepVerifierBuilder<T>
 		implements StepVerifier.FirstStep<T> {
 
 	/**
-	 * the timeout used locally by {@link DefaultStepVerifier#verify()}, changed by
-	 * {@link StepVerifier#setDefaultTimeout(Duration)}
-	 */
-	static Duration defaultVerifyTimeout = StepVerifier.DEFAULT_VERIFY_TIMEOUT;
-
-	private static class HookRecorder {
-		final Queue<Object>                                   droppedElements   = new ConcurrentLinkedQueue<>();
-		final Queue<Object>                                   discardedElements = new ConcurrentLinkedQueue<>();
-		final Queue<Throwable>                                droppedErrors     = new ConcurrentLinkedQueue<>();
-		final Queue<Tuple2<Optional<Throwable>, Optional<?>>> operatorErrors    = new ConcurrentLinkedQueue<>();
-
-		private void plugHooks() {
-			Hooks.onErrorDropped(droppedErrors::offer);
-			Hooks.onNextDropped(droppedElements::offer);
-			Hooks.onOperatorError((t, d) -> {
-				operatorErrors.offer(Tuples.of(Optional.ofNullable(t), Optional.ofNullable(d)));
-				return t;
-			});
-		}
-
-		public void plugHooks(StepVerifierOptions verifierOptions) {
-			plugHooks();
-
-			Context userContext = verifierOptions.getInitialContext();
-			verifierOptions.withInitialContext(Operators.enableOnDiscard(userContext, discardedElements::offer));
-		}
-
-		public void plugHooksForSubscriber(DefaultVerifySubscriber<?> subscriber) {
-			plugHooks();
-
-			Context userContext = subscriber.initialContext;
-			subscriber.initialContext = Operators.enableOnDiscard(userContext, discardedElements::offer);
-		}
-
-		public void unplugHooks() {
-			Hooks.resetOnNextDropped();
-			Hooks.resetOnErrorDropped();
-			Hooks.resetOnOperatorError();
-		}
-
-		public boolean hasDroppedElements() {
-			return !droppedElements.isEmpty();
-		}
-
-		public boolean noDroppedElements() {
-			return !hasDroppedElements();
-		}
-
-		public boolean droppedAllOf(Collection<Object> elements) {
-			return droppedElements.containsAll(elements);
-		}
-
-		public boolean hasDiscardedElements() {
-			return !discardedElements.isEmpty();
-		}
-
-		public boolean noDiscardedElements() {
-			return !hasDiscardedElements();
-		}
-
-		public boolean discardedAllOf(Collection<Object> elements) {
-			return discardedElements.containsAll(elements);
-		}
-
-		public boolean hasDroppedErrors() {
-			return !droppedErrors.isEmpty();
-		}
-
-		public boolean noDroppedErrors() {
-			return !hasDroppedErrors();
-		}
-
-		public boolean hasOperatorErrors() {
-			return !operatorErrors.isEmpty();
-		}
-	}
-
-	/**
 	 * The {@link MessageFormatter} used for cases where no scenario name has been provided
 	 * through {@link StepVerifierOptions}.
 	 */
 	static final MessageFormatter NO_NAME_MESSAGE_FORMATTER = new MessageFormatter(null, null,
 			Collections.emptyList());
+	static final AtomicReferenceFieldUpdater<DefaultVerifySubscriber, Throwable>
+			ERRORS =
+			AtomicReferenceFieldUpdater.newUpdater(DefaultVerifySubscriber.class,
+					Throwable.class,
+					"errors");
+	static final AtomicIntegerFieldUpdater<DefaultVerifySubscriber> WIP =
+			AtomicIntegerFieldUpdater.newUpdater(DefaultVerifySubscriber.class, "wip");
+	static final Optional<AssertionError> EXPECT_MORE = Optional.of(new AssertionError("EXPECT MORE"));
+	/**
+	 * the timeout used locally by {@link DefaultStepVerifier#verify()}, changed by
+	 * {@link StepVerifier#setDefaultTimeout(Duration)}
+	 */
+	static Duration defaultVerifyTimeout = StepVerifier.DEFAULT_VERIFY_TIMEOUT;
+	final SignalEvent<T> defaultFirstStep;
+	final List<Event<T>> script;
+	final MessageFormatter messageFormatter;
+	final long initialRequest;
+	final Supplier<? extends VirtualTimeScheduler> vtsLookup;
+	final StepVerifierOptions options;
+	@Nullable
+	Supplier<? extends Publisher<? extends T>> sourceSupplier;
+	long hangCheckRequested;
+	int requestedFusionMode = -1;
+	int expectedFusionMode = -1;
+	DefaultStepVerifierBuilder(StepVerifierOptions options,
+			@Nullable Supplier<? extends Publisher<? extends T>> sourceSupplier) {
+		this.initialRequest = options.getInitialRequest();
+		this.options = options;
+		if (options.getScenarioName() == null && options.getValueFormatter() == null) {
+			this.messageFormatter = NO_NAME_MESSAGE_FORMATTER;
+		}
+		else {
+			this.messageFormatter = new MessageFormatter(options.getScenarioName(), options.getValueFormatter(), options.getExtractors());
+		}
+		this.vtsLookup = options.getVirtualTimeSchedulerSupplier();
+		this.sourceSupplier = sourceSupplier;
+		this.script = new ArrayList<>();
+		this.defaultFirstStep = newOnSubscribeStep(messageFormatter, "defaultOnSubscribe");
+		this.script.add(defaultFirstStep);
+
+		this.hangCheckRequested = initialRequest;
+	}
 
 	static void checkPositive(long n) {
 		if (n < 0) {
@@ -184,36 +147,41 @@ final class DefaultStepVerifierBuilder<T>
 		return new DefaultStepVerifierBuilder<>(options, scenarioSupplier);
 	}
 
-	final SignalEvent<T>                           defaultFirstStep;
-	final List<Event<T>>                           script;
-	final MessageFormatter                         messageFormatter;
-	final long                                     initialRequest;
-	final Supplier<? extends VirtualTimeScheduler> vtsLookup;
-	final StepVerifierOptions                      options;
-
-	@Nullable
-	Supplier<? extends Publisher<? extends T>> sourceSupplier;
-	long hangCheckRequested;
-	int  requestedFusionMode = -1;
-	int  expectedFusionMode  = -1;
-
-	DefaultStepVerifierBuilder(StepVerifierOptions options,
-			@Nullable Supplier<? extends Publisher<? extends T>> sourceSupplier) {
-		this.initialRequest = options.getInitialRequest();
-		this.options = options;
-		if (options.getScenarioName() == null && options.getValueFormatter() == null) {
-			this.messageFormatter = NO_NAME_MESSAGE_FORMATTER;
+	static void virtualOrRealWait(Duration duration, DefaultVerifySubscriber<?> s)
+			throws Exception {
+		if (s.virtualTimeScheduler == null) {
+			s.completeLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
 		}
 		else {
-			this.messageFormatter = new MessageFormatter(options.getScenarioName(), options.getValueFormatter(), options.getExtractors());
+			s.virtualTimeScheduler.advanceTimeBy(duration);
 		}
-		this.vtsLookup = options.getVirtualTimeSchedulerSupplier();
-		this.sourceSupplier = sourceSupplier;
-		this.script = new ArrayList<>();
-		this.defaultFirstStep = newOnSubscribeStep(messageFormatter, "defaultOnSubscribe");
-		this.script.add(defaultFirstStep);
+	}
 
-		this.hangCheckRequested = initialRequest;
+	static String formatFusionMode(int m) {
+		switch (m) {
+		case Fuseable.ANY:
+			return "(any)";
+		case Fuseable.SYNC:
+			return "(sync)";
+		case Fuseable.ASYNC:
+			return "(async)";
+		case Fuseable.NONE:
+			return "none";
+		case Fuseable.THREAD_BARRIER:
+			return "(thread-barrier)";
+		}
+		return "" + m;
+	}
+
+	static <T> SignalEvent<T> newOnSubscribeStep(MessageFormatter messageFormatter, String desc) {
+		return new SignalEvent<>((signal, se) -> {
+			if (!signal.isOnSubscribe()) {
+				return messageFormatter.failOptional(se, "expected: onSubscribe(); actual: %s", signal);
+			}
+			else {
+				return Optional.empty();
+			}
+		}, desc);
 	}
 
 	@Override
@@ -289,7 +257,7 @@ final class DefaultStepVerifierBuilder<T>
 	public DefaultStepVerifierBuilder<T> consumeSubscriptionWith(
 			Consumer<? super Subscription> consumer) {
 		Objects.requireNonNull(consumer, "consumer");
-		if(script.isEmpty() || (script.size() == 1 && script.get(0) == defaultFirstStep)) {
+		if (script.isEmpty() || (script.size() == 1 && script.get(0) == defaultFirstStep)) {
 			this.script.set(0, new SignalEvent<>((signal, se) -> {
 				if (!signal.isOnSubscribe()) {
 					return messageFormatter.failOptional(se, "expected: onSubscribe(); actual: %s", signal);
@@ -315,18 +283,18 @@ final class DefaultStepVerifierBuilder<T>
 	@Override
 	public DefaultStepVerifierBuilder<T> expectNoAccessibleContext() {
 		return consumeSubscriptionWith(sub -> {
-					Scannable lowest = Scannable.from(sub);
-					Scannable verifierSubscriber = Scannable.from(lowest.scan(Scannable.Attr.ACTUAL));
+			Scannable lowest = Scannable.from(sub);
+			Scannable verifierSubscriber = Scannable.from(lowest.scan(Scannable.Attr.ACTUAL));
 
-					Context c = Flux.fromStream(verifierSubscriber.parents())
-					                .ofType(CoreSubscriber.class)
-					                .map(CoreSubscriber::currentContext)
-					                .blockLast();
+			Context c = Flux.fromStream(verifierSubscriber.parents())
+					.ofType(CoreSubscriber.class)
+					.map(CoreSubscriber::currentContext)
+					.blockLast();
 
-					if (c != null) {
-						throw messageFormatter.assertionError("Expected no accessible Context, got " + c);
-					}
-				});
+			if (c != null) {
+				throw messageFormatter.assertionError("Expected no accessible Context, got " + c);
+			}
+		});
 	}
 
 	@Override
@@ -387,11 +355,11 @@ final class DefaultStepVerifierBuilder<T>
 			}
 			else if (!Objects.equals(errorMessage,
 					signal.getThrowable()
-					      .getMessage())) {
+							.getMessage())) {
 				return messageFormatter.failOptional(se, "expected error message: \"%s\"; " + "actual " + "message: %s",
 						errorMessage,
 						signal.getThrowable()
-						      .getMessage());
+								.getMessage());
 			}
 			else {
 				return Optional.empty();
@@ -451,32 +419,32 @@ final class DefaultStepVerifierBuilder<T>
 
 	@Override
 	public final DefaultStepVerifierBuilder<T> expectNext(T t) {
-		return addExpectedValues(new Object[] { t });
+		return addExpectedValues(new Object[] {t});
 	}
 
 	@Override
 	public final DefaultStepVerifierBuilder<T> expectNext(T t1, T t2) {
-		return addExpectedValues(new Object[] { t1, t2 });
+		return addExpectedValues(new Object[] {t1, t2});
 	}
 
 	@Override
 	public final DefaultStepVerifierBuilder<T> expectNext(T t1, T t2, T t3) {
-		return addExpectedValues(new Object[] { t1, t2, t3 });
+		return addExpectedValues(new Object[] {t1, t2, t3});
 	}
 
 	@Override
 	public final DefaultStepVerifierBuilder<T> expectNext(T t1, T t2, T t3, T t4) {
-		return addExpectedValues(new Object[] { t1, t2, t3, t4 });
+		return addExpectedValues(new Object[] {t1, t2, t3, t4});
 	}
 
 	@Override
 	public final DefaultStepVerifierBuilder<T> expectNext(T t1, T t2, T t3, T t4, T t5) {
-		return addExpectedValues(new Object[] { t1, t2, t3, t4, t5 });
+		return addExpectedValues(new Object[] {t1, t2, t3, t4, t5});
 	}
 
 	@Override
 	public final DefaultStepVerifierBuilder<T> expectNext(T t1, T t2, T t3, T t4, T t5, T t6) {
-		return addExpectedValues(new Object[] { t1, t2, t3, t4, t5, t6 });
+		return addExpectedValues(new Object[] {t1, t2, t3, t4, t5, t6});
 	}
 
 	@Override
@@ -517,7 +485,8 @@ final class DefaultStepVerifierBuilder<T>
 		if (iterable.iterator().hasNext()) {
 			if (iterable instanceof Collection) {
 				checkPotentialHang(((Collection) iterable).size(), "expectNextSequence");
-			} else {
+			}
+			else {
 				//best effort
 				checkPotentialHang(-1, "expectNextSequence");
 			}
@@ -569,10 +538,10 @@ final class DefaultStepVerifierBuilder<T>
 
 	@Override
 	public DefaultStepVerifierBuilder<T> expectSubscription() {
-		if(this.script.get(0) instanceof NoEvent) {
+		if (this.script.get(0) instanceof NoEvent) {
 			this.script.add(defaultFirstStep);
 		}
-		else{
+		else {
 			this.script.set(0, newOnSubscribeStep(messageFormatter, "expectSubscription"));
 		}
 		return this;
@@ -600,7 +569,7 @@ final class DefaultStepVerifierBuilder<T>
 	@Override
 	public DefaultStepVerifierBuilder<T> expectNoEvent(Duration duration) {
 		Objects.requireNonNull(duration, "duration");
-		if(this.script.size() == 1 && this.script.get(0) == defaultFirstStep){
+		if (this.script.size() == 1 && this.script.get(0) == defaultFirstStep) {
 			this.script.set(0, new NoEvent<>(duration, "expectNoEvent"));
 		}
 		else {
@@ -704,12 +673,13 @@ final class DefaultStepVerifierBuilder<T>
 
 	@Override
 	public DefaultStepVerifierBuilder<T> thenConsumeWhile(Predicate<T> predicate) {
-		return thenConsumeWhile(predicate, t -> {});
+		return thenConsumeWhile(predicate, t -> {
+		});
 	}
 
 	@Override
 	public DefaultStepVerifierBuilder<T> thenConsumeWhile(Predicate<T> predicate,
-				Consumer<T> consumer) {
+			Consumer<T> consumer) {
 		Objects.requireNonNull(predicate, "predicate");
 		checkPotentialHang(-1, "thenConsumeWhile");
 		this.script.add(new SignalConsumeWhileEvent<>(predicate, consumer, "thenConsumeWhile"));
@@ -736,9 +706,10 @@ final class DefaultStepVerifierBuilder<T>
 					.append(", expected: ");
 			if (bestEffort) {
 				message.append("at least ")
-				       .append(expectedAmount)
-				       .append(" (best effort estimation)");
-			} else {
+						.append(expectedAmount)
+						.append(" (best effort estimation)");
+			}
+			else {
 				message.append(expectedAmount);
 			}
 			throw messageFormatter.error(IllegalArgumentException::new, message.toString());
@@ -758,6 +729,82 @@ final class DefaultStepVerifierBuilder<T>
 
 		String getDescription();
 
+	}
+
+	interface EagerEvent<T> extends Event<T> {
+
+	}
+
+	private static class HookRecorder {
+		final Queue<Object> droppedElements = new ConcurrentLinkedQueue<>();
+		final Queue<Object> discardedElements = new ConcurrentLinkedQueue<>();
+		final Queue<Throwable> droppedErrors = new ConcurrentLinkedQueue<>();
+		final Queue<Tuple2<Optional<Throwable>, Optional<?>>> operatorErrors = new ConcurrentLinkedQueue<>();
+
+		private void plugHooks() {
+			Hooks.onErrorDropped(droppedErrors::offer);
+			Hooks.onNextDropped(droppedElements::offer);
+			Hooks.onOperatorError((t, d) -> {
+				operatorErrors.offer(Tuples.of(Optional.ofNullable(t), Optional.ofNullable(d)));
+				return t;
+			});
+		}
+
+		public void plugHooks(StepVerifierOptions verifierOptions) {
+			plugHooks();
+
+			Context userContext = verifierOptions.getInitialContext();
+			verifierOptions.withInitialContext(Operators.enableOnDiscard(userContext, discardedElements::offer));
+		}
+
+		public void plugHooksForSubscriber(DefaultVerifySubscriber<?> subscriber) {
+			plugHooks();
+
+			Context userContext = subscriber.initialContext;
+			subscriber.initialContext = Operators.enableOnDiscard(userContext, discardedElements::offer);
+		}
+
+		public void unplugHooks() {
+			Hooks.resetOnNextDropped();
+			Hooks.resetOnErrorDropped();
+			Hooks.resetOnOperatorError();
+		}
+
+		public boolean hasDroppedElements() {
+			return !droppedElements.isEmpty();
+		}
+
+		public boolean noDroppedElements() {
+			return !hasDroppedElements();
+		}
+
+		public boolean droppedAllOf(Collection<Object> elements) {
+			return droppedElements.containsAll(elements);
+		}
+
+		public boolean hasDiscardedElements() {
+			return !discardedElements.isEmpty();
+		}
+
+		public boolean noDiscardedElements() {
+			return !hasDiscardedElements();
+		}
+
+		public boolean discardedAllOf(Collection<Object> elements) {
+			return discardedElements.containsAll(elements);
+		}
+
+		public boolean hasDroppedErrors() {
+			return !droppedErrors.isEmpty();
+		}
+
+		public boolean noDroppedErrors() {
+			return !hasDroppedErrors();
+		}
+
+		public boolean hasOperatorErrors() {
+			return !operatorErrors.isEmpty();
+		}
 	}
 
 	final static class DefaultStepVerifier<T> implements StepVerifier {
@@ -839,11 +886,11 @@ final class DefaultStepVerifierBuilder<T>
 				// a vts through enable(false), because the CURRENT will already be that vts
 				VirtualTimeScheduler.set(vts);
 				vtsCleanup = () -> {
-						vts.dispose();
-				//explicitly reset the factory, rather than rely on vts shutdown doing so
-				// because it could have been eagerly shut down in a test.
-				VirtualTimeScheduler.reset();
-				vtsLock.unlock();
+					vts.dispose();
+					//explicitly reset the factory, rather than rely on vts shutdown doing so
+					// because it could have been eagerly shut down in a test.
+					VirtualTimeScheduler.reset();
+					vtsLock.unlock();
 				};
 			}
 			else {
@@ -911,31 +958,28 @@ final class DefaultStepVerifierBuilder<T>
 			extends AtomicReference<Subscription>
 			implements StepVerifier, CoreSubscriber<T>, Scannable {
 
-		final CountDownLatch       completeLatch;
-		final Queue<Event<T>>      script;
-		final MessageFormatter     messageFormatter;
-		final Queue<TaskEvent<T>>  taskEvents;
-		final int                  requestedFusionMode;
-		final int                  expectedFusionMode;
-		final long                 initialRequest;
-		final VirtualTimeScheduler virtualTimeScheduler;
-		final Disposable           postVerifyCleanup;
-
-		Context                       initialContext;
-		@Nullable
-		Logger                        logger;
-		int                           establishedFusionMode;
-		Fuseable.QueueSubscription<T> qs;
-		long                          produced;   //used for request tracking
-		long                          unasserted; //used for expectNextXXX tracking
-		volatile long                 requested;
-		volatile boolean done; // async fusion
-		Iterator<? extends T>         currentNextAs;
-		Collection<T>                 currentCollector;
-
 		static final AtomicLongFieldUpdater<DefaultVerifySubscriber> REQUESTED =
-			AtomicLongFieldUpdater.newUpdater(DefaultVerifySubscriber.class, "requested");
-
+				AtomicLongFieldUpdater.newUpdater(DefaultVerifySubscriber.class, "requested");
+		final CountDownLatch completeLatch;
+		final Queue<Event<T>> script;
+		final MessageFormatter messageFormatter;
+		final Queue<TaskEvent<T>> taskEvents;
+		final int requestedFusionMode;
+		final int expectedFusionMode;
+		final long initialRequest;
+		final VirtualTimeScheduler virtualTimeScheduler;
+		final Disposable postVerifyCleanup;
+		Context initialContext;
+		@Nullable
+		Logger logger;
+		int establishedFusionMode;
+		Fuseable.QueueSubscription<T> qs;
+		long produced;   //used for request tracking
+		long unasserted; //used for expectNextXXX tracking
+		volatile long requested;
+		volatile boolean done; // async fusion
+		Iterator<? extends T> currentNextAs;
+		Collection<T> currentCollector;
 		@SuppressWarnings("unused")
 		volatile int wip;
 
@@ -988,11 +1032,6 @@ final class DefaultStepVerifierBuilder<T>
 			this.postVerifyCleanup = postVerifyCleanup;
 		}
 
-		@Override
-		public String toString() {
-			return "StepVerifier Subscriber";
-		}
-
 		static <R> Queue<Event<R>> conflateScript(List<Event<R>> script, @Nullable Logger logger) {
 			ConcurrentLinkedQueue<Event<R>> queue = new ConcurrentLinkedQueue<>(script);
 			ConcurrentLinkedQueue<Event<R>> conflated = new ConcurrentLinkedQueue<>();
@@ -1004,14 +1043,15 @@ final class DefaultStepVerifierBuilder<T>
 					while (queue.peek() instanceof SubscriptionEvent) {
 						conflated.add(new SubscriptionTaskEvent<>((SubscriptionEvent<R>) queue.poll()));
 					}
-				} else {
+				}
+				else {
 					conflated.add(queue.poll());
 				}
 			}
 
 			Iterator<Event<R>> iterator = conflated.iterator();
 			Event<R> previous = null;
-			while(iterator.hasNext()) {
+			while (iterator.hasNext()) {
 				Event<R> current = iterator.next();
 				if (previous != null && current instanceof DescriptionEvent) {
 					String newDescription = current.getDescription();
@@ -1027,8 +1067,8 @@ final class DefaultStepVerifierBuilder<T>
 
 			queue.clear();
 			queue.addAll(conflated.stream()
-			                      .filter(ev -> !(ev instanceof DescriptionEvent))
-			                      .collect(Collectors.toList()));
+					.filter(ev -> !(ev instanceof DescriptionEvent))
+					.collect(Collectors.toList()));
 			conflated = queue;
 
 			if (logger != null) {
@@ -1040,6 +1080,11 @@ final class DefaultStepVerifierBuilder<T>
 			//TODO simplify whole algo, remove DescriptionTasks
 
 			return conflated;
+		}
+
+		@Override
+		public String toString() {
+			return "StepVerifier Subscriber";
 		}
 
 		@Override
@@ -1137,16 +1182,16 @@ final class DefaultStepVerifierBuilder<T>
 			}
 		}
 
-		void drainAsyncLoop(){
+		void drainAsyncLoop() {
 			T t;
 			long r = requested;
-			for( ; ;) {
+			for (; ; ) {
 				boolean d = done;
 				if (d && qs.isEmpty()) {
-					if(get() == Operators.cancelledSubscription()){
+					if (get() == Operators.cancelledSubscription()) {
 						return;
 					}
-					if(errors != null){
+					if (errors != null) {
 						onExpectation(Signal.complete());
 					}
 					this.completeLatch.countDown();
@@ -1158,7 +1203,7 @@ final class DefaultStepVerifierBuilder<T>
 				}
 				long p = 0L;
 				while (p != r) {
-					if(get() == Operators.cancelledSubscription()){
+					if (get() == Operators.cancelledSubscription()) {
 						return;
 					}
 					try {
@@ -1183,10 +1228,10 @@ final class DefaultStepVerifierBuilder<T>
 					if (!checkRequestOverflow(signal)) {
 						onExpectation(signal);
 						if (d && qs.isEmpty()) {
-							if(get() == Operators.cancelledSubscription()){
+							if (get() == Operators.cancelledSubscription()) {
 								return;
 							}
-							if(errors != null){
+							if (errors != null) {
 								onExpectation(Signal.complete());
 							}
 							this.completeLatch.countDown();
@@ -1202,7 +1247,7 @@ final class DefaultStepVerifierBuilder<T>
 					r = REQUESTED.addAndGet(this, -p);
 				}
 
-				if(r == 0L || qs.isEmpty()){
+				if (r == 0L || qs.isEmpty()) {
 					break;
 				}
 			}
@@ -1260,7 +1305,7 @@ final class DefaultStepVerifierBuilder<T>
 				}
 				catch (InterruptedException ex) {
 					Thread.currentThread()
-					      .interrupt();
+							.interrupt();
 				}
 				validate();
 				return Duration.between(now, Instant.now());
@@ -1313,7 +1358,7 @@ final class DefaultStepVerifierBuilder<T>
 					this.getAndSet(Operators.cancelledSubscription());
 			if (s != null && s != Operators.cancelledSubscription()) {
 				s.cancel();
-				if(establishedFusionMode == Fuseable.ASYNC) {
+				if (establishedFusionMode == Fuseable.ASYNC) {
 					qs.clear();
 				}
 			}
@@ -1457,7 +1502,7 @@ final class DefaultStepVerifierBuilder<T>
 			}
 			catch (Throwable e) {
 				Exceptions.throwIfFatal(e);
-				if(e instanceof AssertionError){
+				if (e instanceof AssertionError) {
 					Exceptions.addThrowable(ERRORS, this, e);
 				}
 				else {
@@ -1466,8 +1511,8 @@ final class DefaultStepVerifierBuilder<T>
 							"failed running expectation on signal [%s] " + "with " + "[%s]:\n%s",
 							actualSignal,
 							Exceptions.unwrap(e)
-							          .getClass()
-							          .getName(),
+									.getClass()
+									.getName(),
 							msg).get();
 					wrapFailure.addSuppressed(e);
 					Exceptions.addThrowable(ERRORS,
@@ -1484,7 +1529,7 @@ final class DefaultStepVerifierBuilder<T>
 			if (error.isPresent()) {
 				Exceptions.addThrowable(ERRORS, this, error.get());
 				// #55 ensure the onError is added as a suppressed to the AssertionError
-				if(actualSignal.isOnError()) {
+				if (actualSignal.isOnError()) {
 					error.get().addSuppressed(actualSignal.getThrowable());
 				}
 				maybeCancel(actualSignal);
@@ -1523,7 +1568,7 @@ final class DefaultStepVerifierBuilder<T>
 			}
 			else {
 				Exceptions.addThrowable(ERRORS, this, error.get());
-				if(actualSignal.isOnError()) {
+				if (actualSignal.isOnError()) {
 					// #55 ensure the onError is added as a suppressed to the AssertionError
 					error.get().addSuppressed(actualSignal.getThrowable());
 				}
@@ -1565,7 +1610,7 @@ final class DefaultStepVerifierBuilder<T>
 
 					if (error.isPresent()) {
 						Exceptions.addThrowable(ERRORS, this, error.get());
-						if(actualSignal.isOnError()) {
+						if (actualSignal.isOnError()) {
 							// #55 ensure the onError is added as a suppressed to the AssertionError
 							error.get().addSuppressed(actualSignal.getThrowable());
 						}
@@ -1598,7 +1643,7 @@ final class DefaultStepVerifierBuilder<T>
 			}
 		}
 
-		boolean onSubscriptionLoop(){
+		boolean onSubscriptionLoop() {
 			SubscriptionEvent<T> subscriptionEvent;
 			if (this.script.peek() instanceof SubscriptionEvent) {
 				subscriptionEvent = (SubscriptionEvent<T>) this.script.poll();
@@ -1620,10 +1665,10 @@ final class DefaultStepVerifierBuilder<T>
 				return true;
 			}
 			for (; ; ) {
-				if(onSubscriptionLoop()){
+				if (onSubscriptionLoop()) {
 					return true;
 				}
-				if(establishedFusionMode == Fuseable.ASYNC) {
+				if (establishedFusionMode == Fuseable.ASYNC) {
 					drainAsyncLoop();
 				}
 				missed = WIP.addAndGet(this, -missed);
@@ -1667,7 +1712,7 @@ final class DefaultStepVerifierBuilder<T>
 		final void pollTaskEventOrComplete(Duration timeout) throws InterruptedException {
 			Objects.requireNonNull(timeout, "timeout");
 			Instant stop = Instant.now()
-			                      .plus(timeout);
+					.plus(timeout);
 
 			for (; ; ) {
 				waitTaskEvent();
@@ -1739,7 +1784,7 @@ final class DefaultStepVerifierBuilder<T>
 				if (m == Fuseable.SYNC) {
 					T v;
 					for (; ; ) {
-						if(get() == Operators.cancelledSubscription()){
+						if (get() == Operators.cancelledSubscription()) {
 							return;
 						}
 						try {
@@ -1786,8 +1831,8 @@ final class DefaultStepVerifierBuilder<T>
 				return;
 			}
 
-			if(errors instanceof AssertionError){
-				throw (AssertionError)errors;
+			if (errors instanceof AssertionError) {
+				throw (AssertionError) errors;
 			}
 
 			List<Throwable> flat = new ArrayList<>();
@@ -1796,8 +1841,8 @@ final class DefaultStepVerifierBuilder<T>
 
 			StringBuilder messageBuilder = new StringBuilder("Expectation failure(s):\n");
 			flat.stream()
-			             .flatMap(error -> Stream.of(" - ", error, "\n"))
-			             .forEach(messageBuilder::append);
+					.flatMap(error -> Stream.of(" - ", error, "\n"))
+					.forEach(messageBuilder::append);
 
 			messageBuilder.delete(messageBuilder.length() - 1, messageBuilder.length());
 			throw messageFormatter.assertionError(messageBuilder.toString(), errors);
@@ -1807,9 +1852,9 @@ final class DefaultStepVerifierBuilder<T>
 
 	static class DefaultStepVerifierAssertions implements StepVerifier.Assertions {
 
-		private final Duration         duration;
+		private final Duration duration;
 		private final MessageFormatter messageFormatter;
-		private final HookRecorder     hookRecorder;
+		private final HookRecorder hookRecorder;
 
 		DefaultStepVerifierAssertions(HookRecorder hookRecorder,
 				Duration duration,
@@ -2007,6 +2052,7 @@ final class DefaultStepVerifierBuilder<T>
 			return satisfies(hookRecorder::hasOperatorErrors,
 					() -> "Expected at least 1 operator error, none found.");
 		}
+
 		@Override
 		public StepVerifier.Assertions hasOperatorErrors(int size) {
 			return satisfies(() -> hookRecorder.operatorErrors.size() == size,
@@ -2101,12 +2147,6 @@ final class DefaultStepVerifierBuilder<T>
 					() -> String.format("Expected scenario to be verified in more than %sms, took %sms.",
 							d.toMillis(), duration.toMillis()));
 		}
-	}
-
-
-
-	interface EagerEvent<T> extends Event<T> {
-
 	}
 
 	static abstract class AbstractEagerEvent<T> implements EagerEvent<T> {
@@ -2230,9 +2270,9 @@ final class DefaultStepVerifierBuilder<T>
 
 		final Supplier<? extends Collection<T>> supplier;
 
-		final Predicate<? super Collection<T>>  predicate;
+		final Predicate<? super Collection<T>> predicate;
 
-		final Consumer<? super Collection<T>>   consumer;
+		final Consumer<? super Collection<T>> consumer;
 
 		CollectEvent(Supplier<? extends Collection<T>> supplier, MessageFormatter messageFormatter, String desc) {
 			super(desc);
@@ -2312,16 +2352,6 @@ final class DefaultStepVerifierBuilder<T>
 		}
 	}
 
-	static void virtualOrRealWait(Duration duration, DefaultVerifySubscriber<?> s)
-			throws Exception {
-		if (s.virtualTimeScheduler == null) {
-			s.completeLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
-		}
-		else {
-			s.virtualTimeScheduler.advanceTimeBy(duration);
-		}
-	}
-
 	static final class NoEvent<T> extends TaskEvent<T> {
 
 		final Duration duration;
@@ -2333,7 +2363,7 @@ final class DefaultStepVerifierBuilder<T>
 
 		@Override
 		void run(DefaultVerifySubscriber<T> parent) throws Exception {
-			if(parent.virtualTimeScheduler != null) {
+			if (parent.virtualTimeScheduler != null) {
 				parent.monitorSignal = true;
 				virtualOrRealWait(duration.minus(Duration.ofNanos(1)), parent);
 				parent.monitorSignal = false;
@@ -2346,7 +2376,7 @@ final class DefaultStepVerifierBuilder<T>
 				}
 				virtualOrRealWait(Duration.ofNanos(1), parent);
 			}
-			else{
+			else {
 				parent.monitorSignal = true;
 				virtualOrRealWait(duration, parent);
 				parent.monitorSignal = false;
@@ -2394,7 +2424,8 @@ final class DefaultStepVerifierBuilder<T>
 		void run(DefaultVerifySubscriber<T> parent) throws Exception {
 			if (delegate.isTerminal()) {
 				parent.doCancel();
-			} else {
+			}
+			else {
 				delegate.consume(parent.get());
 			}
 		}
@@ -2403,7 +2434,7 @@ final class DefaultStepVerifierBuilder<T>
 	static final class SignalSequenceEvent<T> extends AbstractSignalEvent<T> {
 
 		final Iterable<? extends T> iterable;
-		final MessageFormatter      messageFormatter;
+		final MessageFormatter messageFormatter;
 
 		SignalSequenceEvent(Iterable<? extends T> iterable, MessageFormatter messageFormatter, String desc) {
 			super(desc);
@@ -2438,7 +2469,7 @@ final class DefaultStepVerifierBuilder<T>
 	static final class SignalConsumeWhileEvent<T> extends AbstractSignalEvent<T> {
 
 		private final Predicate<T> predicate;
-		private final Consumer<T>  consumer;
+		private final Consumer<T> consumer;
 
 		SignalConsumeWhileEvent(Predicate<T> predicate, Consumer<T> consumer, String desc) {
 			super(desc);
@@ -2475,39 +2506,12 @@ final class DefaultStepVerifierBuilder<T>
 		}
 	}
 
-	static String formatFusionMode(int m) {
-		switch (m) {
-			case Fuseable.ANY:
-				return "(any)";
-			case Fuseable.SYNC:
-				return "(sync)";
-			case Fuseable.ASYNC:
-				return "(async)";
-			case Fuseable.NONE:
-				return "none";
-			case Fuseable.THREAD_BARRIER:
-				return "(thread-barrier)";
-		}
-		return "" + m;
-	}
-
-	static <T> SignalEvent<T> newOnSubscribeStep(MessageFormatter messageFormatter, String desc){
-		return new SignalEvent<>((signal, se) -> {
-			if (!signal.isOnSubscribe()) {
-				return messageFormatter.failOptional(se, "expected: onSubscribe(); actual: %s", signal);
-			}
-			else {
-				return Optional.empty();
-			}
-		}, desc);
-	}
-
 	static final class DefaultContextExpectations<T>
 			implements StepVerifier.ContextExpectations<T> {
 
-		private final MessageFormatter     messageFormatter;
+		private final MessageFormatter messageFormatter;
 		private final StepVerifier.Step<T> step;
-		private       Consumer<Context>    contextExpectations;
+		private Consumer<Context> contextExpectations;
 
 		DefaultContextExpectations(StepVerifier.Step<T> step, MessageFormatter messageFormatter) {
 			this.messageFormatter = messageFormatter;
@@ -2532,12 +2536,12 @@ final class DefaultStepVerifierBuilder<T>
 						//no parent? must be a ScalaSubscription or similar source
 						.switchIfEmpty(
 								Mono.just(lowest)
-								    //unless it is directly a CoreSubscriber, let's try to scan the leftmost, see if it has an ACTUAL
-								    .map(sc -> (sc instanceof CoreSubscriber) ?
-										    sc :
-										    sc.scanOrDefault(Scannable.Attr.ACTUAL, Scannable.from(null)))
-								    //we are ultimately only interested in CoreSubscribers' Context
-								    .ofType(CoreSubscriber.class)
+										//unless it is directly a CoreSubscriber, let's try to scan the leftmost, see if it has an ACTUAL
+										.map(sc -> (sc instanceof CoreSubscriber) ?
+												sc :
+												sc.scanOrDefault(Scannable.Attr.ACTUAL, Scannable.from(null)))
+										//we are ultimately only interested in CoreSubscribers' Context
+										.ofType(CoreSubscriber.class)
 						)
 						.map(CoreSubscriber::currentContext)
 						//if it wasn't a CoreSubscriber (eg. custom or vanilla Subscriber) there won't be a Context
@@ -2550,8 +2554,8 @@ final class DefaultStepVerifierBuilder<T>
 		@Override
 		public StepVerifier.ContextExpectations<T> hasKey(Object key) {
 			this.contextExpectations = this.contextExpectations.andThen(c -> {
-					if (!c.hasKey(key))
-						throw messageFormatter.assertionError(String.format("Key %s not found in Context %s", key, c));
+				if (!c.hasKey(key))
+					throw messageFormatter.assertionError(String.format("Key %s not found in Context %s", key, c));
 			});
 			return this;
 		}
@@ -2597,8 +2601,8 @@ final class DefaultStepVerifierBuilder<T>
 		public StepVerifier.ContextExpectations<T> containsAllOf(Map<?, ?> other) {
 			this.contextExpectations = this.contextExpectations.andThen(c -> {
 				boolean all = other.entrySet()
-				                   .stream()
-				                   .allMatch(e -> e.getValue().equals(c.getOrDefault(e.getKey(), null)));
+						.stream()
+						.allMatch(e -> e.getValue().equals(c.getOrDefault(e.getKey(), null)));
 				if (!all) {
 					throw messageFormatter.assertionError(String.format("Expected Context %s to contain all of %s", c, other));
 				}
@@ -2614,7 +2618,7 @@ final class DefaultStepVerifierBuilder<T>
 							String.format("Expected Context %s to contain same values as %s, but they differ in size", c, other));
 				}
 				boolean all = other.stream()
-				                   .allMatch(e -> e.getValue().equals(c.getOrDefault(e.getKey(), null)));
+						.allMatch(e -> e.getValue().equals(c.getOrDefault(e.getKey(), null)));
 				if (!all) {
 					throw messageFormatter.assertionError(
 							String.format("Expected Context %s to contain same values as %s, but they differ in content", c, other));
@@ -2631,8 +2635,8 @@ final class DefaultStepVerifierBuilder<T>
 							String.format("Expected Context %s to contain same values as %s, but they differ in size", c, other));
 				}
 				boolean all = other.entrySet()
-				                   .stream()
-				                   .allMatch(e -> e.getValue().equals(c.getOrDefault(e.getKey(), null)));
+						.stream()
+						.allMatch(e -> e.getValue().equals(c.getOrDefault(e.getKey(), null)));
 				if (!all) {
 					throw messageFormatter.assertionError(
 							String.format("Expected Context %s to contain same values as %s, but they differ in content", c, other));
@@ -2669,16 +2673,5 @@ final class DefaultStepVerifierBuilder<T>
 			return this;
 		}
 	}
-
-	static final AtomicReferenceFieldUpdater<DefaultVerifySubscriber, Throwable>
-			ERRORS =
-			AtomicReferenceFieldUpdater.newUpdater(DefaultVerifySubscriber.class,
-					Throwable.class,
-					"errors");
-
-	static final AtomicIntegerFieldUpdater<DefaultVerifySubscriber> WIP =
-			AtomicIntegerFieldUpdater.newUpdater(DefaultVerifySubscriber.class, "wip");
-
-	static final Optional<AssertionError> EXPECT_MORE = Optional.of(new AssertionError("EXPECT MORE"));
 
 }

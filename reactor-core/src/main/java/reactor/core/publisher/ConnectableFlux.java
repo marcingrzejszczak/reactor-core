@@ -33,6 +33,10 @@ import reactor.core.scheduler.Schedulers;
  */
 public abstract class ConnectableFlux<T> extends Flux<T> {
 
+	static final Consumer<Disposable> NOOP_DISCONNECT = runnable -> {
+
+	};
+
 	/**
 	 * Connects this {@link ConnectableFlux} to the upstream source when the first {@link org.reactivestreams.Subscriber}
 	 * subscribes.
@@ -80,7 +84,7 @@ public abstract class ConnectableFlux<T> extends Flux<T> {
 			connect(cancelSupport);
 			return this;
 		}
-		if(this instanceof Fuseable){
+		if (this instanceof Fuseable) {
 			return onAssembly(new FluxAutoConnectFuseable<>(this,
 					minSubscribers,
 					cancelSupport));
@@ -95,7 +99,7 @@ public abstract class ConnectableFlux<T> extends Flux<T> {
 	 * @return the {@link Disposable} that allows disconnecting the connection after.
 	 */
 	public final Disposable connect() {
-		final Disposable[] out = { null };
+		final Disposable[] out = {null};
 		connect(r -> out[0] = r);
 		return out[0];
 	}
@@ -187,8 +191,4 @@ public abstract class ConnectableFlux<T> extends Flux<T> {
 	public final Flux<T> refCount(int minSubscribers, Duration gracePeriod, Scheduler scheduler) {
 		return onAssembly(new FluxRefCountGrace<>(this, minSubscribers, gracePeriod, scheduler));
 	}
-
-	static final Consumer<Disposable> NOOP_DISCONNECT = runnable -> {
-
-	};
 }

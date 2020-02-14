@@ -39,7 +39,7 @@ import reactor.util.context.Context;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">https://github.com/reactor/reactive-streams-commons</a>
  */
 final class FluxGenerate<T, S>
-extends Flux<T> implements Fuseable, SourceProducer<T> {
+		extends Flux<T> implements Fuseable, SourceProducer<T> {
 
 
 	static final Callable EMPTY_CALLABLE = () -> null;
@@ -52,7 +52,7 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 
 	@SuppressWarnings("unchecked")
 	FluxGenerate(Consumer<SynchronousSink<T>> generator) {
-		this(EMPTY_CALLABLE, (state,sink) -> {
+		this(EMPTY_CALLABLE, (state, sink) -> {
 			generator.accept(sink);
 			return null;
 		});
@@ -64,7 +64,7 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 	}
 
 	FluxGenerate(Callable<S> stateSupplier, BiFunction<S, SynchronousSink<T>, S> generator,
-							 Consumer<? super S> stateConsumer) {
+			Consumer<? super S> stateConsumer) {
 		this.stateSupplier = Objects.requireNonNull(stateSupplier, "stateSupplier");
 		this.generator = Objects.requireNonNull(generator, "generator");
 		this.stateConsumer = Objects.requireNonNull(stateConsumer, "stateConsumer");
@@ -76,7 +76,8 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 
 		try {
 			state = stateSupplier.call();
-		} catch (Throwable e) {
+		}
+		catch (Throwable e) {
 			Operators.error(actual, Operators.onOperatorError(e, actual.currentContext()));
 			return;
 		}
@@ -89,37 +90,26 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 	}
 
 	static final class GenerateSubscription<T, S>
-	  implements QueueSubscription<T>, InnerProducer<T>, SynchronousSink<T> {
-
-		final CoreSubscriber<? super T> actual;
-
-		final BiFunction<S, SynchronousSink<T>, S> generator;
-
-		final Consumer<? super S> stateConsumer;
-
-		volatile boolean cancelled;
-
-		S state;
-
-		boolean terminate;
-
-		boolean hasValue;
-		
-		boolean outputFused;
-		
-		T generatedValue;
-		
-		Throwable generatedError;
-
-		volatile long requested;
+			implements QueueSubscription<T>, InnerProducer<T>, SynchronousSink<T> {
 
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<GenerateSubscription> REQUESTED =
-			AtomicLongFieldUpdater.newUpdater(GenerateSubscription.class, "requested");
+				AtomicLongFieldUpdater.newUpdater(GenerateSubscription.class, "requested");
+		final CoreSubscriber<? super T> actual;
+		final BiFunction<S, SynchronousSink<T>, S> generator;
+		final Consumer<? super S> stateConsumer;
+		volatile boolean cancelled;
+		S state;
+		boolean terminate;
+		boolean hasValue;
+		boolean outputFused;
+		T generatedValue;
+		Throwable generatedError;
+		volatile long requested;
 
 		GenerateSubscription(CoreSubscriber<? super T> actual, S state,
-											 BiFunction<S, SynchronousSink<T>, S> generator, Consumer<? super
-		  S> stateConsumer) {
+				BiFunction<S, SynchronousSink<T>, S> generator, Consumer<? super
+				S> stateConsumer) {
 			this.actual = actual;
 			this.state = state;
 			this.generator = generator;
@@ -165,7 +155,8 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 			hasValue = true;
 			if (outputFused) {
 				generatedValue = t;
-			} else {
+			}
+			else {
 				actual.onNext(t);
 			}
 		}
@@ -178,7 +169,8 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 			terminate = true;
 			if (outputFused) {
 				generatedError = e;
-			} else {
+			}
+			else {
 				actual.onError(e);
 			}
 		}
@@ -200,7 +192,8 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 				if (Operators.addCap(REQUESTED, this, n) == 0) {
 					if (n == Long.MAX_VALUE) {
 						fastPath();
-					} else {
+					}
+					else {
 						slowPath(n);
 					}
 				}
@@ -221,7 +214,8 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 
 				try {
 					s = g.apply(s, this);
-				} catch (Throwable e) {
+				}
+				catch (Throwable e) {
 					cleanup(s);
 
 					actual.onError(Operators.onOperatorError(e, actual.currentContext()));
@@ -235,7 +229,7 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 					cleanup(s);
 
 					actual.onError(new IllegalStateException("The generator didn't call any of the " +
-					  "SynchronousSink method"));
+							"SynchronousSink method"));
 					return;
 				}
 
@@ -260,7 +254,8 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 
 					try {
 						s = g.apply(s, this);
-					} catch (Throwable ex) {
+					}
+					catch (Throwable ex) {
 						cleanup(s);
 
 						actual.onError(ex);
@@ -274,7 +269,7 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 						cleanup(s);
 
 						actual.onError(new IllegalStateException("The generator didn't call any of the " +
-						  "SynchronousSink method"));
+								"SynchronousSink method"));
 						return;
 					}
 
@@ -310,11 +305,12 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 				state = null;
 
 				stateConsumer.accept(s);
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				Operators.onErrorDropped(e, actual.currentContext());
 			}
 		}
-		
+
 		@Override
 		public int requestFusion(int requestedMode) {
 			if ((requestedMode & Fuseable.SYNC) != 0 && (requestedMode & Fuseable.THREAD_BARRIER) == 0) {
@@ -323,7 +319,7 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 			}
 			return Fuseable.NONE;
 		}
-		
+
 		@Override
 		@Nullable
 		public T poll() {
@@ -342,17 +338,18 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 				return null;
 			}
 
-			
+
 			try {
 				s = generator.apply(s, this);
-			} catch (final Throwable ex) {
+			}
+			catch (final Throwable ex) {
 				cleanup(s);
 				throw ex;
 			}
-			
+
 			if (!hasValue) {
 				cleanup(s);
-				
+
 				if (!terminate) {
 					throw new IllegalStateException("The generator didn't call any of the SynchronousSink method");
 				}
@@ -366,7 +363,7 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 
 				return null;
 			}
-			
+
 			T v = generatedValue;
 			generatedValue = null;
 			hasValue = false;
@@ -379,12 +376,12 @@ extends Flux<T> implements Fuseable, SourceProducer<T> {
 		public boolean isEmpty() {
 			return terminate;
 		}
-		
+
 		@Override
 		public int size() {
 			return isEmpty() ? 0 : -1;
 		}
-		
+
 		@Override
 		public void clear() {
 			generatedError = null;

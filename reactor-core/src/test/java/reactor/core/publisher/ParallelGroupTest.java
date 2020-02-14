@@ -39,7 +39,8 @@ public class ParallelGroupTest {
 	public void scanInnerGroup() {
 		ParallelInnerGroup<Integer> test = new ParallelInnerGroup<>(1023);
 
-		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(3));
 		Subscription s = Operators.emptySubscription();
 		test.onSubscribe(s);
@@ -61,7 +62,8 @@ public class ParallelGroupTest {
 	public void scanInnerGroupRequestNotTrackedWhenParent() {
 		ParallelInnerGroup<Integer> test = new ParallelInnerGroup<>(1023);
 
-		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(3));
 		Subscription s = Operators.emptySubscription();
 		test.onSubscribe(s);
@@ -76,7 +78,8 @@ public class ParallelGroupTest {
 	public void scanInnerGroupRequestTrackedWhenNoParent() {
 		ParallelInnerGroup<Integer> test = new ParallelInnerGroup<>(1023);
 
-		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(3));
 		test.subscribe(subscriber);
 

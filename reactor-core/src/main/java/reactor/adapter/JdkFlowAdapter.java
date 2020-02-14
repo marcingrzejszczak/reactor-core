@@ -34,6 +34,9 @@ import reactor.core.publisher.Flux;
 @SuppressWarnings("Since15")
 public abstract class JdkFlowAdapter {
 
+	JdkFlowAdapter() {
+	}
+
 	/**
 	 * Return a java {@code Flow.Publisher} from a {@link Flux}
 	 * @param publisher the source Publisher to convert
@@ -57,37 +60,37 @@ public abstract class JdkFlowAdapter {
 	}
 
 	private static class FlowPublisherAsFlux<T> extends Flux<T> implements Scannable {
-        private final java.util.concurrent.Flow.Publisher<T> pub;
+		private final java.util.concurrent.Flow.Publisher<T> pub;
 
-        private FlowPublisherAsFlux(java.util.concurrent.Flow.Publisher<T> pub) {
-            this.pub = pub;
-        }
+		private FlowPublisherAsFlux(java.util.concurrent.Flow.Publisher<T> pub) {
+			this.pub = pub;
+		}
 
-        @Override
-        public void subscribe(final CoreSubscriber<? super T> actual) {
-        	pub.subscribe(new SubscriberToRS<>(actual));
-        }
+		@Override
+		public void subscribe(final CoreSubscriber<? super T> actual) {
+			pub.subscribe(new SubscriberToRS<>(actual));
+		}
 
 		@Override
 		public Object scanUnsafe(Attr key) {
 			return null; //no particular key to be represented, still useful in hooks
 		}
-    }
+	}
 
-    private static class PublisherAsFlowPublisher<T> implements Flow.Publisher<T> {
-        private final Publisher<T> pub;
+	private static class PublisherAsFlowPublisher<T> implements Flow.Publisher<T> {
+		private final Publisher<T> pub;
 
-        private PublisherAsFlowPublisher(Publisher<T> pub) {
-            this.pub = pub;
-        }
+		private PublisherAsFlowPublisher(Publisher<T> pub) {
+			this.pub = pub;
+		}
 
-        @Override
-        public void subscribe(Flow.Subscriber<? super T> subscriber) {
-        	pub.subscribe(new FlowSubscriber<>(subscriber));
-        }
-    }
+		@Override
+		public void subscribe(Flow.Subscriber<? super T> subscriber) {
+			pub.subscribe(new FlowSubscriber<>(subscriber));
+		}
+	}
 
-    private static class FlowSubscriber<T> implements CoreSubscriber<T>, Flow.Subscription {
+	private static class FlowSubscriber<T> implements CoreSubscriber<T>, Flow.Subscription {
 
 		private final Flow.Subscriber<? super T> subscriber;
 
@@ -99,7 +102,7 @@ public abstract class JdkFlowAdapter {
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-		    this.subscription = s;
+			this.subscription = s;
 			subscriber.onSubscribe(this);
 		}
 
@@ -120,12 +123,12 @@ public abstract class JdkFlowAdapter {
 
 		@Override
 		public void request(long n) {
-		    subscription.request(n);
+			subscription.request(n);
 		}
 
 		@Override
 		public void cancel() {
-		    subscription.cancel();
+			subscription.cancel();
 		}
 	}
 
@@ -141,7 +144,7 @@ public abstract class JdkFlowAdapter {
 
 		@Override
 		public void onSubscribe(final Flow.Subscription subscription) {
-		    this.subscription = subscription;
+			this.subscription = subscription;
 			s.onSubscribe(this);
 		}
 
@@ -162,14 +165,12 @@ public abstract class JdkFlowAdapter {
 
 		@Override
 		public void request(long n) {
-		    subscription.request(n);
+			subscription.request(n);
 		}
 
 		@Override
 		public void cancel() {
-		    subscription.cancel();
+			subscription.cancel();
 		}
 	}
-
-	JdkFlowAdapter(){}
 }

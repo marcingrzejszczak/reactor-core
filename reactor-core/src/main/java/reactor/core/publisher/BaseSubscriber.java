@@ -47,12 +47,11 @@ import reactor.util.context.Context;
  * @author Simon Baslé
  */
 public abstract class BaseSubscriber<T> implements CoreSubscriber<T>, Subscription,
-                                                   Disposable {
-
-	volatile Subscription subscription;
+		Disposable {
 
 	static AtomicReferenceFieldUpdater<BaseSubscriber, Subscription> S =
 			AtomicReferenceFieldUpdater.newUpdater(BaseSubscriber.class, Subscription.class, "subscription");
+	volatile Subscription subscription;
 
 	/**
 	 * Return current {@link Subscription}
@@ -85,7 +84,7 @@ public abstract class BaseSubscriber<T> implements CoreSubscriber<T>, Subscripti
 	 *
 	 * @param subscription the subscription to optionally process
 	 */
-	protected void hookOnSubscribe(Subscription subscription){
+	protected void hookOnSubscribe(Subscription subscription) {
 		subscription.request(Long.MAX_VALUE);
 	}
 
@@ -97,7 +96,7 @@ public abstract class BaseSubscriber<T> implements CoreSubscriber<T>, Subscripti
 	 *
 	 * @param value the emitted value to process
 	 */
-	protected void hookOnNext(T value){
+	protected void hookOnNext(T value) {
 		// NO-OP
 	}
 

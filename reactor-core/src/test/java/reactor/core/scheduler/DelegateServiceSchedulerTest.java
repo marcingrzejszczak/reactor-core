@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Test;
-
 import reactor.core.Exceptions;
 import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
@@ -53,21 +52,25 @@ public class DelegateServiceSchedulerTest extends AbstractSchedulerTest {
 	public void notScheduledRejects() {
 		Scheduler s = afterTest.autoDispose(Schedulers.fromExecutorService(Executors.newSingleThreadExecutor()));
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> s.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+				.isThrownBy(() -> s.schedule(() -> {
+				}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct delayed scheduling")
 				.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> s.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+				.isThrownBy(() -> s.schedulePeriodically(() -> {
+				}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct periodic scheduling")
 				.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 
 		Worker w = afterTest.autoDispose(s.createWorker());
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> w.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+				.isThrownBy(() -> w.schedule(() -> {
+				}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker delayed scheduling")
 				.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> w.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+				.isThrownBy(() -> w.schedulePeriodically(() -> {
+				}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker periodic scheduling")
 				.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 	}
@@ -75,18 +78,22 @@ public class DelegateServiceSchedulerTest extends AbstractSchedulerTest {
 	@Test
 	public void scheduledDoesntReject() {
 		Scheduler s = afterTest.autoDispose(Schedulers.fromExecutorService(Executors.newSingleThreadScheduledExecutor()));
-		assertThat(s.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+		assertThat(s.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct delayed scheduling")
 				.isNotNull();
-		assertThat(s.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+		assertThat(s.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct periodic scheduling")
 				.isNotNull();
 
 		Worker w = afterTest.autoDispose(s.createWorker());
-		assertThat(w.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+		assertThat(w.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker delayed scheduling")
 				.isNotNull();
-		assertThat(w.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+		assertThat(w.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker periodic scheduling")
 				.isNotNull();
 	}
@@ -104,9 +111,9 @@ public class DelegateServiceSchedulerTest extends AbstractSchedulerTest {
 					.doOnSubscribe(sub -> start.set(System.nanoTime()))
 					.doOnTerminate(() -> end.set(System.nanoTime()))
 			)
-			            .expectSubscription()
-			            .expectNext(0L)
-			            .verifyComplete();
+					.expectSubscription()
+					.expectNext(0L)
+					.verifyComplete();
 
 			long endValue = end.longValue();
 			long startValue = start.longValue();
@@ -124,14 +131,14 @@ public class DelegateServiceSchedulerTest extends AbstractSchedulerTest {
 		Scheduler s = afterTest.autoDispose(scheduler());
 
 		StepVerifier.create(Flux.interval(Duration.ofMillis(100), Duration.ofMillis(200), s))
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .expectNext(0L)
-		            .expectNoEvent(Duration.ofMillis(200))
-		            .expectNext(1L)
-		            .expectNoEvent(Duration.ofMillis(200))
-		            .expectNext(2L)
-		            .thenCancel();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.expectNext(0L)
+				.expectNoEvent(Duration.ofMillis(200))
+				.expectNext(1L)
+				.expectNoEvent(Duration.ofMillis(200))
+				.expectNext(2L)
+				.thenCancel();
 	}
 
 	@Test

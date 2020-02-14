@@ -26,7 +26,6 @@ import java.util.function.Function;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
-
 import reactor.test.AutoDisposingRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +50,7 @@ public class SchedulersHooksTest {
 
 		CountDownLatch latch = new CountDownLatch(3);
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "foo"))
-		         .schedule(latch::countDown);
+				.schedule(latch::countDown);
 		latch.await(5, TimeUnit.SECONDS);
 
 		assertThat(tracker).as("3 decorators invoked").hasValue(111);
@@ -66,7 +65,7 @@ public class SchedulersHooksTest {
 
 		CountDownLatch latch = new CountDownLatch(1);
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "foo"))
-		         .schedule(latch::countDown);
+				.schedule(latch::countDown);
 		latch.await(5, TimeUnit.SECONDS);
 
 		assertThat(tracker).hasValue(100);
@@ -80,7 +79,7 @@ public class SchedulersHooksTest {
 
 		CountDownLatch latch = new CountDownLatch(1);
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "foo"))
-		         .schedule(latch::countDown);
+				.schedule(latch::countDown);
 		latch.await(5, TimeUnit.SECONDS);
 
 		assertThat(tracker).hasValue(0);
@@ -102,7 +101,7 @@ public class SchedulersHooksTest {
 
 		CountDownLatch latch = new CountDownLatch(3);
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "foo"))
-		         .schedule(latch::countDown);
+				.schedule(latch::countDown);
 		latch.await(5, TimeUnit.SECONDS);
 
 		assertThat(tracker).hasValue(101);
@@ -118,7 +117,7 @@ public class SchedulersHooksTest {
 
 		CountDownLatch latch = new CountDownLatch(1);
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "foo"))
-		         .schedule(latch::countDown);
+				.schedule(latch::countDown);
 		latch.await(5, TimeUnit.SECONDS);
 
 		assertThat(tracker).hasValue(0);
@@ -133,7 +132,7 @@ public class SchedulersHooksTest {
 
 		CountDownLatch latch = new CountDownLatch(1);
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "foo"))
-		         .schedule(latch::countDown);
+				.schedule(latch::countDown);
 		latch.await(5, TimeUnit.SECONDS);
 
 		assertThat(items).containsExactly(

@@ -16,33 +16,28 @@
 
 package reactor.core.scheduler;
 
-import reactor.core.Disposable;
-import reactor.util.annotation.Nullable;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
+import reactor.core.Disposable;
+import reactor.util.annotation.Nullable;
 
 /**
  * A runnable task for {@link Scheduler} Workers that can run periodically
  **/
 final class PeriodicWorkerTask implements Runnable, Disposable, Callable<Void> {
 
-	final Runnable task;
-
 	static final Composite DISPOSED = new EmptyCompositeDisposable();
-
 	static final Future<Void> CANCELLED = new FutureTask<>(() -> null);
-
-	volatile Future<?> future;
 	static final AtomicReferenceFieldUpdater<PeriodicWorkerTask, Future> FUTURE =
 			AtomicReferenceFieldUpdater.newUpdater(PeriodicWorkerTask.class, Future.class, "future");
-
-	volatile Composite parent;
 	static final AtomicReferenceFieldUpdater<PeriodicWorkerTask, Composite> PARENT =
 			AtomicReferenceFieldUpdater.newUpdater(PeriodicWorkerTask.class, Composite.class, "parent");
-
+	final Runnable task;
+	volatile Future<?> future;
+	volatile Composite parent;
 	Thread thread;
 
 	PeriodicWorkerTask(Runnable task, Composite parent) {
@@ -74,7 +69,7 @@ final class PeriodicWorkerTask implements Runnable, Disposable, Callable<Void> {
 	}
 
 	void setFuture(Future<?> f) {
-		for (;;) {
+		for (; ; ) {
 			Future o = future;
 			if (o == CANCELLED) {
 				f.cancel(thread != Thread.currentThread());
@@ -93,7 +88,7 @@ final class PeriodicWorkerTask implements Runnable, Disposable, Callable<Void> {
 
 	@Override
 	public void dispose() {
-		for (;;) {
+		for (; ; ) {
 			Future f = future;
 			if (f == CANCELLED) {
 				break;
@@ -106,7 +101,7 @@ final class PeriodicWorkerTask implements Runnable, Disposable, Callable<Void> {
 			}
 		}
 
-		for (;;) {
+		for (; ; ) {
 			Composite o = parent;
 			if (o == DISPOSED || o == null) {
 				return;

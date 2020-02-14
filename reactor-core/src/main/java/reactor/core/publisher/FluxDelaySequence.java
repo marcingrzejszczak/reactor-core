@@ -30,7 +30,7 @@ import reactor.core.scheduler.Scheduler;
 //adapted from RxJava2 FlowableDelay: https://github.com/ReactiveX/RxJava/blob/2.x/src/main/java/io/reactivex/internal/operators/flowable/FlowableDelay.java
 final class FluxDelaySequence<T> extends InternalFluxOperator<T, T> {
 
-	final Duration  delay;
+	final Duration delay;
 	final Scheduler scheduler;
 
 	FluxDelaySequence(Flux<T> source, Duration delay, Scheduler scheduler) {
@@ -55,18 +55,15 @@ final class FluxDelaySequence<T> extends InternalFluxOperator<T, T> {
 
 	static final class DelaySubscriber<T> implements InnerOperator<T, T> {
 
+		static final AtomicLongFieldUpdater<DelaySubscriber> DELAYED =
+				AtomicLongFieldUpdater.newUpdater(DelaySubscriber.class, "delayed");
 		final CoreSubscriber<? super T> actual;
 		final long delay;
 		final TimeUnit timeUnit;
 		final Scheduler.Worker w;
-
 		Subscription s;
-
 		volatile boolean done;
-
 		volatile long delayed;
-		static final AtomicLongFieldUpdater<DelaySubscriber> DELAYED =
-				AtomicLongFieldUpdater.newUpdater(DelaySubscriber.class, "delayed");
 
 
 		DelaySubscriber(CoreSubscriber<? super T> actual, Duration delay, Scheduler.Worker w) {
@@ -180,7 +177,8 @@ final class FluxDelaySequence<T> extends InternalFluxOperator<T, T> {
 			public void run() {
 				try {
 					actual.onError(t);
-				} finally {
+				}
+				finally {
 					w.dispose();
 				}
 			}
@@ -191,7 +189,8 @@ final class FluxDelaySequence<T> extends InternalFluxOperator<T, T> {
 			public void run() {
 				try {
 					actual.onComplete();
-				} finally {
+				}
+				finally {
 					w.dispose();
 				}
 			}

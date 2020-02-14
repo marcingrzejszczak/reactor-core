@@ -54,8 +54,8 @@ final class MonoError<T> extends Mono<T> implements Fuseable.ScalarCallable, Sou
 
 	@Override
 	public Object call() throws Exception {
-		if(error instanceof Exception){
-			throw ((Exception)error);
+		if (error instanceof Exception) {
+			throw ((Exception) error);
 		}
 		throw Exceptions.propagate(error);
 	}

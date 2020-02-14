@@ -34,15 +34,17 @@ import reactor.util.context.Context;
  */
 final class ImmutableSignal<T> implements Signal<T>, Serializable {
 
+	/**
+	 * @deprecated as Signal is now associated with {@link Context}, prefer using per-subscription instances.
+	 */
+	@Deprecated
+	static final Signal<Void> ON_COMPLETE =
+			new ImmutableSignal<>(Context.empty(), SignalType.ON_COMPLETE, null, null, null);
 	private static final long serialVersionUID = -2004454746525418508L;
-
 	private final transient Context context;
-
 	private final SignalType type;
-	private final Throwable  throwable;
-
+	private final Throwable throwable;
 	private final T value;
-
 	private transient final Subscription subscription;
 
 	ImmutableSignal(Context context, SignalType type, @Nullable T value, @Nullable Throwable e, @Nullable Subscription subscription) {
@@ -114,15 +116,15 @@ final class ImmutableSignal<T> implements Signal<T>, Serializable {
 	public int hashCode() {
 		int result = getType().hashCode();
 		if (isOnError()) {
-			return  31 * result + (getThrowable() != null ? getThrowable().hashCode() :
+			return 31 * result + (getThrowable() != null ? getThrowable().hashCode() :
 					0);
 		}
 		if (isOnNext()) {
 			//noinspection ConstantConditions
-			return  31 * result + (get() != null ? get().hashCode() : 0);
+			return 31 * result + (get() != null ? get().hashCode() : 0);
 		}
 		if (isOnSubscribe()) {
-			return  31 * result + (getSubscription() != null ?
+			return 31 * result + (getSubscription() != null ?
 					getSubscription().hashCode() : 0);
 		}
 		return result;
@@ -131,23 +133,16 @@ final class ImmutableSignal<T> implements Signal<T>, Serializable {
 	@Override
 	public String toString() {
 		switch (this.getType()) {
-			case ON_SUBSCRIBE:
-				return String.format("onSubscribe(%s)", this.getSubscription());
-			case ON_NEXT:
-				return String.format("onNext(%s)", this.get());
-			case ON_ERROR:
-				return String.format("onError(%s)", this.getThrowable());
-			case ON_COMPLETE:
-				return "onComplete()";
-			default:
-				return String.format("Signal type=%s", this.getType());
+		case ON_SUBSCRIBE:
+			return String.format("onSubscribe(%s)", this.getSubscription());
+		case ON_NEXT:
+			return String.format("onNext(%s)", this.get());
+		case ON_ERROR:
+			return String.format("onError(%s)", this.getThrowable());
+		case ON_COMPLETE:
+			return "onComplete()";
+		default:
+			return String.format("Signal type=%s", this.getType());
 		}
 	}
-
-	/**
-	 * @deprecated as Signal is now associated with {@link Context}, prefer using per-subscription instances.
-	 */
-	@Deprecated
-	static final Signal<Void> ON_COMPLETE =
-			new ImmutableSignal<>(Context.empty(), SignalType.ON_COMPLETE, null, null, null);
 }

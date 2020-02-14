@@ -97,51 +97,44 @@ final class FluxPublishMulticast<T, R> extends InternalFluxOperator<T, R> implem
 		return multicast;
 	}
 
+	interface PublishMulticasterParent {
+
+		void terminate();
+
+	}
+
 	static final class FluxPublishMulticaster<T> extends Flux<T>
 			implements InnerConsumer<T>, PublishMulticasterParent {
 
-		final int limit;
-
-		final int prefetch;
-
-		final Supplier<? extends Queue<T>> queueSupplier;
-
-		Queue<T> queue;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FluxPublishMulticaster, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(FluxPublishMulticaster.class,
 						Subscription.class,
 						"s");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<FluxPublishMulticaster> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(FluxPublishMulticaster.class, "wip");
-
-		volatile PublishMulticastInner<T>[] subscribers;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FluxPublishMulticaster, PublishMulticastInner[]>
 				SUBSCRIBERS = AtomicReferenceFieldUpdater.newUpdater(
 				FluxPublishMulticaster.class,
 				PublishMulticastInner[].class,
 				"subscribers");
-
 		@SuppressWarnings("rawtypes")
 		static final PublishMulticastInner[] EMPTY = new PublishMulticastInner[0];
-
 		@SuppressWarnings("rawtypes")
 		static final PublishMulticastInner[] TERMINATED = new PublishMulticastInner[0];
-
-		volatile boolean done;
-
-		volatile boolean connected;
-
-		Throwable error;
-
+		final int limit;
+		final int prefetch;
+		final Supplier<? extends Queue<T>> queueSupplier;
 		final Context context;
-
+		Queue<T> queue;
+		volatile Subscription s;
+		volatile int wip;
+		volatile PublishMulticastInner<T>[] subscribers;
+		volatile boolean done;
+		volatile boolean connected;
+		Throwable error;
 		int produced;
 
 		int sourceMode;
@@ -619,15 +612,13 @@ final class FluxPublishMulticast<T, R> extends InternalFluxOperator<T, R> implem
 
 	static final class PublishMulticastInner<T> implements InnerProducer<T> {
 
-		final FluxPublishMulticaster<T> parent;
-
-		final CoreSubscriber<? super T> actual;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<PublishMulticastInner> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(PublishMulticastInner.class,
 						"requested");
+		final FluxPublishMulticaster<T> parent;
+		final CoreSubscriber<? super T> actual;
+		volatile long requested;
 
 		PublishMulticastInner(FluxPublishMulticaster<T> parent,
 				CoreSubscriber<? super T> actual) {
@@ -675,12 +666,6 @@ final class FluxPublishMulticast<T, R> extends InternalFluxOperator<T, R> implem
 		void produced(long n) {
 			Operators.producedCancellable(REQUESTED, this, n);
 		}
-	}
-
-	interface PublishMulticasterParent {
-
-		void terminate();
-
 	}
 
 	static final class CancelMulticaster<T>

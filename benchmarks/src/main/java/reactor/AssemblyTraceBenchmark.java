@@ -61,16 +61,16 @@ public class AssemblyTraceBenchmark {
 	private void stack(int i, Blackhole bh) {
 		if (i == 0) {
 			Object result = Flux.just(1)
-			                    .map(__ -> {
-				                    throw new IllegalStateException();
-			                    })
-			                    .share()
-			                    .filter(d -> true)
-			                    .doOnNext(d -> {
-			                    })
-			                    .map(d -> d)
-			                    .materialize()
-			                    .blockLast();
+					.map(__ -> {
+						throw new IllegalStateException();
+					})
+					.share()
+					.filter(d -> true)
+					.doOnNext(d -> {
+					})
+					.map(d -> d)
+					.materialize()
+					.blockLast();
 
 			bh.consume(result);
 		}

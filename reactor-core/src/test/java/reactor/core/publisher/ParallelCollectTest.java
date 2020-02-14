@@ -42,12 +42,12 @@ public class ParallelCollectTest {
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 		Flux.range(1, 10)
-		    .parallel()
-		    .collect(as, (a, b) -> a.add(b))
-		    .sequential()
-		    .flatMapIterable(v -> v)
-		    .log("ParallelCollectTest#collect", Level.FINE)
-		    .subscribe(ts);
+				.parallel()
+				.collect(as, (a, b) -> a.add(b))
+				.sequential()
+				.flatMapIterable(v -> v)
+				.log("ParallelCollectTest#collect", Level.FINE)
+				.subscribe(ts);
 
 		ts.assertContainValues(new HashSet<>(Arrays.asList(1,
 				2,
@@ -59,8 +59,8 @@ public class ParallelCollectTest {
 				8,
 				9,
 				10)))
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -70,27 +70,27 @@ public class ParallelCollectTest {
 		};
 
 		StepVerifier.create(Flux.range(1, 10)
-		                        .parallel(3)
-		                        .collect(as, List::add))
-		            .verifyErrorMessage("test");
+				.parallel(3)
+				.collect(as, List::add))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void failCombination() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .parallel(3)
-		                        .collect(() -> 0, (a, b) -> {
-			                        throw new RuntimeException("test");
-		                        }))
-		            .verifyErrorMessage("test");
+				.parallel(3)
+				.collect(() -> 0, (a, b) -> {
+					throw new RuntimeException("test");
+				}))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void testPrefetch() {
 		assertThat(Flux.range(1, 10)
-		               .parallel(3)
-		               .collect(ArrayList::new, List::add)
-		               .getPrefetch()).isEqualTo(Integer.MAX_VALUE);
+				.parallel(3)
+				.collect(ArrayList::new, List::add)
+				.getPrefetch()).isEqualTo(Integer.MAX_VALUE);
 	}
 
 	@Test
@@ -114,7 +114,8 @@ public class ParallelCollectTest {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<List<Integer>> subscriber = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<List<Integer>> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		ParallelCollectSubscriber<Integer, List<Integer>> test = new ParallelCollectSubscriber<>(
 				subscriber, new ArrayList<>(), List::add);
 		Subscription s = Operators.emptySubscription();

@@ -28,18 +28,18 @@ import reactor.core.publisher.ConnectableFlux;
 public class MockUtils {
 
 	/**
-	 * An abstract class that can be used to mock a {@link Scannable} {@link ConnectableFlux}.
-	 */
-	public static abstract class TestScannableConnectableFlux<T>
-			extends ConnectableFlux<T>
-			implements Scannable { }
-
-	/**
 	 * An interface that can be used to mock a {@link Scannable}
 	 * {@link reactor.core.Fuseable.ConditionalSubscriber}.
 	 */
 	public interface TestScannableConditionalSubscriber<T>
 			extends Fuseable.ConditionalSubscriber<T>,
-			        Scannable { }
+			Scannable { }
+
+	/**
+	 * An abstract class that can be used to mock a {@link Scannable} {@link ConnectableFlux}.
+	 */
+	public static abstract class TestScannableConnectableFlux<T>
+			extends ConnectableFlux<T>
+			implements Scannable { }
 
 }

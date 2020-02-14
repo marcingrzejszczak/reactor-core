@@ -25,10 +25,80 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MonoCollectMapTest {
 
+	@Test
+	public void collectMap() {
+		StepVerifier.create(Flux.just(new Pojo("test", 1L),
+				new Pojo("test", 2L),
+				new Pojo("test2", 3L))
+				.collectMap(p -> p.id))
+				.assertNext(d -> assertThat(d).containsKeys(1L, 2L, 3L)
+						.containsValues(new Pojo("test", 1L),
+								new Pojo("test", 2L),
+								new Pojo("test2", 3L)))
+				.verifyComplete();
+
+	}
+
+	@Test
+	public void collectMapEmpty() {
+		StepVerifier.create(Flux.<Pojo>empty().collectMap(p -> p.id))
+				.assertNext(d -> assertThat(d).isEmpty())
+				.verifyComplete();
+
+	}
+
+	@Test
+	public void collectMapCallable() {
+		StepVerifier.create(Mono.fromCallable(() -> new Pojo("test", 1L))
+				.flux()
+				.collectMap(p -> p.id))
+				.assertNext(p -> assertThat(p).containsOnlyKeys(1L)
+						.containsValues(new Pojo("test", 1L)))
+				.verifyComplete();
+
+	}
+
+	@Test
+	public void collectMultiMap() {
+		StepVerifier.create(Flux.just(new Pojo("test", 1L),
+				new Pojo("test", 2L),
+				new Pojo("test2", 3L))
+				.collectMultimap(p -> p.name))
+				.assertNext(d -> assertThat(d).containsKeys("test", "test2")
+						.containsValues(Arrays.asList(new Pojo(
+										"test",
+										1L), new Pojo("test", 2L)),
+								Arrays.asList(new Pojo("test2",
+										3L))))
+				.verifyComplete();
+
+	}
+
+	@Test
+	public void collectMultiMapEmpty() {
+		StepVerifier.create(Flux.<Pojo>empty().collectMultimap(p -> p.id))
+				.assertNext(d -> assertThat(d).isEmpty())
+				.verifyComplete();
+
+	}
+
+	@Test
+	public void collectMultiMapCallable() {
+		StepVerifier.create(Mono.fromCallable(() -> new Pojo("test", 1L))
+				.flux()
+				.collectMultimap(p -> p.id))
+				.assertNext(p -> assertThat(p).containsOnlyKeys(1L)
+						.containsValues(Arrays.asList(new Pojo(
+								"test",
+								1L))))
+				.verifyComplete();
+
+	}
+
 	static final class Pojo {
 
 		final String name;
-		final long   id;
+		final long id;
 
 		Pojo(String name, long id) {
 			this.name = name;
@@ -53,75 +123,5 @@ public class MonoCollectMapTest {
 		public int hashCode() {
 			return (int) (id ^ (id >>> 32));
 		}
-	}
-
-	@Test
-	public void collectMap() {
-		StepVerifier.create(Flux.just(new Pojo("test", 1L),
-				new Pojo("test", 2L),
-				new Pojo("test2", 3L))
-		                        .collectMap(p -> p.id))
-		            .assertNext(d -> assertThat(d).containsKeys(1L, 2L, 3L)
-		                                          .containsValues(new Pojo("test", 1L),
-				                                          new Pojo("test", 2L),
-				                                          new Pojo("test2", 3L)))
-		            .verifyComplete();
-
-	}
-
-	@Test
-	public void collectMapEmpty() {
-		StepVerifier.create(Flux.<Pojo>empty().collectMap(p -> p.id))
-		            .assertNext(d -> assertThat(d).isEmpty())
-		            .verifyComplete();
-
-	}
-
-	@Test
-	public void collectMapCallable() {
-		StepVerifier.create(Mono.fromCallable(() -> new Pojo("test", 1L))
-		                        .flux()
-		                        .collectMap(p -> p.id))
-		            .assertNext(p -> assertThat(p).containsOnlyKeys(1L)
-		                                          .containsValues(new Pojo("test", 1L)))
-		            .verifyComplete();
-
-	}
-
-	@Test
-	public void collectMultiMap() {
-		StepVerifier.create(Flux.just(new Pojo("test", 1L),
-				new Pojo("test", 2L),
-				new Pojo("test2", 3L))
-		                        .collectMultimap(p -> p.name))
-		            .assertNext(d -> assertThat(d).containsKeys("test", "test2")
-		                                          .containsValues(Arrays.asList(new Pojo(
-						                                          "test",
-						                                          1L), new Pojo("test", 2L)),
-				                                          Arrays.asList(new Pojo("test2",
-						                                          3L))))
-		            .verifyComplete();
-
-	}
-
-	@Test
-	public void collectMultiMapEmpty() {
-		StepVerifier.create(Flux.<Pojo>empty().collectMultimap(p -> p.id))
-		            .assertNext(d -> assertThat(d).isEmpty())
-		            .verifyComplete();
-
-	}
-
-	@Test
-	public void collectMultiMapCallable() {
-		StepVerifier.create(Mono.fromCallable(() -> new Pojo("test", 1L))
-		                        .flux()
-		                        .collectMultimap(p -> p.id))
-		            .assertNext(p -> assertThat(p).containsOnlyKeys(1L)
-		                                          .containsValues(Arrays.asList(new Pojo(
-				                                          "test",
-				                                          1L))))
-		            .verifyComplete();
-
 	}
 }

@@ -36,16 +36,6 @@ final class FluxEmpty extends Flux<Object>
 		// deliberately no op
 	}
 
-	@Override
-	public void subscribe(CoreSubscriber<? super Object> actual) {
-		Operators.complete(actual);
-	}
-
-	@Override
-	public Object scanUnsafe(Attr key) {
-		return null; //no particular key to be represented, still useful in hooks
-	}
-
 	/**
 	 * Returns a properly parametrized instance of this empty Publisher.
 	 *
@@ -55,6 +45,16 @@ final class FluxEmpty extends Flux<Object>
 	@SuppressWarnings("unchecked")
 	public static <T> Flux<T> instance() {
 		return (Flux<T>) INSTANCE;
+	}
+
+	@Override
+	public void subscribe(CoreSubscriber<? super Object> actual) {
+		Operators.complete(actual);
+	}
+
+	@Override
+	public Object scanUnsafe(Attr key) {
+		return null; //no particular key to be represented, still useful in hooks
 	}
 
 	@Override

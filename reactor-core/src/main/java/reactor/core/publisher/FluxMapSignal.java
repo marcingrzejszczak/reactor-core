@@ -36,250 +36,245 @@ import reactor.util.annotation.Nullable;
  */
 final class FluxMapSignal<T, R> extends InternalFluxOperator<T, R> {
 
-    final Function<? super T, ? extends R> mapperNext;
-    final Function<? super Throwable, ? extends R> mapperError;
-    final Supplier<? extends R>            mapperComplete;
+	final Function<? super T, ? extends R> mapperNext;
+	final Function<? super Throwable, ? extends R> mapperError;
+	final Supplier<? extends R> mapperComplete;
 
-    /**
-     * Constructs a FluxMapSignal instance with the given source and mappers.
-     *
-     * @param source the source Publisher instance
-     * @param mapperNext the next mapper function
-     * @param mapperError the error mapper function
-     * @param mapperComplete the complete mapper function
-     *
-     * @throws NullPointerException if either {@code source} is null or all {@code mapper} are null.
-     */
-    FluxMapSignal(Flux<? extends T> source,
-		    @Nullable Function<? super T, ? extends R> mapperNext,
-		    @Nullable Function<? super Throwable, ? extends R> mapperError,
-		    @Nullable Supplier<? extends R> mapperComplete) {
-        super(source);
-	    if(mapperNext == null && mapperError == null && mapperComplete == null){
-		    throw new IllegalArgumentException("Map Signal needs at least one valid mapper");
-	    }
+	/**
+	 * Constructs a FluxMapSignal instance with the given source and mappers.
+	 *
+	 * @param source the source Publisher instance
+	 * @param mapperNext the next mapper function
+	 * @param mapperError the error mapper function
+	 * @param mapperComplete the complete mapper function
+	 *
+	 * @throws NullPointerException if either {@code source} is null or all {@code mapper} are null.
+	 */
+	FluxMapSignal(Flux<? extends T> source,
+			@Nullable Function<? super T, ? extends R> mapperNext,
+			@Nullable Function<? super Throwable, ? extends R> mapperError,
+			@Nullable Supplier<? extends R> mapperComplete) {
+		super(source);
+		if (mapperNext == null && mapperError == null && mapperComplete == null) {
+			throw new IllegalArgumentException("Map Signal needs at least one valid mapper");
+		}
 
-        this.mapperNext = mapperNext;
-        this.mapperError = mapperError;
-        this.mapperComplete = mapperComplete;
-    }
+		this.mapperNext = mapperNext;
+		this.mapperError = mapperError;
+		this.mapperComplete = mapperComplete;
+	}
 
-    @Override
-    public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super R> actual) {
-        return new FluxMapSignalSubscriber<>(actual,
-                mapperNext,
-                mapperError,
-                mapperComplete);
-    }
+	@Override
+	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super R> actual) {
+		return new FluxMapSignalSubscriber<>(actual,
+				mapperNext,
+				mapperError,
+				mapperComplete);
+	}
 
-    static final class FluxMapSignalSubscriber<T, R>
-    extends AbstractQueue<R>
-		    implements InnerOperator<T, R>,
-		               BooleanSupplier {
+	static final class FluxMapSignalSubscriber<T, R>
+			extends AbstractQueue<R>
+			implements InnerOperator<T, R>,
+			BooleanSupplier {
 
-	    final CoreSubscriber<? super R>                actual;
-	    final Function<? super T, ? extends R>         mapperNext;
-	    final Function<? super Throwable, ? extends R> mapperError;
-	    final Supplier<? extends R>                    mapperComplete;
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<FluxMapSignalSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(FluxMapSignalSubscriber.class, "requested");
+		final CoreSubscriber<? super R> actual;
+		final Function<? super T, ? extends R> mapperNext;
+		final Function<? super Throwable, ? extends R> mapperError;
+		final Supplier<? extends R> mapperComplete;
+		boolean done;
+		Subscription s;
+		R value;
+		volatile long requested;
+		volatile boolean cancelled;
 
-        boolean done;
+		long produced;
 
-        Subscription s;
-        
-        R value;
-        
-        volatile long requested;
-        @SuppressWarnings("rawtypes")
-        static final AtomicLongFieldUpdater<FluxMapSignalSubscriber> REQUESTED =
-                AtomicLongFieldUpdater.newUpdater(FluxMapSignalSubscriber.class, "requested");
+		FluxMapSignalSubscriber(CoreSubscriber<? super R> actual,
+				@Nullable Function<? super T, ? extends R> mapperNext,
+				@Nullable Function<? super Throwable, ? extends R> mapperError,
+				@Nullable Supplier<? extends R> mapperComplete) {
+			this.actual = actual;
+			this.mapperNext = mapperNext;
+			this.mapperError = mapperError;
+			this.mapperComplete = mapperComplete;
+		}
 
-        volatile boolean cancelled;
-        
-        long produced;
+		@Override
+		public void onSubscribe(Subscription s) {
+			if (Operators.validate(this.s, s)) {
+				this.s = s;
 
-	    FluxMapSignalSubscriber(CoreSubscriber<? super R> actual,
-		        @Nullable Function<? super T, ? extends R> mapperNext,
-		        @Nullable Function<? super Throwable, ? extends R> mapperError,
-		        @Nullable Supplier<? extends R>            mapperComplete) {
-            this.actual = actual;
-            this.mapperNext = mapperNext;
-            this.mapperError = mapperError;
-            this.mapperComplete = mapperComplete;
-        }
+				actual.onSubscribe(this);
 
-        @Override
-        public void onSubscribe(Subscription s) {
-            if (Operators.validate(this.s, s)) {
-                this.s = s;
+				if (mapperNext == null) {
+					s.request(Long.MAX_VALUE);
+				}
+			}
+		}
 
-                actual.onSubscribe(this);
+		@Override
+		public void onNext(T t) {
+			if (done) {
+				Operators.onNextDropped(t, actual.currentContext());
+				return;
+			}
 
-                if (mapperNext == null) {
-		            s.request(Long.MAX_VALUE);
-	            }
-	        }
-        }
+			if (mapperNext == null) {
+				return;
+			}
 
-        @Override
-        public void onNext(T t) {
-	        if (done) {
-	            Operators.onNextDropped(t, actual.currentContext());
-                return;
-            }
+			R v;
 
-	        if (mapperNext == null) {
-		        return;
-		    }
+			try {
+				v = Objects.requireNonNull(mapperNext.apply(t),
+						"The mapper returned a null value.");
+			}
+			catch (Throwable e) {
+				done = true;
+				actual.onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
+				return;
+			}
 
-            R v;
+			produced++;
+			actual.onNext(v);
+		}
 
-            try {
-                v = Objects.requireNonNull(mapperNext.apply(t),
-		                "The mapper returned a null value.");
-            }
-            catch (Throwable e) {
-	            done = true;
-	            actual.onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
-                return;
-            }
+		@Override
+		public void onError(Throwable t) {
+			if (done) {
+				Operators.onErrorDropped(t, actual.currentContext());
+				return;
+			}
 
-            produced++;
-            actual.onNext(v);
-        }
+			done = true;
 
-        @Override
-        public void onError(Throwable t) {
-            if (done) {
-                Operators.onErrorDropped(t, actual.currentContext());
-                return;
-            }
+			if (mapperError == null) {
+				actual.onError(t);
+				return;
+			}
 
-            done = true;
+			R v;
 
-	        if(mapperError == null){
-		        actual.onError(t);
-		        return;
-	        }
+			try {
+				v = Objects.requireNonNull(mapperError.apply(t),
+						"The mapper returned a null value.");
+			}
+			catch (Throwable e) {
+				done = true;
+				actual.onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
+				return;
+			}
 
-	        R v;
+			value = v;
+			long p = produced;
+			if (p != 0L) {
+				Operators.addCap(REQUESTED, this, -p);
+			}
+			DrainUtils.postComplete(actual, this, REQUESTED, this, this);
+		}
 
-	        try {
-		        v = Objects.requireNonNull(mapperError.apply(t),
-				        "The mapper returned a null value.");
-	        }
-	        catch (Throwable e) {
-		        done = true;
-		        actual.onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
-		        return;
-	        }
+		@Override
+		public void onComplete() {
+			if (done) {
+				return;
+			}
+			done = true;
 
-	        value = v;
-            long p = produced;
-            if (p != 0L) {
-	            Operators.addCap(REQUESTED, this, -p);
-            }
-	        DrainUtils.postComplete(actual, this, REQUESTED, this, this);
-        }
+			if (mapperComplete == null) {
+				actual.onComplete();
+				return;
+			}
 
-        @Override
-        public void onComplete() {
-            if (done) {
-                return;
-            }
-            done = true;
+			R v;
 
-	        if(mapperComplete == null){
-		        actual.onComplete();
-		        return;
-	        }
+			try {
+				v = Objects.requireNonNull(mapperComplete.get(),
+						"The mapper returned a null value.");
+			}
+			catch (Throwable e) {
+				done = true;
+				actual.onError(Operators.onOperatorError(s, e, actual.currentContext()));
+				return;
+			}
 
-	        R v;
+			value = v;
+			long p = produced;
+			if (p != 0L) {
+				Operators.addCap(REQUESTED, this, -p);
+			}
+			DrainUtils.postComplete(actual, this, REQUESTED, this, this);
+		}
 
-	        try {
-		        v = Objects.requireNonNull(mapperComplete.get(),
-				        "The mapper returned a null value.");
-	        }
-	        catch (Throwable e) {
-		        done = true;
-		        actual.onError(Operators.onOperatorError(s, e, actual.currentContext()));
-		        return;
-	        }
+		@Override
+		public CoreSubscriber<? super R> actual() {
+			return actual;
+		}
 
-            value = v;
-            long p = produced;
-            if (p != 0L) {
-	            Operators.addCap(REQUESTED, this, -p);
-            }
-            DrainUtils.postComplete(actual, this, REQUESTED, this, this);
-        }
+		@Override
+		public void request(long n) {
+			if (Operators.validate(n)) {
+				if (!DrainUtils.postCompleteRequest(n, actual, this, REQUESTED, this, this)) {
+					s.request(n);
+				}
+			}
+		}
 
-        @Override
-        public CoreSubscriber<? super R> actual() {
-            return actual;
-        }
+		@Override
+		public boolean offer(R e) {
+			throw new UnsupportedOperationException();
+		}
 
-	    @Override
-	    public void request(long n) {
-	        if (Operators.validate(n)) {
-	            if (!DrainUtils.postCompleteRequest(n, actual, this, REQUESTED, this, this)) {
-	                s.request(n);
-	            }
-	        }
-	    }
+		@Override
+		@Nullable
+		public R poll() {
+			R v = value;
+			if (v != null) {
+				value = null;
+				return v;
+			}
+			return null;
+		}
 
-        @Override
-        public boolean offer(R e) {
-            throw new UnsupportedOperationException();
-        }
+		@Override
+		@Nullable
+		public Object scanUnsafe(Attr key) {
+			if (key == Attr.PARENT) return s;
+			if (key == Attr.TERMINATED) return done;
+			if (key == Attr.CANCELLED) return getAsBoolean();
+			if (key == Attr.REQUESTED_FROM_DOWNSTREAM) return requested;
+			if (key == Attr.BUFFERED) return size();
 
-        @Override
-        @Nullable
-        public R poll() {
-            R v = value;
-            if (v != null) {
-                value = null;
-                return v;
-            }
-            return null;
-        }
+			return InnerOperator.super.scanUnsafe(key);
+		}
 
-	    @Override
-	    @Nullable
-	    public Object scanUnsafe(Attr key) {
-		    if (key == Attr.PARENT) return s;
-		    if (key == Attr.TERMINATED) return done;
-		    if (key == Attr.CANCELLED) return getAsBoolean();
-		    if (key == Attr.REQUESTED_FROM_DOWNSTREAM) return requested;
-		    if (key == Attr.BUFFERED) return size();
+		@Override
+		@Nullable
+		public R peek() {
+			return value;
+		}
 
-		    return InnerOperator.super.scanUnsafe(key);
-	    }
+		@Override
+		public boolean getAsBoolean() {
+			return cancelled;
+		}
 
-	    @Override
-	    @Nullable
-        public R peek() {
-            return value;
-        }
+		@Override
+		public void cancel() {
+			cancelled = true;
+			s.cancel();
+		}
 
-        @Override
-        public boolean getAsBoolean() {
-            return cancelled;
-        }
+		@Override
+		public Iterator<R> iterator() {
+			throw new UnsupportedOperationException();
+		}
 
-        @Override
-        public void cancel() {
-            cancelled = true;
-            s.cancel();
-        }
-
-        @Override
-        public Iterator<R> iterator() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int size() {
-            return value == null ? 0 : 1;
-        }
-    }
+		@Override
+		public int size() {
+			return value == null ? 0 : 1;
+		}
+	}
 }

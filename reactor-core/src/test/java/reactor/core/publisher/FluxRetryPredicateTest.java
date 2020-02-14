@@ -36,7 +36,7 @@ public class FluxRetryPredicateTest {
 	@Test(expected = NullPointerException.class)
 	public void predicateNull() {
 		Flux.never()
-		    .retry(null);
+				.retry(null);
 	}
 
 	@Test
@@ -46,12 +46,12 @@ public class FluxRetryPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.retry(e -> times[0]-- > 0)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 1, 2, 3, 4, 5)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure 0")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure 0")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -61,30 +61,30 @@ public class FluxRetryPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		source.retry(e -> times[0]-- > 0)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 1, 2, 3, 4, 5)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure 0")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure 0")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -92,12 +92,12 @@ public class FluxRetryPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.retry(e -> false)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure 0")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure 0")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -107,12 +107,12 @@ public class FluxRetryPredicateTest {
 		source.retry(e -> {
 			throw new RuntimeException("forced failure");
 		})
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -120,16 +120,16 @@ public class FluxRetryPredicateTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Flux.just("test", "test2", "test3")
-		                        .doOnNext(d -> {
-			                        if (i.getAndIncrement() < 2) {
-				                        throw new RuntimeException("test");
-			                        }
-		                        })
-		                        .retry(e -> i.get() <= 2)
-		                        .count())
-		            .expectNext(3L)
-		            .expectComplete()
-		            .verify();
+				.doOnNext(d -> {
+					if (i.getAndIncrement() < 2) {
+						throw new RuntimeException("test");
+					}
+				})
+				.retry(e -> i.get() <= 2)
+				.count())
+				.expectNext(3L)
+				.expectComplete()
+				.verify();
 	}
 
 
@@ -139,18 +139,18 @@ public class FluxRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.defer(() -> Flux.just(i.incrementAndGet()))
-		                        .doOnNext(v -> {
-			                        if(v < 4) {
-				                        throw new RuntimeException("test");
-			                        }
-			                        else {
-				                        bool.set(false);
-			                        }
-		                        })
-		                        .retry(3, e -> bool.get()))
-		            .expectNext(4)
-		            .expectComplete()
-		            .verify();
+				.doOnNext(v -> {
+					if (v < 4) {
+						throw new RuntimeException("test");
+					}
+					else {
+						bool.set(false);
+					}
+				})
+				.retry(3, e -> bool.get()))
+				.expectNext(4)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -159,16 +159,16 @@ public class FluxRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.defer(() -> Flux.just(i.incrementAndGet()))
-		                        .doOnNext(v -> {
-			                        if(v < 4) {
-				                        if( v > 2){
-					                        bool.set(false);
-				                        }
-				                        throw new RuntimeException("test");
-			                        }
-		                        })
-		                        .retry(3, e -> bool.get()))
-		            .verifyErrorMessage("test");
+				.doOnNext(v -> {
+					if (v < 4) {
+						if (v > 2) {
+							bool.set(false);
+						}
+						throw new RuntimeException("test");
+					}
+				})
+				.retry(3, e -> bool.get()))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -177,16 +177,16 @@ public class FluxRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.defer(() -> Flux.just(i.incrementAndGet()))
-		                        .doOnNext(v -> {
-			                        if(v < 4) {
-				                        throw new RuntimeException("test");
-			                        }
-			                        else {
-				                        bool.set(false);
-			                        }
-		                        })
-		                        .retry(2, e -> bool.get()))
-		            .verifyErrorMessage("test");
+				.doOnNext(v -> {
+					if (v < 4) {
+						throw new RuntimeException("test");
+					}
+					else {
+						bool.set(false);
+					}
+				})
+				.retry(2, e -> bool.get()))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -195,18 +195,18 @@ public class FluxRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.defer(() -> Flux.just(i.incrementAndGet()))
-		                        .doOnNext(v -> {
-			                        if(v < 4) {
-				                        throw new RuntimeException("test");
-			                        }
-			                        else {
-				                        bool.set(false);
-			                        }
-		                        })
-		                        .retry(0, e -> bool.get()))
-		            .expectNext(4)
-		            .expectComplete()
-		            .verify();
+				.doOnNext(v -> {
+					if (v < 4) {
+						throw new RuntimeException("test");
+					}
+					else {
+						bool.set(false);
+					}
+				})
+				.retry(0, e -> bool.get()))
+				.expectNext(4)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -215,16 +215,16 @@ public class FluxRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.defer(() -> Flux.just(i.incrementAndGet()))
-		                        .doOnNext(v -> {
-			                        if(v < 4) {
-				                        if( v > 2){
-					                        bool.set(false);
-				                        }
-				                        throw new RuntimeException("test");
-			                        }
-		                        })
-		                        .retry(0, e -> bool.get()))
-		            .verifyErrorMessage("test");
+				.doOnNext(v -> {
+					if (v < 4) {
+						if (v > 2) {
+							bool.set(false);
+						}
+						throw new RuntimeException("test");
+					}
+				})
+				.retry(0, e -> bool.get()))
+				.verifyErrorMessage("test");
 	}
 
 }

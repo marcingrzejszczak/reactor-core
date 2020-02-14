@@ -36,13 +36,13 @@ public class FluxWithLatestFromTest {
 	@Test(expected = NullPointerException.class)
 	public void otherNull() {
 		Flux.never()
-		    .withLatestFrom(null, (a, b) -> a);
+				.withLatestFrom(null, (a, b) -> a);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void combinerNull() {
 		Flux.never()
-		    .withLatestFrom(Flux.never(), null);
+				.withLatestFrom(Flux.never(), null);
 	}
 
 	@Test
@@ -50,13 +50,13 @@ public class FluxWithLatestFromTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .withLatestFrom(Flux.just(10), (a, b) -> a + b)
-		    .subscribe
-		  (ts);
+				.withLatestFrom(Flux.just(10), (a, b) -> a + b)
+				.subscribe
+						(ts);
 
 		ts.assertValues(11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -64,31 +64,31 @@ public class FluxWithLatestFromTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .withLatestFrom(Flux.just(10), (a, b) -> a + b)
-		    .subscribe
-		  (ts);
+				.withLatestFrom(Flux.just(10), (a, b) -> a + b)
+				.subscribe
+						(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(11, 12)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(11, 12, 13, 14, 15, 16, 17)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -96,12 +96,12 @@ public class FluxWithLatestFromTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .withLatestFrom(Flux.<Integer>empty(), (a, b) -> a + b)
-		    .subscribe(ts);
+				.withLatestFrom(Flux.<Integer>empty(), (a, b) -> a + b)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -109,12 +109,12 @@ public class FluxWithLatestFromTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .withLatestFrom(Flux.<Integer>empty(), (a, b) -> a + b)
-		    .subscribe(ts);
+				.withLatestFrom(Flux.<Integer>empty(), (a, b) -> a + b)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -122,12 +122,12 @@ public class FluxWithLatestFromTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .withLatestFrom(Flux.just(10), (a, b) -> (Integer) null)
-		    .subscribe(ts);
+				.withLatestFrom(Flux.just(10), (a, b) -> (Integer) null)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -135,14 +135,14 @@ public class FluxWithLatestFromTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10).<Integer, Integer>withLatestFrom(Flux.just(10),
-		  (a, b) -> {
-			  throw new RuntimeException("forced failure");
-		  }).subscribe(ts);
+				(a, b) -> {
+					throw new RuntimeException("forced failure");
+				}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith( e -> Assert.assertTrue(e.getMessage().contains("forced failure")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage().contains("forced failure")));
 	}
 
 
@@ -150,15 +150,16 @@ public class FluxWithLatestFromTest {
 	public void combineLatest2Null() {
 		StepVerifier.create(Flux.just(1).withLatestFrom(Flux.just(2), (a, b) ->
 				null))
-		            .verifyError(NullPointerException.class);
+				.verifyError(NullPointerException.class);
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWithLatestFrom.WithLatestFromSubscriber<Integer, Integer, Integer> test =
-        		new FluxWithLatestFrom.WithLatestFromSubscriber<>(actual, (i, j) -> i + j);
-        Subscription parent = Operators.emptySubscription();
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWithLatestFrom.WithLatestFromSubscriber<Integer, Integer, Integer> test =
+				new FluxWithLatestFrom.WithLatestFromSubscriber<>(actual, (i, j) -> i + j);
+		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 
 		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
@@ -167,18 +168,19 @@ public class FluxWithLatestFromTest {
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
 		test.cancel();
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+	}
 
 	@Test
-    public void scanOtherSubscriber() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWithLatestFrom.WithLatestFromSubscriber<Integer, Integer, Integer> main =
-        		new FluxWithLatestFrom.WithLatestFromSubscriber<>(actual, (i, j) -> i + j);
-        FluxWithLatestFrom.WithLatestFromOtherSubscriber<Integer> test =
-        		new FluxWithLatestFrom.WithLatestFromOtherSubscriber<>(main);
-        Subscription parent = Operators.emptySubscription();
+	public void scanOtherSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWithLatestFrom.WithLatestFromSubscriber<Integer, Integer, Integer> main =
+				new FluxWithLatestFrom.WithLatestFromSubscriber<>(actual, (i, j) -> i + j);
+		FluxWithLatestFrom.WithLatestFromOtherSubscriber<Integer> test =
+				new FluxWithLatestFrom.WithLatestFromOtherSubscriber<>(main);
+		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 		Assertions.assertThat(test.currentContext()).isEqualTo(Context.empty());
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+	}
 }

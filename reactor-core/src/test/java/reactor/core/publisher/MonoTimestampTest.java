@@ -23,17 +23,17 @@ import reactor.util.function.Tuple2;
 
 public class MonoTimestampTest {
 
-	Mono<Tuple2<Long, String>> scenario_aMonoCanBeTimestamped(){
+	Mono<Tuple2<Long, String>> scenario_aMonoCanBeTimestamped() {
 		return Mono.just("test")
-		           .timestamp();
+				.timestamp();
 	}
 
 	@Test
-	public void aMonoCanBeTimestamped(){
+	public void aMonoCanBeTimestamped() {
 		StepVerifier.withVirtualTime(this::scenario_aMonoCanBeTimestamped, 0)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .thenRequest(1)
-		            .expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(2))
+				.thenRequest(1)
+				.expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
+				.verifyComplete();
 	}
 }

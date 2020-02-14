@@ -18,7 +18,9 @@ package reactor.util.function;
 
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class Tuple6Test {
 
@@ -37,12 +39,12 @@ public class Tuple6Test {
 		Tuple6<String, Integer, Integer, Integer, Integer, Integer> base =
 				Tuples.of("Foo", 200, 300, 400, 500, 600);
 
-		Tuple2<?,?> mapped = base.mapT1(String::length);
+		Tuple2<?, ?> mapped = base.mapT1(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(6)
-		                  .containsExactly(3, base.getT2(), base.getT3(), base.getT4(),
-				                  base.getT5(), base.getT6());
+				.hasSize(6)
+				.containsExactly(3, base.getT2(), base.getT3(), base.getT4(),
+						base.getT5(), base.getT6());
 	}
 
 	@Test
@@ -50,12 +52,12 @@ public class Tuple6Test {
 		Tuple6<Integer, String, Integer, Integer, Integer, Integer> base =
 				Tuples.of(100, "Foo", 300, 400, 500, 600);
 
-		Tuple2<?,?> mapped = base.mapT2(String::length);
+		Tuple2<?, ?> mapped = base.mapT2(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(6)
-		                  .containsExactly(base.getT1(), 3, base.getT3(), base.getT4(),
-				                  base.getT5(), base.getT6());
+				.hasSize(6)
+				.containsExactly(base.getT1(), 3, base.getT3(), base.getT4(),
+						base.getT5(), base.getT6());
 	}
 
 	@Test
@@ -63,12 +65,12 @@ public class Tuple6Test {
 		Tuple6<Integer, Integer, String, Integer, Integer, Integer> base =
 				Tuples.of(100, 200, "Foo", 400, 500, 600);
 
-		Tuple2<?,?> mapped = base.mapT3(String::length);
+		Tuple2<?, ?> mapped = base.mapT3(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(6)
-		                  .containsExactly(base.getT1(), base.getT2(), 3, base.getT4(),
-				                  base.getT5(), base.getT6());
+				.hasSize(6)
+				.containsExactly(base.getT1(), base.getT2(), 3, base.getT4(),
+						base.getT5(), base.getT6());
 	}
 
 	@Test
@@ -76,12 +78,12 @@ public class Tuple6Test {
 		Tuple6<Integer, Integer, Integer, String, Integer, Integer> base =
 				Tuples.of(100, 200, 300, "Foo", 500, 600);
 
-		Tuple2<?,?> mapped = base.mapT4(String::length);
+		Tuple2<?, ?> mapped = base.mapT4(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(6)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), 3,
-				                  base.getT5(), base.getT6());
+				.hasSize(6)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), 3,
+						base.getT5(), base.getT6());
 	}
 
 	@Test
@@ -89,12 +91,12 @@ public class Tuple6Test {
 		Tuple6<Integer, Integer, Integer, Integer, String, Integer> base =
 				Tuples.of(100, 200, 300, 400, "Foo", 600);
 
-		Tuple2<?,?> mapped = base.mapT5(String::length);
+		Tuple2<?, ?> mapped = base.mapT5(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(6)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
-				                  3, base.getT6());
+				.hasSize(6)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
+						3, base.getT6());
 	}
 
 	@Test
@@ -102,19 +104,19 @@ public class Tuple6Test {
 		Tuple6<Integer, Integer, Integer, Integer, Integer, String> base =
 				Tuples.of(100, 200, 300, 400, 500, "Foo");
 
-		Tuple2<?,?> mapped = base.mapT6(String::length);
+		Tuple2<?, ?> mapped = base.mapT6(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(6)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
-				                  base.getT5(), 3);
+				.hasSize(6)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
+						base.getT5(), 3);
 	}
 
 	@Test
 	public void mapT6Null() {
 		assertThatNullPointerException().isThrownBy(() ->
 				Tuples.of(1, 2, 3, 4, 5, 6)
-				      .mapT6(i -> null)
+						.mapT6(i -> null)
 		).withMessage("t6");
 	}
 
@@ -134,7 +136,7 @@ public class Tuple6Test {
 
 		for (int i = 0; i < array.length; i++) {
 			assertThat(full.get(i)).as("element " + i)
-			                       .isEqualTo(array[i]);
+					.isEqualTo(array[i]);
 		}
 	}
 
@@ -146,7 +148,7 @@ public class Tuple6Test {
 	@Test
 	public void equalityOfNullOrWrongClass() {
 		assertThat(full).isNotEqualTo(null)
-		                .isNotEqualTo("foo");
+				.isNotEqualTo("foo");
 	}
 
 	@Test

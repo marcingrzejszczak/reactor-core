@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
@@ -46,7 +45,7 @@ import reactor.util.context.Context;
  *
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class MonoUsing<T, S> extends Mono<T> implements Fuseable, SourceProducer<T>  {
+final class MonoUsing<T, S> extends Mono<T> implements Fuseable, SourceProducer<T> {
 
 	final Callable<S> resourceSupplier;
 
@@ -122,24 +121,18 @@ final class MonoUsing<T, S> extends Mono<T> implements Fuseable, SourceProducer<
 	static final class MonoUsingSubscriber<T, S>
 			implements InnerOperator<T, T>, QueueSubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Consumer<? super S> resourceCleanup;
-
-		final S resource;
-
-		final boolean eager;
-		final boolean allowFusion;
-
-		Subscription         s;
-		@Nullable
-		QueueSubscription<T> qs;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<MonoUsingSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(MonoUsingSubscriber.class, "wip");
-
+		final CoreSubscriber<? super T> actual;
+		final Consumer<? super S> resourceCleanup;
+		final S resource;
+		final boolean eager;
+		final boolean allowFusion;
+		Subscription s;
+		@Nullable
+		QueueSubscription<T> qs;
+		volatile int wip;
 		int mode;
 		boolean valued;
 

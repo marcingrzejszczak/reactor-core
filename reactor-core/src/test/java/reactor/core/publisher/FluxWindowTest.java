@@ -38,6 +38,24 @@ import static org.mockito.Mockito.when;
 
 public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 
+	// javac can't handle these inline and fails with type inference error
+	final Supplier<Queue<Integer>> pqs = ConcurrentLinkedQueue::new;
+	final Supplier<Queue<UnicastProcessor<Integer>>> oqs = ConcurrentLinkedQueue::new;
+
+	static <T> AssertSubscriber<T> toList(Publisher<T> windows) {
+		AssertSubscriber<T> ts = AssertSubscriber.create();
+		windows.subscribe(ts);
+		return ts;
+	}
+
+	@SafeVarargs
+	static <T> void expect(AssertSubscriber<Publisher<T>> ts, int index, T... values) {
+		toList(ts.values()
+				.get(index)).assertValues(values)
+				.assertComplete()
+				.assertNoError();
+	}
+
 	@Override
 	protected Scenario<String, Flux<String>> defaultScenarioOptions(Scenario<String, Flux<String>> defaultOptions) {
 		return defaultOptions.shouldAssertPostTerminateState(false);
@@ -73,10 +91,6 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		);
 	}
 
-	// javac can't handle these inline and fails with type inference error
-	final Supplier<Queue<Integer>>                   pqs = ConcurrentLinkedQueue::new;
-	final Supplier<Queue<UnicastProcessor<Integer>>> oqs = ConcurrentLinkedQueue::new;
-
 	@Test(expected = NullPointerException.class)
 	public void source1Null() {
 		new FluxWindow<>(null, 1, pqs);
@@ -105,25 +119,19 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 	@Test(expected = IllegalArgumentException.class)
 	public void size1Invalid() {
 		Flux.never()
-		    .window(0);
+				.window(0);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void size2Invalid() {
 		Flux.never()
-		    .window(0, 2);
+				.window(0, 2);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void skipInvalid() {
 		Flux.never()
-		    .window(1, 0);
-	}
-
-	static <T> AssertSubscriber<T> toList(Publisher<T> windows) {
-		AssertSubscriber<T> ts = AssertSubscriber.create();
-		windows.subscribe(ts);
-		return ts;
+				.window(1, 0);
 	}
 
 	@Test
@@ -131,32 +139,32 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		AssertSubscriber<Publisher<Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .window(3)
-		    .subscribe(ts);
+				.window(3)
+				.subscribe(ts);
 
 		ts.assertValueCount(4)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(0)).assertValues(1, 2, 3)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(0)).assertValues(1, 2, 3)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5, 6)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(1)).assertValues(4, 5, 6)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(2)).assertValues(7, 8, 9)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(2)).assertValues(7, 8, 9)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(3)).assertValues(10)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(3)).assertValues(10)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -164,56 +172,56 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		AssertSubscriber<Publisher<Integer>> ts = AssertSubscriber.create(0L);
 
 		Flux.range(1, 10)
-		    .window(3)
-		    .subscribe(ts);
+				.window(3)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValueCount(1)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(0)).assertValues(1, 2, 3)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(0)).assertValues(1, 2, 3)
+				.assertComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValueCount(2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5, 6)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(1)).assertValues(4, 5, 6)
+				.assertComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValueCount(3)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(2)).assertValues(7, 8, 9)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(2)).assertValues(7, 8, 9)
+				.assertComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValueCount(4)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(3)).assertValues(10)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(3)).assertValues(10)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -223,23 +231,23 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		Flux.range(1, 9).window(3).subscribe(ts);
 
 		ts.assertValueCount(3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(0)).assertValues(1, 2, 3)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(0)).assertValues(1, 2, 3)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5, 6)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(1)).assertValues(4, 5, 6)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(2)).assertValues(7, 8, 9)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(2)).assertValues(7, 8, 9)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -247,32 +255,32 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		AssertSubscriber<Publisher<Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .window(2, 3)
-		    .subscribe(ts);
+				.window(2, 3)
+				.subscribe(ts);
 
 		ts.assertValueCount(4)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(0)).assertValues(1, 2)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(0)).assertValues(1, 2)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(1)).assertValues(4, 5)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(2)).assertValues(7, 8)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(2)).assertValues(7, 8)
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(3)).assertValues(10)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(3)).assertValues(10)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -280,64 +288,56 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		AssertSubscriber<Publisher<Integer>> ts = AssertSubscriber.create(0L);
 
 		Flux.range(1, 10)
-		    .window(2, 3)
-		    .subscribe(ts);
+				.window(2, 3)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValueCount(1)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(0)).assertValues(1, 2)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(0)).assertValues(1, 2)
+				.assertComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValueCount(2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(1)).assertValues(4, 5)
+				.assertComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValueCount(3)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(2)).assertValues(7, 8)
-		                 .assertComplete()
-		                 .assertNoError();
+				.get(2)).assertValues(7, 8)
+				.assertComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValueCount(4)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		toList(ts.values()
-		         .get(3)).assertValues(10)
-		                 .assertComplete()
-		                 .assertNoError();
-	}
-
-	@SafeVarargs
-	static <T> void expect(AssertSubscriber<Publisher<T>> ts, int index, T... values) {
-		toList(ts.values()
-		         .get(index)).assertValues(values)
-		                     .assertComplete()
-		                     .assertNoError();
+				.get(3)).assertValues(10)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -345,12 +345,12 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		AssertSubscriber<Publisher<Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .window(3, 1)
-		    .subscribe(ts);
+				.window(3, 1)
+				.subscribe(ts);
 
 		ts.assertValueCount(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		expect(ts, 0, 1, 2, 3);
 		expect(ts, 1, 2, 3, 4);
@@ -369,18 +369,18 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		AssertSubscriber<Publisher<Integer>> ts = AssertSubscriber.create(0L);
 
 		Flux.range(1, 10)
-		    .window(3, 1)
-		    .subscribe(ts);
+				.window(3, 1)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		for (int i = 0; i < 10; i++) {
 			ts.request(1);
 
 			ts.assertValueCount(i + 1)
-			  .assertNoError();
+					.assertNoError();
 
 			if (i == 9) {
 				ts.assertComplete();
@@ -390,36 +390,36 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 			}
 
 			switch (i) {
-				case 9:
-					expect(ts, 9, 10);
-					break;
-				case 8:
-					expect(ts, 8, 9, 10);
-					break;
-				case 7:
-					expect(ts, 7, 8, 9, 10);
-					break;
-				case 6:
-					expect(ts, 6, 7, 8, 9);
-					break;
-				case 5:
-					expect(ts, 5, 6, 7, 8);
-					break;
-				case 4:
-					expect(ts, 4, 5, 6, 7);
-					break;
-				case 3:
-					expect(ts, 3, 4, 5, 6);
-					break;
-				case 2:
-					expect(ts, 2, 3, 4, 5);
-					break;
-				case 1:
-					expect(ts, 1, 2, 3, 4);
-					break;
-				case 0:
-					expect(ts, 0, 1, 2, 3);
-					break;
+			case 9:
+				expect(ts, 9, 10);
+				break;
+			case 8:
+				expect(ts, 8, 9, 10);
+				break;
+			case 7:
+				expect(ts, 7, 8, 9, 10);
+				break;
+			case 6:
+				expect(ts, 6, 7, 8, 9);
+				break;
+			case 5:
+				expect(ts, 5, 6, 7, 8);
+				break;
+			case 4:
+				expect(ts, 4, 5, 6, 7);
+				break;
+			case 3:
+				expect(ts, 3, 4, 5, 6);
+				break;
+			case 2:
+				expect(ts, 2, 3, 4, 5);
+				break;
+			case 1:
+				expect(ts, 1, 2, 3, 4);
+				break;
+			case 0:
+				expect(ts, 0, 1, 2, 3);
+				break;
 			}
 		}
 	}
@@ -431,25 +431,25 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		DirectProcessor<Integer> sp = DirectProcessor.create();
 
 		sp.window(2, 2)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(0)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		sp.onNext(1);
 		sp.onError(new RuntimeException("forced failure"));
 
 		ts.assertValueCount(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		toList(ts.values()
-		         .get(0)).assertValues(1)
-		                 .assertNotComplete()
-		                 .assertError(RuntimeException.class)
-		                 .assertErrorMessage("forced failure");
+				.get(0)).assertValues(1)
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -459,25 +459,25 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		DirectProcessor<Integer> sp = DirectProcessor.create();
 
 		sp.window(2, 3)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(0)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		sp.onNext(1);
 		sp.onError(new RuntimeException("forced failure"));
 
 		ts.assertValueCount(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		toList(ts.values()
-		         .get(0)).assertValues(1)
-		                 .assertNotComplete()
-		                 .assertError(RuntimeException.class)
-		                 .assertErrorMessage("forced failure");
+				.get(0)).assertValues(1)
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -487,20 +487,20 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		DirectProcessor<Integer> sp = DirectProcessor.create();
 
 		sp.window(1, 3)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(0)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		sp.onNext(1);
 		sp.onNext(2);
 		sp.onError(new RuntimeException("forced failure"));
 
 		ts.assertValueCount(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		expect(ts, 0, 1);
 	}
@@ -512,25 +512,25 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 		DirectProcessor<Integer> sp = DirectProcessor.create();
 
 		sp.window(2, 1)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(0)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		sp.onNext(1);
 		sp.onError(new RuntimeException("forced failure"));
 
 		ts.assertValueCount(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		toList(ts.values()
-		         .get(0)).assertValues(1)
-		                 .assertNotComplete()
-		                 .assertError(RuntimeException.class)
-		                 .assertErrorMessage("forced failure");
+				.get(0)).assertValues(1)
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -539,9 +539,9 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 
 		//"non overlapping windows"
 		List<List<Integer>> res = numbers.window(2, 3)
-		                                 .concatMap(Flux::buffer)
-		                                 .buffer()
-		                                 .blockLast();
+				.concatMap(Flux::buffer)
+				.buffer()
+				.blockLast();
 
 		assertThat(res).containsExactly(
 				Arrays.asList(1, 2),
@@ -555,9 +555,9 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 
 		//"non overlapping windows"
 		List<List<Integer>> res = numbers.window(3, 2)
-		                                 .concatMap(Flux::buffer)
-		                                 .buffer()
-		                                 .blockLast();
+				.concatMap(Flux::buffer)
+				.buffer()
+				.blockLast();
 
 		assertThat(res).containsExactly(
 				Arrays.asList(1, 2, 3),
@@ -567,121 +567,126 @@ public class FluxWindowTest extends FluxOperatorTest<String, Flux<String>> {
 	}
 
 	@Test
-	public void windowWillRerouteAsManyElementAsSpecified(){
+	public void windowWillRerouteAsManyElementAsSpecified() {
 		assertThat(Flux.just(1, 2, 3, 4, 5)
-		               .window(2)
-		               .concatMap(Flux::collectList)
-		               .collectList()
-		               .block()).containsExactly(
+				.window(2)
+				.concatMap(Flux::collectList)
+				.collectList()
+				.block()).containsExactly(
 				Arrays.asList(1, 2),
 				Arrays.asList(3, 4),
 				Arrays.asList(5));
 	}
 
 	@Test
-    public void scanExactSubscriber() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindow.WindowExactSubscriber<Integer> test = new FluxWindow.WindowExactSubscriber<Integer>(actual,
-        		123, Queues.unbounded());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanExactSubscriber() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindow.WindowExactSubscriber<Integer> test = new FluxWindow.WindowExactSubscriber<Integer>(actual,
+				123, Queues.unbounded());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanOverlapSubscriber() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindow.WindowOverlapSubscriber<Integer> test = new FluxWindow.WindowOverlapSubscriber<Integer>(actual,
-        		123, 3, Queues.unbounded(), Queues.<UnicastProcessor<Integer>>unbounded().get());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanOverlapSubscriber() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindow.WindowOverlapSubscriber<Integer> test = new FluxWindow.WindowOverlapSubscriber<Integer>(actual,
+				123, 3, Queues.unbounded(), Queues.<UnicastProcessor<Integer>>unbounded().get());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);
-        test.requested = 35;
-        Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
-        test.onNext(2);
-        Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);
+		test.requested = 35;
+		Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		test.onNext(2);
+		Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-        test.onError(new IllegalStateException("boom"));
-        Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+		test.onError(new IllegalStateException("boom"));
+		Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
-    @Test
-    public void scanOverlapSubscriberSmallBuffered() {
-	    @SuppressWarnings("unchecked")
-	    Queue<UnicastProcessor<Integer>> mockQueue = Mockito.mock(Queue.class);
+	@Test
+	public void scanOverlapSubscriberSmallBuffered() {
+		@SuppressWarnings("unchecked")
+		Queue<UnicastProcessor<Integer>> mockQueue = Mockito.mock(Queue.class);
 
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindow.WindowOverlapSubscriber<Integer> test = new FluxWindow.WindowOverlapSubscriber<Integer>(actual,
-                3,3, Queues.unbounded(), mockQueue);
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindow.WindowOverlapSubscriber<Integer> test = new FluxWindow.WindowOverlapSubscriber<Integer>(actual,
+				3, 3, Queues.unbounded(), mockQueue);
 
-        when(mockQueue.size()).thenReturn(Integer.MAX_VALUE - 2);
-        //size() is 1
-        test.offer(UnicastProcessor.create());
+		when(mockQueue.size()).thenReturn(Integer.MAX_VALUE - 2);
+		//size() is 1
+		test.offer(UnicastProcessor.create());
 
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(Integer.MAX_VALUE - 1);
-        assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(Integer.MAX_VALUE - 1L);
-    }
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(Integer.MAX_VALUE - 1);
+		assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(Integer.MAX_VALUE - 1L);
+	}
 
-    @Test
-    public void scanOverlapSubscriberLargeBuffered() {
-	    @SuppressWarnings("unchecked")
-	    Queue<UnicastProcessor<Integer>> mockQueue = Mockito.mock(Queue.class);
+	@Test
+	public void scanOverlapSubscriberLargeBuffered() {
+		@SuppressWarnings("unchecked")
+		Queue<UnicastProcessor<Integer>> mockQueue = Mockito.mock(Queue.class);
 
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindow.WindowOverlapSubscriber<Integer> test = new FluxWindow.WindowOverlapSubscriber<Integer>(actual,
-                3, 3, Queues.unbounded(), mockQueue);
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindow.WindowOverlapSubscriber<Integer> test = new FluxWindow.WindowOverlapSubscriber<Integer>(actual,
+				3, 3, Queues.unbounded(), mockQueue);
 
-        when(mockQueue.size()).thenReturn(Integer.MAX_VALUE);
-        //size() is 5
-        test.offer(UnicastProcessor.create());
-        test.offer(UnicastProcessor.create());
-        test.offer(UnicastProcessor.create());
-        test.offer(UnicastProcessor.create());
-        test.offer(UnicastProcessor.create());
+		when(mockQueue.size()).thenReturn(Integer.MAX_VALUE);
+		//size() is 5
+		test.offer(UnicastProcessor.create());
+		test.offer(UnicastProcessor.create());
+		test.offer(UnicastProcessor.create());
+		test.offer(UnicastProcessor.create());
+		test.offer(UnicastProcessor.create());
 
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(Integer.MIN_VALUE);
-        assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(Integer.MAX_VALUE + 5L);
-    }
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(Integer.MIN_VALUE);
+		assertThat(test.scan(Scannable.Attr.LARGE_BUFFERED)).isEqualTo(Integer.MAX_VALUE + 5L);
+	}
 
-    @Test
-    public void scanSkipSubscriber() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindow.WindowSkipSubscriber<Integer> test = new FluxWindow.WindowSkipSubscriber<Integer>(actual,
-        		123, 3, Queues.unbounded());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanSkipSubscriber() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindow.WindowSkipSubscriber<Integer> test = new FluxWindow.WindowSkipSubscriber<Integer>(actual,
+				123, 3, Queues.unbounded());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(123);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

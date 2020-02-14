@@ -79,31 +79,24 @@ final class FluxSubscribeOnValue<T> extends Flux<T> implements Fuseable, Scannab
 	static final class ScheduledScalar<T>
 			implements QueueSubscription<T>, InnerProducer<T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-
-		final T value;
-
-		final Scheduler scheduler;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ScheduledScalar> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(ScheduledScalar.class, "once");
-
-		volatile Disposable future;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ScheduledScalar, Disposable> FUTURE =
 				AtomicReferenceFieldUpdater.newUpdater(ScheduledScalar.class,
 						Disposable.class,
 						"future");
-
 		static final Disposable FINISHED = Disposables.disposed();
-
-		int fusionState;
-
-		static final int NO_VALUE  = 1;
+		static final int NO_VALUE = 1;
 		static final int HAS_VALUE = 2;
-		static final int COMPLETE  = 3;
+		static final int COMPLETE = 3;
+		final CoreSubscriber<? super T> actual;
+		final T value;
+		final Scheduler scheduler;
+		volatile int once;
+		volatile Disposable future;
+		int fusionState;
 
 		ScheduledScalar(CoreSubscriber<? super T> actual, T value, Scheduler scheduler) {
 			this.actual = actual;
@@ -220,15 +213,13 @@ final class FluxSubscribeOnValue<T> extends Flux<T> implements Fuseable, Scannab
 
 	static final class ScheduledEmpty implements QueueSubscription<Void>, Runnable {
 
-		final Subscriber<?> actual;
-
-		volatile Disposable future;
 		static final AtomicReferenceFieldUpdater<ScheduledEmpty, Disposable> FUTURE =
 				AtomicReferenceFieldUpdater.newUpdater(ScheduledEmpty.class,
 						Disposable.class,
 						"future");
-
 		static final Disposable FINISHED = Disposables.disposed();
+		final Subscriber<?> actual;
+		volatile Disposable future;
 
 		ScheduledEmpty(Subscriber<?> actual) {
 			this.actual = actual;

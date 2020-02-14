@@ -50,11 +50,11 @@ public class FluxStreamTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.fromStream(source.stream())
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueSequence(source)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -62,23 +62,23 @@ public class FluxStreamTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.fromStream(source.stream())
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValueSequence(source)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -86,11 +86,11 @@ public class FluxStreamTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(10);
 
 		Flux.fromStream(source.stream())
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueSequence(source)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -98,12 +98,12 @@ public class FluxStreamTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.fromStream(Arrays.asList(1, 2, 3, 4, 5, null, 7, 8, 9, 10)
-		                      .stream())
-		    .subscribe(ts);
+				.stream())
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -115,11 +115,11 @@ public class FluxStreamTest {
 		s.count();
 
 		Flux.fromStream(s)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(IllegalStateException.class);
+				.assertNotComplete()
+				.assertError(IllegalStateException.class);
 	}
 
 	@Test
@@ -128,11 +128,11 @@ public class FluxStreamTest {
 		Flux<Integer> flux = Flux.fromStream(stream);
 
 		StepVerifier.create(flux)
-		            .expectNextSequence(source)
-		            .verifyComplete();
+				.expectNextSequence(source)
+				.verifyComplete();
 
 		StepVerifier.create(flux)
-		            .verifyError(IllegalStateException.class);
+				.verifyError(IllegalStateException.class);
 	}
 
 	@Test
@@ -140,12 +140,12 @@ public class FluxStreamTest {
 		Flux<Integer> flux = Flux.fromStream(source::stream);
 
 		StepVerifier.create(flux)
-		            .expectNextSequence(source)
-		            .verifyComplete();
+				.expectNextSequence(source)
+				.verifyComplete();
 
 		StepVerifier.create(flux)
-		            .expectNextSequence(source)
-		            .verifyComplete();
+				.expectNextSequence(source)
+				.verifyComplete();
 	}
 
 	@Test
@@ -153,20 +153,20 @@ public class FluxStreamTest {
 		Flux<String> flux = new FluxStream<>(() -> null);
 
 		StepVerifier.create(flux)
-		            .verifyErrorSatisfies(t -> assertThat(t).isInstanceOf(NullPointerException.class)
-				            .hasMessage("The stream supplier returned a null Stream"));
+				.verifyErrorSatisfies(t -> assertThat(t).isInstanceOf(NullPointerException.class)
+						.hasMessage("The stream supplier returned a null Stream"));
 	}
 
 	@Test
 	public void streamClosedOnCancelNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source))
-		            .expectNext("foo")
-		            .thenCancel()
-		            .verify();
+				.expectNext("foo")
+				.thenCancel()
+				.verify();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -175,12 +175,12 @@ public class FluxStreamTest {
 	public void streamClosedOnCancelSlowPathNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source), 1)
-		            .expectNext("foo")
-		            .thenCancel()
-		            .verify();
+				.expectNext("foo")
+				.thenCancel()
+				.verify();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -189,11 +189,11 @@ public class FluxStreamTest {
 	public void streamClosedOnCompletionNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source))
-		            .expectNext("foo", "bar", "baz")
-		            .verifyComplete();
+				.expectNext("foo", "bar", "baz")
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -202,11 +202,11 @@ public class FluxStreamTest {
 	public void streamClosedOnCompletionSlowPathNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source), 3)
-		            .expectNext("foo", "bar", "baz")
-		            .verifyComplete();
+				.expectNext("foo", "bar", "baz")
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -215,12 +215,12 @@ public class FluxStreamTest {
 	public void streamClosedOnErrorNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source)
-		                        .concatWith(Mono.error(new IllegalStateException("boom"))))
-		            .expectNext("foo", "bar", "baz")
-		            .verifyErrorMessage("boom");
+				.concatWith(Mono.error(new IllegalStateException("boom"))))
+				.expectNext("foo", "bar", "baz")
+				.verifyErrorMessage("boom");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -229,13 +229,13 @@ public class FluxStreamTest {
 	public void streamClosedOnErrorSlowPathNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source)
-		                        .concatWith(Mono.error(new IllegalStateException("boom"))),
+						.concatWith(Mono.error(new IllegalStateException("boom"))),
 				4)
-		            .expectNext("foo", "bar", "baz")
-		            .verifyErrorMessage("boom");
+				.expectNext("foo", "bar", "baz")
+				.verifyErrorMessage("boom");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -244,11 +244,11 @@ public class FluxStreamTest {
 	public void streamClosedOnNullContentNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", null, "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source))
-		            .expectNext("foo", "bar")
-		            .verifyErrorMessage("The iterator returned a null value");
+				.expectNext("foo", "bar")
+				.verifyErrorMessage("The iterator returned a null value");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -257,11 +257,11 @@ public class FluxStreamTest {
 	public void streamClosedOnNullContentSlowPathNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", null, "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source), 4)
-		            .expectNext("foo", "bar")
-		            .verifyErrorMessage("The iterator returned a null value");
+				.expectNext("foo", "bar")
+				.verifyErrorMessage("The iterator returned a null value");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -270,12 +270,12 @@ public class FluxStreamTest {
 	public void streamClosedOnPollCompletionNormal() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source).map(Function.identity()))
-		            .expectFusion()
-		            .expectNext("foo", "bar")
-		            .verifyComplete();
+				.expectFusion()
+				.expectNext("foo", "bar")
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -283,26 +283,28 @@ public class FluxStreamTest {
 	@Test
 	public void streamCloseFailureDroppedNormal() {
 		Stream<String> source = Stream.of("foo", "bar")
-		                              .onClose(() -> { throw new IllegalStateException("boom"); });
+				.onClose(() -> {
+					throw new IllegalStateException("boom");
+				});
 
 		StepVerifier.create(Flux.fromStream(source))
-		            .expectNext("foo", "bar")
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom");
+				.expectNext("foo", "bar")
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test
 	public void streamClosedOnCancelConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source)
-		                        .filter(i -> true))
-		            .expectNext("foo")
-		            .thenCancel()
-		            .verify();
+				.filter(i -> true))
+				.expectNext("foo")
+				.thenCancel()
+				.verify();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -311,13 +313,13 @@ public class FluxStreamTest {
 	public void streamClosedOnCancelSlowPathConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source).filter(i -> true), 0)
-		            .thenRequest(1)
-		            .expectNext("foo")
-		            .thenCancel()
-		            .verify();
+				.thenRequest(1)
+				.expectNext("foo")
+				.thenCancel()
+				.verify();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -326,11 +328,11 @@ public class FluxStreamTest {
 	public void streamClosedOnCompletionConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source).filter(i -> true))
-		            .expectNext("foo", "bar", "baz")
-		            .verifyComplete();
+				.expectNext("foo", "bar", "baz")
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -339,11 +341,11 @@ public class FluxStreamTest {
 	public void streamClosedOnCompletionSlowPathConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source).filter(i -> true), 3)
-		            .expectNext("foo", "bar", "baz")
-		            .verifyComplete();
+				.expectNext("foo", "bar", "baz")
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -352,13 +354,13 @@ public class FluxStreamTest {
 	public void streamClosedOnErrorConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source)
-		                        .concatWith(Mono.error(new IllegalStateException("boom")))
-		                        .filter(i -> true))
-		            .expectNext("foo", "bar", "baz")
-		            .verifyErrorMessage("boom");
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.filter(i -> true))
+				.expectNext("foo", "bar", "baz")
+				.verifyErrorMessage("boom");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -367,13 +369,13 @@ public class FluxStreamTest {
 	public void streamClosedOnErrorSlowPathConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source)
-		                        .concatWith(Mono.error(new IllegalStateException("boom")))
-		                        .filter(i -> true), 4)
-		            .expectNext("foo", "bar", "baz")
-		            .verifyErrorMessage("boom");
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.filter(i -> true), 4)
+				.expectNext("foo", "bar", "baz")
+				.verifyErrorMessage("boom");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -382,11 +384,11 @@ public class FluxStreamTest {
 	public void streamClosedOnNullContentConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", null, "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source).filter(i -> true))
-		            .expectNext("foo", "bar")
-		            .verifyErrorMessage("The iterator returned a null value");
+				.expectNext("foo", "bar")
+				.verifyErrorMessage("The iterator returned a null value");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -395,11 +397,11 @@ public class FluxStreamTest {
 	public void streamClosedOnNullContentSlowPathConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar", null, "baz")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source).filter(i -> true), 4)
-		            .expectNext("foo", "bar")
-		            .verifyErrorMessage("The iterator returned a null value");
+				.expectNext("foo", "bar")
+				.verifyErrorMessage("The iterator returned a null value");
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -408,14 +410,14 @@ public class FluxStreamTest {
 	public void streamClosedOnPollCompletionConditional() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source)
-		                        .filter(i -> true)
-		                        .map(Function.identity()))
-		            .expectFusion()
-		            .expectNext("foo", "bar")
-		            .verifyComplete();
+				.filter(i -> true)
+				.map(Function.identity()))
+				.expectFusion()
+				.expectNext("foo", "bar")
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1);
 	}
@@ -423,28 +425,30 @@ public class FluxStreamTest {
 	@Test
 	public void streamCloseFailureDroppedConditional() {
 		Stream<String> source = Stream.of("foo", "bar")
-		                              .onClose(() -> { throw new IllegalStateException("boom"); });
+				.onClose(() -> {
+					throw new IllegalStateException("boom");
+				});
 
 		StepVerifier.create(Flux.fromStream(source).filter(i -> true))
-		            .expectNext("foo", "bar")
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom");
+				.expectNext("foo", "bar")
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test
 	public void intermediateCloseIdempotent() {
 		AtomicInteger closed = new AtomicInteger();
 		Stream<String> source = Stream.of("foo", "bar")
-		                              .onClose(closed::incrementAndGet);
+				.onClose(closed::incrementAndGet);
 
 		StepVerifier.create(Flux.fromStream(source), 1)
-		            .expectNext("foo")
-		            .then(source::close)
-		            .then(() -> assertThat(closed.get()).isEqualTo(1))
-		            .thenRequest(1)
-		            .expectNext("bar") //still working on the iterator
-		            .verifyComplete();
+				.expectNext("foo")
+				.then(source::close)
+				.then(() -> assertThat(closed.get()).isEqualTo(1))
+				.thenRequest(1)
+				.expectNext("bar") //still working on the iterator
+				.verifyComplete();
 
 		assertThat(closed.get()).isEqualTo(1); //no double close
 	}

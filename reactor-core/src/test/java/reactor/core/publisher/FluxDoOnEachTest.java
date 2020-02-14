@@ -51,49 +51,49 @@ import static org.junit.Assert.fail;
 @RunWith(JUnitParamsRunner.class)
 public class FluxDoOnEachTest {
 
+	private static final String sourceErrorMessage = "boomSource";
+
 	@Test(expected = NullPointerException.class)
 	public void nullSource() {
 		new FluxDoOnEach<>(null, null);
 	}
 
-	private static final String sourceErrorMessage = "boomSource";
-
 	private Object[] sourcesError() {
 		return new Object[] {
-				new Object[] { Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))
-						.hide() },
-				new Object[] { Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))
-				                   .hide().filter(i -> true) },
-				new Object[] { Flux.<Integer>error(new IllegalStateException(sourceErrorMessage)) },
-				new Object[] { Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))
-						.filter(i -> true) }
+				new Object[] {Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))
+						.hide()},
+				new Object[] {Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))
+						.hide().filter(i -> true)},
+				new Object[] {Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))},
+				new Object[] {Flux.<Integer>error(new IllegalStateException(sourceErrorMessage))
+						.filter(i -> true)}
 		};
 	}
 
 	private Object[] sources12Complete() {
 		return new Object[] {
-				new Object[] { Flux.just(1,2).hide() },
-				new Object[] { Flux.just(1,2).hide().filter(i -> true) },
-				new Object[] { Flux.just(1,2) },
-				new Object[] { Flux.just(1,2).filter(i -> true) }
+				new Object[] {Flux.just(1, 2).hide()},
+				new Object[] {Flux.just(1, 2).hide().filter(i -> true)},
+				new Object[] {Flux.just(1, 2)},
+				new Object[] {Flux.just(1, 2).filter(i -> true)}
 		};
 	}
 
 	private Object[] sourcesEmpty() {
 		return new Object[] {
-				new Object[] { Flux.<Integer>empty().hide() },
-				new Object[] { Flux.<Integer>empty().hide().filter(i -> true) },
-				new Object[] { Flux.<Integer>empty() },
-				new Object[] { Flux.<Integer>empty().filter(i -> true) }
+				new Object[] {Flux.<Integer>empty().hide()},
+				new Object[] {Flux.<Integer>empty().hide().filter(i -> true)},
+				new Object[] {Flux.<Integer>empty()},
+				new Object[] {Flux.<Integer>empty().filter(i -> true)}
 		};
 	}
 
 	private Object[] sourcesNever() {
 		return new Object[] {
-				new Object[] { Flux.<Integer>never().hide() },
-				new Object[] { Flux.<Integer>never().hide().filter(i -> true) },
-				new Object[] { Flux.<Integer>never() },
-				new Object[] { Flux.<Integer>never().filter(i -> true) }
+				new Object[] {Flux.<Integer>never().hide()},
+				new Object[] {Flux.<Integer>never().hide().filter(i -> true)},
+				new Object[] {Flux.<Integer>never()},
+				new Object[] {Flux.<Integer>never().filter(i -> true)}
 		};
 	}
 
@@ -108,19 +108,19 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		source.doOnEach(s -> {
-			    if (s.isOnNext()) {
-				    onNext.set(s.get());
-				    state.increment();
-			    }
-			    else if (s.isOnError()) {
-				    onError.set(s.getThrowable());
-			    }
-			    else if (s.isOnComplete()) {
-				    onComplete.set(true);
-			    }
+			if (s.isOnNext()) {
+				onNext.set(s.get());
+				state.increment();
+			}
+			else if (s.isOnError()) {
+				onError.set(s.getThrowable());
+			}
+			else if (s.isOnComplete()) {
+				onComplete.set(true);
+			}
 		})
-		      .filter(t -> true)
-		    .subscribe(ts);
+				.filter(t -> true)
+				.subscribe(ts);
 
 		assertThat(onNext).hasValue(2);
 		assertThat(onError).hasValue(null);
@@ -135,15 +135,15 @@ public class FluxDoOnEachTest {
 		AtomicInteger invocationCount = new AtomicInteger();
 
 		Flux<String> sourceWithFusionAsync = Flux.just("foo")
-		                                         .publishOn(Schedulers.elastic())
-		                                         .flatMap(v -> Flux.just("flatMap_" + v)
-		                                                           .doOnEach(sig -> invocationCount.incrementAndGet())
-		                                         );
+				.publishOn(Schedulers.elastic())
+				.flatMap(v -> Flux.just("flatMap_" + v)
+						.doOnEach(sig -> invocationCount.incrementAndGet())
+				);
 
 		StepVerifier.create(sourceWithFusionAsync)
-		            .expectNoFusionSupport()
-		            .expectNext("flatMap_foo")
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.expectNext("flatMap_foo")
+				.verifyComplete();
 
 		assertThat(invocationCount).as("doOnEach invoked").hasValue(2);
 	}
@@ -156,21 +156,21 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		StepVerifier.create(Flux.just("sync")
-		                        .doOnEach(s -> {
-			                        if (s.isOnNext()) {
-				                        onNext.set(s.get());
-				                        state.increment();
-			                        }
-			                        else if (s.isOnError()) {
-				                        onError.set(s.getThrowable());
-			                        }
-			                        else if (s.isOnComplete()) {
-				                        onComplete.set(true);
-			                        }
-		                        }))
-		            .expectFusion(Fuseable.SYNC, Fuseable.SYNC)
-		            .expectNext("sync")
-		            .verifyComplete();
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						onComplete.set(true);
+					}
+				}))
+				.expectFusion(Fuseable.SYNC, Fuseable.SYNC)
+				.expectNext("sync")
+				.verifyComplete();
 
 		assertThat(onNext).hasValue("sync");
 		assertThat(onError).hasValue(null);
@@ -185,21 +185,21 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		StepVerifier.create(Flux.just("sync")
-		                        .doOnEach(s -> {
-			                        if (s.isOnNext()) {
-				                        onNext.set(s.get());
-				                        state.increment();
-			                        }
-			                        else if (s.isOnError()) {
-				                        onError.set(s.getThrowable());
-			                        }
-			                        else if (s.isOnComplete()) {
-			                        	throw new IllegalStateException("boom");
-			                        }
-		                        }))
-		            .expectFusion(Fuseable.SYNC, Fuseable.SYNC)
-		            .expectNext("sync")
-		            .verifyErrorMessage("boom");
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						throw new IllegalStateException("boom");
+					}
+				}))
+				.expectFusion(Fuseable.SYNC, Fuseable.SYNC)
+				.expectNext("sync")
+				.verifyErrorMessage("boom");
 
 		assertThat(onNext).hasValue("sync");
 		assertThat(onError.get()).isNull();
@@ -214,23 +214,23 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		StepVerifier.create(Flux.just("foo")
-		                        .publishOn(Schedulers.immediate())
-		                        .map(s -> s + "_async")
-		                        .doOnEach(s -> {
-			                        if (s.isOnNext()) {
-				                        onNext.set(s.get());
-				                        state.increment();
-			                        }
-			                        else if (s.isOnError()) {
-				                        onError.set(s.getThrowable());
-			                        }
-			                        else if (s.isOnComplete()) {
-				                        onComplete.set(true);
-			                        }
-		                        }))
-		            .expectFusion(Fuseable.ASYNC, Fuseable.ASYNC)
-		            .expectNext("foo_async")
-		            .verifyComplete();
+				.publishOn(Schedulers.immediate())
+				.map(s -> s + "_async")
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						onComplete.set(true);
+					}
+				}))
+				.expectFusion(Fuseable.ASYNC, Fuseable.ASYNC)
+				.expectNext("foo_async")
+				.verifyComplete();
 
 		assertThat(onNext).hasValue("foo_async");
 		assertThat(onError).hasValue(null);
@@ -245,23 +245,23 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		StepVerifier.create(Flux.just("foo")
-		                        .publishOn(Schedulers.immediate())
-		                        .map(s -> s + "_async")
-		                        .doOnEach(s -> {
-			                        if (s.isOnNext()) {
-				                        onNext.set(s.get());
-				                        state.increment();
-			                        }
-			                        else if (s.isOnError()) {
-				                        onError.set(s.getThrowable());
-			                        }
-			                        else if (s.isOnComplete()) {
-			                        	throw new IllegalStateException("boom");
-			                        }
-		                        }))
-		            .expectFusion(Fuseable.ASYNC, Fuseable.ASYNC)
-		            .expectNext("foo_async")
-		            .verifyErrorMessage("boom");
+				.publishOn(Schedulers.immediate())
+				.map(s -> s + "_async")
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						throw new IllegalStateException("boom");
+					}
+				}))
+				.expectFusion(Fuseable.ASYNC, Fuseable.ASYNC)
+				.expectNext("foo_async")
+				.verifyErrorMessage("boom");
 
 		assertThat(onNext).hasValue("foo_async");
 		assertThat(onError.get()).isNotNull().hasMessage("boom");
@@ -276,19 +276,19 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		StepVerifier.create(Flux.just("foo")
-		                        .publishOn(Schedulers.immediate())
-		                        .map(s -> s + "_async")
-		                        .doOnEach(s -> {
-		                        	if (s.isOnNext()) {
-		                        		onNext.set(s.get());
-			                        }
-			                        else {
-				                        throw new IllegalStateException("boom");
-			                        }
-		                        }))
-		            .expectFusion(Fuseable.ASYNC, Fuseable.ASYNC)
-		            .expectNext("foo_async")
-		            .verifyErrorMessage("boom");
+				.publishOn(Schedulers.immediate())
+				.map(s -> s + "_async")
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+					}
+					else {
+						throw new IllegalStateException("boom");
+					}
+				}))
+				.expectFusion(Fuseable.ASYNC, Fuseable.ASYNC)
+				.expectNext("foo_async")
+				.verifyErrorMessage("boom");
 
 		assertThat(onNext).hasValue("foo_async");
 		assertThat(onError.get()).isNull();
@@ -306,24 +306,24 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		source
-		    .doOnEach(s -> {
-			    if (s.isOnNext()) {
-				    onNext.set(s.get());
-				    state.increment();
-			    }
-			    else if (s.isOnError()) {
-				    onError.set(s.getThrowable());
-			    }
-			    else if (s.isOnComplete()) {
-				    onComplete.set(true);
-			    }
-		    })
-		    .filter(t -> true)
-		    .subscribe(ts);
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						onComplete.set(true);
+					}
+				})
+				.filter(t -> true)
+				.subscribe(ts);
 
 		assertThat(onNext).hasValue(null);
 		assertThat(onError.get()).isInstanceOf(IllegalStateException.class)
-		                         .hasMessage(sourceErrorMessage);
+				.hasMessage(sourceErrorMessage);
 		assertThat(onComplete).isFalse();
 		assertThat(state.intValue()).isZero();
 	}
@@ -339,20 +339,20 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		source
-		    .doOnEach(s -> {
-			    if (s.isOnNext()) {
-				    onNext.set(s.get());
-				    state.increment();
-			    }
-			    else if (s.isOnError()) {
-				    onError.set(s.getThrowable());
-			    }
-			    else if (s.isOnComplete()) {
-				    onComplete.set(true);
-			    }
-		    })
-		    .filter(t -> true)
-		    .subscribe(ts);
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						onComplete.set(true);
+					}
+				})
+				.filter(t -> true)
+				.subscribe(ts);
 
 		assertThat(onNext).hasValue(null);
 		assertThat(onError).hasValue(null);
@@ -371,20 +371,20 @@ public class FluxDoOnEachTest {
 		LongAdder state = new LongAdder();
 
 		source
-		    .doOnEach(s -> {
-			    if (s.isOnNext()) {
-				    onNext.set(s.get());
-				    state.increment();
-			    }
-			    else if (s.isOnError()) {
-				    onError.set(s.getThrowable());
-			    }
-			    else if (s.isOnComplete()) {
-				    onComplete.set(true);
-			    }
-		    })
-		    .filter(t -> true)
-		    .subscribe(ts);
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						onNext.set(s.get());
+						state.increment();
+					}
+					else if (s.isOnError()) {
+						onError.set(s.getThrowable());
+					}
+					else if (s.isOnComplete()) {
+						onComplete.set(true);
+					}
+				})
+				.filter(t -> true)
+				.subscribe(ts);
 
 		assertThat(onNext).hasValue(null);
 		assertThat(onError).hasValue(null);
@@ -401,14 +401,14 @@ public class FluxDoOnEachTest {
 		Throwable err = new Exception("test");
 
 		source
-		    .doOnEach(s -> {
-			    if (s.isOnNext()) {
-				    state.increment();
-				    throw Exceptions.propagate(err);
-			    }
-		    })
-		    .filter(t -> true)
-		    .subscribe(ts);
+				.doOnEach(s -> {
+					if (s.isOnNext()) {
+						state.increment();
+						throw Exceptions.propagate(err);
+					}
+				})
+				.filter(t -> true)
+				.subscribe(ts);
 
 		//nominal error path (DownstreamException)
 		ts.assertErrorMessage("test");
@@ -425,14 +425,14 @@ public class FluxDoOnEachTest {
 
 		try {
 			source
-			    .doOnEach(s -> {
-				    if (s.isOnNext()) {
-					    state.increment();
-					    throw Exceptions.bubble(err);
-				    }
-			    })
-			    .filter(t -> true)
-			    .subscribe(ts);
+					.doOnEach(s -> {
+						if (s.isOnNext()) {
+							state.increment();
+							throw Exceptions.bubble(err);
+						}
+					})
+					.filter(t -> true)
+					.subscribe(ts);
 
 			fail();
 		}
@@ -452,23 +452,23 @@ public class FluxDoOnEachTest {
 		Throwable err = new Exception("test");
 
 		source
-		    .doOnEach(s -> {
-			    if (s.isOnComplete()) {
-				    completeHandled.set(true);
-				    throw Exceptions.propagate(err);
-			    }
-			    if (s.isOnError()) {
-			    	errorHandled.set(true);
-			    }
-		    })
-		    .filter(t -> true)
-		    .subscribe(ts);
+				.doOnEach(s -> {
+					if (s.isOnComplete()) {
+						completeHandled.set(true);
+						throw Exceptions.propagate(err);
+					}
+					if (s.isOnError()) {
+						errorHandled.set(true);
+					}
+				})
+				.filter(t -> true)
+				.subscribe(ts);
 
 		ts.assertErrorMessage("test");
 		assertThat(completeHandled).as("complete() handler triggered")
-		                        .isTrue();
+				.isTrue();
 		assertThat(errorHandled).as("complete() failure passed to error handler triggered")
-		                        .isTrue();
+				.isTrue();
 	}
 
 	@Test
@@ -480,14 +480,14 @@ public class FluxDoOnEachTest {
 		IllegalStateException err = new IllegalStateException("test");
 
 		source
-		    .doOnEach(s -> {
-			    if (s.isOnError()) {
-				    state.increment();
-				    throw Exceptions.propagate(err);
-			    }
-		    })
-		    .filter(t -> true)
-		    .subscribe(ts);
+				.doOnEach(s -> {
+					if (s.isOnError()) {
+						state.increment();
+						throw Exceptions.propagate(err);
+					}
+				})
+				.filter(t -> true)
+				.subscribe(ts);
 
 		ts.assertNoValues();
 		ts.assertError(IllegalStateException.class);
@@ -518,7 +518,7 @@ public class FluxDoOnEachTest {
 
 		assertThat(signals).hasSize(2);
 		assertThat(signals.get(0)).matches(Signal::isOnNext)
-		                          .matches(s -> s.get() == Boolean.TRUE);
+				.matches(s -> s.get() == Boolean.TRUE);
 		assertThat(signals.get(1)).matches(Signal::isOnComplete);
 
 		List<Boolean> actualTryNext = ((FluxPeekFuseableTest.ConditionalAssertSubscriber<Boolean>) actual).next;
@@ -548,7 +548,7 @@ public class FluxDoOnEachTest {
 
 		assertThat(signals).hasSize(2);
 		assertThat(signals.get(0)).matches(Signal::isOnNext)
-		                          .matches(s -> s.get() == Boolean.TRUE);
+				.matches(s -> s.get() == Boolean.TRUE);
 		assertThat(signals.get(1)).matches(Signal::isOnComplete);
 
 		List<Boolean> actualTryNext = actual.next;
@@ -563,44 +563,48 @@ public class FluxDoOnEachTest {
 		List<Signal> signals = new ArrayList<>();
 
 		StepVerifier.create(Flux.just("hello")
-		                        .doOnEach(signals::add),
+						.doOnEach(signals::add),
 				StepVerifierOptions.create().withInitialContext(context))
-		            .expectNext("hello")
-		            .verifyComplete();
+				.expectNext("hello")
+				.verifyComplete();
 
 		assertThat(signals)
-		          .allSatisfy(signal -> assertThat(signal.getContext().hasKey("foo"))
-				          .as("has Context value")
-				          .isTrue());
+				.allSatisfy(signal -> assertThat(signal.getContext().hasKey("foo"))
+						.as("has Context value")
+						.isTrue());
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxDoOnEach<Integer> peek =
-				new FluxDoOnEach<>(Flux.just(1), s -> { });
+				new FluxDoOnEach<>(Flux.just(1), s -> {
+				});
 		FluxDoOnEach.DoOnEachSubscriber<Integer> test =
 				new FluxDoOnEach.DoOnEachSubscriber<>(actual, peek.onSignal, false);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    //https://github.com/reactor/reactor-core/issues/1067
+	//https://github.com/reactor/reactor-core/issues/1067
 	@Test
 	public void shallExecuteSideEffectsCallback() {
 
 		Flux<Integer> result = Mono.just(Arrays.asList(1, 2))
-		                           //.doOnEach(sig -> System.out.println("SIGNAL beforeMap " + sig))// <- if enabled than everything is fine
-		                           .map(x -> x)
-		                           .doOnEach(sig -> {throw new RuntimeException("expected");})
-		                           .flatMapIterable(Function.identity());
+				//.doOnEach(sig -> System.out.println("SIGNAL beforeMap " + sig))// <- if enabled than everything is fine
+				.map(x -> x)
+				.doOnEach(sig -> {
+					throw new RuntimeException("expected");
+				})
+				.flatMapIterable(Function.identity());
 
 
 		StepVerifier.create(result).expectError().verify();

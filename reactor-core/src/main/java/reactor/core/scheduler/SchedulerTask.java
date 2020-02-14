@@ -27,21 +27,16 @@ import reactor.util.annotation.Nullable;
 
 final class SchedulerTask implements Runnable, Disposable, Callable<Void> {
 
-	final Runnable task;
-
 	static final Future<Void> FINISHED = new FutureTask<>(() -> null);
 	static final Future<Void> CANCELLED = new FutureTask<>(() -> null);
-
 	static final Disposable TAKEN = Disposables.disposed();
-
-	volatile Future<?> future;
 	static final AtomicReferenceFieldUpdater<SchedulerTask, Future> FUTURE =
 			AtomicReferenceFieldUpdater.newUpdater(SchedulerTask.class, Future.class, "future");
-
-	volatile Disposable parent;
 	static final AtomicReferenceFieldUpdater<SchedulerTask, Disposable> PARENT =
 			AtomicReferenceFieldUpdater.newUpdater(SchedulerTask.class, Disposable.class, "parent");
-
+	final Runnable task;
+	volatile Future<?> future;
+	volatile Disposable parent;
 	Thread thread;
 
 	SchedulerTask(Runnable task, @Nullable Disposable parent) {
@@ -55,7 +50,7 @@ final class SchedulerTask implements Runnable, Disposable, Callable<Void> {
 		thread = Thread.currentThread();
 		Disposable d = null;
 		try {
-			for (;;) {
+			for (; ; ) {
 				d = parent;
 				if (d == TAKEN || d == null) {
 					break;
@@ -74,7 +69,7 @@ final class SchedulerTask implements Runnable, Disposable, Callable<Void> {
 		finally {
 			thread = null;
 			Future f;
-			for (;;) {
+			for (; ; ) {
 				f = future;
 				if (f == CANCELLED || FUTURE.compareAndSet(this, f, FINISHED)) {
 					break;
@@ -93,7 +88,7 @@ final class SchedulerTask implements Runnable, Disposable, Callable<Void> {
 	}
 
 	void setFuture(Future<?> f) {
-		for (;;) {
+		for (; ; ) {
 			Future o = future;
 			if (o == FINISHED) {
 				return;
@@ -116,7 +111,7 @@ final class SchedulerTask implements Runnable, Disposable, Callable<Void> {
 
 	@Override
 	public void dispose() {
-		for (;;) {
+		for (; ; ) {
 			Future f = future;
 			if (f == FINISHED || f == CANCELLED) {
 				break;
@@ -130,7 +125,7 @@ final class SchedulerTask implements Runnable, Disposable, Callable<Void> {
 		}
 
 		Disposable d;
-		for (;;) {
+		for (; ; ) {
 			d = parent;
 			if (d == TAKEN || d == null) {
 				break;

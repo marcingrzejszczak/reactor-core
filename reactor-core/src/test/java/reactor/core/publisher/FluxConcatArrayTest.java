@@ -31,23 +31,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxConcatArrayTest {
 
+	final Publisher<Integer> source = Flux.range(1, 3);
+
 	@Test(expected = NullPointerException.class)
 	public void arrayNull() {
 		Flux.concat((Publisher<Object>[]) null);
 	}
-
-	final Publisher<Integer> source = Flux.range(1, 3);
 
 	@Test
 	public void normal() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.concat(source, source, source)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 1, 2, 3, 1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -55,29 +55,29 @@ public class FluxConcatArrayTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.concat(source, source, source)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(4);
 
 		ts.assertValues(1, 2, 3, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 1, 2, 3, 1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -85,11 +85,11 @@ public class FluxConcatArrayTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.concat(source, null, source)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3)
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -97,11 +97,11 @@ public class FluxConcatArrayTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.concat((Publisher<Integer>) null)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -109,17 +109,17 @@ public class FluxConcatArrayTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.just(1)
-		    .concatWith(Flux.range(2, 3))
-		    .subscribe(ts);
+				.concatWith(Flux.range(2, 3))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError();
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -130,12 +130,12 @@ public class FluxConcatArrayTest {
 				Flux.range(1, 2),
 				Flux.error(new RuntimeException("Forced failure")),
 				Flux.range(3, 2))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("Forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("Forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -148,28 +148,28 @@ public class FluxConcatArrayTest {
 				Flux.range(3, 2),
 				Flux.error(new RuntimeException("Forced failure")),
 				Flux.empty())
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4)
-		  .assertError(Throwable.class)
-		  .assertErrorMessage("Multiple exceptions")
-		  .assertNotComplete();
+				.assertError(Throwable.class)
+				.assertErrorMessage("Multiple exceptions")
+				.assertNotComplete();
 	}
 
 	@Test
 	public void veryLongTake() {
 		Flux.range(1, 1_000_000_000)
-		    .concatWith(Flux.empty())
-		    .take(10)
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertComplete()
-		    .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+				.concatWith(Flux.empty())
+				.take(10)
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete()
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 	}
 
 	@Test
 	public void pairWise() {
 		Flux<String> f = Flux.concat(Flux.just("test"), Flux.just("test2"))
-		                     .concatWith(Flux.just("test3"));
+				.concatWith(Flux.just("test3"));
 
 		Assert.assertTrue(f instanceof FluxConcatArray);
 		FluxConcatArray<String> s = (FluxConcatArray<String>) f;
@@ -177,15 +177,15 @@ public class FluxConcatArrayTest {
 		Assert.assertTrue(s.array.length == 3);
 
 		StepVerifier.create(f)
-	                .expectNext("test", "test2", "test3")
-	                .verifyComplete();
+				.expectNext("test", "test2", "test3")
+				.verifyComplete();
 	}
 
 
 	@Test
 	public void pairWise2() {
 		Flux<String> f = Mono.just("test")
-		                     .concatWith(Flux.just("test2"));
+				.concatWith(Flux.just("test2"));
 
 		Assert.assertTrue(f instanceof FluxConcatArray);
 		FluxConcatArray<String> s = (FluxConcatArray<String>) f;
@@ -193,44 +193,44 @@ public class FluxConcatArrayTest {
 		Assert.assertTrue(s.array.length == 2);
 
 		StepVerifier.create(f)
-	                .expectNext("test", "test2")
-	                .verifyComplete();
+				.expectNext("test", "test2")
+				.verifyComplete();
 	}
 
 	@Test
-	public void thenMany(){
+	public void thenMany() {
 		StepVerifier.create(Flux.just(1, 2, 3).thenMany(Flux.just("test", "test2")))
-	                .expectNext("test", "test2")
-	                .verifyComplete();
+				.expectNext("test", "test2")
+				.verifyComplete();
 	}
 
 
 	@Test
-	public void thenManyThenMany(){
+	public void thenManyThenMany() {
 		StepVerifier.create(Flux.just(1, 2, 3).thenMany(Flux.just("test", "test2"))
-		                        .thenMany(Flux.just(1L, 2L)))
-	                .expectNext(1L, 2L)
-	                .verifyComplete();
+				.thenMany(Flux.just(1L, 2L)))
+				.expectNext(1L, 2L)
+				.verifyComplete();
 	}
 
 	@Test
-	public void thenManySupplier(){
+	public void thenManySupplier() {
 		StepVerifier.create(Flux.just(1, 2, 3).thenMany(Flux.defer(() -> Flux.just("test", "test2"))))
-		            .expectNext("test", "test2")
-		            .verifyComplete();
+				.expectNext("test", "test2")
+				.verifyComplete();
 	}
 
 	@Test
-	public void thenManyError(){
+	public void thenManyError() {
 		StepVerifier.create(Flux.error(new Exception("test")).thenMany(Flux.just(4, 5, 6)))
-	                .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
-	public void startWith(){
+	public void startWith() {
 		StepVerifier.create(Flux.just(1, 2, 3).startWith(Arrays.asList(-1, 0)))
-		            .expectNext(-1, 0, 1, 2, 3)
-		            .verifyComplete();
+				.expectNext(-1, 0, 1, 2, 3)
+				.verifyComplete();
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -242,8 +242,8 @@ public class FluxConcatArrayTest {
 						Flux.error(new Exception("test")),
 						Flux.just(3, 4))
 		)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -251,24 +251,25 @@ public class FluxConcatArrayTest {
 	public void concatArrayDelayErrorWithMonoError() {
 		StepVerifier.create(
 				Flux.concatDelayError(
-								Flux.just(1, 2),
-								Mono.error(new Exception("test")),
-								Flux.just(3, 4))
+						Flux.just(1, 2),
+						Mono.error(new Exception("test")),
+						Flux.just(3, 4))
 		)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void scanOperator() {
 		@SuppressWarnings("unchecked") //vararg of Publisher<String>
-		FluxConcatArray<String> s = new FluxConcatArray<>(true, Flux.empty());
+				FluxConcatArray<String> s = new FluxConcatArray<>(true, Flux.empty());
 		assertThat(s.scan(Scannable.Attr.DELAY_ERROR)).as("delayError").isTrue();
 	}
 
 	@Test
 	public void scanDelayErrorSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		@SuppressWarnings("unchecked")
 		Publisher<String>[] emptyPub = (Publisher<String>[]) new Publisher[0];
 		FluxConcatArray.ConcatArrayDelayErrorSubscriber<String> test = new FluxConcatArray.ConcatArrayDelayErrorSubscriber<>(actual, emptyPub);

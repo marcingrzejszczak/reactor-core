@@ -18,7 +18,6 @@ package reactor.core.publisher;
 import java.util.Objects;
 
 import org.reactivestreams.Publisher;
-
 import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.util.annotation.Nullable;
@@ -29,7 +28,7 @@ import reactor.util.annotation.Nullable;
  * @param <I> Upstream type
  */
 final class FluxSource<I> extends Flux<I> implements SourceProducer<I>,
-                                                     OptimizableOperator<I, I> {
+		OptimizableOperator<I, I> {
 
 
 	final Publisher<? extends I> source;

@@ -61,17 +61,17 @@ public class FizzBuzzTests extends AbstractReactorTest {
 				}
 			}
 		})
-		                           .log("oooo")
-		                           .flatMap((s) -> Flux.create((sub) -> timer.schedule(new TimerTask() {
-			                           @Override
-			                           public void run() {
-				                           sub.next(s);
-				                           sub.complete();
-			                           }
-		                           }, 10)))
-		                           .log()
-		                           .take(numOfItems + 1)
-		                           .collectList();
+				.log("oooo")
+				.flatMap((s) -> Flux.create((sub) -> timer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						sub.next(s);
+						sub.complete();
+					}
+				}, 10)))
+				.log()
+				.take(numOfItems + 1)
+				.collectList();
 
 		c.block();
 	}

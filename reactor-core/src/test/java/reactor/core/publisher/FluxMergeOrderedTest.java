@@ -18,7 +18,6 @@ package reactor.core.publisher;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -35,7 +34,9 @@ import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 import reactor.util.function.Tuple2;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FluxMergeOrderedTest {
 
@@ -46,8 +47,8 @@ public class FluxMergeOrderedTest {
 				Flux.just(2, 4, 6, 8, 10));
 
 		StepVerifier.create(test)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 10)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
@@ -58,8 +59,8 @@ public class FluxMergeOrderedTest {
 		assertThat(test.getPrefetch()).isEqualTo(Queues.SMALL_BUFFER_SIZE);
 
 		StepVerifier.create(test)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 10)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
@@ -69,8 +70,8 @@ public class FluxMergeOrderedTest {
 		assertThat(test.getPrefetch()).isEqualTo(Queues.SMALL_BUFFER_SIZE);
 
 		StepVerifier.create(test)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 10)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
@@ -80,11 +81,11 @@ public class FluxMergeOrderedTest {
 				Flux.just(2, 4, 6, 8, 10));
 
 		StepVerifier.create(test, 5)
-		            .expectNext(1, 2, 3, 4)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(5)
-		            .expectNext(5, 6, 7, 8, 10)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(5)
+				.expectNext(5, 6, 7, 8, 10)
+				.verifyComplete();
 	}
 
 	@Test
@@ -99,32 +100,6 @@ public class FluxMergeOrderedTest {
 		assertThat(testOne).isSameAs(expectedOne);
 	}
 
-	static class Person {
-		private final String name;
-
-		Person(String name) {
-			this.name = name;
-		}
-
-		public String getName() {
-			return name;
-		}
-	}
-
-	static class User extends Person {
-
-		private final String login;
-
-		User(String name, String login) {
-			super(name);
-			this.login = login;
-		}
-
-		public String getLogin() {
-			return login;
-		}
-	}
-
 	@Test
 	public void mergeOrderedWithCombinesComparators() {
 		Comparator<Person> nameComparator = Comparator.comparing(Person::getName);
@@ -135,10 +110,10 @@ public class FluxMergeOrderedTest {
 		Flux<User> c = Flux.just(new User("foo", "C"));
 
 		StepVerifier.create(a.mergeOrderedWith(b, nameComparator)
-		                     .mergeOrderedWith(c, loginComparator)
-		                     .map(User::getLogin))
-		            .expectNext("C", "B", "A", "JustBob")
-		            .verifyComplete();
+				.mergeOrderedWith(c, loginComparator)
+				.map(User::getLogin))
+				.expectNext("C", "B", "A", "JustBob")
+				.verifyComplete();
 	}
 
 	@Test
@@ -146,8 +121,8 @@ public class FluxMergeOrderedTest {
 		Comparator<String> comparator = Comparator.comparingInt(String::length);
 
 		final Flux<String> flux = Flux.just("AAAAA", "BBBB")
-		                              .mergeOrderedWith(Flux.just("DD", "CCC"), comparator)
-		                              .mergeOrderedWith(Flux.just("E"), comparator);
+				.mergeOrderedWith(Flux.just("DD", "CCC"), comparator)
+				.mergeOrderedWith(Flux.just("E"), comparator);
 
 		assertThat(flux).isInstanceOf(FluxMergeOrdered.class);
 		assertThat(((FluxMergeOrdered) flux).valueComparator)
@@ -158,8 +133,8 @@ public class FluxMergeOrderedTest {
 	@Test
 	public void mergeOrderedWithDoesntCombineNaturalOrder() {
 		final Flux<String> flux = Flux.just("AAAAA", "BBBB")
-		                              .mergeOrderedWith(Flux.just("DD", "CCC"), Comparator.naturalOrder())
-		                              .mergeOrderedWith(Flux.just("E"), Comparator.naturalOrder());
+				.mergeOrderedWith(Flux.just("DD", "CCC"), Comparator.naturalOrder())
+				.mergeOrderedWith(Flux.just("E"), Comparator.naturalOrder());
 
 		assertThat(flux).isInstanceOf(FluxMergeOrdered.class);
 		assertThat(((FluxMergeOrdered) flux).valueComparator)
@@ -175,20 +150,20 @@ public class FluxMergeOrderedTest {
 				Flux.just("E"));
 
 		StepVerifier.create(flux)
-		            .expectNext("E") // between E, DD and AAAAA => E, 3rd slot done
-		            .expectNext("DD") // between DD and AAAAA => DD, replenish 2nd slot to CCC
-		            .expectNext("CCC") // between CCC and AAAAA => CCC, 2nd slot done
-		            .expectNext("AAAAA", "BBBB") // rest of first flux in 1st slot => AAAAA then BBBB
-		            .verifyComplete();
+				.expectNext("E") // between E, DD and AAAAA => E, 3rd slot done
+				.expectNext("DD") // between DD and AAAAA => DD, replenish 2nd slot to CCC
+				.expectNext("CCC") // between CCC and AAAAA => CCC, 2nd slot done
+				.expectNext("AAAAA", "BBBB") // rest of first flux in 1st slot => AAAAA then BBBB
+				.verifyComplete();
 	}
 
 	@Test
 	public void reorderingByIndex() {
 		List<Mono<Tuple2<Long, Integer>>> sourceList = Flux.range(1, 10)
-		                                                   .index()
-		                                                   .map(Mono::just)
-		                                                   .collectList()
-		                                                   .block();
+				.index()
+				.map(Mono::just)
+				.collectList()
+				.block();
 		assertThat(sourceList).isNotNull();
 		Collections.shuffle(sourceList);
 
@@ -200,22 +175,22 @@ public class FluxMergeOrderedTest {
 				.map(Tuple2::getT2);
 
 		StepVerifier.create(test)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void reorderingByIndexWithDelays() {
 		List<Mono<Tuple2<Long, Integer>>> sourceList = Flux.range(1, 10)
-		                                                   .index()
-		                                                   .map(t2 -> {
-			                                                   if (t2.getT1() < 4) {
-				                                                   return Mono.just(t2).delayElement(Duration.ofMillis(500 - t2.getT2() * 100));
-			                                                   }
-			                                                   return Mono.just(t2);
-		                                                   })
-		                                                   .collectList()
-		                                                   .block();
+				.index()
+				.map(t2 -> {
+					if (t2.getT1() < 4) {
+						return Mono.just(t2).delayElement(Duration.ofMillis(500 - t2.getT2() * 100));
+					}
+					return Mono.just(t2);
+				})
+				.collectList()
+				.block();
 		assertThat(sourceList).isNotNull();
 		Collections.shuffle(sourceList);
 
@@ -227,8 +202,8 @@ public class FluxMergeOrderedTest {
 				.map(Tuple2::getT2);
 
 		StepVerifier.create(test)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
@@ -275,15 +250,15 @@ public class FluxMergeOrderedTest {
 
 		assertThat(fmo2).isNotSameAs(fmo);
 		assertThat(fmo2.sources).startsWith(fmo.sources)
-		                        .hasSize(3);
+				.hasSize(3);
 		assertThat(fmo.sources).hasSize(2);
 		assertThat(fmo2.valueComparator)
 				.as("same comparator detected and used")
 				.isSameAs(originalComparator);
 
 		StepVerifier.create(fmo2)
-		            .expectNext(1, 2, 3, 4, 5, 6)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 4, 5, 6)
+				.verifyComplete();
 	}
 
 	@Test
@@ -292,7 +267,7 @@ public class FluxMergeOrderedTest {
 		Flux<Integer> source2 = Flux.just(2);
 
 		@SuppressWarnings("unchecked") //safe varargs
-		Scannable fmo = new FluxMergeOrdered<>(123, Queues.small(), Comparator.naturalOrder(), source1, source2);
+				Scannable fmo = new FluxMergeOrdered<>(123, Queues.small(), Comparator.naturalOrder(), source1, source2);
 
 		assertThat(fmo.scan(Scannable.Attr.PARENT)).isSameAs(source1);
 		assertThat(fmo.scan(Scannable.Attr.PREFETCH)).isEqualTo(123);
@@ -367,8 +342,7 @@ public class FluxMergeOrderedTest {
 
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> {
-					@SuppressWarnings("unchecked")
-					final Publisher<Integer>[] sources = new Publisher[3];
+					@SuppressWarnings("unchecked") final Publisher<Integer>[] sources = new Publisher[3];
 					test.subscribe(sources);
 				})
 				.withMessage("must subscribe with 4 sources");
@@ -407,7 +381,7 @@ public class FluxMergeOrderedTest {
 		test.request(Long.MAX_VALUE);
 		assertThat(test.consumed).isEqualTo(0);
 		assertThat(requested).as("prefetch + replenish")
-		                     .hasValue(test.prefetch + test.limit);
+				.hasValue(test.prefetch + test.limit);
 	}
 
 	@Test
@@ -609,7 +583,9 @@ public class FluxMergeOrderedTest {
 	@SuppressWarnings("unchecked") //safe varargs
 	public void fusedThrowsInDrainLoopDelayed() {
 		new FluxMergeOrdered<>(2, Queues.small(), Comparator.naturalOrder(),
-				Flux.just(1).map(v -> { throw new IllegalArgumentException("boom"); }),
+				Flux.just(1).map(v -> {
+					throw new IllegalArgumentException("boom");
+				}),
 				Flux.just(2, 3))
 				.as(StepVerifier::create)
 				.expectNext(2, 3)
@@ -620,7 +596,9 @@ public class FluxMergeOrderedTest {
 	@SuppressWarnings("unchecked") //safe varargs
 	public void fusedThrowsInPostEmissionCheckDelayed() {
 		new FluxMergeOrdered<>(2, Queues.small(), Comparator.naturalOrder(),
-				Flux.just(1).map(v -> { throw new IllegalArgumentException("boom"); }),
+				Flux.just(1).map(v -> {
+					throw new IllegalArgumentException("boom");
+				}),
 				Flux.just(2, 3))
 				.as(f -> StepVerifier.create(f, 0L))
 				.thenRequest(2)
@@ -636,7 +614,7 @@ public class FluxMergeOrderedTest {
 				Flux.just(1), null);
 
 		assertThatNullPointerException().isThrownBy(test::subscribe)
-		                                .withMessage("subscribed with a null source: sources[1]");
+				.withMessage("subscribed with a null source: sources[1]");
 	}
 
 	@Test
@@ -647,14 +625,16 @@ public class FluxMergeOrderedTest {
 				null, Flux.just(1), null);
 
 		assertThatNullPointerException().isThrownBy(test::subscribe)
-		                                .withMessage("subscribed with a null source: sources[0]");
+				.withMessage("subscribed with a null source: sources[0]");
 	}
 
 	@Test
 	@SuppressWarnings("unchecked") //safe varargs
 	public void comparatorThrows() {
 		new FluxMergeOrdered<>(2, Queues.small(),
-				(a, b) -> { throw new IllegalArgumentException("boom"); },
+				(a, b) -> {
+					throw new IllegalArgumentException("boom");
+				},
 				Flux.just(1, 3), Flux.just(2, 4))
 				.as(StepVerifier::create)
 				.verifyErrorMessage("boom");
@@ -668,6 +648,32 @@ public class FluxMergeOrderedTest {
 				.as(StepVerifier::create)
 				.expectNext(1, 2)
 				.verifyComplete();
+	}
+
+	static class Person {
+		private final String name;
+
+		Person(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+	}
+
+	static class User extends Person {
+
+		private final String login;
+
+		User(String name, String login) {
+			super(name);
+			this.login = login;
+		}
+
+		public String getLogin() {
+			return login;
+		}
 	}
 
 }

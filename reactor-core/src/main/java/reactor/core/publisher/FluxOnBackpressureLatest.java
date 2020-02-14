@@ -51,30 +51,24 @@ final class FluxOnBackpressureLatest<T> extends InternalFluxOperator<T, T> {
 	static final class LatestSubscriber<T>
 			implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-		final Context ctx;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<LatestSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(LatestSubscriber.class, "requested");
-
-		volatile int wip;
+				AtomicLongFieldUpdater.newUpdater(LatestSubscriber.class, "requested");
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<LatestSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(LatestSubscriber.class, "wip");
-
-		Subscription s;
-
-		Throwable error;
-		volatile boolean done;
-
-		volatile boolean cancelled;
-
-		volatile T value;
+				AtomicIntegerFieldUpdater.newUpdater(LatestSubscriber.class, "wip");
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<LatestSubscriber, Object> VALUE =
-		  AtomicReferenceFieldUpdater.newUpdater(LatestSubscriber.class, Object.class, "value");
+				AtomicReferenceFieldUpdater.newUpdater(LatestSubscriber.class, Object.class, "value");
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		volatile long requested;
+		volatile int wip;
+		Subscription s;
+		Throwable error;
+		volatile boolean done;
+		volatile boolean cancelled;
+		volatile T value;
 
 		LatestSubscriber(CoreSubscriber<? super T> actual) {
 			this.actual = actual;
@@ -198,7 +192,8 @@ final class FluxOnBackpressureLatest<T> extends InternalFluxOperator<T, T> {
 				Object toDiscard = VALUE.getAndSet(this, null);
 				if (toDiscard != null) {
 					Operators.onDiscard(toDiscard, ctx);
-				}return true;
+				}
+				return true;
 			}
 
 			if (d) {
@@ -211,7 +206,8 @@ final class FluxOnBackpressureLatest<T> extends InternalFluxOperator<T, T> {
 
 					a.onError(e);
 					return true;
-				} else if (empty) {
+				}
+				else if (empty) {
 					a.onComplete();
 					return true;
 				}

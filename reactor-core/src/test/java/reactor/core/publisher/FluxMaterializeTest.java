@@ -43,47 +43,47 @@ public class FluxMaterializeTest
 								s -> assertThat(s).isEqualTo(Signal.next(item(2))),
 								s -> assertThat(s).isEqualTo(Signal.complete()))
 						.verifier(step -> step.expectNext(Signal.next(item(0)))
-						                      .expectNext(Signal.next(item(1)))
-						                      .consumeSubscriptionWith(s -> {
-							                      if(s instanceof FluxMaterialize.MaterializeSubscriber) {
-								                      FluxMaterialize.MaterializeSubscriber m =
-										                      (FluxMaterialize.MaterializeSubscriber) s;
+								.expectNext(Signal.next(item(1)))
+								.consumeSubscriptionWith(s -> {
+									if (s instanceof FluxMaterialize.MaterializeSubscriber) {
+										FluxMaterialize.MaterializeSubscriber m =
+												(FluxMaterialize.MaterializeSubscriber) s;
 
-								                      m.peek();
-								                      m.poll();
-								                      m.size();
-							                      }
-						                      })
-						                      .expectNext(Signal.next(item(2)))
-						                      .thenRequest(1)
-						                      .expectNext(Signal.complete())
-						                      .consumeSubscriptionWith(s -> {
-							                      if(s instanceof FluxMaterialize.MaterializeSubscriber){
-								                      FluxMaterialize.MaterializeSubscriber m =
-										                      (FluxMaterialize.MaterializeSubscriber)s;
+										m.peek();
+										m.poll();
+										m.size();
+									}
+								})
+								.expectNext(Signal.next(item(2)))
+								.thenRequest(1)
+								.expectNext(Signal.complete())
+								.consumeSubscriptionWith(s -> {
+									if (s instanceof FluxMaterialize.MaterializeSubscriber) {
+										FluxMaterialize.MaterializeSubscriber m =
+												(FluxMaterialize.MaterializeSubscriber) s;
 
-								                      m.peek();
-								                      m.poll();
-								                      m.size();
+										m.peek();
+										m.poll();
+										m.size();
 
-								                      try{
-									                      m.offer(null);
-									                      Assert.fail();
-								                      }
-								                      catch (UnsupportedOperationException u){
-									                      //ignore
-								                      }
+										try {
+											m.offer(null);
+											Assert.fail();
+										}
+										catch (UnsupportedOperationException u) {
+											//ignore
+										}
 
-								                      try{
-									                      m.iterator();
-									                      Assert.fail();
-								                      }
-								                      catch (UnsupportedOperationException u){
-									                      //ignore
-								                      }
-							                      }
-						                      })
-						                      .verifyComplete())
+										try {
+											m.iterator();
+											Assert.fail();
+										}
+										catch (UnsupportedOperationException u) {
+											//ignore
+										}
+									}
+								})
+								.verifyComplete())
 		);
 	}
 
@@ -96,7 +96,7 @@ public class FluxMaterializeTest
 							Hooks.onNextDropped(c -> assertThat(c).isEqualTo("dropped"));
 							step.assertNext(s -> assertThat(s
 									.getThrowable()).hasMessage("test"))
-							    .verifyComplete();
+									.verifyComplete();
 						})
 		);
 	}
@@ -106,17 +106,17 @@ public class FluxMaterializeTest
 		AssertSubscriber<Signal<Integer>> ts = AssertSubscriber.create(0L);
 
 		Flux.<Integer>empty().materialize()
-		                     .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(Signal.complete())
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -126,62 +126,63 @@ public class FluxMaterializeTest
 		RuntimeException ex = new RuntimeException();
 
 		Flux.<Integer>error(ex).materialize()
-		                       .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(Signal.error(ex))
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
 	public void materialize() {
 		StepVerifier.create(Flux.just("Three", "Two", "One")
-		                        .materialize())
-		            .expectNextMatches(s -> s.isOnNext() && "Three".equals(s.get()))
-		            .expectNextMatches(s -> s.isOnNext() && "Two".equals(s.get()))
-		            .expectNextMatches(s -> s.isOnNext() && "One".equals(s.get()))
-		            .expectNextMatches(Signal::isOnComplete)
-		            .verifyComplete();
+				.materialize())
+				.expectNextMatches(s -> s.isOnNext() && "Three".equals(s.get()))
+				.expectNextMatches(s -> s.isOnNext() && "Two".equals(s.get()))
+				.expectNextMatches(s -> s.isOnNext() && "One".equals(s.get()))
+				.expectNextMatches(Signal::isOnComplete)
+				.verifyComplete();
 	}
 
 	@Test
 	public void materialize2() {
 		StepVerifier.create(Flux.just("Three", "Two")
-		                        .concatWith(Flux.error(new RuntimeException("test")))
-		                        .materialize())
-		            .expectNextMatches(s -> s.isOnNext() && "Three".equals(s.get()))
-		            .expectNextMatches(s -> s.isOnNext() && "Two".equals(s.get()))
-		            .expectNextMatches(s -> s.isOnError() && s.getThrowable() != null
-				            && "test".equals(s.getThrowable().getMessage()))
-		            .verifyComplete();
+				.concatWith(Flux.error(new RuntimeException("test")))
+				.materialize())
+				.expectNextMatches(s -> s.isOnNext() && "Three".equals(s.get()))
+				.expectNextMatches(s -> s.isOnNext() && "Two".equals(s.get()))
+				.expectNextMatches(s -> s.isOnError() && s.getThrowable() != null
+						&& "test".equals(s.getThrowable().getMessage()))
+				.verifyComplete();
 	}
 
-    @Test
-    public void scanSubscriber() {
-        CoreSubscriber<Signal<String>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxMaterialize.MaterializeSubscriber<String> test = new FluxMaterialize.MaterializeSubscriber<String>(actual);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanSubscriber() {
+		CoreSubscriber<Signal<String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxMaterialize.MaterializeSubscriber<String> test = new FluxMaterialize.MaterializeSubscriber<String>(actual);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0); // RS: TODO non-zero size
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0); // RS: TODO non-zero size
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.terminalSignal = Signal.error(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.terminalSignal = Signal.error(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

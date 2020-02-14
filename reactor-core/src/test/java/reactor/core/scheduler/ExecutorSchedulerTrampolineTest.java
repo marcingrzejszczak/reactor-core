@@ -79,7 +79,12 @@ public class ExecutorSchedulerTrampolineTest extends AbstractSchedulerTest {
 
 		Runnable task = () -> {
 			System.out.println(Thread.currentThread().getName());
-			try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+			try {
+				Thread.sleep(1000);
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		};
 		try {
 			//all tasks are actually executed on a single thread, starting immediately with 1st task

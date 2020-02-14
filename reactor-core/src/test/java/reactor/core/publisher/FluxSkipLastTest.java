@@ -31,8 +31,8 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
 		return defaultOptions.shouldAssertPostTerminateState(false)
-		                     .shouldHitDropErrorHookAfterTerminate(false)
-		                     .shouldHitDropNextHookAfterTerminate(false);
+				.shouldHitDropErrorHookAfterTerminate(false)
+				.shouldHitDropNextHookAfterTerminate(false);
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		return Arrays.asList(
 
 				scenario(f -> f.skipLast(1))
-						.receiveValues(item(0) ,item(1))
+						.receiveValues(item(0), item(1))
 		);
 	}
 
@@ -58,7 +58,7 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 	@Test(expected = IllegalArgumentException.class)
 	public void negativeNumber() {
 		Flux.never()
-		    .skipLast(-1);
+				.skipLast(-1);
 	}
 
 	@Test
@@ -66,12 +66,12 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .skipLast(0)
-		    .subscribe(ts);
+				.skipLast(0)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -79,30 +79,30 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .skipLast(0)
-		    .subscribe(ts);
+				.skipLast(0)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -110,12 +110,12 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .skipLast(3)
-		    .subscribe(ts);
+				.skipLast(3)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -123,30 +123,30 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .skipLast(3)
-		    .subscribe(ts);
+				.skipLast(3)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(4);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -154,12 +154,12 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .skipLast(20)
-		    .subscribe(ts);
+				.skipLast(20)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -167,25 +167,26 @@ public class FluxSkipLastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .skipLast(20)
-		    .subscribe(ts);
+				.skipLast(20)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSkipLast.SkipLastSubscriber<Integer> test = new FluxSkipLast.SkipLastSubscriber<>(actual, 7);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSkipLast.SkipLastSubscriber<Integer> test = new FluxSkipLast.SkipLastSubscriber<>(actual, 7);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(7);
-        test.offer(1);
-        Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(7);
+		test.offer(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+	}
 }

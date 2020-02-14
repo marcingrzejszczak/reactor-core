@@ -31,7 +31,7 @@ import reactor.core.scheduler.Scheduler;
  * @param <T> the value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">https://github.com/reactor/reactive-streams-commons</a>
  */
-final class MonoSubscribeOnCallable<T> extends Mono<T> implements Fuseable, Scannable{
+final class MonoSubscribeOnCallable<T> extends Mono<T> implements Fuseable, Scannable {
 
 	final Callable<? extends T> callable;
 
@@ -52,7 +52,7 @@ final class MonoSubscribeOnCallable<T> extends Mono<T> implements Fuseable, Scan
 			parent.setMainFuture(scheduler.schedule(parent));
 		}
 		catch (RejectedExecutionException ree) {
-			if(parent.state != FluxSubscribeOnCallable.CallableSubscribeOnSubscription.HAS_CANCELLED) {
+			if (parent.state != FluxSubscribeOnCallable.CallableSubscribeOnSubscription.HAS_CANCELLED) {
 				actual.onError(Operators.onRejectedExecution(ree, actual.currentContext()));
 			}
 		}

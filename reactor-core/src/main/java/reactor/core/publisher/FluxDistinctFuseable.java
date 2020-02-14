@@ -40,9 +40,9 @@ final class FluxDistinctFuseable<T, K, C>
 		extends InternalFluxOperator<T, T> implements Fuseable {
 
 	final Function<? super T, ? extends K> keyExtractor;
-	final Supplier<C>                      collectionSupplier;
-	final BiPredicate<C, K>                distinctPredicate;
-	final Consumer<C>                      cleanupCallback;
+	final Supplier<C> collectionSupplier;
+	final BiPredicate<C, K> distinctPredicate;
+	final Consumer<C> cleanupCallback;
 
 	FluxDistinctFuseable(Flux<? extends T> source,
 			Function<? super T, ? extends K> keyExtractor, Supplier<C> collectionSupplier,

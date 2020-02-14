@@ -105,22 +105,17 @@ final class FluxWindow<T> extends InternalFluxOperator<T, Flux<T>> {
 	static final class WindowExactSubscriber<T>
 			implements Disposable, InnerOperator<T, Flux<T>> {
 
-		final CoreSubscriber<? super Flux<T>> actual;
-
-		final Supplier<? extends Queue<T>> processorQueueSupplier;
-
-		final int size;
-
-		volatile int cancelled;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowExactSubscriber> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(WindowExactSubscriber.class, "cancelled");
-
-		volatile int windowCount;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowExactSubscriber> WINDOW_COUNT =
 				AtomicIntegerFieldUpdater.newUpdater(WindowExactSubscriber.class, "windowCount");
-
+		final CoreSubscriber<? super Flux<T>> actual;
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
+		final int size;
+		volatile int cancelled;
+		volatile int windowCount;
 		int index;
 
 		Subscription s;
@@ -262,31 +257,24 @@ final class FluxWindow<T> extends InternalFluxOperator<T, Flux<T>> {
 	static final class WindowSkipSubscriber<T>
 			implements Disposable, InnerOperator<T, Flux<T>> {
 
-		final CoreSubscriber<? super Flux<T>> actual;
-		final Context                         ctx;
-
-		final Supplier<? extends Queue<T>> processorQueueSupplier;
-
-		final int size;
-
-		final int skip;
-
-		volatile int cancelled;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowSkipSubscriber> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(WindowSkipSubscriber.class, "cancelled");
-
-		volatile int windowCount;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowSkipSubscriber> WINDOW_COUNT =
 				AtomicIntegerFieldUpdater.newUpdater(WindowSkipSubscriber.class, "windowCount");
-
-		volatile int firstRequest;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowSkipSubscriber> FIRST_REQUEST =
 				AtomicIntegerFieldUpdater.newUpdater(WindowSkipSubscriber.class,
 						"firstRequest");
-
+		final CoreSubscriber<? super Flux<T>> actual;
+		final Context ctx;
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
+		final int size;
+		final int skip;
+		volatile int cancelled;
+		volatile int windowCount;
+		volatile int firstRequest;
 		int index;
 
 		Subscription s;
@@ -451,45 +439,35 @@ final class FluxWindow<T> extends InternalFluxOperator<T, Flux<T>> {
 	static final class WindowOverlapSubscriber<T> extends ArrayDeque<UnicastProcessor<T>>
 			implements Disposable, InnerOperator<T, Flux<T>> {
 
-		final CoreSubscriber<? super Flux<T>> actual;
-
-		final Supplier<? extends Queue<T>> processorQueueSupplier;
-
-		final Queue<UnicastProcessor<T>> queue;
-
-		final int size;
-
-		final int skip;
-
-		volatile int cancelled;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class,
 						"cancelled");
-
-		volatile int windowCount;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> WINDOW_COUNT =
 				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class,
 						"windowCount");
-
-		volatile int firstRequest;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> FIRST_REQUEST =
 				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class,
 						"firstRequest");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<WindowOverlapSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(WindowOverlapSubscriber.class,
 						"requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class, "wip");
-
+		final CoreSubscriber<? super Flux<T>> actual;
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
+		final Queue<UnicastProcessor<T>> queue;
+		final int size;
+		final int skip;
+		volatile int cancelled;
+		volatile int windowCount;
+		volatile int firstRequest;
+		volatile long requested;
+		volatile int wip;
 		int index;
 
 		int produced;
@@ -741,7 +719,7 @@ final class FluxWindow<T> extends InternalFluxOperator<T, Flux<T>> {
 		@Override
 		public Stream<? extends Scannable> inners() {
 			return Stream.of(toArray())
-			             .map(Scannable::from);
+					.map(Scannable::from);
 		}
 	}
 

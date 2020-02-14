@@ -25,7 +25,11 @@ import org.reactivestreams.Subscription;
 import reactor.core.Scannable;
 import reactor.util.context.Context;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -36,13 +40,13 @@ public class LambdaSubscriberTest {
 		AtomicReference<Context> contextRef = new AtomicReference<>();
 
 		Flux.just("foo")
-		    .flatMap(c -> Mono.subscriberContext())
-		    .doOnNext(contextRef::set)
-		    .subscribe(null, null, null, Context.of("subscriber", "context"));
+				.flatMap(c -> Mono.subscriberContext())
+				.doOnNext(contextRef::set)
+				.subscribe(null, null, null, Context.of("subscriber", "context"));
 
 		Assertions.assertThat(contextRef.get())
-		          .isNotNull()
-		          .matches(c -> c.hasKey("subscriber"));
+				.isNotNull()
+				.matches(c -> c.hasKey("subscriber"));
 	}
 
 	@Test
@@ -50,7 +54,8 @@ public class LambdaSubscriberTest {
 		AtomicReference<Throwable> droppedRef = new AtomicReference<>();
 		Context ctx = Context.of(Hooks.KEY_ON_ERROR_DROPPED, (Consumer<Throwable>) droppedRef::set);
 		IllegalStateException expectDropped = new IllegalStateException("boom2");
-		LambdaSubscriber<Object> sub = new LambdaSubscriber<>(null, e -> { }, null, null, ctx);
+		LambdaSubscriber<Object> sub = new LambdaSubscriber<>(null, e -> {
+		}, null, null, ctx);
 
 		sub.onError(new IllegalStateException("boom1"));
 		//now trigger drop
@@ -64,10 +69,14 @@ public class LambdaSubscriberTest {
 		AtomicReference<Throwable> errorHolder = new AtomicReference<>(null);
 
 		LambdaSubscriber<String> tested = new LambdaSubscriber<>(
-				value -> {},
+				value -> {
+				},
 				errorHolder::set,
-				() -> {},
-				subscription -> { throw new IllegalArgumentException(); });
+				() -> {
+				},
+				subscription -> {
+					throw new IllegalArgumentException();
+				});
 
 		TestSubscription testSubscription = new TestSubscription();
 
@@ -87,10 +96,14 @@ public class LambdaSubscriberTest {
 		AtomicReference<Throwable> errorHolder = new AtomicReference<>(null);
 
 		LambdaSubscriber<String> tested = new LambdaSubscriber<>(
-				value -> {},
+				value -> {
+				},
 				errorHolder::set,
-				() -> {},
-				subscription -> { throw new OutOfMemoryError(); });
+				() -> {
+				},
+				subscription -> {
+					throw new OutOfMemoryError();
+				});
 
 		TestSubscription testSubscription = new TestSubscription();
 
@@ -115,9 +128,11 @@ public class LambdaSubscriberTest {
 		AtomicReference<Throwable> errorHolder = new AtomicReference<>(null);
 		AtomicReference<Subscription> subscriptionHolder = new AtomicReference<>(null);
 		LambdaSubscriber<String> tested = new LambdaSubscriber<>(
-				value -> {},
+				value -> {
+				},
 				errorHolder::set,
-				() -> { },
+				() -> {
+				},
 				s -> {
 					subscriptionHolder.set(s);
 					s.request(32);
@@ -139,9 +154,11 @@ public class LambdaSubscriberTest {
 	public void noSubscriptionConsumerTriggersRequestOfMax() {
 		AtomicReference<Throwable> errorHolder = new AtomicReference<>(null);
 		LambdaSubscriber<String> tested = new LambdaSubscriber<>(
-				value -> {},
+				value -> {
+				},
 				errorHolder::set,
-				() -> {},
+				() -> {
+				},
 				null); //defaults to initial request of max
 		TestSubscription testSubscription = new TestSubscription();
 
@@ -161,9 +178,12 @@ public class LambdaSubscriberTest {
 		AtomicReference<Throwable> errorHolder = new AtomicReference<>(null);
 
 		LambdaSubscriber<String> tested = new LambdaSubscriber<>(
-				value -> { throw new IllegalArgumentException(); },
+				value -> {
+					throw new IllegalArgumentException();
+				},
 				errorHolder::set,
-				() -> {},
+				() -> {
+				},
 				null);
 
 		TestSubscription testSubscription = new TestSubscription();
@@ -183,9 +203,12 @@ public class LambdaSubscriberTest {
 		AtomicReference<Throwable> errorHolder = new AtomicReference<>(null);
 
 		LambdaSubscriber<String> tested = new LambdaSubscriber<>(
-				value -> { throw new OutOfMemoryError(); },
+				value -> {
+					throw new OutOfMemoryError();
+				},
 				errorHolder::set,
-				() -> {},
+				() -> {
+				},
 				null);
 
 		TestSubscription testSubscription = new TestSubscription();
@@ -226,7 +249,7 @@ public class LambdaSubscriberTest {
 	private static class TestSubscription implements Subscription {
 
 		volatile boolean isCancelled = false;
-		volatile long    requested   = -1L;
+		volatile long requested = -1L;
 
 		@Override
 		public void request(long n) {

@@ -15,7 +15,6 @@
  */
 package reactor.util;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -51,6 +50,9 @@ public abstract class Loggers {
 
 	static {
 		resetLoggerFactory();
+	}
+
+	Loggers() {
 	}
 
 	/**
@@ -437,8 +439,8 @@ public abstract class Loggers {
 		}
 
 		@Nullable
-		final String format(@Nullable String from, @Nullable Object... arguments){
-			if(from != null) {
+		final String format(@Nullable String from, @Nullable Object... arguments) {
+			if (from != null) {
 				String computed = from;
 				if (arguments != null && arguments.length != 0) {
 					for (Object argument : arguments) {
@@ -487,8 +489,8 @@ public abstract class Loggers {
 		}
 
 		@Nullable
-		final String format(@Nullable String from, @Nullable Object... arguments){
-			if(from != null) {
+		final String format(@Nullable String from, @Nullable Object... arguments) {
+			if (from != null) {
 				String computed = from;
 				if (arguments != null && arguments.length != 0) {
 					for (Object argument : arguments) {
@@ -520,6 +522,7 @@ public abstract class Loggers {
 			}
 			this.log.format("[TRACE] (%s) %s\n", Thread.currentThread().getName(), format(format, arguments));
 		}
+
 		@Override
 		public synchronized void trace(String msg, Throwable t) {
 			if (!verbose) {
@@ -638,6 +641,4 @@ public abstract class Loggers {
 			return consoleLoggers.computeIfAbsent(name, n -> new ConsoleLogger(n, verbose));
 		}
 	}
-
-	Loggers(){}
 }

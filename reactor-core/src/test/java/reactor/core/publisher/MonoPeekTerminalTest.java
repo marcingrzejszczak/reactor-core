@@ -27,7 +27,8 @@ public class MonoPeekTerminalTest {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoPeekTerminal<String> main = new MonoPeekTerminal<>(Mono.just("foo"), null, null, null);
 		MonoPeekTerminal.MonoTerminalPeekSubscriber<String> test = new MonoPeekTerminal.MonoTerminalPeekSubscriber<>(
 				actual, main);

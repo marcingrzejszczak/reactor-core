@@ -31,217 +31,220 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class InstantPeriodicWorkerTaskTest {
-    private static final RuntimeException exception = new RuntimeException();
-    private static final Runnable errorRunnable = () -> { throw exception; };
-    private static final Runnable emptyRunnable = () -> { };
+	private static final RuntimeException exception = new RuntimeException();
+	private static final Runnable errorRunnable = () -> {
+		throw exception;
+	};
+	private static final Runnable emptyRunnable = () -> {
+	};
 
-    @Test
-    public void taskCrash() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composite = Disposables.composite();
-        List<Throwable> throwables = prepareErrorHook();
+	private static List<Throwable> prepareErrorHook() {
+		List<Throwable> errorsCollector = new CopyOnWriteArrayList<>();
+		Schedulers.onHandleError((t, e) -> errorsCollector.add(e));
+		return errorsCollector;
+	}
 
-        try {
-            InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composite);
+	@Test
+	public void taskCrash() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composite = Disposables.composite();
+		List<Throwable> throwables = prepareErrorHook();
 
-            assertThat(task.call()).isNull();
-            assertThat(throwables).containsOnly(exception);
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+		try {
+			InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composite);
 
-    @Test
-    public void dispose() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+			assertThat(task.call()).isNull();
+			assertThat(throwables).containsOnly(exception);
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+	@Test
+	public void dispose() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-            assertThat(task.isDisposed()).isFalse();
+		try {
+			InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
 
-            task.dispose();
+			assertThat(task.isDisposed()).isFalse();
 
-            assertThat(task.isDisposed()).isTrue();
+			task.dispose();
 
-            task.dispose();
+			assertThat(task.isDisposed()).isTrue();
 
-            assertThat(task.isDisposed()).isTrue();
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+			task.dispose();
 
-    @Test
-    public void dispose2() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+			assertThat(task.isDisposed()).isTrue();
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+	@Test
+	public void dispose2() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-            task.setFirst(new FutureTask<Void>(emptyRunnable, null));
-            task.setRest(new FutureTask<Void>(emptyRunnable, null));
+		try {
+			InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
 
-            assertThat(task.isDisposed()).isFalse();
+			task.setFirst(new FutureTask<Void>(emptyRunnable, null));
+			task.setRest(new FutureTask<Void>(emptyRunnable, null));
 
-            task.dispose();
+			assertThat(task.isDisposed()).isFalse();
 
-            assertThat(task.isDisposed()).isTrue();
+			task.dispose();
 
-            task.dispose();
+			assertThat(task.isDisposed()).isTrue();
 
-            assertThat(task.isDisposed()).isTrue();
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+			task.dispose();
 
-    @Test
-    public void dispose2CurrentThread() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+			assertThat(task.isDisposed()).isTrue();
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
-            task.thread = Thread.currentThread();
+	@Test
+	public void dispose2CurrentThread() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-            task.setFirst(new FutureTask<Void>(emptyRunnable, null));
-            task.setRest(new FutureTask<Void>(emptyRunnable, null));
+		try {
+			InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+			task.thread = Thread.currentThread();
 
-            assertThat(task.isDisposed()).isFalse();
+			task.setFirst(new FutureTask<Void>(emptyRunnable, null));
+			task.setRest(new FutureTask<Void>(emptyRunnable, null));
 
-            task.dispose();
+			assertThat(task.isDisposed()).isFalse();
 
-            assertThat(task.isDisposed()).isTrue();
-            assertThat(composit.size()).isEqualTo(0);
+			task.dispose();
 
-            task.dispose();
+			assertThat(task.isDisposed()).isTrue();
+			assertThat(composit.size()).isEqualTo(0);
 
-            assertThat(task.isDisposed()).isTrue();
-            assertThat(composit.size()).isEqualTo(0);
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+			task.dispose();
 
-    @Test
-    public void dispose3() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+			assertThat(task.isDisposed()).isTrue();
+			assertThat(composit.size()).isEqualTo(0);
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+	@Test
+	public void dispose3() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-            task.dispose();
+		try {
+			InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
 
-            FutureTask<Void> f1 = new FutureTask<Void>(emptyRunnable, null);
-            task.setFirst(f1);
+			task.dispose();
 
-            assertThat(f1.isCancelled()).isTrue();
+			FutureTask<Void> f1 = new FutureTask<Void>(emptyRunnable, null);
+			task.setFirst(f1);
 
-            FutureTask<Void> f2 = new FutureTask<Void>(emptyRunnable, null);
-            task.setRest(f2);
+			assertThat(f1.isCancelled()).isTrue();
 
-            assertThat(f2.isCancelled()).isTrue();
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+			FutureTask<Void> f2 = new FutureTask<Void>(emptyRunnable, null);
+			task.setRest(f2);
 
-    @Test
-    public void disposeOnCurrentThread() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+			assertThat(f2.isCancelled()).isTrue();
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+	@Test
+	public void disposeOnCurrentThread() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-            task.thread = Thread.currentThread();
+		try {
+			InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
 
-            task.dispose();
+			task.thread = Thread.currentThread();
 
-            FutureTask<Void> f1 = new FutureTask<Void>(emptyRunnable, null);
-            task.setFirst(f1);
+			task.dispose();
 
-            assertThat(f1.isCancelled()).isTrue();
+			FutureTask<Void> f1 = new FutureTask<Void>(emptyRunnable, null);
+			task.setFirst(f1);
 
-            FutureTask<Void> f2 = new FutureTask<Void>(emptyRunnable, null);
-            task.setRest(f2);
+			assertThat(f1.isCancelled()).isTrue();
 
-            assertThat(f2.isCancelled()).isTrue();
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+			FutureTask<Void> f2 = new FutureTask<Void>(emptyRunnable, null);
+			task.setRest(f2);
 
-    @Test
-    public void firstCancelRace() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+			assertThat(f2.isCancelled()).isTrue();
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            for (int i = 0; i < 10000; i++) {
-                final InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+	@Test
+	public void firstCancelRace() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-                final FutureTask<Void>
-		                f1 = new FutureTask<Void>(emptyRunnable, null);
-                Runnable r1 = () -> task.setFirst(f1);
-                Runnable r2 = task::dispose;
+		try {
+			for (int i = 0; i < 10000; i++) {
+				final InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
 
-                RaceTestUtils.race(r1, r2);
+				final FutureTask<Void>
+						f1 = new FutureTask<Void>(emptyRunnable, null);
+				Runnable r1 = () -> task.setFirst(f1);
+				Runnable r2 = task::dispose;
 
-                assertTrue(f1.isCancelled());
-                assertTrue(task.isDisposed());
-            }
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+				RaceTestUtils.race(r1, r2);
 
-    @Test
-    public void restCancelRace() {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Disposable.Composite composit = Disposables.composite();
+				assertTrue(f1.isCancelled());
+				assertTrue(task.isDisposed());
+			}
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 
-        try {
-            for (int i = 0; i < 10000; i++) {
-                final InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
+	@Test
+	public void restCancelRace() {
+		ExecutorService exec = Executors.newSingleThreadExecutor();
+		Disposable.Composite composit = Disposables.composite();
 
-                final FutureTask<Void> f1 = new FutureTask<Void>(emptyRunnable, null);
-                Runnable r1 = () -> task.setRest(f1);
-                Runnable r2 = task::dispose;
+		try {
+			for (int i = 0; i < 10000; i++) {
+				final InstantPeriodicWorkerTask task = new InstantPeriodicWorkerTask(errorRunnable, exec, composit);
 
-                RaceTestUtils.race(r1, r2);
+				final FutureTask<Void> f1 = new FutureTask<Void>(emptyRunnable, null);
+				Runnable r1 = () -> task.setRest(f1);
+				Runnable r2 = task::dispose;
 
-                assertTrue(f1.isCancelled());
-                assertTrue(task.isDisposed());
-            }
-        }
-        finally {
-            exec.shutdownNow();
-            Schedulers.resetOnHandleError();
-        }
-    }
+				RaceTestUtils.race(r1, r2);
 
-    private static List<Throwable> prepareErrorHook() {
-        List<Throwable> errorsCollector = new CopyOnWriteArrayList<>();
-        Schedulers.onHandleError((t, e) -> errorsCollector.add(e));
-        return errorsCollector;
-    }
+				assertTrue(f1.isCancelled());
+				assertTrue(task.isDisposed());
+			}
+		}
+		finally {
+			exec.shutdownNow();
+			Schedulers.resetOnHandleError();
+		}
+	}
 }

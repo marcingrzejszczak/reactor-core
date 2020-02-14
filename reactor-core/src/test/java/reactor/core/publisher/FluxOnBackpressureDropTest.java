@@ -53,12 +53,12 @@ public class FluxOnBackpressureDropTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .onBackpressureDrop()
-		    .subscribe(ts);
+				.onBackpressureDrop()
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -66,12 +66,12 @@ public class FluxOnBackpressureDropTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .onBackpressureError()
-		    .subscribe(ts);
+				.onBackpressureError()
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -79,12 +79,12 @@ public class FluxOnBackpressureDropTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .onBackpressureDrop()
-		    .subscribe(ts);
+				.onBackpressureDrop()
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -96,7 +96,7 @@ public class FluxOnBackpressureDropTest {
 		List<Integer> drops = new ArrayList<>();
 
 		tp.onBackpressureDrop(drops::add)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		tp.onNext(1);
 
@@ -112,8 +112,8 @@ public class FluxOnBackpressureDropTest {
 		tp.onComplete();
 
 		ts.assertValues(2, 3, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		Assert.assertEquals(Arrays.asList(1, 4), drops);
 	}
@@ -124,42 +124,44 @@ public class FluxOnBackpressureDropTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .onBackpressureDrop(e -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.onBackpressureDrop(e -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
 	public void onBackpressureDrop() {
 		StepVerifier.create(Flux.range(1, 100)
-		                        .onBackpressureDrop(), 0)
-		            .thenRequest(5)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureDrop(), 0)
+				.thenRequest(5)
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxOnBackpressureDrop.DropSubscriber<Integer> test =
-        		new FluxOnBackpressureDrop.DropSubscriber<>(actual, t -> {});
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxOnBackpressureDrop.DropSubscriber<Integer> test =
+				new FluxOnBackpressureDrop.DropSubscriber<>(actual, t -> {
+				});
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
 
-        test.onComplete();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		test.onComplete();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 }

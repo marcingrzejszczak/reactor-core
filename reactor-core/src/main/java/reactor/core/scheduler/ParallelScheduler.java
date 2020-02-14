@@ -37,56 +37,52 @@ import reactor.core.Scannable;
  * @author Simon Baslé
  */
 final class ParallelScheduler implements Scheduler, Supplier<ScheduledExecutorService>,
-                                         Scannable {
+		Scannable {
 
-    static final AtomicLong COUNTER = new AtomicLong();
+	static final AtomicLong COUNTER = new AtomicLong();
+	static final AtomicReferenceFieldUpdater<ParallelScheduler, ScheduledExecutorService[]> EXECUTORS =
+			AtomicReferenceFieldUpdater.newUpdater(ParallelScheduler.class, ScheduledExecutorService[].class, "executors");
+	static final ScheduledExecutorService[] SHUTDOWN = new ScheduledExecutorService[0];
+	static final ScheduledExecutorService TERMINATED;
 
-    final int n;
-    
-    final ThreadFactory factory;
+	static {
+		TERMINATED = Executors.newSingleThreadScheduledExecutor();
+		TERMINATED.shutdownNow();
+	}
 
-    volatile ScheduledExecutorService[] executors;
-    static final AtomicReferenceFieldUpdater<ParallelScheduler, ScheduledExecutorService[]> EXECUTORS =
-            AtomicReferenceFieldUpdater.newUpdater(ParallelScheduler.class, ScheduledExecutorService[].class, "executors");
+	final int n;
+	final ThreadFactory factory;
+	volatile ScheduledExecutorService[] executors;
+	int roundRobin;
 
-    static final ScheduledExecutorService[] SHUTDOWN = new ScheduledExecutorService[0];
-    
-    static final ScheduledExecutorService TERMINATED;
-    static {
-        TERMINATED = Executors.newSingleThreadScheduledExecutor();
-        TERMINATED.shutdownNow();
-    }
+	ParallelScheduler(int n, ThreadFactory factory) {
+		if (n <= 0) {
+			throw new IllegalArgumentException("n > 0 required but it was " + n);
+		}
+		this.n = n;
+		this.factory = factory;
+		init(n);
+	}
 
-    int roundRobin;
+	/**
+	 * Instantiates the default {@link ScheduledExecutorService} for the ParallelScheduler
+	 * ({@code Executors.newScheduledThreadPoolExecutor} with core and max pool size of 1).
+	 */
+	@Override
+	public ScheduledExecutorService get() {
+		ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(1, factory);
+		poolExecutor.setMaximumPoolSize(1);
+		poolExecutor.setRemoveOnCancelPolicy(true);
+		return poolExecutor;
+	}
 
-    ParallelScheduler(int n, ThreadFactory factory) {
-        if (n <= 0) {
-            throw new IllegalArgumentException("n > 0 required but it was " + n);
-        }
-        this.n = n;
-        this.factory = factory;
-        init(n);
-    }
-
-    /**
-     * Instantiates the default {@link ScheduledExecutorService} for the ParallelScheduler
-     * ({@code Executors.newScheduledThreadPoolExecutor} with core and max pool size of 1).
-     */
-    @Override
-    public ScheduledExecutorService get() {
-        ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(1, factory);
-        poolExecutor.setMaximumPoolSize(1);
-        poolExecutor.setRemoveOnCancelPolicy(true);
-        return poolExecutor;
-    }
-    
-    void init(int n) {
-        ScheduledExecutorService[] a = new ScheduledExecutorService[n];
-        for (int i = 0; i < n; i++) {
-            a[i] = Schedulers.decorateExecutorService(this, this.get());
-        }
-        EXECUTORS.lazySet(this, a);
-    }
+	void init(int n) {
+		ScheduledExecutorService[] a = new ScheduledExecutorService[n];
+		for (int i = 0; i < n; i++) {
+			a[i] = Schedulers.decorateExecutorService(this, this.get());
+		}
+		EXECUTORS.lazySet(this, a);
+	}
 
 	@Override
 	public boolean isDisposed() {
@@ -94,111 +90,112 @@ final class ParallelScheduler implements Scheduler, Supplier<ScheduledExecutorSe
 	}
 
 	@Override
-    public void start() {
-        ScheduledExecutorService[] b = null;
-        for (;;) {
-            ScheduledExecutorService[] a = executors;
-            if (a != SHUTDOWN) {
-                if (b != null) {
-                    for (ScheduledExecutorService exec : b) {
-                        exec.shutdownNow();
-                    }
-                }
-                return;
-            }
+	public void start() {
+		ScheduledExecutorService[] b = null;
+		for (; ; ) {
+			ScheduledExecutorService[] a = executors;
+			if (a != SHUTDOWN) {
+				if (b != null) {
+					for (ScheduledExecutorService exec : b) {
+						exec.shutdownNow();
+					}
+				}
+				return;
+			}
 
-            if (b == null) {
-                b = new ScheduledExecutorService[n];
-                for (int i = 0; i < n; i++) {
-                    b[i] = Schedulers.decorateExecutorService(this, this.get());
-                }
-            }
-            
-            if (EXECUTORS.compareAndSet(this, a, b)) {
-                return;
-            }
-        }
-    }
+			if (b == null) {
+				b = new ScheduledExecutorService[n];
+				for (int i = 0; i < n; i++) {
+					b[i] = Schedulers.decorateExecutorService(this, this.get());
+				}
+			}
 
-    @Override
-    public void dispose() {
-        ScheduledExecutorService[] a = executors;
-        if (a != SHUTDOWN) {
-            a = EXECUTORS.getAndSet(this, SHUTDOWN);
-            if (a != SHUTDOWN) {
-                for (ScheduledExecutorService exec : a) {
-                    exec.shutdownNow();
-                }
-            }
-        }
-    }
-    
-    ScheduledExecutorService pick() {
-        ScheduledExecutorService[] a = executors;
-        if (a != SHUTDOWN) {
-            // ignoring the race condition here, its already random who gets which executor
-            int idx = roundRobin;
-            if (idx == n) {
-                idx = 0;
-                roundRobin = 1;
-            } else {
-                roundRobin = idx + 1;
-            }
-            return a[idx];
-        }
-        return TERMINATED;
-    }
+			if (EXECUTORS.compareAndSet(this, a, b)) {
+				return;
+			}
+		}
+	}
 
-    @Override
-    public Disposable schedule(Runnable task) {
-	    return Schedulers.directSchedule(pick(), task, null, 0L, TimeUnit.MILLISECONDS);
-    }
+	@Override
+	public void dispose() {
+		ScheduledExecutorService[] a = executors;
+		if (a != SHUTDOWN) {
+			a = EXECUTORS.getAndSet(this, SHUTDOWN);
+			if (a != SHUTDOWN) {
+				for (ScheduledExecutorService exec : a) {
+					exec.shutdownNow();
+				}
+			}
+		}
+	}
 
-    @Override
-    public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
-	    return Schedulers.directSchedule(pick(), task, null, delay, unit);
-    }
+	ScheduledExecutorService pick() {
+		ScheduledExecutorService[] a = executors;
+		if (a != SHUTDOWN) {
+			// ignoring the race condition here, its already random who gets which executor
+			int idx = roundRobin;
+			if (idx == n) {
+				idx = 0;
+				roundRobin = 1;
+			}
+			else {
+				roundRobin = idx + 1;
+			}
+			return a[idx];
+		}
+		return TERMINATED;
+	}
 
-    @Override
-    public Disposable schedulePeriodically(Runnable task,
-            long initialDelay,
-            long period,
-            TimeUnit unit) {
-	    return Schedulers.directSchedulePeriodically(pick(),
-			    task,
-			    initialDelay,
-			    period,
-			    unit);
-    }
+	@Override
+	public Disposable schedule(Runnable task) {
+		return Schedulers.directSchedule(pick(), task, null, 0L, TimeUnit.MILLISECONDS);
+	}
 
-    @Override
-    public String toString() {
-        StringBuilder ts = new StringBuilder(Schedulers.PARALLEL)
-                .append('(').append(n);
-        if (factory instanceof ReactorThreadFactory) {
-            ts.append(",\"").append(((ReactorThreadFactory) factory).get()).append('\"');
-        }
-        ts.append(')');
-        return ts.toString();
-    }
+	@Override
+	public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
+		return Schedulers.directSchedule(pick(), task, null, delay, unit);
+	}
 
-    @Override
-    public Object scanUnsafe(Attr key) {
-        if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
-        if (key == Attr.CAPACITY || key == Attr.BUFFERED) return n; //BUFFERED: number of workers doesn't vary
-        if (key == Attr.NAME) return this.toString();
+	@Override
+	public Disposable schedulePeriodically(Runnable task,
+			long initialDelay,
+			long period,
+			TimeUnit unit) {
+		return Schedulers.directSchedulePeriodically(pick(),
+				task,
+				initialDelay,
+				period,
+				unit);
+	}
 
-        return null;
-    }
+	@Override
+	public String toString() {
+		StringBuilder ts = new StringBuilder(Schedulers.PARALLEL)
+				.append('(').append(n);
+		if (factory instanceof ReactorThreadFactory) {
+			ts.append(",\"").append(((ReactorThreadFactory) factory).get()).append('\"');
+		}
+		ts.append(')');
+		return ts.toString();
+	}
 
-    @Override
-    public Stream<? extends Scannable> inners() {
-        return Stream.of(executors)
-                .map(exec -> key -> Schedulers.scanExecutor(exec, key));
-    }
+	@Override
+	public Object scanUnsafe(Attr key) {
+		if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
+		if (key == Attr.CAPACITY || key == Attr.BUFFERED) return n; //BUFFERED: number of workers doesn't vary
+		if (key == Attr.NAME) return this.toString();
 
-    @Override
-    public Worker createWorker() {
-        return new ExecutorServiceWorker(pick());
-    }
+		return null;
+	}
+
+	@Override
+	public Stream<? extends Scannable> inners() {
+		return Stream.of(executors)
+				.map(exec -> key -> Schedulers.scanExecutor(exec, key));
+	}
+
+	@Override
+	public Worker createWorker() {
+		return new ExecutorServiceWorker(pick());
+	}
 }

@@ -33,13 +33,21 @@ import reactor.util.function.Tuples;
  * @param <T> the value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class ParallelFluxName<T> extends ParallelFlux<T> implements Scannable{
+final class ParallelFluxName<T> extends ParallelFlux<T> implements Scannable {
 
 	final ParallelFlux<T> source;
 
 	final String name;
 
 	final Set<Tuple2<String, String>> tags;
+
+	ParallelFluxName(ParallelFlux<T> source,
+			@Nullable String name,
+			@Nullable Set<Tuple2<String, String>> tags) {
+		this.source = source;
+		this.name = name;
+		this.tags = tags;
+	}
 
 	@SuppressWarnings("unchecked")
 	static <T> ParallelFlux<T> createOrAppend(ParallelFlux<T> source, String name) {
@@ -61,21 +69,13 @@ final class ParallelFluxName<T> extends ParallelFlux<T> implements Scannable{
 
 		if (source instanceof ParallelFluxName) {
 			ParallelFluxName<T> s = (ParallelFluxName<T>) source;
-			if(s.tags != null) {
+			if (s.tags != null) {
 				tags = new HashSet<>(tags);
 				tags.addAll(s.tags);
 			}
 			return new ParallelFluxName<>(s.source, s.name, tags);
 		}
 		return new ParallelFluxName<>(source, null, tags);
-	}
-
-	ParallelFluxName(ParallelFlux<T> source,
-			@Nullable String name,
-			@Nullable Set<Tuple2<String, String>> tags) {
-		this.source = source;
-		this.name = name;
-		this.tags = tags;
 	}
 
 	@Override

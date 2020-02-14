@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
-import reactor.core.Scannable;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Scheduler.Worker;
 import reactor.util.annotation.Nullable;
@@ -36,17 +35,17 @@ import reactor.util.annotation.Nullable;
 final class FluxInterval extends Flux<Long> implements SourceProducer<Long> {
 
 	final Scheduler timedScheduler;
-	
+
 	final long initialDelay;
-	
+
 	final long period;
-	
+
 	final TimeUnit unit;
 
 	FluxInterval(
-			long initialDelay, 
-			long period, 
-			TimeUnit unit, 
+			long initialDelay,
+			long period,
+			TimeUnit unit,
 			Scheduler timedScheduler) {
 		if (period < 0L) {
 			throw new IllegalArgumentException("period >= 0 required but it was " + period);
@@ -56,7 +55,7 @@ final class FluxInterval extends Flux<Long> implements SourceProducer<Long> {
 		this.unit = Objects.requireNonNull(unit, "unit");
 		this.timedScheduler = Objects.requireNonNull(timedScheduler, "timedScheduler");
 	}
-	
+
 	@Override
 	public void subscribe(CoreSubscriber<? super Long> actual) {
 		Worker w = timedScheduler.createWorker();
@@ -84,15 +83,12 @@ final class FluxInterval extends Flux<Long> implements SourceProducer<Long> {
 	}
 
 	static final class IntervalRunnable implements Runnable, Subscription,
-	                                               InnerProducer<Long> {
-		final CoreSubscriber<? super Long> actual;
-
-		final Worker worker;
-
-		volatile long requested;
+			InnerProducer<Long> {
 		static final AtomicLongFieldUpdater<IntervalRunnable> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(IntervalRunnable.class, "requested");
-
+		final CoreSubscriber<? super Long> actual;
+		final Worker worker;
+		volatile long requested;
 		long count;
 
 		volatile boolean cancelled;
@@ -124,22 +120,23 @@ final class FluxInterval extends Flux<Long> implements SourceProducer<Long> {
 					if (requested != Long.MAX_VALUE) {
 						REQUESTED.decrementAndGet(this);
 					}
-				} else {
+				}
+				else {
 					cancel();
-					
+
 					actual.onError(Exceptions.failWithOverflow("Could not emit tick " + count + " due to lack of requests" +
 							" (interval doesn't support small downstream requests that replenish slower than the ticks)"));
 				}
 			}
 		}
-		
+
 		@Override
 		public void request(long n) {
 			if (Operators.validate(n)) {
 				Operators.addCap(REQUESTED, this, n);
 			}
 		}
-		
+
 		@Override
 		public void cancel() {
 			if (!cancelled) {

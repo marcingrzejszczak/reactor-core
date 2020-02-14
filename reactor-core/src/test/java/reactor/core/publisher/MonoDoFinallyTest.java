@@ -29,9 +29,10 @@ import reactor.test.StepVerifier;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static reactor.core.Fuseable.SYNC;
 
 /**
@@ -59,10 +60,10 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalJust() {
 		StepVerifier.create(Mono.just(1).hide().doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -71,9 +72,9 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalEmpty() {
 		StepVerifier.create(Mono.empty().doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectComplete()
-		            .verify();
+				.expectNoFusionSupport()
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -82,9 +83,9 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalError() {
 		StepVerifier.create(Mono.error(new IllegalArgumentException()).doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectError(IllegalArgumentException.class)
-		            .verify();
+				.expectNoFusionSupport()
+				.expectError(IllegalArgumentException.class)
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_ERROR, signalType);
@@ -96,13 +97,13 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 		AtomicBoolean cancelCheck = new AtomicBoolean(false);
 
 		StepVerifier.create(Mono.just(1).hide()
-		                        .doOnCancel(() -> cancelCheck.set(true))
-		                        .doFinally(this))
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .thenCancel()
-		            .verify();
-		
+				.doOnCancel(() -> cancelCheck.set(true))
+				.doFinally(this))
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.thenCancel()
+				.verify();
+
 		assertEquals("expected doFinally to be invoked exactly once", 1, calls);
 		assertEquals(SignalType.CANCEL, signalType);
 		assertTrue("expected tested mono to be cancelled", cancelCheck.get());
@@ -111,13 +112,13 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void normalJustConditional() {
 		StepVerifier.create(Mono.just(1)
-		                        .hide()
-		                        .doFinally(this)
-		                        .filter(i -> true))
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.hide()
+				.doFinally(this)
+				.filter(i -> true))
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
 		assertEquals(1, calls);
 		assertEquals(SignalType.ON_COMPLETE, signalType);
@@ -126,23 +127,25 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	@Test
 	public void syncFused() {
 		StepVerifier.create(Mono.just(1).doFinally(this))
-		            .expectFusion(SYNC)
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(SYNC)
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
-		assertEquals(1, calls); assertEquals(SignalType.ON_COMPLETE, signalType);
+		assertEquals(1, calls);
+		assertEquals(SignalType.ON_COMPLETE, signalType);
 	}
 
 	@Test
 	public void syncFusedConditional() {
 		StepVerifier.create(Mono.just(1).doFinally(this).filter(i -> true))
-		            .expectFusion(SYNC)
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.expectFusion(SYNC)
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
-		assertEquals(1, calls); assertEquals(SignalType.ON_COMPLETE, signalType);
+		assertEquals(1, calls);
+		assertEquals(SignalType.ON_COMPLETE, signalType);
 	}
 
 
@@ -155,12 +158,12 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	public void callbackThrows() {
 		try {
 			StepVerifier.create(Mono.just(1)
-			                        .doFinally(signal -> {
-				                        throw new IllegalStateException();
-			                        }))
-			            .expectNext(1)
-			            .expectComplete()
-			            .verify();
+					.doFinally(signal -> {
+						throw new IllegalStateException();
+					}))
+					.expectNext(1)
+					.expectComplete()
+					.verify();
 		}
 		catch (Throwable e) {
 			Throwable _e = Exceptions.unwrap(e);
@@ -173,13 +176,13 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 	public void callbackThrowsConditional() {
 		try {
 			StepVerifier.create(Mono.just(1)
-			                        .doFinally(signal -> {
-				                        throw new IllegalStateException();
-			                        })
-			                        .filter(i -> true))
-			            .expectNext(1)
-			            .expectComplete()
-			            .verify();
+					.doFinally(signal -> {
+						throw new IllegalStateException();
+					})
+					.filter(i -> true))
+					.expectNext(1)
+					.expectComplete()
+					.verify();
 		}
 		catch (Throwable e) {
 			Throwable _e = Exceptions.unwrap(e);
@@ -193,13 +196,13 @@ public class MonoDoFinallyTest implements Consumer<SignalType> {
 		Queue<String> finallyOrder = new ConcurrentLinkedDeque<>();
 
 		Flux.just("b")
-		    .hide()
-		    .doFinally(s -> finallyOrder.offer("FIRST"))
-		    .doFinally(s -> finallyOrder.offer("SECOND"))
-		    .blockLast();
+				.hide()
+				.doFinally(s -> finallyOrder.offer("FIRST"))
+				.doFinally(s -> finallyOrder.offer("SECOND"))
+				.blockLast();
 
 		Assertions.assertThat(finallyOrder)
-		          .containsExactly("SECOND", "FIRST");
+				.containsExactly("SECOND", "FIRST");
 	}
 
 }

@@ -28,7 +28,7 @@ interface CoreContext extends Context {
 		// Overridden in Context0#isEmpty
 		return false;
 	}
-	
+
 	@Override
 	default Context putAll(Context other) {
 		if (other.isEmpty()) return this;

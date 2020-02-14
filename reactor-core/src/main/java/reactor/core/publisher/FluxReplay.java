@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
@@ -44,14 +43,147 @@ import reactor.util.context.Context;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
 final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fuseable,
-                                                                OptimizableOperator<T, T> {
+		OptimizableOperator<T, T> {
 
-	final CorePublisher<T>   source;
-	final int            history;
-	final long           ttl;
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<FluxReplay, ReplaySubscriber> CONNECTION =
+			AtomicReferenceFieldUpdater.newUpdater(FluxReplay.class,
+					ReplaySubscriber.class,
+					"connection");
+	final CorePublisher<T> source;
+	final int history;
+	final long ttl;
 	final Scheduler scheduler;
-
+	@Nullable
+	final OptimizableOperator<?, T> optimizableOperator;
 	volatile ReplaySubscriber<T> connection;
+
+	FluxReplay(CorePublisher<T> source,
+			int history,
+			long ttl,
+			@Nullable Scheduler scheduler) {
+		this.source = Objects.requireNonNull(source, "source");
+		this.optimizableOperator = source instanceof OptimizableOperator ? (OptimizableOperator) source : null;
+		this.history = history;
+		if (history < 0) {
+			throw new IllegalArgumentException("History cannot be negative : " + history);
+		}
+		if (scheduler != null && ttl < 0) {
+			throw new IllegalArgumentException("TTL cannot be negative : " + ttl);
+		}
+		this.ttl = ttl;
+		this.scheduler = scheduler;
+	}
+
+	@Override
+	public int getPrefetch() {
+		return history;
+	}
+
+	ReplaySubscriber<T> newState() {
+		if (scheduler != null) {
+			return new ReplaySubscriber<>(new SizeAndTimeBoundReplayBuffer<>(history,
+					ttl,
+					scheduler),
+					this);
+		}
+		if (history != Integer.MAX_VALUE) {
+			return new ReplaySubscriber<>(new SizeBoundReplayBuffer<>(history),
+					this);
+		}
+		return new ReplaySubscriber<>(new UnboundedReplayBuffer<>(Queues.SMALL_BUFFER_SIZE),
+				this);
+	}
+
+	@Override
+	public void connect(Consumer<? super Disposable> cancelSupport) {
+		boolean doConnect;
+		ReplaySubscriber<T> s;
+		for (; ; ) {
+			s = connection;
+			if (s == null) {
+				ReplaySubscriber<T> u = newState();
+				if (!CONNECTION.compareAndSet(this, null, u)) {
+					continue;
+				}
+
+				s = u;
+			}
+
+			doConnect = s.tryConnect();
+			break;
+		}
+
+		cancelSupport.accept(s);
+		if (doConnect) {
+			source.subscribe(s);
+		}
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void subscribe(CoreSubscriber<? super T> actual) {
+		CoreSubscriber nextSubscriber = subscribeOrReturn(actual);
+		if (nextSubscriber == null) {
+			return;
+		}
+		source.subscribe(nextSubscriber);
+	}
+
+	@Override
+	public final CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
+		boolean expired;
+		for (; ; ) {
+			ReplaySubscriber<T> c = connection;
+			expired = scheduler != null && c != null && c.buffer.isExpired();
+			if (c == null || expired) {
+				ReplaySubscriber<T> u = newState();
+				if (!CONNECTION.compareAndSet(this, c, u)) {
+					continue;
+				}
+
+				c = u;
+			}
+
+			ReplayInner<T> inner = new ReplayInner<>(actual, c, ReplaySubscriber.CONNECTED.get(c) == 0);
+			actual.onSubscribe(inner);
+			c.add(inner);
+
+			if (inner.isCancelled()) {
+				c.remove(inner);
+				return null;
+			}
+
+			c.buffer.replay(inner);
+
+			if (expired) {
+				return c;
+			}
+
+			break;
+		}
+		return null;
+	}
+
+	@Override
+	public final CorePublisher<? extends T> source() {
+		return source;
+	}
+
+	@Override
+	public final OptimizableOperator<?, ? extends T> nextOptimizableSource() {
+		return optimizableOperator;
+	}
+
+	@Override
+	@Nullable
+	public Object scanUnsafe(Scannable.Attr key) {
+		if (key == Attr.PREFETCH) return getPrefetch();
+		if (key == Attr.PARENT) return source;
+		if (key == Attr.RUN_ON) return scheduler;
+
+		return null;
+	}
 
 	interface ReplaySubscription<T> extends QueueSubscription<T>, InnerProducer<T> {
 
@@ -119,19 +251,9 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 
 	static final class SizeAndTimeBoundReplayBuffer<T> implements ReplayBuffer<T> {
 
-		static final class TimedNode<T> extends AtomicReference<TimedNode<T>> {
-
-			final T    value;
-			final long time;
-
-			TimedNode(@Nullable T value, long time) {
-				this.value = value;
-				this.time = time;
-			}
-		}
-
-		final int            limit;
-		final long           maxAge;
+		static final long NOT_DONE = Long.MIN_VALUE;
+		final int limit;
+		final long maxAge;
 		final Scheduler scheduler;
 		int size;
 
@@ -140,8 +262,6 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 		TimedNode<T> tail;
 
 		Throwable error;
-		static final long NOT_DONE = Long.MIN_VALUE;
-
 		volatile long done = NOT_DONE;
 
 		SizeAndTimeBoundReplayBuffer(int limit,
@@ -448,16 +568,24 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 				replayFused(rs);
 			}
 		}
+
+		static final class TimedNode<T> extends AtomicReference<TimedNode<T>> {
+
+			final T value;
+			final long time;
+
+			TimedNode(@Nullable T value, long time) {
+				this.value = value;
+				this.time = time;
+			}
+		}
 	}
 
 	static final class UnboundedReplayBuffer<T> implements ReplayBuffer<T> {
 
 		final int batchSize;
-
-		volatile int size;
-
 		final Object[] head;
-
+		volatile int size;
 		Object[] tail;
 
 		int tailIndex;
@@ -726,7 +854,7 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 		Throwable error;
 
 		SizeBoundReplayBuffer(int limit) {
-			if(limit < 0){
+			if (limit < 0) {
 				throw new IllegalArgumentException("Limit cannot be negative");
 			}
 			this.limit = limit;
@@ -913,23 +1041,6 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 			return done;
 		}
 
-		static final class Node<T> extends AtomicReference<Node<T>> {
-
-			/** */
-			private static final long serialVersionUID = 3713592843205853725L;
-
-			final T value;
-
-			Node(@Nullable T value) {
-				this.value = value;
-			}
-
-			@Override
-			public String toString() {
-				return "Node(" + value + ")";
-			}
-		}
-
 		@Override
 		@Nullable
 		public T poll(ReplaySubscription<T> rs) {
@@ -993,174 +1104,49 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 
 			return count;
 		}
-	}
 
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<FluxReplay, ReplaySubscriber> CONNECTION =
-			AtomicReferenceFieldUpdater.newUpdater(FluxReplay.class,
-					ReplaySubscriber.class,
-					"connection");
+		static final class Node<T> extends AtomicReference<Node<T>> {
 
-	@Nullable
-	final OptimizableOperator<?, T> optimizableOperator;
+			/** */
+			private static final long serialVersionUID = 3713592843205853725L;
 
-	FluxReplay(CorePublisher<T> source,
-			int history,
-			long ttl,
-			@Nullable Scheduler scheduler) {
-		this.source = Objects.requireNonNull(source, "source");
-		this.optimizableOperator = source instanceof OptimizableOperator ? (OptimizableOperator) source : null;
-		this.history = history;
-		if(history < 0){
-			throw new IllegalArgumentException("History cannot be negative : " + history);
-		}
-		if (scheduler != null && ttl < 0) {
-			throw new IllegalArgumentException("TTL cannot be negative : " + ttl);
-		}
-		this.ttl = ttl;
-		this.scheduler = scheduler;
-	}
+			final T value;
 
-	@Override
-	public int getPrefetch() {
-		return history;
-	}
-
-	ReplaySubscriber<T> newState() {
-		if (scheduler != null) {
-			return new ReplaySubscriber<>(new SizeAndTimeBoundReplayBuffer<>(history,
-					ttl,
-					scheduler),
-					this);
-		}
-		if (history != Integer.MAX_VALUE) {
-			return new ReplaySubscriber<>(new SizeBoundReplayBuffer<>(history),
-					this);
-		}
-		return new ReplaySubscriber<>(new UnboundedReplayBuffer<>(Queues.SMALL_BUFFER_SIZE),
-					this);
-	}
-
-	@Override
-	public void connect(Consumer<? super Disposable> cancelSupport) {
-		boolean doConnect;
-		ReplaySubscriber<T> s;
-		for (; ; ) {
-			s = connection;
-			if (s == null) {
-				ReplaySubscriber<T> u = newState();
-				if (!CONNECTION.compareAndSet(this, null, u)) {
-					continue;
-				}
-
-				s = u;
+			Node(@Nullable T value) {
+				this.value = value;
 			}
 
-			doConnect = s.tryConnect();
-			break;
-		}
-
-		cancelSupport.accept(s);
-		if (doConnect) {
-			source.subscribe(s);
-		}
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public void subscribe(CoreSubscriber<? super T> actual) {
-		CoreSubscriber nextSubscriber = subscribeOrReturn(actual);
-		if (nextSubscriber == null) {
-			return;
-		}
-		source.subscribe(nextSubscriber);
-	}
-
-	@Override
-	public final CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
-		boolean expired;
-		for (; ; ) {
-			ReplaySubscriber<T> c = connection;
-			expired = scheduler != null && c != null && c.buffer.isExpired();
-			if (c == null || expired) {
-				ReplaySubscriber<T> u = newState();
-				if (!CONNECTION.compareAndSet(this, c, u)) {
-					continue;
-				}
-
-				c = u;
+			@Override
+			public String toString() {
+				return "Node(" + value + ")";
 			}
-
-			ReplayInner<T> inner = new ReplayInner<>(actual, c, ReplaySubscriber.CONNECTED.get(c) == 0);
-			actual.onSubscribe(inner);
-			c.add(inner);
-
-			if (inner.isCancelled()) {
-				c.remove(inner);
-				return null;
-			}
-
-			c.buffer.replay(inner);
-
-			if (expired) {
-				return c;
-			}
-
-			break;
 		}
-		return null;
-	}
-
-	@Override
-	public final CorePublisher<? extends T> source() {
-		return source;
-	}
-
-	@Override
-	public final OptimizableOperator<?, ? extends T> nextOptimizableSource() {
-		return optimizableOperator;
-	}
-
-	@Override
-	@Nullable
-	public Object scanUnsafe(Scannable.Attr key) {
-		if (key == Attr.PREFETCH) return getPrefetch();
-		if (key == Attr.PARENT) return source;
-		if (key == Attr.RUN_ON) return scheduler;
-
-		return null;
 	}
 
 	static final class ReplaySubscriber<T>
 			implements InnerConsumer<T>, Disposable {
 
-		final FluxReplay<T>   parent;
-		final ReplayBuffer<T> buffer;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ReplaySubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(ReplaySubscriber.class,
 						Subscription.class,
 						"s");
-
-		volatile ReplaySubscription<T>[] subscribers;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ReplaySubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ReplaySubscriber.class, "wip");
-
-		volatile int connected;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ReplaySubscriber> CONNECTED =
 				AtomicIntegerFieldUpdater.newUpdater(ReplaySubscriber.class, "connected");
-
 		@SuppressWarnings("rawtypes")
-		static final ReplaySubscription[] EMPTY      = new ReplaySubscription[0];
+		static final ReplaySubscription[] EMPTY = new ReplaySubscription[0];
 		@SuppressWarnings("rawtypes")
 		static final ReplaySubscription[] TERMINATED = new ReplaySubscription[0];
-
+		final FluxReplay<T> parent;
+		final ReplayBuffer<T> buffer;
+		volatile Subscription s;
+		volatile ReplaySubscription<T>[] subscribers;
+		volatile int wip;
+		volatile int connected;
 		volatile boolean cancelled;
 		volatile boolean unbounded;
 
@@ -1174,7 +1160,7 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			if(buffer.isDone()){
+			if (buffer.isDone()) {
 				s.cancel();
 			}
 			else if (Operators.setOnce(S, this, s)) {
@@ -1391,42 +1377,31 @@ final class FluxReplay<T> extends ConnectableFlux<T> implements Scannable, Fusea
 	static final class ReplayInner<T>
 			implements ReplaySubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-		final ReplaySubscriber<T>       parent;
-
-		int index;
-
-		int tailIndex;
-
-		Object node;
-
-		int fusionMode;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ReplayInner> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ReplayInner.class, "wip");
-
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ReplayInner> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ReplayInner.class, "requested");
-
-		volatile int state;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ReplayInner> STATE = AtomicIntegerFieldUpdater.newUpdater(ReplayInner.class, "state");
-
-
+		static final int STATE_LATE = 0;
+		static final int STATE_EARLY_ACCUMULATE = 1;
+		static final int STATE_EARLY_PROPAGATE = 2;
+		final CoreSubscriber<? super T> actual;
+		final ReplaySubscriber<T> parent;
+		int index;
+		int tailIndex;
+		Object node;
+		int fusionMode;
+		volatile int wip;
+		volatile long requested;
+		volatile int state;
 		ReplayInner(CoreSubscriber<? super T> actual, ReplaySubscriber<T> parent, boolean registeredBeforeConnection) {
 			this.actual = actual;
 			this.parent = parent;
 			this.state = registeredBeforeConnection ? STATE_EARLY_ACCUMULATE : STATE_LATE;
 		}
-
-		static final int STATE_LATE = 0;
-		static final int STATE_EARLY_ACCUMULATE = 1;
-		static final int STATE_EARLY_PROPAGATE = 2;
 
 		@Override
 		public void request(long n) {

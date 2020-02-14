@@ -23,8 +23,11 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static reactor.util.context.ContextTest.key;
 import static reactor.util.context.ContextTest.keyValue;
 
@@ -203,7 +206,7 @@ public class Context4Test {
 		Context put = c.putAll(m);
 
 		assertThat(put).isInstanceOf(Context5.class)
-		               .hasToString("Context5{1=replaced, 2=B, 3=C, 4=D, A=1}");
+				.hasToString("Context5{1=replaced, 2=B, 3=C, 4=D, A=1}");
 	}
 
 	@Test
@@ -256,7 +259,7 @@ public class Context4Test {
 	@Test
 	public void checkNullKeysTwo() {
 		assertThatNullPointerException().isThrownBy(() -> Context4.checkKeys("one", null))
-		                                .withMessage("key2");
+				.withMessage("key2");
 	}
 
 	@Test
@@ -372,7 +375,7 @@ public class Context4Test {
 		Context result = ((CoreContext) c).putAllInto(initial);
 
 		assertThat(result).isNotSameAs(initial)
-		                  .isNotSameAs(c);
+				.isNotSameAs(c);
 
 		assertThat(result.stream()).containsExactlyElementsOf(c.stream().collect(Collectors.toList()));
 	}
@@ -384,7 +387,7 @@ public class Context4Test {
 		Context result = self.putAllInto(initial);
 
 		assertThat(result).isNotSameAs(initial)
-		                  .isNotSameAs(c);
+				.isNotSameAs(c);
 
 		assertThat(result.stream().map(String::valueOf))
 				.containsExactly("1=1", "2=2", "3=3", "4=4", "5=5", "6=6", "A=1", "B=2", "C=3", "D=4");

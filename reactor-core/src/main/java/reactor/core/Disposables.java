@@ -37,7 +37,15 @@ import reactor.util.annotation.Nullable;
  */
 public final class Disposables {
 
-	private Disposables() { }
+	/**
+	 * A singleton {@link Disposable} that represents a disposed instance. Should not be
+	 * leaked to clients.
+	 */
+	//NOTE: There is a private similar DISPOSED singleton in Disposables as well
+	static final Disposable DISPOSED = disposed();
+
+	private Disposables() {
+	}
 
 	/**
 	 * Create a new empty {@link Disposable.Composite} with atomic guarantees on all mutative
@@ -99,6 +107,8 @@ public final class Disposables {
 		return new SimpleDisposable();
 	}
 
+	//==== STATIC package private implementations ====
+
 	/**
 	 * Create a new empty {@link Disposable.Swap} with atomic guarantees on all mutative
 	 * operations.
@@ -109,7 +119,90 @@ public final class Disposables {
 		return new SwapDisposable();
 	}
 
-	//==== STATIC package private implementations ====
+	/**
+	 * Atomically set the field to a {@link Disposable} and dispose the old content.
+	 *
+	 * @param updater the target field updater
+	 * @param holder the target instance holding the field
+	 * @param newValue the new Disposable to set
+	 * @return true if successful, false if the field contains the {@link #DISPOSED} instance.
+	 */
+	static <T> boolean set(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder, @Nullable Disposable newValue) {
+		for (; ; ) {
+			Disposable current = updater.get(holder);
+			if (current == DISPOSED) {
+				if (newValue != null) {
+					newValue.dispose();
+				}
+				return false;
+			}
+			if (updater.compareAndSet(holder, current, newValue)) {
+				if (current != null) {
+					current.dispose();
+				}
+				return true;
+			}
+		}
+	}
+
+	/**
+	 * Atomically replace the {@link Disposable} in the field with the given new Disposable
+	 * but do not dispose the old one.
+	 *
+	 * @param updater the target field updater
+	 * @param holder the target instance holding the field
+	 * @param newValue the new Disposable to set, null allowed
+	 * @return true if the operation succeeded, false if the target field contained
+	 * the common {@link #DISPOSED} instance and the given disposable is not null but is disposed.
+	 */
+	static <T> boolean replace(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder, @Nullable Disposable newValue) {
+		for (; ; ) {
+			Disposable current = updater.get(holder);
+			if (current == DISPOSED) {
+				if (newValue != null) {
+					newValue.dispose();
+				}
+				return false;
+			}
+			if (updater.compareAndSet(holder, current, newValue)) {
+				return true;
+			}
+		}
+	}
+
+	/**
+	 * Atomically dispose the {@link Disposable} in the field if not already disposed.
+	 *
+	 * @param updater the target field updater
+	 * @param holder the target instance holding the field
+	 * @return true if the {@link Disposable} held by the field was properly disposed
+	 */
+	static <T> boolean dispose(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder) {
+		Disposable current = updater.get(holder);
+		Disposable d = DISPOSED;
+		if (current != d) {
+			current = updater.getAndSet(holder, d);
+			if (current != d) {
+				if (current != null) {
+					current.dispose();
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if the given {@link Disposable} is the singleton {@link #DISPOSED}.
+	 *
+	 * @param d the disposable to check
+	 * @return true if d is {@link #DISPOSED}
+	 */
+	static boolean isDisposed(Disposable d) {
+		return d == DISPOSED;
+	}
+
+	//==== STATIC ATOMIC UTILS copied from Disposables ====
 
 	/**
 	 * @author David Karnok
@@ -261,7 +354,8 @@ public final class Disposables {
 			for (Disposable o : set) {
 				try {
 					o.dispose();
-				} catch (Throwable ex) {
+				}
+				catch (Throwable ex) {
 					Exceptions.throwIfFatal(ex);
 					if (errors == null) {
 						errors = new ArrayList<>();
@@ -282,8 +376,8 @@ public final class Disposables {
 			List<Disposable> r = resources;
 			if (r == null) return Stream.empty();
 			return r.stream()
-			        .filter(Objects::nonNull)
-			        .map(Scannable::from);
+					.filter(Objects::nonNull)
+					.map(Scannable::from);
 		}
 
 		@Nullable
@@ -296,187 +390,95 @@ public final class Disposables {
 		}
 	}
 
-/**
- * Not public API. Implementation of a {@link Swap}.
- *
- * @author Simon Baslé
- * @author David Karnok
- */
-static final class SwapDisposable implements Disposable.Swap {
-
-	volatile Disposable inner;
-	static final AtomicReferenceFieldUpdater<SwapDisposable, Disposable>
-	                    INNER =
-			AtomicReferenceFieldUpdater.newUpdater(SwapDisposable.class, Disposable.class, "inner");
-
-	@Override
-	public boolean update(@Nullable Disposable next) {
-		return Disposables.set(INNER, this, next);
-	}
-
-	@Override
-	public boolean replace(@Nullable Disposable next) {
-		return Disposables.replace(INNER, this, next);
-	}
-
-	@Override
-	@Nullable
-	public Disposable get() {
-		return inner;
-	}
-
-	@Override
-	public void dispose() {
-		Disposables.dispose(INNER, this);
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return Disposables.isDisposed(INNER.get(this));
-	}
-}
-
-/**
- * A very simple {@link Disposable} that only wraps a mutable boolean for
- * {@link #isDisposed()}.
- */
-static final class SimpleDisposable extends AtomicBoolean implements Disposable {
-
-	@Override
-	public void dispose() {
-		set(true);
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return get();
-	}
-}
-
-/**
- * Immutable disposable that is always {@link #isDisposed() disposed}. Calling
- * {@link #dispose()} does nothing, and {@link #isDisposed()} always return true.
- */
-static final class AlwaysDisposable implements Disposable {
-
-	@Override
-	public void dispose() {
-		//NO-OP
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return true;
-	}
-}
-
-/**
- * Immutable disposable that is never {@link #isDisposed() disposed}. Calling
- * {@link #dispose()} does nothing, and {@link #isDisposed()} always return false.
- */
-static final class NeverDisposable implements Disposable {
-
-	@Override
-	public void dispose() {
-		//NO-OP
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return false;
-	}
-}
-
-	//==== STATIC ATOMIC UTILS copied from Disposables ====
-
 	/**
-	 * A singleton {@link Disposable} that represents a disposed instance. Should not be
-	 * leaked to clients.
-	 */
-	//NOTE: There is a private similar DISPOSED singleton in Disposables as well
-	static final Disposable DISPOSED = disposed();
-
-	/**
-	 * Atomically set the field to a {@link Disposable} and dispose the old content.
+	 * Not public API. Implementation of a {@link Swap}.
 	 *
-	 * @param updater the target field updater
-	 * @param holder the target instance holding the field
-	 * @param newValue the new Disposable to set
-	 * @return true if successful, false if the field contains the {@link #DISPOSED} instance.
+	 * @author Simon Baslé
+	 * @author David Karnok
 	 */
-	static <T> boolean set(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder, @Nullable Disposable newValue) {
-		for (;;) {
-			Disposable current = updater.get(holder);
-			if (current == DISPOSED) {
-				if (newValue != null) {
-					newValue.dispose();
-				}
-				return false;
-			}
-			if (updater.compareAndSet(holder, current, newValue)) {
-				if (current != null) {
-					current.dispose();
-				}
-				return true;
-			}
+	static final class SwapDisposable implements Disposable.Swap {
+
+		static final AtomicReferenceFieldUpdater<SwapDisposable, Disposable>
+				INNER =
+				AtomicReferenceFieldUpdater.newUpdater(SwapDisposable.class, Disposable.class, "inner");
+		volatile Disposable inner;
+
+		@Override
+		public boolean update(@Nullable Disposable next) {
+			return Disposables.set(INNER, this, next);
+		}
+
+		@Override
+		public boolean replace(@Nullable Disposable next) {
+			return Disposables.replace(INNER, this, next);
+		}
+
+		@Override
+		@Nullable
+		public Disposable get() {
+			return inner;
+		}
+
+		@Override
+		public void dispose() {
+			Disposables.dispose(INNER, this);
+		}
+
+		@Override
+		public boolean isDisposed() {
+			return Disposables.isDisposed(INNER.get(this));
 		}
 	}
 
 	/**
-	 * Atomically replace the {@link Disposable} in the field with the given new Disposable
-	 * but do not dispose the old one.
-	 *
-	 * @param updater the target field updater
-	 * @param holder the target instance holding the field
-	 * @param newValue the new Disposable to set, null allowed
-	 * @return true if the operation succeeded, false if the target field contained
-	 * the common {@link #DISPOSED} instance and the given disposable is not null but is disposed.
+	 * A very simple {@link Disposable} that only wraps a mutable boolean for
+	 * {@link #isDisposed()}.
 	 */
-	static <T> boolean replace(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder, @Nullable Disposable newValue) {
-		for (;;) {
-			Disposable current = updater.get(holder);
-			if (current == DISPOSED) {
-				if (newValue != null) {
-					newValue.dispose();
-				}
-				return false;
-			}
-			if (updater.compareAndSet(holder, current, newValue)) {
-				return true;
-			}
+	static final class SimpleDisposable extends AtomicBoolean implements Disposable {
+
+		@Override
+		public void dispose() {
+			set(true);
+		}
+
+		@Override
+		public boolean isDisposed() {
+			return get();
 		}
 	}
 
 	/**
-	 * Atomically dispose the {@link Disposable} in the field if not already disposed.
-	 *
-	 * @param updater the target field updater
-	 * @param holder the target instance holding the field
-	 * @return true if the {@link Disposable} held by the field was properly disposed
+	 * Immutable disposable that is always {@link #isDisposed() disposed}. Calling
+	 * {@link #dispose()} does nothing, and {@link #isDisposed()} always return true.
 	 */
-	static <T> boolean dispose(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder) {
-		Disposable current = updater.get(holder);
-		Disposable d = DISPOSED;
-		if (current != d) {
-			current = updater.getAndSet(holder, d);
-			if (current != d) {
-				if (current != null) {
-					current.dispose();
-				}
-				return true;
-			}
+	static final class AlwaysDisposable implements Disposable {
+
+		@Override
+		public void dispose() {
+			//NO-OP
 		}
-		return false;
+
+		@Override
+		public boolean isDisposed() {
+			return true;
+		}
 	}
 
 	/**
-	 * Check if the given {@link Disposable} is the singleton {@link #DISPOSED}.
-	 *
-	 * @param d the disposable to check
-	 * @return true if d is {@link #DISPOSED}
+	 * Immutable disposable that is never {@link #isDisposed() disposed}. Calling
+	 * {@link #dispose()} does nothing, and {@link #isDisposed()} always return false.
 	 */
-	static boolean isDisposed(Disposable d) {
-		return d == DISPOSED;
+	static final class NeverDisposable implements Disposable {
+
+		@Override
+		public void dispose() {
+			//NO-OP
+		}
+
+		@Override
+		public boolean isDisposed() {
+			return false;
+		}
 	}
 	//=====================================================
 }

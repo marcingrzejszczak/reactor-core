@@ -124,20 +124,15 @@ final class FluxUsing<T, S> extends Flux<T> implements Fuseable, SourceProducer<
 	static final class UsingSubscriber<T, S>
 			implements InnerOperator<T, T>, QueueSubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Consumer<? super S> resourceCleanup;
-
-		final S resource;
-
-		final boolean eager;
-
-		Subscription s;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<UsingSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(UsingSubscriber.class, "wip");
+		final CoreSubscriber<? super T> actual;
+		final Consumer<? super S> resourceCleanup;
+		final S resource;
+		final boolean eager;
+		Subscription s;
+		volatile int wip;
 
 		UsingSubscriber(CoreSubscriber<? super T> actual,
 				Consumer<? super S> resourceCleanup,
@@ -269,22 +264,16 @@ final class FluxUsing<T, S> extends Flux<T> implements Fuseable, SourceProducer<
 	static final class UsingFuseableSubscriber<T, S>
 			implements InnerOperator<T, T>, QueueSubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Consumer<? super S> resourceCleanup;
-
-		final S resource;
-
-		final boolean eager;
-
-		QueueSubscription<T> s;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<UsingFuseableSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(UsingFuseableSubscriber.class,
 						"wip");
-
+		final CoreSubscriber<? super T> actual;
+		final Consumer<? super S> resourceCleanup;
+		final S resource;
+		final boolean eager;
+		QueueSubscription<T> s;
+		volatile int wip;
 		int mode;
 
 		UsingFuseableSubscriber(CoreSubscriber<? super T> actual,
@@ -426,23 +415,18 @@ final class FluxUsing<T, S> extends Flux<T> implements Fuseable, SourceProducer<
 
 	static final class UsingConditionalSubscriber<T, S>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T>,
-			           QueueSubscription<T> {
+			QueueSubscription<T> {
 
-		final ConditionalSubscriber<? super T> actual;
-
-		final Consumer<? super S> resourceCleanup;
-
-		final S resource;
-
-		final boolean eager;
-
-		Subscription s;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<UsingConditionalSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(UsingConditionalSubscriber.class,
 						"wip");
+		final ConditionalSubscriber<? super T> actual;
+		final Consumer<? super S> resourceCleanup;
+		final S resource;
+		final boolean eager;
+		Subscription s;
+		volatile int wip;
 
 		UsingConditionalSubscriber(ConditionalSubscriber<? super T> actual,
 				Consumer<? super S> resourceCleanup,

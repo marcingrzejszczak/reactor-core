@@ -205,27 +205,19 @@ final class FluxBuffer<T, C extends Collection<? super T>> extends InternalFluxO
 	static final class BufferSkipSubscriber<T, C extends Collection<? super T>>
 			implements InnerOperator<T, C> {
 
-		final CoreSubscriber<? super C> actual;
-		final Context ctx;
-
-		final Supplier<C> bufferSupplier;
-
-		final int size;
-
-		final int skip;
-
-		C buffer;
-
-		Subscription s;
-
-		boolean done;
-
-		long index;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<BufferSkipSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(BufferSkipSubscriber.class, "wip");
+		final CoreSubscriber<? super C> actual;
+		final Context ctx;
+		final Supplier<C> bufferSupplier;
+		final int size;
+		final int skip;
+		C buffer;
+		Subscription s;
+		boolean done;
+		long index;
+		volatile int wip;
 
 		BufferSkipSubscriber(CoreSubscriber<? super C> actual,
 				int size,
@@ -370,35 +362,25 @@ final class FluxBuffer<T, C extends Collection<? super T>> extends InternalFluxO
 			extends ArrayDeque<C>
 			implements BooleanSupplier, InnerOperator<T, C> {
 
-		final CoreSubscriber<? super C> actual;
-
-		final Supplier<C> bufferSupplier;
-
-		final int size;
-
-		final int skip;
-
-		Subscription s;
-
-		boolean done;
-
-		long index;
-
-		volatile boolean cancelled;
-
-		long produced;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<BufferOverlappingSubscriber> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(BufferOverlappingSubscriber.class,
 						"once");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferOverlappingSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BufferOverlappingSubscriber.class,
 						"requested");
+		final CoreSubscriber<? super C> actual;
+		final Supplier<C> bufferSupplier;
+		final int size;
+		final int skip;
+		Subscription s;
+		boolean done;
+		long index;
+		volatile boolean cancelled;
+		long produced;
+		volatile int once;
+		volatile long requested;
 
 		BufferOverlappingSubscriber(CoreSubscriber<? super C> actual,
 				int size,
@@ -523,9 +505,9 @@ final class FluxBuffer<T, C extends Collection<? super T>> extends InternalFluxO
 		@Override
 		public void clear() {
 			Context ctx = actual.currentContext();
-            for(C b: this) {
-            	Operators.onDiscardMultiple(b, ctx);
-            }
+			for (C b : this) {
+				Operators.onDiscardMultiple(b, ctx);
+			}
 			super.clear();
 		}
 
@@ -538,7 +520,7 @@ final class FluxBuffer<T, C extends Collection<? super T>> extends InternalFluxO
 			done = true;
 			long p = produced;
 			if (p != 0L) {
-				Operators.produced(REQUESTED,this, p);
+				Operators.produced(REQUESTED, this, p);
 			}
 			DrainUtils.postComplete(actual, this, REQUESTED, this, this);
 		}

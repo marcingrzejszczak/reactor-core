@@ -39,7 +39,18 @@ import reactor.core.Scannable;
 import reactor.test.publisher.TestPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static reactor.core.publisher.FluxMetrics.*;
+import static reactor.core.publisher.FluxMetrics.METER_FLOW_DURATION;
+import static reactor.core.publisher.FluxMetrics.METER_MALFORMED;
+import static reactor.core.publisher.FluxMetrics.METER_ON_NEXT_DELAY;
+import static reactor.core.publisher.FluxMetrics.METER_REQUESTED;
+import static reactor.core.publisher.FluxMetrics.METER_SUBSCRIBED;
+import static reactor.core.publisher.FluxMetrics.MetricsSubscriber;
+import static reactor.core.publisher.FluxMetrics.REACTOR_DEFAULT_NAME;
+import static reactor.core.publisher.FluxMetrics.TAG_CANCEL;
+import static reactor.core.publisher.FluxMetrics.TAG_KEY_EXCEPTION;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_COMPLETE;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_ERROR;
+import static reactor.core.publisher.FluxMetrics.TAG_SEQUENCE_NAME;
 import static reactor.test.publisher.TestPublisher.Violation.CLEANUP_ON_TERMINATE;
 
 public class FluxMetricsTest {
@@ -111,9 +122,9 @@ public class FluxMetricsTest {
 		final Flux<Integer> unnamed = new FluxMetrics<>(unnamedSource, registry)
 				.onErrorResume(e -> Mono.empty());
 		final Flux<Integer> namedSource = Flux.range(1, 40)
-		                                      .name("foo")
-		                                      .map(i -> 100 / (40 - i))
-		                                      .hide();
+				.name("foo")
+				.map(i -> 100 / (40 - i))
+				.hide();
 		final Flux<Integer> named = new FluxMetrics<>(namedSource, registry)
 				.onErrorResume(e -> Mono.empty());
 
@@ -143,10 +154,10 @@ public class FluxMetricsTest {
 	@Test
 	public void usesTags() {
 		Flux<Integer> source = Flux.range(1, 8)
-		                           .tag("tag1", "A")
-		                           .name("usesTags")
-		                           .tag("tag2", "foo")
-		                           .hide();
+				.tag("tag1", "A")
+				.name("usesTags")
+				.tag("tag2", "foo")
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.blockLast();
 
@@ -164,7 +175,7 @@ public class FluxMetricsTest {
 	@Test
 	public void onNextTimerCounts() {
 		Flux<Integer> source = Flux.range(1, 123)
-		                           .hide();
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.blockLast();
 
@@ -176,7 +187,7 @@ public class FluxMetricsTest {
 		assertThat(nextMeter.count()).isEqualTo(123L);
 
 		Flux<Integer> source2 = Flux.range(1, 10)
-		                            .hide();
+				.hide();
 		new FluxMetrics<>(source2, registry)
 				.take(3)
 				.blockLast();
@@ -184,8 +195,8 @@ public class FluxMetricsTest {
 		assertThat(nextMeter.count()).isEqualTo(126L);
 
 		Flux<Integer> source3 = Flux.range(1, 1000)
-		                            .name("foo")
-		                            .hide();
+				.name("foo")
+				.hide();
 		new FluxMetrics<>(source3, registry)
 				.blockLast();
 
@@ -203,8 +214,8 @@ public class FluxMetricsTest {
 				.subscribe();
 
 		testPublisher.next(1)
-		             .complete()
-		             .next(2);
+				.complete()
+				.next(2);
 
 		Counter malformedMeter = registry
 				.find(METER_MALFORMED)
@@ -227,8 +238,8 @@ public class FluxMetricsTest {
 					.subscribe();
 
 			testPublisher.next(1)
-			             .complete()
-			             .error(dropError);
+					.complete()
+					.error(dropError);
 
 			Counter malformedMeter = registry
 					.find(METER_MALFORMED)
@@ -238,7 +249,7 @@ public class FluxMetricsTest {
 			assertThat(malformedMeter.count()).isEqualTo(1);
 			assertThat(errorDropped).hasValue(dropError);
 		}
-		finally{
+		finally {
 			Hooks.resetOnErrorDropped();
 		}
 	}
@@ -246,22 +257,22 @@ public class FluxMetricsTest {
 	@Test
 	public void subscribeToComplete() {
 		Flux<String> source = Flux.just("foo")
-		                          .delayElements(Duration.ofMillis(100))
-		                          .hide();
+				.delayElements(Duration.ofMillis(100))
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.blockLast();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer.max(TimeUnit.MILLISECONDS))
@@ -281,24 +292,24 @@ public class FluxMetricsTest {
 	@Test
 	public void subscribeToError() {
 		Flux<Integer> source = Flux.just(1, 0)
-		                           .delayElements(Duration.ofMillis(100))
-		                           .map(v -> 100 / v)
-		                           .hide();
+				.delayElements(Duration.ofMillis(100))
+				.map(v -> 100 / v)
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.onErrorReturn(-1)
 				.blockLast();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
@@ -318,23 +329,23 @@ public class FluxMetricsTest {
 	@Test
 	public void subscribeToCancel() {
 		Flux<Integer> source = Flux.just(1, 0)
-		                           .delayElements(Duration.ofMillis(100))
-		                           .hide();
+				.delayElements(Duration.ofMillis(100))
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.take(1)
 				.blockLast();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
@@ -354,12 +365,12 @@ public class FluxMetricsTest {
 	@Test
 	public void countsSubscriptions() {
 		Flux<Integer> source = Flux.range(1, 10)
-		                           .hide();
+				.hide();
 		Flux<Integer> test = new FluxMetrics<>(source, registry);
 
 		test.subscribe();
 		Counter meter = registry.find(METER_SUBSCRIBED)
-		                        .counter();
+				.counter();
 
 		assertThat(meter).isNotNull();
 		assertThat(meter.count()).as("after 1s subscribe").isEqualTo(1);
@@ -373,12 +384,12 @@ public class FluxMetricsTest {
 	@Test
 	public void requestTrackingDisabledIfNotNamed() {
 		Flux<Integer> source = Flux.range(1, 10)
-		                           .hide();
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.blockLast();
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .summary();
+				.summary();
 
 		if (meter != null) { //meter could be null in some tests
 			assertThat(meter.count()).isZero();
@@ -388,19 +399,19 @@ public class FluxMetricsTest {
 	@Test
 	public void requestTrackingHasMeterForNamedSequence() {
 		Flux<Integer> source = Flux.range(1, 10)
-		                           .name("foo")
-		                           .hide();
+				.name("foo")
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.blockLast();
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .summary();
+				.summary();
 
 		assertThat(meter).as("global find").isNotNull();
 
 		meter = registry.find(METER_REQUESTED)
-		                .tag(TAG_SEQUENCE_NAME, "foo")
-		                .summary();
+				.tag(TAG_SEQUENCE_NAME, "foo")
+				.summary();
 
 		assertThat(meter).as("tagged find").isNotNull();
 	}
@@ -414,14 +425,14 @@ public class FluxMetricsTest {
 			}
 		};
 		Flux<Integer> source = Flux.range(1, 10)
-		                           .name("foo")
-		                           .hide();
+				.name("foo")
+				.hide();
 		new FluxMetrics<>(source, registry)
 				.subscribe(bs);
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .tag(TAG_SEQUENCE_NAME, "foo")
-		                                    .summary();
+				.tag(TAG_SEQUENCE_NAME, "foo")
+				.summary();
 
 		assertThat(meter).as("meter").isNotNull();
 		assertThat(meter.totalAmount()).isEqualTo(1);
@@ -439,11 +450,11 @@ public class FluxMetricsTest {
 	@Test
 	public void flowDurationTagsConsistency() {
 		Flux<Integer> source1 = Flux.just(1)
-		                            .name("normal")
-		                            .hide();
+				.name("normal")
+				.hide();
 		Flux<Object> source2 = Flux.error(new IllegalStateException("dummy"))
-		                           .name("error")
-		                           .hide();
+				.name("error")
+				.hide();
 
 		new FluxMetrics<>(source1, registry)
 				.blockLast();

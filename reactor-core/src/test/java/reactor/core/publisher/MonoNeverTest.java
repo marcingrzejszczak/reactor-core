@@ -23,9 +23,9 @@ public class MonoNeverTest {
 	@Test
 	public void normal() {
 		Mono.never()
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertSubscribed()
-		    .assertNoError()
-		    .assertNotComplete();
+				.subscribeWith(AssertSubscriber.create())
+				.assertSubscribed()
+				.assertNoError()
+				.assertNotComplete();
 	}
 }

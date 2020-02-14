@@ -17,7 +17,6 @@
 package reactor.core.publisher;
 
 import org.reactivestreams.Subscriber;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 

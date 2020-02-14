@@ -38,10 +38,10 @@ import reactor.util.context.Context;
  */
 final class FluxBufferTimeout<T, C extends Collection<? super T>> extends InternalFluxOperator<T, C> {
 
-	final int            batchSize;
-	final Supplier<C>    bufferSupplier;
-	final Scheduler      timer;
-	final long           timespan;
+	final int batchSize;
+	final Supplier<C> bufferSupplier;
+	final Scheduler timer;
+	final long timespan;
 
 	FluxBufferTimeout(Flux<T> source,
 			int maxSize,
@@ -82,49 +82,34 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 	final static class BufferTimeoutSubscriber<T, C extends Collection<? super T>>
 			implements InnerOperator<T, C> {
 
-		final CoreSubscriber<? super C> actual;
-
-		final static int NOT_TERMINATED          = 0;
+		final static int NOT_TERMINATED = 0;
 		final static int TERMINATED_WITH_SUCCESS = 1;
-		final static int TERMINATED_WITH_ERROR   = 2;
-		final static int TERMINATED_WITH_CANCEL  = 3;
-
-		final int                        batchSize;
-		final long                       timespan;
-		final Scheduler.Worker           timer;
-		final Runnable                   flushTask;
-
-		protected Subscription subscription;
-
-		volatile     int                                                  terminated =
-				NOT_TERMINATED;
+		final static int TERMINATED_WITH_ERROR = 2;
+		final static int TERMINATED_WITH_CANCEL = 3;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<BufferTimeoutSubscriber> TERMINATED =
 				AtomicIntegerFieldUpdater.newUpdater(BufferTimeoutSubscriber.class, "terminated");
-
-
-		volatile long requested;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferTimeoutSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BufferTimeoutSubscriber.class, "requested");
-
-		volatile long outstanding;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferTimeoutSubscriber> OUTSTANDING =
 				AtomicLongFieldUpdater.newUpdater(BufferTimeoutSubscriber.class, "outstanding");
-
-		volatile int index = 0;
-
 		static final AtomicIntegerFieldUpdater<BufferTimeoutSubscriber> INDEX =
 				AtomicIntegerFieldUpdater.newUpdater(BufferTimeoutSubscriber.class, "index");
-
-
-		volatile Disposable timespanRegistration;
-
+		final CoreSubscriber<? super C> actual;
+		final int batchSize;
+		final long timespan;
+		final Scheduler.Worker timer;
+		final Runnable flushTask;
 		final Supplier<C> bufferSupplier;
-
+		protected Subscription subscription;
+		volatile int terminated =
+				NOT_TERMINATED;
+		volatile long requested;
+		volatile long outstanding;
+		volatile int index = 0;
+		volatile Disposable timespanRegistration;
 		volatile C values;
 
 		BufferTimeoutSubscriber(CoreSubscriber<? super C> actual,
@@ -138,12 +123,12 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 			this.flushTask = () -> {
 				if (terminated == NOT_TERMINATED) {
 					int index;
-					for(;;){
+					for (; ; ) {
 						index = this.index;
-						if(index == 0){
+						if (index == 0) {
 							return;
 						}
-						if(INDEX.compareAndSet(this, index, 0)){
+						if (INDEX.compareAndSet(this, index, 0)) {
 							break;
 						}
 					}
@@ -161,8 +146,7 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 
 		void nextCallback(T value) {
 			synchronized (this) {
-				if (OUTSTANDING.decrementAndGet(this) < 0)
-				{
+				if (OUTSTANDING.decrementAndGet(this) < 0) {
 					actual.onError(Exceptions.failWithOverflow("Unrequested element received"));
 					Context ctx = actual.currentContext();
 					Operators.onDiscard(value, ctx);
@@ -171,7 +155,7 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 				}
 
 				C v = values;
-				if(v == null) {
+				if (v == null) {
 					v = Objects.requireNonNull(bufferSupplier.get(),
 							"The bufferSupplier returned a null buffer");
 					values = v;
@@ -196,7 +180,7 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 				if (r != 0L) {
 					if (r != Long.MAX_VALUE) {
 						long next;
-						for (;;) {
+						for (; ; ) {
 							next = r - 1;
 							if (REQUESTED.compareAndSet(this, r, next)) {
 								actual.onNext(v);
@@ -239,9 +223,9 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 		@Override
 		public void onNext(final T value) {
 			int index;
-			for(;;){
+			for (; ; ) {
 				index = this.index + 1;
-				if(INDEX.compareAndSet(this, index - 1, index)){
+				if (INDEX.compareAndSet(this, index - 1, index)) {
 					break;
 				}
 			}
@@ -338,7 +322,7 @@ final class FluxBufferTimeout<T, C extends Collection<? super T>> extends Intern
 				Context ctx = actual.currentContext();
 				synchronized (this) {
 					C v = values;
-					if(v != null) {
+					if (v != null) {
 						Operators.onDiscardMultiple(v, ctx);
 						v.clear();
 						values = null;

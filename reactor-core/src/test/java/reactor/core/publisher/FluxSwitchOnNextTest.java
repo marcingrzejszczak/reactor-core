@@ -16,24 +16,21 @@
 
 package reactor.core.publisher;
 
-import org.junit.Assert;
 import org.junit.Test;
 import reactor.test.StepVerifier;
-import reactor.test.subscriber.AssertSubscriber;
 
 public class FluxSwitchOnNextTest {
-
 
 
 	@Test
 	public void switchOnNext() {
 		StepVerifier.create(Flux.switchOnNext(Flux.just(Flux.just("Three", "Two", "One"),
 				Flux.just("Zero"))))
-		            .expectNext("Three")
-		            .expectNext("Two")
-		            .expectNext("One")
-		            .expectNext("Zero")
-		            .verifyComplete();
+				.expectNext("Three")
+				.expectNext("Two")
+				.expectNext("One")
+				.expectNext("Zero")
+				.verifyComplete();
 	}
 
 }

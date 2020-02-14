@@ -42,9 +42,9 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
 		return defaultOptions.fusionMode(Fuseable.ANY)
-		                     .fusionModeThreadBarrier(Fuseable.ANY)
-		                     .shouldHitDropNextHookAfterTerminate(false)
-		                     .shouldHitDropErrorHookAfterTerminate(false);
+				.fusionModeThreadBarrier(Fuseable.ANY)
+				.shouldHitDropNextHookAfterTerminate(false)
+				.shouldHitDropErrorHookAfterTerminate(false);
 	}
 
 	@Override
@@ -52,15 +52,18 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 		return Arrays.asList(
 				scenario(f -> Flux.using(() -> {
 					throw exception();
-				}, c -> f, c -> {}))
+				}, c -> f, c -> {
+				}))
 						.fusionMode(Fuseable.NONE),
 
-				scenario(f -> Flux.using(() -> 0, c -> null, c -> {}))
+				scenario(f -> Flux.using(() -> 0, c -> null, c -> {
+				}))
 						.fusionMode(Fuseable.NONE),
 
 				scenario(f -> Flux.using(() -> 0, c -> {
 					throw exception();
-				}, c -> {}))
+				}, c -> {
+				}))
 						.fusionMode(Fuseable.NONE)
 
 				/*scenario(f -> Flux.using(() -> 0, c -> f, c -> {
@@ -82,9 +85,11 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected List<Scenario<String, String>> scenarios_operatorSuccess() {
 		return Arrays.asList(
-				scenario(f -> Flux.using(() -> 0, c -> f, c -> {})),
+				scenario(f -> Flux.using(() -> 0, c -> f, c -> {
+				})),
 
-				scenario(f -> Flux.using(() -> 0, c -> f, c -> {}, false))
+				scenario(f -> Flux.using(() -> 0, c -> f, c -> {
+				}, false))
 						.shouldAssertPostTerminateState(false)
 		);
 	}
@@ -113,11 +118,11 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 		AtomicInteger cleanup = new AtomicInteger();
 
 		Flux.using(() -> 1, r -> Flux.range(r, 10), cleanup::set, false)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -129,11 +134,11 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 		AtomicInteger cleanup = new AtomicInteger();
 
 		Flux.using(() -> 1, r -> Flux.range(r, 10), cleanup::set)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -162,18 +167,18 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 			}
 			return Flux.range(r, 10);
 		}, cleanup::set, eager)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		if (fail) {
 			ts.assertNoValues()
-			  .assertError(RuntimeException.class)
-			  .assertNotComplete()
-			  .assertErrorMessage("forced failure");
+					.assertError(RuntimeException.class)
+					.assertNotComplete()
+					.assertErrorMessage("forced failure");
 		}
 		else {
 			ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-			  .assertComplete()
-			  .assertNoError();
+					.assertComplete()
+					.assertNoError();
 		}
 
 		Assert.assertEquals(1, cleanup.get());
@@ -209,12 +214,12 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 		Flux.using(() -> {
 			throw new RuntimeException("forced failure");
 		}, r -> Flux.range(1, 10), cleanup::set, false)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		Assert.assertEquals(0, cleanup.get());
 	}
@@ -228,12 +233,12 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 		Flux.using(() -> 1, r -> {
 			throw new RuntimeException("forced failure");
 		}, cleanup::set, false)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -250,8 +255,8 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 				false).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -265,23 +270,23 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 		DirectProcessor<Integer> tp = DirectProcessor.create();
 
 		Flux.using(() -> 1, r -> tp, cleanup::set, true)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		Assert.assertTrue("No subscriber?", tp.hasDownstreams());
 
 		tp.onNext(1);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.cancel();
 
 		tp.onNext(2);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		Assert.assertFalse("Has subscriber?", tp.hasDownstreams());
 
@@ -300,70 +305,79 @@ public class FluxUsingTest extends FluxOperatorTest<String, String> {
 				}, "suppressing <%s>", sourceEx);
 
 		Flux<String> test = new FluxUsing<>(() -> "foo",
-				o -> { throw sourceEx; },
-				s -> { throw cleanupEx; },
+				o -> {
+					throw sourceEx;
+				},
+				s -> {
+					throw cleanupEx;
+				},
 				false);
 
 		StepVerifier.create(test)
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .hasMessage("resourceCleanup")
-				            .is(suppressingFactory));
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.hasMessage("resourceCleanup")
+						.is(suppressingFactory));
 
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxUsing.UsingSubscriber<Integer, String> test = new FluxUsing.UsingSubscriber<>(actual,
-        		s -> {}, "", true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxUsing.UsingSubscriber<Integer, String> test = new FluxUsing.UsingSubscriber<>(actual,
+				s -> {
+				}, "", true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanConditionalSubscriber() {
+	public void scanConditionalSubscriber() {
 		@SuppressWarnings("unchecked")
 		Fuseable.ConditionalSubscriber<Integer> actual = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
 		FluxUsing.UsingConditionalSubscriber<Integer, String> test =
-				new FluxUsing.UsingConditionalSubscriber<>(actual, s -> {}, "", true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+				new FluxUsing.UsingConditionalSubscriber<>(actual, s -> {
+				}, "", true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
-    @Test
-    public void scanFuseableSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxUsing.UsingFuseableSubscriber<Integer, String> test =
-				new FluxUsing.UsingFuseableSubscriber<>(actual, s -> {}, "", true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanFuseableSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxUsing.UsingFuseableSubscriber<Integer, String> test =
+				new FluxUsing.UsingFuseableSubscriber<>(actual, s -> {
+				}, "", true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 }

@@ -30,15 +30,15 @@ import reactor.util.annotation.Nullable;
  *
  * @param <T> the value type
  */
-final class ParallelRunOn<T> extends ParallelFlux<T> implements Scannable{
+final class ParallelRunOn<T> extends ParallelFlux<T> implements Scannable {
 	final ParallelFlux<? extends T> source;
-	
+
 	final Scheduler scheduler;
 
 	final int prefetch;
 
 	final Supplier<Queue<T>> queueSupplier;
-	
+
 	ParallelRunOn(ParallelFlux<? extends T> parent,
 			Scheduler scheduler, int prefetch, Supplier<Queue<T>> queueSupplier) {
 		if (prefetch <= 0) {
@@ -58,16 +58,16 @@ final class ParallelRunOn<T> extends ParallelFlux<T> implements Scannable{
 
 		return null;
 	}
-	
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public void subscribe(CoreSubscriber<? super T>[] subscribers) {
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
-		
+
 
 		CoreSubscriber<T>[] parents = new CoreSubscriber[n];
 
@@ -78,7 +78,7 @@ final class ParallelRunOn<T> extends ParallelFlux<T> implements Scannable{
 
 			if (conditional) {
 				parents[i] = new FluxPublishOn.PublishOnConditionalSubscriber<>(
-						(Fuseable.ConditionalSubscriber<T>)subscribers[i],
+						(Fuseable.ConditionalSubscriber<T>) subscribers[i],
 						scheduler, w, true,
 						prefetch, prefetch, queueSupplier);
 			}
@@ -88,7 +88,7 @@ final class ParallelRunOn<T> extends ParallelFlux<T> implements Scannable{
 						prefetch, prefetch, queueSupplier);
 			}
 		}
-		
+
 		source.subscribe(parents);
 	}
 

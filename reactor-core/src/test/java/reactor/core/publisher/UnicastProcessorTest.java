@@ -24,7 +24,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
 import org.junit.Test;
-import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.test.StepVerifier;
 import reactor.test.subscriber.AssertSubscriber;
@@ -36,22 +35,22 @@ import static org.junit.Assert.assertEquals;
 
 public class UnicastProcessorTest {
 
-    @Test
-    public void secondSubscriberRejectedProperly() {
+	@Test
+	public void secondSubscriberRejectedProperly() {
 
-        UnicastProcessor<Integer> up = UnicastProcessor.create(new ConcurrentLinkedQueue<>());
+		UnicastProcessor<Integer> up = UnicastProcessor.create(new ConcurrentLinkedQueue<>());
 
-        up.subscribe();
+		up.subscribe();
 
-        AssertSubscriber<Integer> ts = AssertSubscriber.create();
+		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
-        up.subscribe(ts);
+		up.subscribe(ts);
 
-        ts.assertNoValues()
-        .assertError(IllegalStateException.class)
-        .assertNotComplete();
+		ts.assertNoValues()
+				.assertError(IllegalStateException.class)
+				.assertNotComplete();
 
-    }
+	}
 
 	@Test
 	public void multiThreadedProducer() {
@@ -69,9 +68,9 @@ public class UnicastProcessorTest {
 			executor.submit(generator);
 		}
 		StepVerifier.create(processor)
-					.expectNextCount(nThreads * countPerThread)
-					.thenCancel()
-					.verify();
+				.expectNextCount(nThreads * countPerThread)
+				.thenCancel()
+				.verify();
 		executor.shutdownNow();
 	}
 
@@ -90,7 +89,8 @@ public class UnicastProcessorTest {
 
 	@Test
 	public void createOverrideQueueOnTerminate() {
-		Disposable onTerminate = () -> {};
+		Disposable onTerminate = () -> {
+		};
 		Queue<Integer> queue = Queues.<Integer>get(10).get();
 		UnicastProcessor<Integer> processor = UnicastProcessor.create(queue, onTerminate);
 		assertProcessor(processor, queue, null, onTerminate);
@@ -98,8 +98,10 @@ public class UnicastProcessorTest {
 
 	@Test
 	public void createOverrideAll() {
-		Disposable onTerminate = () -> {};
-		Consumer<? super Integer> onOverflow = t -> {};
+		Disposable onTerminate = () -> {
+		};
+		Consumer<? super Integer> onOverflow = t -> {
+		};
 		Queue<Integer> queue = Queues.<Integer>get(10).get();
 		UnicastProcessor<Integer> processor = UnicastProcessor.create(queue, onOverflow, onTerminate);
 		assertProcessor(processor, queue, onOverflow, onTerminate);
@@ -119,26 +121,26 @@ public class UnicastProcessorTest {
 
 	@Test
 	public void bufferSizeReactorUnboundedQueue() {
-    	UnicastProcessor processor = UnicastProcessor.create(
-    			Queues.unbounded(2).get());
+		UnicastProcessor processor = UnicastProcessor.create(
+				Queues.unbounded(2).get());
 
-    	assertThat(processor.getBufferSize()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(processor.getBufferSize()).isEqualTo(Integer.MAX_VALUE);
 	}
 
 	@Test
 	public void bufferSizeReactorBoundedQueue() {
-    	//the bounded queue floors at 8 and rounds to the next power of 2
+		//the bounded queue floors at 8 and rounds to the next power of 2
 
 		assertThat(UnicastProcessor.create(Queues.get(2).get())
-		                           .getBufferSize())
+				.getBufferSize())
 				.isEqualTo(8);
 
 		assertThat(UnicastProcessor.create(Queues.get(8).get())
-		                           .getBufferSize())
+				.getBufferSize())
 				.isEqualTo(8);
 
 		assertThat(UnicastProcessor.create(Queues.get(9).get())
-		                           .getBufferSize())
+				.getBufferSize())
 				.isEqualTo(16);
 	}
 
@@ -166,16 +168,16 @@ public class UnicastProcessorTest {
 
 		assertThat(processor.getBufferSize())
 				.isEqualTo(Integer.MIN_VALUE)
-	            .isEqualTo(Queues.CAPACITY_UNSURE);
+				.isEqualTo(Queues.CAPACITY_UNSURE);
 	}
 
 
 	@Test
 	public void contextTest() {
-    	UnicastProcessor<Integer> p = UnicastProcessor.create();
-    	p.subscriberContext(ctx -> ctx.put("foo", "bar")).subscribe();
+		UnicastProcessor<Integer> p = UnicastProcessor.create();
+		p.subscriberContext(ctx -> ctx.put("foo", "bar")).subscribe();
 
-    	assertThat(p.sink().currentContext().get("foo").toString()).isEqualTo("bar");
+		assertThat(p.sink().currentContext().get("foo").toString()).isEqualTo("bar");
 	}
 
 	@Test

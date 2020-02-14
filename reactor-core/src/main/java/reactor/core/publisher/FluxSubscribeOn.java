@@ -30,7 +30,7 @@ import reactor.util.annotation.Nullable;
 /**
  * Subscribes to the source Publisher asynchronously through a scheduler function or
  * ExecutorService.
- * 
+ *
  * @param <T> the value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
@@ -55,7 +55,8 @@ final class FluxSubscribeOn<T> extends InternalFluxOperator<T, T> {
 		try {
 			worker = Objects.requireNonNull(scheduler.createWorker(),
 					"The scheduler returned a null Function");
-		} catch (Throwable e) {
+		}
+		catch (Throwable e) {
 			Operators.error(actual, Operators.onOperatorError(e, actual.currentContext()));
 			return null;
 		}
@@ -79,34 +80,26 @@ final class FluxSubscribeOn<T> extends InternalFluxOperator<T, T> {
 	static final class SubscribeOnSubscriber<T>
 			implements InnerOperator<T, T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-
-		final CorePublisher<? extends T> source;
-
-		final Worker  worker;
-		final boolean requestOnSeparateThread;
-
-		volatile Subscription s;
 		static final AtomicReferenceFieldUpdater<SubscribeOnSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(SubscribeOnSubscriber.class,
 						Subscription.class,
 						"s");
-
-
-		volatile long requested;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SubscribeOnSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(SubscribeOnSubscriber.class,
 						"requested");
-
-		volatile Thread thread;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SubscribeOnSubscriber, Thread> THREAD =
 				AtomicReferenceFieldUpdater.newUpdater(SubscribeOnSubscriber.class,
 						Thread.class,
 						"thread");
+		final CoreSubscriber<? super T> actual;
+		final CorePublisher<? extends T> source;
+		final Worker worker;
+		final boolean requestOnSeparateThread;
+		volatile Subscription s;
+		volatile long requested;
+		volatile Thread thread;
 
 		SubscribeOnSubscriber(CorePublisher<? extends T> source, CoreSubscriber<? super T> actual,
 				Worker worker, boolean requestOnSeparateThread) {
@@ -135,7 +128,7 @@ final class FluxSubscribeOn<T> extends InternalFluxOperator<T, T> {
 					worker.schedule(() -> s.request(n));
 				}
 				catch (RejectedExecutionException ree) {
-					if(!worker.isDisposed()) {
+					if (!worker.isDisposed()) {
 						//FIXME should not throw but if we implement strict
 						// serialization like in StrictSubscriber, onNext will carry an
 						// extra cost

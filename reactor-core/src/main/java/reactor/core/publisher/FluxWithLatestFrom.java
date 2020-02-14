@@ -75,26 +75,22 @@ final class FluxWithLatestFrom<T, U, R> extends InternalFluxOperator<T, R> {
 
 	static final class WithLatestFromSubscriber<T, U, R> implements InnerOperator<T, R> {
 
-		final CoreSubscriber<? super R> actual;
-		final BiFunction<? super T, ? super U, ? extends R> combiner;
-
-		volatile Subscription main;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WithLatestFromSubscriber, Subscription>
 				MAIN =
 				AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class,
 						Subscription.class,
 						"main");
-
-		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WithLatestFromSubscriber, Subscription>
 				OTHER =
 				AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class,
 						Subscription.class,
 						"other");
-
+		final CoreSubscriber<? super R> actual;
+		final BiFunction<? super T, ? super U, ? extends R> combiner;
+		volatile Subscription main;
+		volatile Subscription other;
 		volatile U otherValue;
 
 		WithLatestFromSubscriber(CoreSubscriber<? super R> actual,
@@ -184,7 +180,7 @@ final class FluxWithLatestFrom<T, U, R> extends InternalFluxOperator<T, R> {
 
 				try {
 					r = Objects.requireNonNull(combiner.apply(t, u),
-					"The combiner returned a null value");
+							"The combiner returned a null value");
 				}
 				catch (Throwable e) {
 					onError(Operators.onOperatorError(this, e, t, actual.currentContext()));
@@ -260,7 +256,7 @@ final class FluxWithLatestFrom<T, U, R> extends InternalFluxOperator<T, R> {
 
 		final WithLatestFromSubscriber<?, U, ?> main;
 
-		 WithLatestFromOtherSubscriber(WithLatestFromSubscriber<?, U, ?> main) {
+		WithLatestFromOtherSubscriber(WithLatestFromSubscriber<?, U, ?> main) {
 			this.main = main;
 		}
 

@@ -96,37 +96,32 @@ final class FluxBufferWhen<T, OPEN, CLOSE, BUFFER extends Collection<? super T>>
 	static final class BufferWhenMainSubscriber<T, OPEN, CLOSE, BUFFER extends Collection<? super T>>
 			implements InnerOperator<T, BUFFER> {
 
-		final CoreSubscriber<? super BUFFER>                               actual;
-		final Context                                                      ctx;
-		final Publisher<? extends OPEN>                                    bufferOpen;
-		final Function<? super OPEN, ? extends Publisher<? extends CLOSE>> bufferClose;
-		final Supplier<BUFFER>                                             bufferSupplier;
-		final Disposable.Composite                                         subscribers;
-		final Queue<BUFFER>                                                queue;
-
-		volatile long requested;
 		static final AtomicLongFieldUpdater<BufferWhenMainSubscriber> REQUESTED =
-		AtomicLongFieldUpdater.newUpdater(BufferWhenMainSubscriber.class, "requested");
-
-		volatile Subscription s;
+				AtomicLongFieldUpdater.newUpdater(BufferWhenMainSubscriber.class, "requested");
 		static final AtomicReferenceFieldUpdater<BufferWhenMainSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(BufferWhenMainSubscriber.class, Subscription.class, "s");
-
-		volatile Throwable errors;
 		static final AtomicReferenceFieldUpdater<BufferWhenMainSubscriber, Throwable>
 				ERRORS =
 				AtomicReferenceFieldUpdater.newUpdater(BufferWhenMainSubscriber.class, Throwable.class, "errors");
-
-		volatile int windows;
 		static final AtomicIntegerFieldUpdater<BufferWhenMainSubscriber> WINDOWS =
 				AtomicIntegerFieldUpdater.newUpdater(BufferWhenMainSubscriber.class, "windows");
-
+		final CoreSubscriber<? super BUFFER> actual;
+		final Context ctx;
+		final Publisher<? extends OPEN> bufferOpen;
+		final Function<? super OPEN, ? extends Publisher<? extends CLOSE>> bufferClose;
+		final Supplier<BUFFER> bufferSupplier;
+		final Disposable.Composite subscribers;
+		final Queue<BUFFER> queue;
+		volatile long requested;
+		volatile Subscription s;
+		volatile Throwable errors;
+		volatile int windows;
 		volatile boolean done;
 		volatile boolean cancelled;
 
-		long                        index;
+		long index;
 		LinkedHashMap<Long, BUFFER> buffers; //linkedHashMap important to keep the buffer order on final drain
-		long                        emitted;
+		long emitted;
 
 		BufferWhenMainSubscriber(CoreSubscriber<? super BUFFER> actual,
 				Supplier<BUFFER> bufferSupplier, Supplier<? extends Queue<BUFFER>> queueSupplier,
@@ -249,7 +244,7 @@ final class FluxBufferWhen<T, OPEN, CLOSE, BUFFER extends Collection<? super T>>
 			Subscriber<? super BUFFER> a = actual;
 			Queue<BUFFER> q = queue;
 
-			for (;;) {
+			for (; ; ) {
 				long r = requested;
 
 				while (e != r) {
@@ -416,9 +411,9 @@ final class FluxBufferWhen<T, OPEN, CLOSE, BUFFER extends Collection<? super T>>
 			if (key == Attr.ACTUAL) return actual;
 			if (key == Attr.PREFETCH) return Integer.MAX_VALUE;
 			if (key == Attr.BUFFERED) return buffers.values()
-			                                        .stream()
-			                                        .mapToInt(Collection::size)
-			                                        .sum();
+					.stream()
+					.mapToInt(Collection::size)
+					.sum();
 			if (key == Attr.CANCELLED) return cancelled;
 			if (key == Attr.TERMINATED) return done;
 			if (key == Attr.REQUESTED_FROM_DOWNSTREAM) return requested;
@@ -431,11 +426,10 @@ final class FluxBufferWhen<T, OPEN, CLOSE, BUFFER extends Collection<? super T>>
 	static final class BufferWhenOpenSubscriber<OPEN>
 			implements Disposable, InnerConsumer<OPEN> {
 
-		volatile Subscription subscription;
 		static final AtomicReferenceFieldUpdater<BufferWhenOpenSubscriber, Subscription> SUBSCRIPTION =
 				AtomicReferenceFieldUpdater.newUpdater(BufferWhenOpenSubscriber.class, Subscription.class, "subscription");
-
 		final BufferWhenMainSubscriber<?, OPEN, ?, ?> parent;
+		volatile Subscription subscription;
 
 		BufferWhenOpenSubscriber(BufferWhenMainSubscriber<?, OPEN, ?, ?> parent) {
 			this.parent = parent;
@@ -495,12 +489,11 @@ final class FluxBufferWhen<T, OPEN, CLOSE, BUFFER extends Collection<? super T>>
 	static final class BufferWhenCloseSubscriber<T, BUFFER extends Collection<? super T>>
 			implements Disposable, InnerConsumer<Object> {
 
-		volatile Subscription subscription;
 		static final AtomicReferenceFieldUpdater<BufferWhenCloseSubscriber, Subscription> SUBSCRIPTION =
 				AtomicReferenceFieldUpdater.newUpdater(BufferWhenCloseSubscriber.class, Subscription.class, "subscription");
-
 		final BufferWhenMainSubscriber<T, ?, ?, BUFFER> parent;
-		final long                                      index;
+		final long index;
+		volatile Subscription subscription;
 
 
 		BufferWhenCloseSubscriber(BufferWhenMainSubscriber<T, ?, ?, BUFFER> parent, long index) {

@@ -74,7 +74,7 @@ final class MonoErrorSupplied<T> extends Mono<T> implements Fuseable.ScalarCalla
 	@Override
 	public Object call() throws Exception {
 		Throwable error = Objects.requireNonNull(errorSupplier.get(), "the errorSupplier returned null");
-		if(error instanceof Exception){
+		if (error instanceof Exception) {
 			throw ((Exception) error);
 		}
 		throw Exceptions.propagate(error);

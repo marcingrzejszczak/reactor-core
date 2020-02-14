@@ -35,7 +35,7 @@ public class LiftFunctionTest {
 	@Test
 	public void liftMono() {
 		Mono<Integer> source = Mono.just(1)
-		                           .hide();
+				.hide();
 
 		Operators.LiftFunction<Integer, Integer> liftFunction =
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
@@ -45,14 +45,14 @@ public class LiftFunctionTest {
 				.isInstanceOf(Mono.class)
 				.isExactlyInstanceOf(MonoLift.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
 	@Test
 	public void liftFlux() {
 		Flux<Integer> source = Flux.just(1)
-		                           .hide();
+				.hide();
 
 		Operators.LiftFunction<Integer, Integer> liftFunction =
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
@@ -62,15 +62,15 @@ public class LiftFunctionTest {
 				.isInstanceOf(Flux.class)
 				.isExactlyInstanceOf(FluxLift.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
 	@Test
 	public void liftParallelFlux() {
 		ParallelFlux<Integer> source = Flux.just(1)
-		                                   .parallel(2)
-		                                   .hide();
+				.parallel(2)
+				.hide();
 
 		Operators.LiftFunction<Integer, Integer> liftFunction =
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
@@ -80,15 +80,15 @@ public class LiftFunctionTest {
 				.isInstanceOf(ParallelFlux.class)
 				.isExactlyInstanceOf(ParallelLift.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
 	@Test
 	public void liftConnectableFlux() {
 		ConnectableFlux<Integer> source = Flux.just(1)
-		                                      .publish()
-		                                      .hide();
+				.publish()
+				.hide();
 
 		Operators.LiftFunction<Integer, Integer> liftFunction =
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
@@ -98,7 +98,7 @@ public class LiftFunctionTest {
 				.isInstanceOf(ConnectableFlux.class)
 				.isExactlyInstanceOf(ConnectableLift.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
@@ -108,7 +108,7 @@ public class LiftFunctionTest {
 		AtomicBoolean cancelSupportInvoked = new AtomicBoolean();
 
 		ConnectableFlux<Integer> source = Flux.just(1)
-		                                      .publish(); //TODO hide if ConnectableFlux gets a hide function
+				.publish(); //TODO hide if ConnectableFlux gets a hide function
 
 		Operators.LiftFunction<Integer, Integer> liftFunction =
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
@@ -120,7 +120,7 @@ public class LiftFunctionTest {
 		((ConnectableLift) liftOperator).connect(d -> cancelSupportInvoked.set(true));
 
 		Awaitility.await().atMost(1, TimeUnit.SECONDS)
-		          .untilAsserted(() -> assertThat(cancelSupportInvoked).isTrue());
+				.untilAsserted(() -> assertThat(cancelSupportInvoked).isTrue());
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1860
@@ -155,10 +155,10 @@ public class LiftFunctionTest {
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
 
 		sourceGroups.map(g -> liftFunction.apply(g)) //TODO hide if GroupedFlux gets a proper hide() function
-		            .doOnNext(liftOperator -> assertThat(liftOperator)
-				            .isInstanceOf(GroupedFlux.class)
-				            .isExactlyInstanceOf(GroupedLift.class))
-		            .blockLast();
+				.doOnNext(liftOperator -> assertThat(liftOperator)
+						.isInstanceOf(GroupedFlux.class)
+						.isExactlyInstanceOf(GroupedLift.class))
+				.blockLast();
 	}
 
 	@Test
@@ -174,7 +174,7 @@ public class LiftFunctionTest {
 				.isInstanceOf(Fuseable.class)
 				.isExactlyInstanceOf(MonoLiftFuseable.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
@@ -191,7 +191,7 @@ public class LiftFunctionTest {
 				.isInstanceOf(Fuseable.class)
 				.isExactlyInstanceOf(FluxLiftFuseable.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
@@ -210,15 +210,15 @@ public class LiftFunctionTest {
 				.isInstanceOf(ParallelFlux.class)
 				.isExactlyInstanceOf(ParallelLiftFuseable.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<List<Integer>>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<List<Integer>>() { }))
 				.doesNotThrowAnyException();
 	}
 
 	@Test
 	public void liftConnectableFluxFuseable() {
 		ConnectableFlux<Integer> source = Flux.just(1)
-		                                      .publish()
-		                                      .replay(2);
+				.publish()
+				.replay(2);
 
 		Operators.LiftFunction<Integer, Integer> liftFunction =
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
@@ -229,7 +229,7 @@ public class LiftFunctionTest {
 				.isInstanceOf(Fuseable.class)
 				.isExactlyInstanceOf(ConnectableLiftFuseable.class);
 
-		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() {}))
+		assertThatCode(() -> liftOperator.subscribe(new BaseSubscriber<Integer>() { }))
 				.doesNotThrowAnyException();
 	}
 
@@ -243,10 +243,10 @@ public class LiftFunctionTest {
 				Operators.LiftFunction.liftScannable(null, (s, actual) -> actual);
 
 		sourceGroups.map(g -> liftFunction.apply(g))
-		            .doOnNext(liftOperator -> assertThat(liftOperator)
-				            .isInstanceOf(GroupedFlux.class)
-				            .isInstanceOf(Fuseable.class)
-				            .isExactlyInstanceOf(GroupedLiftFuseable.class))
-		            .blockLast();
+				.doOnNext(liftOperator -> assertThat(liftOperator)
+						.isInstanceOf(GroupedFlux.class)
+						.isInstanceOf(Fuseable.class)
+						.isExactlyInstanceOf(GroupedLiftFuseable.class))
+				.blockLast();
 	}
 }

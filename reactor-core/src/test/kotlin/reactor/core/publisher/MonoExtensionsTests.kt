@@ -67,6 +67,7 @@ class MonoExtensionsTests {
                 .expectNext("a")
                 .verifyComplete()
     }
+
     @Test
     fun fluxToMono() {
         val f = Flux.range(1, 2)
@@ -100,7 +101,7 @@ class MonoExtensionsTests {
         val future = CompletableFuture<String?>()
 
         val verifier = StepVerifier.create(future.toMono().map { it.toUpperCase() })
-            .expectComplete()
+                .expectComplete()
         future.complete(null)
         verifier.verify()
     }
@@ -118,8 +119,8 @@ class MonoExtensionsTests {
     fun nullableCallableToMonoWithMap() {
         val callable = Callable<String?> { "foo" }
         val verifier = StepVerifier.create(callable.toMono().map { it.toUpperCase() })
-            .expectNext("FOO")
-            .expectComplete()
+                .expectNext("FOO")
+                .expectComplete()
         verifier.verify()
     }
 
@@ -127,7 +128,7 @@ class MonoExtensionsTests {
     fun nullableCallableToEmptyMonoWitMap() {
         val callable = Callable<String?> { null }
         val verifier = StepVerifier.create(callable.toMono().map { it.toUpperCase() })
-            .expectComplete()
+                .expectComplete()
         verifier.verify()
     }
 
@@ -135,7 +136,7 @@ class MonoExtensionsTests {
     fun nullableLambdaToEmptyMono() {
         val callable = { null }
         val verifier = StepVerifier.create(callable.toMono())
-            .expectComplete()
+                .expectComplete()
         verifier.verify()
     }
 
@@ -144,7 +145,7 @@ class MonoExtensionsTests {
         @Suppress("USELESS_CAST")
         val callable = { null as String? }
         val verifier = StepVerifier.create(callable.toMono().map { it.toUpperCase() })
-            .expectComplete()
+                .expectComplete()
         verifier.verify()
     }
 
@@ -236,7 +237,7 @@ class MonoExtensionsTests {
     @Test
     fun `zip with an Iterable of Mono + and a combinator`() {
         StepVerifier.create(listOf("foo1".toMono(), "foo2".toMono(), "foo3".toMono())
-                .zip { it.reduce { acc, s -> acc + s }})
+                .zip { it.reduce { acc, s -> acc + s } })
                 .expectNext("foo1foo2foo3")
                 .verifyComplete()
     }

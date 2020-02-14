@@ -40,7 +40,7 @@ public class FluxRepeatWhenTest {
 	@Test(expected = NullPointerException.class)
 	public void whenFactoryNull() {
 		Flux.never()
-		    .repeatWhen(null);
+				.repeatWhen(null);
 	}
 
 	@Test
@@ -48,23 +48,23 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.just(1)
-		    .repeatWhen(v -> Flux.range(1, 10))
-		    .subscribe(ts);
+				.repeatWhen(v -> Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertValues(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
 	public void cancelsOther() {
 		AtomicBoolean cancelled = new AtomicBoolean();
 		Flux<Integer> when = Flux.range(1, 10)
-		                         .doOnCancel(() -> cancelled.set(true));
+				.doOnCancel(() -> cancelled.set(true));
 
 		StepVerifier.create(Flux.just(1).repeatWhen(other -> when))
-		            .thenCancel()
-		            .verify();
+				.thenCancel()
+				.verify();
 
 		assertThat(cancelled.get()).isTrue();
 	}
@@ -73,18 +73,18 @@ public class FluxRepeatWhenTest {
 	public void cancelTwiceCancelsOtherOnce() {
 		AtomicInteger cancelled = new AtomicInteger();
 		Flux<Integer> when = Flux.range(1, 10)
-		                         .doOnCancel(cancelled::incrementAndGet);
+				.doOnCancel(cancelled::incrementAndGet);
 
 		Flux.just(1)
-		    .repeatWhen(other -> when)
-		    .subscribe(new BaseSubscriber<Integer>() {
-			    @Override
-			    protected void hookOnSubscribe(Subscription subscription) {
-				    subscription.request(1);
-				    subscription.cancel();
-				    subscription.cancel();
-			    }
-		    });
+				.repeatWhen(other -> when)
+				.subscribe(new BaseSubscriber<Integer>() {
+					@Override
+					protected void hookOnSubscribe(Subscription subscription) {
+						subscription.request(1);
+						subscription.cancel();
+						subscription.cancel();
+					}
+				});
 
 		assertThat(cancelled.get()).isEqualTo(1);
 	}
@@ -94,14 +94,14 @@ public class FluxRepeatWhenTest {
 		AtomicBoolean sourceSubscribed = new AtomicBoolean();
 		AtomicBoolean sourceCancelled = new AtomicBoolean();
 		Flux<Integer> source = Flux.just(1)
-		                           .doOnSubscribe(sub -> sourceSubscribed.set(true))
-		                           .doOnCancel(() -> sourceCancelled.set(true));
+				.doOnSubscribe(sub -> sourceSubscribed.set(true))
+				.doOnCancel(() -> sourceCancelled.set(true));
 
 		Flux<Integer> repeat = source.repeatWhen(other -> Mono.error(new IllegalStateException("boom")));
 
 		StepVerifier.create(repeat)
-		            .expectSubscription()
-		            .verifyErrorMessage("boom");
+				.expectSubscription()
+				.verifyErrorMessage("boom");
 
 		assertThat(sourceSubscribed.get()).isFalse();
 		assertThat(sourceCancelled.get()).isFalse();
@@ -113,18 +113,18 @@ public class FluxRepeatWhenTest {
 		AtomicBoolean sourceCancelled = new AtomicBoolean();
 		AtomicInteger count = new AtomicInteger();
 		Flux<Integer> source = Flux.just(1)
-		                           .doOnSubscribe(sub -> sourceSubscribed.set(true))
-		                           .doOnCancel(() -> sourceCancelled.set(true));
+				.doOnSubscribe(sub -> sourceSubscribed.set(true))
+				.doOnCancel(() -> sourceCancelled.set(true));
 
 
 		Flux<Integer> repeat = source.repeatWhen(other -> other.flatMap(l ->
 				count.getAndIncrement() == 0 ? Mono.just(l) : Mono.error(new IllegalStateException("boom"))));
 
 		StepVerifier.create(repeat)
-		            .expectSubscription()
-		            .expectNext(1)
-		            .expectNext(1)
-		            .verifyErrorMessage("boom");
+				.expectSubscription()
+				.expectNext(1)
+				.expectNext(1)
+				.verifyErrorMessage("boom");
 
 		assertThat(sourceSubscribed.get()).isTrue();
 		assertThat(sourceCancelled.get()).isTrue();
@@ -135,14 +135,14 @@ public class FluxRepeatWhenTest {
 		AtomicBoolean sourceSubscribed = new AtomicBoolean();
 		AtomicBoolean sourceCancelled = new AtomicBoolean();
 		Flux<Integer> source = Flux.just(1)
-		                           .doOnSubscribe(sub -> sourceSubscribed.set(true))
-		                           .doOnCancel(() -> sourceCancelled.set(true));
+				.doOnSubscribe(sub -> sourceSubscribed.set(true))
+				.doOnCancel(() -> sourceCancelled.set(true));
 
 		Flux<Integer> repeat = source.repeatWhen(other -> Flux.empty());
 
 		StepVerifier.create(repeat)
-		            .expectSubscription()
-		            .verifyComplete();
+				.expectSubscription()
+				.verifyComplete();
 
 		assertThat(sourceSubscribed.get()).isFalse();
 		assertThat(sourceCancelled.get()).isFalse();
@@ -153,16 +153,16 @@ public class FluxRepeatWhenTest {
 		AtomicBoolean sourceSubscribed = new AtomicBoolean();
 		AtomicBoolean sourceCancelled = new AtomicBoolean();
 		Flux<Integer> source = Flux.just(1)
-		                           .doOnSubscribe(sub -> sourceSubscribed.set(true))
-		                           .doOnCancel(() -> sourceCancelled.set(true));
+				.doOnSubscribe(sub -> sourceSubscribed.set(true))
+				.doOnCancel(() -> sourceCancelled.set(true));
 
 		Flux<Integer> repeat = source.repeatWhen(other -> other.take(1));
 
 		StepVerifier.create(repeat)
-		            .expectSubscription()
-		            .expectNext(1) //original
-		            .expectNext(1) //repeat
-		            .verifyComplete(); //repeat terminated
+				.expectSubscription()
+				.expectNext(1) //original
+				.expectNext(1) //repeat
+				.verifyComplete(); //repeat terminated
 
 		assertThat(sourceSubscribed.get()).isTrue();
 		assertThat(sourceCancelled.get()).isTrue();
@@ -173,36 +173,36 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> Flux.range(1, 5))
-		    .subscribe(ts);
+				.repeatWhen(v -> Flux.range(1, 5))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2, 1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -210,12 +210,12 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> Flux.empty())
-		    .subscribe(ts);
+				.repeatWhen(v -> Flux.empty())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -223,13 +223,13 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> Flux.error(new RuntimeException("forced " + "failure")))
-		    .subscribe(ts);
+				.repeatWhen(v -> Flux.error(new RuntimeException("forced " + "failure")))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -237,15 +237,15 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.repeatWhen(v -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 	}
 
@@ -256,8 +256,8 @@ public class FluxRepeatWhenTest {
 		new FluxRepeatWhen<>(Flux.range(1, 2), v -> null).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 
 	}
 
@@ -266,15 +266,15 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> v.map(a -> {
-			    throw new RuntimeException("forced failure");
-		    }))
-		    .subscribe(ts);
+				.repeatWhen(v -> v.map(a -> {
+					throw new RuntimeException("forced failure");
+				}))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 	}
 
@@ -283,14 +283,14 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> v)
-		    .subscribe(ts);
+				.repeatWhen(v -> v)
+				.subscribe(ts);
 
 		ts.request(8);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 	@Test
@@ -300,15 +300,15 @@ public class FluxRepeatWhenTest {
 		AtomicInteger count = new AtomicInteger();
 
 		Flux.just(1)
-		    .map(d -> count.incrementAndGet())
-		    .repeatWhen(v -> v)
-		    .subscribe(ts);
+				.map(d -> count.incrementAndGet())
+				.repeatWhen(v -> v)
+				.subscribe(ts);
 
 		ts.request(8);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 	@Test
@@ -316,45 +316,45 @@ public class FluxRepeatWhenTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 2)
-		    .repeatWhen(v -> v.takeWhile(n -> n > 0))
-		    .subscribe(ts);
+				.repeatWhen(v -> v.takeWhile(n -> n > 0))
+				.subscribe(ts);
 
 		ts.request(8);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 	@Test
 	public void exponentialRepeat() {
 		StepVerifier.withVirtualTime(this::exponentialRepeatScenario1)
-		            .expectNext(1)
-		            .thenAwait(Duration.ofSeconds(1))
-		            .expectNext(2)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .expectNext(3)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNext(4)
-		            .expectComplete()
-		            .verify();
+				.expectNext(1)
+				.thenAwait(Duration.ofSeconds(1))
+				.expectNext(2)
+				.thenAwait(Duration.ofSeconds(2))
+				.expectNext(3)
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNext(4)
+				.expectComplete()
+				.verify();
 	}
 
 	Flux<Integer> exponentialRepeatScenario1() {
 		AtomicInteger i = new AtomicInteger();
 		return Mono.fromCallable(i::incrementAndGet)
-		           .repeatWhen(repeat -> repeat.zipWith(Flux.range(1, 3), (t1, t2) -> t2)
-		                                       .flatMap(time -> Mono.delay(Duration.ofSeconds(
-				                                       time))));
+				.repeatWhen(repeat -> repeat.zipWith(Flux.range(1, 3), (t1, t2) -> t2)
+						.flatMap(time -> Mono.delay(Duration.ofSeconds(
+								time))));
 	}
 
 	@Test
 	public void exponentialRepeat2() {
 		StepVerifier.withVirtualTime(this::exponentialRepeatScenario2)
-		            .thenAwait(Duration.ofSeconds(6))
-		            .expectNext("hey")
-		            .expectComplete()
-		            .verify();
+				.thenAwait(Duration.ofSeconds(6))
+				.expectNext("hey")
+				.expectComplete()
+				.verify();
 	}
 
 	Flux<String> exponentialRepeatScenario2() {
@@ -367,43 +367,47 @@ public class FluxRepeatWhenTest {
 				s.success();
 			}
 		}).repeatWhen(repeat -> repeat.zipWith(Flux.range(1, 3), (t1, t2) -> t2)
-		                              .flatMap(time -> Mono.delay(Duration.ofSeconds(time))));
+				.flatMap(time -> Mono.delay(Duration.ofSeconds(time))));
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxRepeatWhen.RepeatWhenMainSubscriber<Integer> test =
-        		new FluxRepeatWhen.RepeatWhenMainSubscriber<>(actual, null, Flux.empty());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxRepeatWhen.RepeatWhenMainSubscriber<Integer> test =
+				new FluxRepeatWhen.RepeatWhenMainSubscriber<>(actual, null, Flux.empty());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanOtherSubscriber() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxRepeatWhen.RepeatWhenMainSubscriber<Integer> main =
-        		new FluxRepeatWhen.RepeatWhenMainSubscriber<>(actual, null, Flux.empty());
-        FluxRepeatWhen.RepeatWhenOtherSubscriber test = new FluxRepeatWhen.RepeatWhenOtherSubscriber();
-        test.main = main;
+	public void scanOtherSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxRepeatWhen.RepeatWhenMainSubscriber<Integer> main =
+				new FluxRepeatWhen.RepeatWhenMainSubscriber<>(actual, null, Flux.empty());
+		FluxRepeatWhen.RepeatWhenOtherSubscriber test = new FluxRepeatWhen.RepeatWhenOtherSubscriber();
+		test.main = main;
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main.otherArbiter);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main.otherArbiter);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+	}
 
 	@Test
 	public void inners() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-		CoreSubscriber<Long> signaller = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		CoreSubscriber<Long> signaller = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		Flux<Integer> when = Flux.empty();
 		FluxRepeatWhen.RepeatWhenMainSubscriber<Integer> main = new FluxRepeatWhen.RepeatWhenMainSubscriber<>(actual, signaller, when);
 
@@ -420,38 +424,39 @@ public class FluxRepeatWhenTest {
 
 		Flux<String> retryWithContext =
 				Flux.just("A", "B")
-				    .doOnEach(sig -> {
-				    	if (sig.isOnComplete()) {
-						    Context ctx = sig.getContext();
-						    contexts.add(ctx);
-						    repeats.add("emitted " + ctx.get("emitted") + " elements this attempt, " + ctx.get("repeatsLeft") + " repeats left");
-					    }
-				    })
-				    .repeatWhen(emittedEachAttempt -> emittedEachAttempt
-						    .flatMap(e -> Mono.subscriberContext().map(ctx -> Tuples.of(e, ctx)))
-						    .flatMap(t2 -> {
-							    long lastEmitted = t2.getT1();
-							    Context ctx = t2.getT2();
-							    int rl = ctx.getOrDefault("repeatsLeft", 0);
-							    if (rl > 0) {
-								    return Mono.just(Context.of(
-										    "repeatsLeft", rl - 1,
-										    "emitted", lastEmitted));
-							    } else {
-								    return Mono.<Context>error(new IllegalStateException("repeats exhausted"));
-							    }
-						    })
-				    )
-				    .subscriberContext(Context.of("repeatsLeft", REPEAT_COUNT, "emitted", 0))
-				    .subscriberContext(Context.of("thirdPartyContext", "present"));
+						.doOnEach(sig -> {
+							if (sig.isOnComplete()) {
+								Context ctx = sig.getContext();
+								contexts.add(ctx);
+								repeats.add("emitted " + ctx.get("emitted") + " elements this attempt, " + ctx.get("repeatsLeft") + " repeats left");
+							}
+						})
+						.repeatWhen(emittedEachAttempt -> emittedEachAttempt
+								.flatMap(e -> Mono.subscriberContext().map(ctx -> Tuples.of(e, ctx)))
+								.flatMap(t2 -> {
+									long lastEmitted = t2.getT1();
+									Context ctx = t2.getT2();
+									int rl = ctx.getOrDefault("repeatsLeft", 0);
+									if (rl > 0) {
+										return Mono.just(Context.of(
+												"repeatsLeft", rl - 1,
+												"emitted", lastEmitted));
+									}
+									else {
+										return Mono.<Context>error(new IllegalStateException("repeats exhausted"));
+									}
+								})
+						)
+						.subscriberContext(Context.of("repeatsLeft", REPEAT_COUNT, "emitted", 0))
+						.subscriberContext(Context.of("thirdPartyContext", "present"));
 
 		StepVerifier.create(retryWithContext)
-		            .expectNext("A", "B")
-		            .expectNext("A", "B")
-		            .expectNext("A", "B")
-		            .expectNext("A", "B")
-		            .expectErrorMessage("repeats exhausted")
-		            .verify(Duration.ofSeconds(1));
+				.expectNext("A", "B")
+				.expectNext("A", "B")
+				.expectNext("A", "B")
+				.expectNext("A", "B")
+				.expectErrorMessage("repeats exhausted")
+				.verify(Duration.ofSeconds(1));
 
 		assertThat(repeats).containsExactly(
 				"emitted 0 elements this attempt, 3 repeats left",
@@ -473,37 +478,38 @@ public class FluxRepeatWhenTest {
 
 		Flux<String> retryWithContext =
 				Flux.just("A", "B")
-				    .doOnEach(sig -> {
-					    if (sig.isOnComplete()) {
-						    Context ctx = sig.getContext();
-						    contexts.add(ctx);
-						    repeats.add("emitted " + ctx.get("emitted") + " elements this attempt, " + ctx.get("repeatsLeft") + " repeats left");
-					    }
-				    })
-				    .repeatWhen(emittedEachAttempt -> emittedEachAttempt
-						    .flatMap(e -> Mono.subscriberContext().map(ctx -> Tuples.of(e, ctx)))
-						    .flatMap(t2 -> {
-							    long lastEmitted = t2.getT1();
-							    Context ctx = t2.getT2();
-							    int rl = ctx.getOrDefault("repeatsLeft", 0);
-							    if (rl > 0) {
-								    return Mono.just(ctx.put("repeatsLeft", rl - 1)
-										    .put("emitted", lastEmitted));
-							    } else {
-								    return Mono.<Context>error(new IllegalStateException("repeats exhausted"));
-							    }
-						    })
-				    )
-				    .subscriberContext(Context.of("repeatsLeft", REPEAT_COUNT, "emitted", 0))
-				    .subscriberContext(Context.of("thirdPartyContext", "present"));
+						.doOnEach(sig -> {
+							if (sig.isOnComplete()) {
+								Context ctx = sig.getContext();
+								contexts.add(ctx);
+								repeats.add("emitted " + ctx.get("emitted") + " elements this attempt, " + ctx.get("repeatsLeft") + " repeats left");
+							}
+						})
+						.repeatWhen(emittedEachAttempt -> emittedEachAttempt
+								.flatMap(e -> Mono.subscriberContext().map(ctx -> Tuples.of(e, ctx)))
+								.flatMap(t2 -> {
+									long lastEmitted = t2.getT1();
+									Context ctx = t2.getT2();
+									int rl = ctx.getOrDefault("repeatsLeft", 0);
+									if (rl > 0) {
+										return Mono.just(ctx.put("repeatsLeft", rl - 1)
+												.put("emitted", lastEmitted));
+									}
+									else {
+										return Mono.<Context>error(new IllegalStateException("repeats exhausted"));
+									}
+								})
+						)
+						.subscriberContext(Context.of("repeatsLeft", REPEAT_COUNT, "emitted", 0))
+						.subscriberContext(Context.of("thirdPartyContext", "present"));
 
 		StepVerifier.create(retryWithContext)
-		            .expectNext("A", "B")
-		            .expectNext("A", "B")
-		            .expectNext("A", "B")
-		            .expectNext("A", "B")
-		            .expectErrorMessage("repeats exhausted")
-		            .verify(Duration.ofSeconds(1));
+				.expectNext("A", "B")
+				.expectNext("A", "B")
+				.expectNext("A", "B")
+				.expectNext("A", "B")
+				.expectErrorMessage("repeats exhausted")
+				.verify(Duration.ofSeconds(1));
 
 		assertThat(repeats).containsExactly(
 				"emitted 0 elements this attempt, 3 repeats left",

@@ -37,10 +37,10 @@ public class FluxGenerateVerification extends PublisherVerification<Long> {
 	@Override
 	public Publisher<Long> createPublisher(long elements) {
 		return Flux.<Long, Long>generate(() -> 0L, (cursor, s) -> {
-			if(cursor < elements && cursor < elements) {
+			if (cursor < elements && cursor < elements) {
 				s.next(cursor);
 			}
-			else if(cursor == elements){
+			else if (cursor == elements) {
 				s.complete();
 			}
 
@@ -48,7 +48,7 @@ public class FluxGenerateVerification extends PublisherVerification<Long> {
 		})
 
 				.map(data -> data * 10)
-				.map( data -> data / 10)
+				.map(data -> data / 10)
 				.log("log-test", Level.FINE);
 	}
 

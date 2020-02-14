@@ -23,7 +23,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
 import reactor.test.publisher.ReduceOperatorTest;
@@ -64,13 +63,13 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 	@Test(expected = NullPointerException.class)
 	public void supplierNull() {
 		Flux.never()
-		    .reduceWith(null, (a, b) -> b);
+				.reduceWith(null, (a, b) -> b);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void accumulatorNull() {
 		Flux.never()
-		    .reduceWith(() -> 1, null);
+				.reduceWith(() -> 1, null);
 	}
 
 	@Test
@@ -78,12 +77,12 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .reduceWith(() -> 0, (a, b) -> b)
-		    .subscribe(ts);
+				.reduceWith(() -> 0, (a, b) -> b)
+				.subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -91,18 +90,18 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .reduceWith(() -> 0, (a, b) -> b)
-		    .subscribe(ts);
+				.reduceWith(() -> 0, (a, b) -> b)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -114,10 +113,10 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 		}, (a, b) -> b).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith(e -> Assert.assertTrue(e.getMessage()
-		                                           .contains("forced failure")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage()
+						.contains("forced failure")));
 	}
 
 	@Test
@@ -129,10 +128,10 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith(e -> Assert.assertTrue(e.getMessage()
-		                                           .contains("forced failure")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage()
+						.contains("forced failure")));
 	}
 
 	@Test
@@ -142,8 +141,8 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 		Flux.range(1, 10).<Integer>reduceWith(() -> null, (a, b) -> b).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -151,12 +150,12 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .reduceWith(() -> 0, (a, b) -> null)
-		    .subscribe(ts);
+				.reduceWith(() -> 0, (a, b) -> null)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -192,7 +191,7 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 				new MonoReduceSeed.ReduceSeedSubscriber<>(testSubscriber,
 						(current, next) -> current + next, 0);
 
-		sub.onSubscribe(Operators. emptySubscription());
+		sub.onSubscribe(Operators.emptySubscription());
 
 		sub.onNext(1);
 		assertThat(sub.value).isEqualTo(1);
@@ -212,7 +211,7 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 				new MonoReduceSeed.ReduceSeedSubscriber<>(testSubscriber,
 						(current, next) -> current + next, 0);
 
-		sub.onSubscribe(Operators. emptySubscription());
+		sub.onSubscribe(Operators.emptySubscription());
 
 		sub.cancel(); //discards seed
 
@@ -235,7 +234,7 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 				new MonoReduceSeed.ReduceSeedSubscriber<>(testSubscriber,
 						(current, next) -> current + next, 0);
 
-		sub.onSubscribe(Operators. emptySubscription());
+		sub.onSubscribe(Operators.emptySubscription());
 
 		sub.onNext(1);
 		assertThat(sub.value).isEqualTo(1);
@@ -287,7 +286,8 @@ public class MonoReduceSeedTest extends ReduceOperatorTest<String, String> {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoReduceSeed.ReduceSeedSubscriber<Integer, String> test = new MonoReduceSeed.ReduceSeedSubscriber<>(
 				actual, (s, i) -> s + i, "foo");
 		Subscription parent = Operators.emptySubscription();

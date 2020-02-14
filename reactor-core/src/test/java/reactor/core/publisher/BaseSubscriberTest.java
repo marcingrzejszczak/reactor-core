@@ -27,8 +27,12 @@ import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Exceptions;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BaseSubscriberTest {
 
@@ -98,7 +102,7 @@ public class BaseSubscriberTest {
 		}
 		catch (UnsupportedOperationException e) {
 			assertThat(e.getClass()
-			            .getSimpleName(), is("ErrorCallbackNotImplemented"));
+					.getSimpleName(), is("ErrorCallbackNotImplemented"));
 			assertThat(e.getCause(), is(instanceOf(IllegalStateException.class)));
 		}
 	}
@@ -239,31 +243,31 @@ public class BaseSubscriberTest {
 		AtomicReference<Throwable> error = new AtomicReference<>();
 
 		Flux.just("foo")
-		    .subscribe(new BaseSubscriber<String>() {
-			    @Override
-			    protected void hookOnSubscribe(Subscription subscription) {
-			    	requestUnbounded();
-			    }
+				.subscribe(new BaseSubscriber<String>() {
+					@Override
+					protected void hookOnSubscribe(Subscription subscription) {
+						requestUnbounded();
+					}
 
-			    @Override
-			    protected void hookOnNext(String value) {
-			    }
+					@Override
+					protected void hookOnNext(String value) {
+					}
 
-			    @Override
-			    protected void hookOnError(Throwable throwable) {
-				    error.set(throwable);
-			    }
+					@Override
+					protected void hookOnError(Throwable throwable) {
+						error.set(throwable);
+					}
 
-			    @Override
-			    protected void hookOnComplete() {
-				    throw err;
-			    }
+					@Override
+					protected void hookOnComplete() {
+						throw err;
+					}
 
-			    @Override
-			    protected void hookFinally(SignalType type) {
-				    checkFinally.set(type);
-			    }
-		    });
+					@Override
+					protected void hookFinally(SignalType type) {
+						checkFinally.set(type);
+					}
+				});
 
 		assertThat(checkFinally.get(), is(SignalType.ON_COMPLETE));
 		assertThat(error.get(), is(err));
@@ -282,20 +286,20 @@ public class BaseSubscriberTest {
 							requestUnbounded();
 						}
 
-				@Override
-				protected void hookOnNext(String value) {
-				}
+						@Override
+						protected void hookOnNext(String value) {
+						}
 
-				@Override
-				protected void hookOnError(Throwable throwable) {
-					throw err;
-				}
+						@Override
+						protected void hookOnError(Throwable throwable) {
+							throw err;
+						}
 
-				@Override
-				protected void hookFinally(SignalType type) {
-					checkFinally.set(type);
-				}
-			});
+						@Override
+						protected void hookFinally(SignalType type) {
+							checkFinally.set(type);
+						}
+					});
 			fail("expected " + err);
 		}
 		catch (Throwable e) {
@@ -311,31 +315,31 @@ public class BaseSubscriberTest {
 		AtomicReference<Throwable> error = new AtomicReference<>();
 
 		Flux.just("foo")
-		    .subscribe(new BaseSubscriber<String>() {
-			    @Override
-			    protected void hookOnSubscribe(Subscription subscription) {
-				    this.cancel();
-			    }
+				.subscribe(new BaseSubscriber<String>() {
+					@Override
+					protected void hookOnSubscribe(Subscription subscription) {
+						this.cancel();
+					}
 
-			    @Override
-			    protected void hookOnNext(String value) {
-			    }
+					@Override
+					protected void hookOnNext(String value) {
+					}
 
-			    @Override
-			    protected void hookOnError(Throwable throwable) {
-				    error.set(throwable);
-			    }
+					@Override
+					protected void hookOnError(Throwable throwable) {
+						error.set(throwable);
+					}
 
-			    @Override
-			    protected void hookOnCancel() {
-				    throw err;
-			    }
+					@Override
+					protected void hookOnCancel() {
+						throw err;
+					}
 
-			    @Override
-			    protected void hookFinally(SignalType type) {
-				    checkFinally.set(type);
-			    }
-		    });
+					@Override
+					protected void hookFinally(SignalType type) {
+						checkFinally.set(type);
+					}
+				});
 
 		assertThat(checkFinally.get(), is(SignalType.CANCEL));
 		assertThat(error.get(), is(err));
@@ -366,7 +370,7 @@ public class BaseSubscriberTest {
 		};
 
 		Disposable d = Mono.delay(Duration.ofSeconds(1))
-		                   .subscribeWith(sub);
+				.subscribeWith(sub);
 		d.dispose();
 
 		assertTrue("delay not skipped by cancel", latch.await(1500, TimeUnit.MILLISECONDS));

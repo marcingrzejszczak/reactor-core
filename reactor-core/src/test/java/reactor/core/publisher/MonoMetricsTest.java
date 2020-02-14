@@ -41,7 +41,17 @@ import reactor.core.publisher.MonoMetrics.MetricsSubscriber;
 import reactor.test.publisher.TestPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static reactor.core.publisher.FluxMetrics.*;
+import static reactor.core.publisher.FluxMetrics.METER_FLOW_DURATION;
+import static reactor.core.publisher.FluxMetrics.METER_MALFORMED;
+import static reactor.core.publisher.FluxMetrics.METER_ON_NEXT_DELAY;
+import static reactor.core.publisher.FluxMetrics.METER_REQUESTED;
+import static reactor.core.publisher.FluxMetrics.METER_SUBSCRIBED;
+import static reactor.core.publisher.FluxMetrics.REACTOR_DEFAULT_NAME;
+import static reactor.core.publisher.FluxMetrics.TAG_CANCEL;
+import static reactor.core.publisher.FluxMetrics.TAG_KEY_EXCEPTION;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_COMPLETE;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_ERROR;
+import static reactor.core.publisher.FluxMetrics.TAG_SEQUENCE_NAME;
 import static reactor.test.publisher.TestPublisher.Violation.CLEANUP_ON_TERMINATE;
 
 public class MonoMetricsTest {
@@ -113,9 +123,9 @@ public class MonoMetricsTest {
 		final Mono<Integer> unnamed = new MonoMetrics<>(unnamedSource, registry)
 				.onErrorResume(e -> Mono.empty());
 		final Mono<Integer> namedSource = Mono.just(40)
-		                                      .name("foo")
-		                                      .map(i -> 100 / (40 - i))
-		                                      .hide();
+				.name("foo")
+				.map(i -> 100 / (40 - i))
+				.hide();
 		final Mono<Integer> named = new MonoMetrics<>(namedSource, registry)
 				.onErrorResume(e -> Mono.empty());
 
@@ -145,10 +155,10 @@ public class MonoMetricsTest {
 	@Test
 	public void usesTags() {
 		Mono<Integer> source = Mono.just(1)
-		                           .tag("tag1", "A")
-		                           .name("usesTags")
-		                           .tag("tag2", "foo")
-		                           .hide();
+				.tag("tag1", "A")
+				.name("usesTags")
+				.tag("tag2", "foo")
+				.hide();
 		new MonoMetrics<>(source, registry)
 				.block();
 
@@ -167,7 +177,7 @@ public class MonoMetricsTest {
 	@Test
 	public void noOnNextTimer() {
 		Mono<Integer> source = Mono.just(1)
-		                           .hide();
+				.hide();
 		new MonoMetrics<>(source, registry)
 				.block();
 
@@ -187,7 +197,7 @@ public class MonoMetricsTest {
 				.subscribe();
 
 		testPublisher.complete()
-		             .next(2);
+				.next(2);
 
 		Counter malformedMeter = registry
 				.find(METER_MALFORMED)
@@ -210,7 +220,7 @@ public class MonoMetricsTest {
 					.subscribe();
 
 			testPublisher.complete()
-			             .error(dropError);
+					.error(dropError);
 
 			Counter malformedMeter = registry
 					.find(METER_MALFORMED)
@@ -220,7 +230,7 @@ public class MonoMetricsTest {
 			assertThat(malformedMeter.count()).isEqualTo(1);
 			assertThat(errorDropped).hasValue(dropError);
 		}
-		finally{
+		finally {
 			Hooks.resetOnErrorDropped();
 		}
 	}
@@ -228,21 +238,21 @@ public class MonoMetricsTest {
 	@Test
 	public void subscribeToComplete() {
 		Mono<Long> source = Mono.delay(Duration.ofMillis(100))
-		                          .hide();
+				.hide();
 		new MonoMetrics<>(source, registry)
 				.block();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		assertThat(stcCompleteTimer.max(TimeUnit.MILLISECONDS))
 				.as("subscribe to complete timer")
@@ -260,23 +270,23 @@ public class MonoMetricsTest {
 	@Test
 	public void subscribeToError() {
 		Mono<Long> source = Mono.delay(Duration.ofMillis(100))
-		                           .map(v -> 100 / v)
-		                           .hide();
+				.map(v -> 100 / v)
+				.hide();
 		new MonoMetrics<>(source, registry)
 				.onErrorReturn(-1L)
 				.block();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
@@ -296,22 +306,22 @@ public class MonoMetricsTest {
 	@Test
 	public void subscribeToCancel() throws InterruptedException {
 		Mono<Long> source = Mono.delay(Duration.ofMillis(200))
-		                           .hide();
+				.hide();
 		Disposable disposable = new MonoMetrics<>(source, registry).subscribe();
 		Thread.sleep(100);
 		disposable.dispose();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
@@ -331,12 +341,12 @@ public class MonoMetricsTest {
 	@Test
 	public void countsSubscriptions() {
 		Mono<Integer> source = Mono.just(1)
-		                           .hide();
+				.hide();
 		Mono<Integer> test = new MonoMetrics<>(source, registry);
 
 		test.subscribe();
 		Counter meter = registry.find(METER_SUBSCRIBED)
-		                        .counter();
+				.counter();
 
 		assertThat(meter).isNotNull();
 		assertThat(meter.count()).as("after 1s subscribe").isEqualTo(1);
@@ -350,19 +360,19 @@ public class MonoMetricsTest {
 	@Test
 	public void noRequestTrackingEvenForNamedSequence() {
 		Mono<Integer> source = Mono.just(10)
-		                           .name("foo")
-		                           .hide();
+				.name("foo")
+				.hide();
 		new MonoMetrics<>(source, registry)
 				.block();
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .summary();
+				.summary();
 
 		assertThat(meter).as("global find").isNull();
 
 		meter = registry.find(METER_REQUESTED)
-		                .tag(TAG_SEQUENCE_NAME, "foo")
-		                .summary();
+				.tag(TAG_SEQUENCE_NAME, "foo")
+				.summary();
 
 		assertThat(meter).as("tagged find").isNull();
 	}
@@ -371,11 +381,11 @@ public class MonoMetricsTest {
 	@Test
 	public void flowDurationTagsConsistency() {
 		Mono<Integer> source1 = Mono.just(1)
-		                            .name("normal")
-		                            .hide();
+				.name("normal")
+				.hide();
 		Mono<Object> source2 = Mono.error(new IllegalStateException("dummy"))
-		                           .name("error")
-		                           .hide();
+				.name("error")
+				.hide();
 
 		new MonoMetrics<>(source1, registry)
 				.block();

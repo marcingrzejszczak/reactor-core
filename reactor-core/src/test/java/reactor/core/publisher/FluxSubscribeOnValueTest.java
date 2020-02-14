@@ -44,13 +44,13 @@ public class FluxSubscribeOnValueTest {
 	public void testSubscribeOnValueFusion() {
 
 		StepVerifier.create(Flux.range(1, 100)
-		                        .flatMap(f -> Flux.just(f)
-		                                          .subscribeOn(Schedulers.parallel())
-		                                          .log("testSubscribeOnValueFusion", Level.FINE)
-		                                          .map(this::slow)))
-		            .expectFusion(Fuseable.ASYNC, Fuseable.NONE)
-		            .expectNextCount(100)
-		            .verifyComplete();
+				.flatMap(f -> Flux.just(f)
+						.subscribeOn(Schedulers.parallel())
+						.log("testSubscribeOnValueFusion", Level.FINE)
+						.map(this::slow)))
+				.expectFusion(Fuseable.ASYNC, Fuseable.NONE)
+				.expectNextCount(100)
+				.verifyComplete();
 
 		int minExec = 2;
 
@@ -61,12 +61,12 @@ public class FluxSubscribeOnValueTest {
 
 	}
 
-	int slow(int slow){
+	int slow(int slow) {
 		try {
 			execs.computeIfAbsent(Thread.currentThread()
-			                            .hashCode(), i -> 0);
+					.hashCode(), i -> 0);
 			execs.compute(Thread.currentThread()
-			                    .hashCode(), (k, v) -> v + 1);
+					.hashCode(), (k, v) -> v + 1);
 			Thread.sleep(10);
 			return slow;
 		}
@@ -76,32 +76,33 @@ public class FluxSubscribeOnValueTest {
 	}
 
 	@Test
-    public void scanOperator() {
+	public void scanOperator() {
 		final Flux<Integer> test = Flux.just(1).subscribeOn(Schedulers.immediate());
 
 		assertThat(test).isInstanceOf(Scannable.class)
-		                .isInstanceOf(FluxSubscribeOnValue.class);
+				.isInstanceOf(FluxSubscribeOnValue.class);
 
 		assertThat(((Scannable) test).scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.immediate());
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSubscribeOnValue.ScheduledScalar<Integer> test =
-        		new FluxSubscribeOnValue.ScheduledScalar<Integer>(actual, 1, Schedulers.single());
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSubscribeOnValue.ScheduledScalar<Integer> test =
+				new FluxSubscribeOnValue.ScheduledScalar<Integer>(actual, 1, Schedulers.single());
 
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.future = FluxSubscribeOnValue.ScheduledScalar.FINISHED;
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.future = FluxSubscribeOnValue.ScheduledScalar.FINISHED;
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.future = OperatorDisposables.DISPOSED;
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.future = OperatorDisposables.DISPOSED;
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
 
-        assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
-    }
+		assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
+	}
 }

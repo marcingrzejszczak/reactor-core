@@ -47,7 +47,7 @@ final class FluxDoOnEach<T> extends InternalFluxOperator<T, T> {
 	static <T> DoOnEachSubscriber<T> createSubscriber(CoreSubscriber<? super T> actual,
 			Consumer<? super Signal<T>> onSignal, boolean fuseable, boolean isMono) {
 		if (fuseable) {
-			if(actual instanceof ConditionalSubscriber) {
+			if (actual instanceof ConditionalSubscriber) {
 				return new DoOnEachFuseableConditionalSubscriber<>((ConditionalSubscriber<? super T>) actual, onSignal, isMono);
 			}
 			return new DoOnEachFuseableSubscriber<>(actual, onSignal, isMono);
@@ -66,13 +66,13 @@ final class FluxDoOnEach<T> extends InternalFluxOperator<T, T> {
 
 	static class DoOnEachSubscriber<T> implements InnerOperator<T, T>, Signal<T> {
 
-		static final short STATE_FLUX_START   = (short) 0;
-		static final short STATE_MONO_START   = (short) 1;
+		static final short STATE_FLUX_START = (short) 0;
+		static final short STATE_MONO_START = (short) 1;
 		static final short STATE_SKIP_HANDLER = (short) 2;
-		static final short STATE_DONE         = (short) 3;
+		static final short STATE_DONE = (short) 3;
 
-		final CoreSubscriber<? super T>   actual;
-		final Context                     cachedContext;
+		final CoreSubscriber<? super T> actual;
+		final Context cachedContext;
 		final Consumer<? super Signal<T>> onSignal;
 
 		T t;
@@ -296,7 +296,8 @@ final class FluxDoOnEach<T> extends InternalFluxOperator<T, T> {
 				catch (Throwable e) {
 					throw e;
 				}
-			} else if (v != null) {
+			}
+			else if (v != null) {
 				this.t = v;
 				onSignal.accept(this); //throws in case of error
 			}
@@ -320,7 +321,7 @@ final class FluxDoOnEach<T> extends InternalFluxOperator<T, T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public boolean tryOnNext(T t) {
-			boolean result = ((ConditionalSubscriber<? super T>)actual).tryOnNext(t);
+			boolean result = ((ConditionalSubscriber<? super T>) actual).tryOnNext(t);
 			if (result) {
 				this.t = t;
 				onSignal.accept(this);

@@ -36,30 +36,30 @@ public class StrictSubscriberTest {
 		AtomicReference<Throwable> e = new AtomicReference<>();
 
 		Flux.just(1)
-		    .subscribe(new Subscriber<Integer>() {
-			    boolean open;
+				.subscribe(new Subscriber<Integer>() {
+					boolean open;
 
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(1);
-				    open = true;
-			    }
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(1);
+						open = true;
+					}
 
-			    @Override
-			    public void onNext(Integer t) {
-				    state.set(open);
-			    }
+					@Override
+					public void onNext(Integer t) {
+						state.set(open);
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    e.set(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						e.set(t);
+					}
 
-			    @Override
-			    public void onComplete() {
+					@Override
+					public void onComplete() {
 
-			    }
-		    });
+					}
+				});
 
 		Assert.assertNull("Error: " + e.get(), e.get());
 
@@ -75,27 +75,27 @@ public class StrictSubscriberTest {
 		DirectProcessor<Integer> sp = DirectProcessor.create();
 
 		sp.doOnCancel(() -> state2.set(state1.get()))
-		  .subscribe(new Subscriber<Integer>() {
-			  @Override
-			  public void onSubscribe(Subscription s) {
-				  s.cancel();
-				  state1.set(true);
-			  }
+				.subscribe(new Subscriber<Integer>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.cancel();
+						state1.set(true);
+					}
 
-			  @Override
-			  public void onNext(Integer t) {
-			  }
+					@Override
+					public void onNext(Integer t) {
+					}
 
-			  @Override
-			  public void onError(Throwable t) {
-				  e.set(t);
-			  }
+					@Override
+					public void onError(Throwable t) {
+						e.set(t);
+					}
 
-			  @Override
-			  public void onComplete() {
+					@Override
+					public void onComplete() {
 
-			  }
-		  });
+					}
+				});
 
 		Assert.assertNull("Error: " + e.get(), e.get());
 
@@ -109,30 +109,30 @@ public class StrictSubscriberTest {
 		AtomicReference<Throwable> e = new AtomicReference<>();
 
 		Flux.just(1)
-		    .subscribe(new CoreSubscriber<Integer>() {
-			    boolean open;
+				.subscribe(new CoreSubscriber<Integer>() {
+					boolean open;
 
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(1);
-				    open = true;
-			    }
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(1);
+						open = true;
+					}
 
-			    @Override
-			    public void onNext(Integer t) {
-				    state.set(open);
-			    }
+					@Override
+					public void onNext(Integer t) {
+						state.set(open);
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    e.set(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						e.set(t);
+					}
 
-			    @Override
-			    public void onComplete() {
+					@Override
+					public void onComplete() {
 
-			    }
-		    });
+					}
+				});
 
 		Assert.assertNull("Error: " + e.get(), e.get());
 
@@ -146,28 +146,28 @@ public class StrictSubscriberTest {
 		AtomicReference<Throwable> e = new AtomicReference<>();
 
 		Flux.just(1)
-		    .doOnCancel(() -> state2.set(state1.get()))
-		    .subscribe(new CoreSubscriber<Integer>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.cancel();
-				    state1.set(true);
-			    }
+				.doOnCancel(() -> state2.set(state1.get()))
+				.subscribe(new CoreSubscriber<Integer>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.cancel();
+						state1.set(true);
+					}
 
-			    @Override
-			    public void onNext(Integer t) {
-			    }
+					@Override
+					public void onNext(Integer t) {
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    e.set(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						e.set(t);
+					}
 
-			    @Override
-			    public void onComplete() {
+					@Override
+					public void onComplete() {
 
-			    }
-		    });
+					}
+				});
 
 		Assert.assertNull("Error: " + e.get(), e.get());
 

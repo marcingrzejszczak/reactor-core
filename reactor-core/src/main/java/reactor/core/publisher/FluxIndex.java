@@ -59,12 +59,12 @@ final class FluxIndex<T, I> extends InternalFluxOperator<T, I> {
 
 	static final class IndexSubscriber<T, I> implements InnerOperator<T, I> {
 
-		final CoreSubscriber<? super I>                        actual;
+		final CoreSubscriber<? super I> actual;
 		final BiFunction<? super Long, ? super T, ? extends I> indexMapper;
 
-		boolean      done;
+		boolean done;
 		Subscription s;
-		long         index = 0;
+		long index = 0;
 
 		IndexSubscriber(CoreSubscriber<? super I> actual,
 				BiFunction<? super Long, ? super T, ? extends I> indexMapper) {
@@ -147,9 +147,9 @@ final class FluxIndex<T, I> extends InternalFluxOperator<T, I> {
 	}
 
 	static final class IndexConditionalSubscriber<T, I> implements InnerOperator<T, I>,
-	                                                               ConditionalSubscriber<T> {
+			ConditionalSubscriber<T> {
 
-		final ConditionalSubscriber<? super I>      actual;
+		final ConditionalSubscriber<? super I> actual;
 		final BiFunction<? super Long, ? super T, ? extends I> indexMapper;
 
 		Subscription s;
@@ -265,16 +265,6 @@ final class FluxIndex<T, I> extends InternalFluxOperator<T, I> {
 			this.indexMapper = indexMapper;
 		}
 
-		@Override
-		public I apply(Long i, T t) {
-			I typedIndex = indexMapper.apply(i, t);
-			if (typedIndex == null) {
-				throw new NullPointerException("indexMapper returned a null value" +
-						" at raw index " + i + " for value " + t);
-			}
-			return typedIndex;
-		}
-
 		static <T, I> BiFunction<? super Long, ? super T, ? extends I> create(
 				BiFunction<? super Long, ? super T, ? extends I> indexMapper) {
 			if (indexMapper == Flux.TUPLE2_BIFUNCTION) {
@@ -283,6 +273,16 @@ final class FluxIndex<T, I> extends InternalFluxOperator<T, I> {
 				return indexMapper;
 			}
 			return new NullSafeIndexMapper<>(indexMapper);
+		}
+
+		@Override
+		public I apply(Long i, T t) {
+			I typedIndex = indexMapper.apply(i, t);
+			if (typedIndex == null) {
+				throw new NullPointerException("indexMapper returned a null value" +
+						" at raw index " + i + " for value " + t);
+			}
+			return typedIndex;
 		}
 	}
 }

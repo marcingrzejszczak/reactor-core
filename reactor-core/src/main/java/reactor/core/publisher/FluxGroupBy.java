@@ -93,45 +93,38 @@ final class FluxGroupBy<T, K, V> extends InternalFluxOperator<T, GroupedFlux<K, 
 
 	static final class GroupByMain<T, K, V>
 			implements QueueSubscription<GroupedFlux<K, V>>,
-			           InnerOperator<T, GroupedFlux<K, V>> {
-
-		final Function<? super T, ? extends K>          keySelector;
-		final Function<? super T, ? extends V>          valueSelector;
-		final Queue<GroupedFlux<K, V>>                  queue;
-		final Supplier<? extends Queue<V>>              groupQueueSupplier;
-		final int                                       prefetch;
-		final Map<K, UnicastGroupedFlux<K, V>>          groupMap;
-		final CoreSubscriber<? super GroupedFlux<K, V>> actual;
-
-		volatile int wip;
+			InnerOperator<T, GroupedFlux<K, V>> {
 
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<GroupByMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(GroupByMain.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<GroupByMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(GroupByMain.class, "requested");
-
-		volatile boolean   done;
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<GroupByMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(GroupByMain.class,
 						Throwable.class,
 						"error");
-
-		volatile int cancelled;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<GroupByMain> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(GroupByMain.class, "cancelled");
-
-		volatile int groupCount;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<GroupByMain> GROUP_COUNT =
 				AtomicIntegerFieldUpdater.newUpdater(GroupByMain.class, "groupCount");
-
+		final Function<? super T, ? extends K> keySelector;
+		final Function<? super T, ? extends V> valueSelector;
+		final Queue<GroupedFlux<K, V>> queue;
+		final Supplier<? extends Queue<V>> groupQueueSupplier;
+		final int prefetch;
+		final Map<K, UnicastGroupedFlux<K, V>> groupMap;
+		final CoreSubscriber<? super GroupedFlux<K, V>> actual;
+		volatile int wip;
+		volatile long requested;
+		volatile boolean done;
+		volatile Throwable error;
+		volatile int cancelled;
+		volatile int groupCount;
 		Subscription s;
 
 		volatile boolean enableAsyncFusion;
@@ -168,7 +161,7 @@ final class FluxGroupBy<T, K, V> extends InternalFluxOperator<T, GroupedFlux<K, 
 
 		@Override
 		public void onNext(T t) {
-			if(done){
+			if (done) {
 				Operators.onNextDropped(t, actual.currentContext());
 				return;
 			}
@@ -219,7 +212,7 @@ final class FluxGroupBy<T, K, V> extends InternalFluxOperator<T, GroupedFlux<K, 
 
 		@Override
 		public void onComplete() {
-			if(done){
+			if (done) {
 				return;
 			}
 			for (UnicastGroupedFlux<K, V> g : groupMap.values()) {
@@ -277,19 +270,19 @@ final class FluxGroupBy<T, K, V> extends InternalFluxOperator<T, GroupedFlux<K, 
 					s.cancel();
 				}
 				else if (!enableAsyncFusion) {
-						if (WIP.getAndIncrement(this) == 0) {
-							// remove queued up but unobservable groups from the mapping
-							GroupedFlux<K, V> g;
-							while ((g = queue.poll()) != null) {
-								((UnicastGroupedFlux<K, V>) g).cancel();
-							}
-
-							if (WIP.decrementAndGet(this) == 0) {
-								return;
-							}
-
-							drainLoop();
+					if (WIP.getAndIncrement(this) == 0) {
+						// remove queued up but unobservable groups from the mapping
+						GroupedFlux<K, V> g;
+						while ((g = queue.poll()) != null) {
+							((UnicastGroupedFlux<K, V>) g).cancel();
 						}
+
+						if (WIP.decrementAndGet(this) == 0) {
+							return;
+						}
+
+						drainLoop();
+					}
 				}
 			}
 		}
@@ -458,55 +451,38 @@ final class FluxGroupBy<T, K, V> extends InternalFluxOperator<T, GroupedFlux<K, 
 	static final class UnicastGroupedFlux<K, V> extends GroupedFlux<K, V>
 			implements Fuseable, QueueSubscription<V>, InnerProducer<V> {
 
-		final K key;
-
-		final int limit;
-
-		final Context context;
-
-		@Override
-		public K key() {
-			return key;
-		}
-
-		final Queue<V> queue;
-
-		volatile GroupByMain<?, K, V> parent;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<UnicastGroupedFlux, GroupByMain> PARENT =
 				AtomicReferenceFieldUpdater.newUpdater(UnicastGroupedFlux.class,
 						GroupByMain.class,
 						"parent");
-
-		volatile boolean done;
-		Throwable error;
-
-		volatile CoreSubscriber<? super V> actual;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<UnicastGroupedFlux, CoreSubscriber> ACTUAL =
 				AtomicReferenceFieldUpdater.newUpdater(UnicastGroupedFlux.class,
 						CoreSubscriber.class,
 						"actual");
-
-		volatile boolean cancelled;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<UnicastGroupedFlux> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(UnicastGroupedFlux.class, "once");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<UnicastGroupedFlux> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(UnicastGroupedFlux.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<UnicastGroupedFlux> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(UnicastGroupedFlux.class, "requested");
-
+		final K key;
+		final int limit;
+		final Context context;
+		final Queue<V> queue;
+		volatile GroupByMain<?, K, V> parent;
+		volatile boolean done;
+		Throwable error;
+		volatile CoreSubscriber<? super V> actual;
+		volatile boolean cancelled;
+		volatile int once;
+		volatile int wip;
+		volatile long requested;
 		volatile boolean outputFused;
-
 		int produced;
 
 		UnicastGroupedFlux(K key,
@@ -518,6 +494,11 @@ final class FluxGroupBy<T, K, V> extends InternalFluxOperator<T, GroupedFlux<K, 
 			this.context = parent.currentContext();
 			this.parent = parent;
 			this.limit = Operators.unboundedOrLimit(prefetch);
+		}
+
+		@Override
+		public K key() {
+			return key;
 		}
 
 		void doTerminate() {

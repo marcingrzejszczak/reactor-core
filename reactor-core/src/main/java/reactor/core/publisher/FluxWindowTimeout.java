@@ -39,9 +39,9 @@ import reactor.util.concurrent.Queues;
  */
 final class FluxWindowTimeout<T> extends InternalFluxOperator<T, Flux<T>> {
 
-	final int            maxSize;
-	final long           timespan;
-	final Scheduler      timer;
+	final int maxSize;
+	final long timespan;
+	final Scheduler timer;
 
 	FluxWindowTimeout(Flux<T> source, int maxSize, long timespan, Scheduler timer) {
 		super(source);
@@ -72,42 +72,34 @@ final class FluxWindowTimeout<T> extends InternalFluxOperator<T, Flux<T>> {
 
 	static final class WindowTimeoutSubscriber<T> implements InnerOperator<T, Flux<T>> {
 
-		final CoreSubscriber<? super Flux<T>> actual;
-		final long                            timespan;
-		final Scheduler                       scheduler;
-		final int                             maxSize;
-		final Scheduler.Worker                worker;
-		final Queue<Object>                   queue;
-
-		Throwable error;
-		volatile boolean done;
-		volatile boolean cancelled;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<WindowTimeoutSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(WindowTimeoutSubscriber.class,
 						"requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowTimeoutSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(WindowTimeoutSubscriber.class,
 						"wip");
-
-		int  count;
-		long producerIndex;
-
-		Subscription s;
-
-		UnicastProcessor<T> window;
-
-		volatile boolean terminated;
-
-		volatile     Disposable                                           timer;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WindowTimeoutSubscriber, Disposable> TIMER =
 				AtomicReferenceFieldUpdater.newUpdater(WindowTimeoutSubscriber.class, Disposable.class, "timer");
+		final CoreSubscriber<? super Flux<T>> actual;
+		final long timespan;
+		final Scheduler scheduler;
+		final int maxSize;
+		final Scheduler.Worker worker;
+		final Queue<Object> queue;
+		Throwable error;
+		volatile boolean done;
+		volatile boolean cancelled;
+		volatile long requested;
+		volatile int wip;
+		int count;
+		long producerIndex;
+		Subscription s;
+		UnicastProcessor<T> window;
+		volatile boolean terminated;
+		volatile Disposable timer;
 
 		WindowTimeoutSubscriber(CoreSubscriber<? super Flux<T>> actual,
 				int maxSize,
@@ -281,7 +273,7 @@ final class FluxWindowTimeout<T> extends InternalFluxOperator<T, Flux<T>> {
 
 		@Override
 		public void request(long n) {
-			if(Operators.validate(n)) {
+			if (Operators.validate(n)) {
 				Operators.addCap(REQUESTED, this, n);
 			}
 		}
@@ -416,7 +408,7 @@ final class FluxWindowTimeout<T> extends InternalFluxOperator<T, Flux<T>> {
 
 		static final class ConsumerIndexHolder implements Runnable {
 
-			final long                       index;
+			final long index;
 			final WindowTimeoutSubscriber<?> parent;
 
 			ConsumerIndexHolder(long index, WindowTimeoutSubscriber<?> parent) {

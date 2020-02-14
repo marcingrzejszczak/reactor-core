@@ -16,79 +16,79 @@
 
 package reactor.core.publisher;
 
-import org.junit.Assert;
-import org.junit.Test;
-import reactor.test.subscriber.AssertSubscriber;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
+import org.junit.Test;
+import reactor.test.subscriber.AssertSubscriber;
+
 public class MonoRepeatWhenEmptyTest {
 
-    @Test
-    public void repeatInfinite() {
-        AtomicInteger c = new AtomicInteger();
+	@Test
+	public void repeatInfinite() {
+		AtomicInteger c = new AtomicInteger();
 
-        Mono<String> source = Mono.defer(() -> c.getAndIncrement() < 3 ? Mono.empty() : Mono.just("test-data"));
+		Mono<String> source = Mono.defer(() -> c.getAndIncrement() < 3 ? Mono.empty() : Mono.just("test-data"));
 
-        List<Long> iterations = new ArrayList<>();
-        AssertSubscriber<String> ts = AssertSubscriber.create();
+		List<Long> iterations = new ArrayList<>();
+		AssertSubscriber<String> ts = AssertSubscriber.create();
 
-        source
-            .repeatWhenEmpty(o -> o.doOnNext(iterations::add))
-            .subscribe(ts);
+		source
+				.repeatWhenEmpty(o -> o.doOnNext(iterations::add))
+				.subscribe(ts);
 
-        ts
-            .assertValues("test-data")
-            .assertComplete()
-            .assertNoError();
+		ts
+				.assertValues("test-data")
+				.assertComplete()
+				.assertNoError();
 
-        Assert.assertEquals(4, c.get());
-        Assert.assertEquals(Arrays.asList(0L, 1L, 2L), iterations);
-    }
+		Assert.assertEquals(4, c.get());
+		Assert.assertEquals(Arrays.asList(0L, 1L, 2L), iterations);
+	}
 
-    @Test
-    public void repeatFinite() {
-        AtomicInteger c = new AtomicInteger();
+	@Test
+	public void repeatFinite() {
+		AtomicInteger c = new AtomicInteger();
 
-        Mono<String> source = Mono.defer(() -> c.getAndIncrement() < 3 ? Mono.empty() : Mono.just("test-data"));
+		Mono<String> source = Mono.defer(() -> c.getAndIncrement() < 3 ? Mono.empty() : Mono.just("test-data"));
 
-        List<Long> iterations = new ArrayList<>();
-        AssertSubscriber<String> ts = AssertSubscriber.create();
+		List<Long> iterations = new ArrayList<>();
+		AssertSubscriber<String> ts = AssertSubscriber.create();
 
-        source
-            .repeatWhenEmpty(1000, o -> o.doOnNext(iterations::add))
-            .subscribe(ts);
+		source
+				.repeatWhenEmpty(1000, o -> o.doOnNext(iterations::add))
+				.subscribe(ts);
 
-        ts
-            .assertValues("test-data")
-            .assertComplete()
-            .assertNoError();
+		ts
+				.assertValues("test-data")
+				.assertComplete()
+				.assertNoError();
 
-        Assert.assertEquals(4, c.get());
-        Assert.assertEquals(Arrays.asList(0L, 1L, 2L), iterations);
-    }
+		Assert.assertEquals(4, c.get());
+		Assert.assertEquals(Arrays.asList(0L, 1L, 2L), iterations);
+	}
 
-    @Test
-    public void repeatFiniteExceeded() {
-        AtomicInteger c = new AtomicInteger();
+	@Test
+	public void repeatFiniteExceeded() {
+		AtomicInteger c = new AtomicInteger();
 
-        Mono<String> source = Mono.defer(() -> c.getAndIncrement() < 3 ? Mono.empty() : Mono.just("test-data"));
+		Mono<String> source = Mono.defer(() -> c.getAndIncrement() < 3 ? Mono.empty() : Mono.just("test-data"));
 
-        List<Long> iterations = new ArrayList<>();
-        AssertSubscriber<String> ts = AssertSubscriber.create();
+		List<Long> iterations = new ArrayList<>();
+		AssertSubscriber<String> ts = AssertSubscriber.create();
 
-        source
-            .repeatWhenEmpty(2, o -> o.doOnNext(iterations::add))
-            .subscribe(ts);
+		source
+				.repeatWhenEmpty(2, o -> o.doOnNext(iterations::add))
+				.subscribe(ts);
 
-        ts
-            .assertError(IllegalStateException.class);
+		ts
+				.assertError(IllegalStateException.class);
 
-        Assert.assertEquals(3, c.get());
-        Assert.assertEquals(Arrays.asList(0L, 1L), iterations);
-    }
+		Assert.assertEquals(3, c.get());
+		Assert.assertEquals(Arrays.asList(0L, 1L), iterations);
+	}
 
 }

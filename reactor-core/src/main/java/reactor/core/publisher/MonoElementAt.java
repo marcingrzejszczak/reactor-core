@@ -70,7 +70,7 @@ final class MonoElementAt<T> extends MonoFromFluxOperator<T, T>
 		boolean done;
 
 		ElementAtSubscriber(CoreSubscriber<? super T> actual, long index,
-											T defaultValue) {
+				T defaultValue) {
 			super(actual);
 			this.index = index;
 			this.defaultValue = defaultValue;
@@ -146,10 +146,10 @@ final class MonoElementAt<T> extends MonoFromFluxOperator<T, T>
 			}
 			done = true;
 
-			if(defaultValue != null) {
+			if (defaultValue != null) {
 				complete(defaultValue);
 			}
-			else{
+			else {
 				actual.onError(Operators.onOperatorError(new
 						IndexOutOfBoundsException(), actual.currentContext()));
 			}

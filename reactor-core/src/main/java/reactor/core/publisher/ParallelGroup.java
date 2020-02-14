@@ -34,7 +34,7 @@ import reactor.util.annotation.Nullable;
  * @param <T> the value type
  */
 final class ParallelGroup<T> extends Flux<GroupedFlux<Integer, T>> implements
-                                                                   Scannable, Fuseable {
+		Scannable, Fuseable {
 
 	final ParallelFlux<? extends T> source;
 
@@ -68,24 +68,20 @@ final class ParallelGroup<T> extends Flux<GroupedFlux<Integer, T>> implements
 	}
 
 	static final class ParallelInnerGroup<T> extends GroupedFlux<Integer, T>
-	implements InnerOperator<T, T> {
-		final int key;
-
-		volatile int once;
+			implements InnerOperator<T, T> {
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ParallelInnerGroup> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(ParallelInnerGroup.class, "once");
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ParallelInnerGroup, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(ParallelInnerGroup.class, Subscription.class, "s");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ParallelInnerGroup> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ParallelInnerGroup.class, "requested");
-
+		final int key;
+		volatile int once;
+		volatile Subscription s;
+		volatile long requested;
 		CoreSubscriber<? super T> actual;
 
 		ParallelInnerGroup(int key) {
@@ -102,7 +98,8 @@ final class ParallelGroup<T> extends Flux<GroupedFlux<Integer, T>> implements
 			if (ONCE.compareAndSet(this, 0, 1)) {
 				this.actual = actual;
 				actual.onSubscribe(this);
-			} else {
+			}
+			else {
 				Operators.error(actual, new IllegalStateException("This ParallelGroup can be subscribed to at most once."));
 			}
 		}
@@ -161,7 +158,8 @@ final class ParallelGroup<T> extends Flux<GroupedFlux<Integer, T>> implements
 							a.request(n);
 						}
 					}
-				} else {
+				}
+				else {
 					a.request(n);
 				}
 			}

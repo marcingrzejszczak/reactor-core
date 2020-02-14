@@ -52,12 +52,12 @@ import reactor.util.context.Context;
  */
 final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 
-	final Publisher<S>                                                     resourceSupplier;
-	final Function<? super S, ? extends Publisher<? extends T>>            resourceClosure;
-	final Function<? super S, ? extends Publisher<?>>                      asyncComplete;
+	final Publisher<S> resourceSupplier;
+	final Function<? super S, ? extends Publisher<? extends T>> resourceClosure;
+	final Function<? super S, ? extends Publisher<?>> asyncComplete;
 	final BiFunction<? super S, ? super Throwable, ? extends Publisher<?>> asyncError;
 	@Nullable
-	final Function<? super S, ? extends Publisher<?>>                      asyncCancel;
+	final Function<? super S, ? extends Publisher<?>> asyncCancel;
 
 	FluxUsingWhen(Publisher<S> resourceSupplier,
 			Function<? super S, ? extends Publisher<? extends T>> resourceClosure,
@@ -69,43 +69,6 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 		this.asyncComplete = Objects.requireNonNull(asyncComplete, "asyncComplete");
 		this.asyncError = Objects.requireNonNull(asyncError, "asyncError");
 		this.asyncCancel = asyncCancel;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public void subscribe(CoreSubscriber<? super T> actual) {
-		if (resourceSupplier instanceof Callable) {
-			try {
-				Callable<S> resourceCallable = (Callable<S>) resourceSupplier;
-				S resource = resourceCallable.call();
-				if (resource == null) {
-					Operators.complete(actual);
-				}
-				else {
-					Publisher<? extends T> p = deriveFluxFromResource(resource, resourceClosure);
-					UsingWhenSubscriber<? super T, S> subscriber = prepareSubscriberForResource(resource,
-							actual,
-							asyncComplete,
-							asyncError,
-							asyncCancel,
-							null);
-
-					p.subscribe(subscriber);
-				}
-			}
-			catch (Throwable e) {
-				Operators.error(actual, e);
-			}
-			return;
-		}
-
-		//trigger the resource creation and delay the subscription to actual
-		resourceSupplier.subscribe(new ResourceSubscriber(actual, resourceClosure, asyncComplete, asyncError, asyncCancel, resourceSupplier instanceof Mono));
-	}
-
-	@Override
-	public Object scanUnsafe(Attr key) {
-		return null; //no particular key to be represented, still useful in hooks
 	}
 
 	private static <RESOURCE, T> Publisher<? extends T> deriveFluxFromResource(
@@ -152,19 +115,63 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 		}
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public void subscribe(CoreSubscriber<? super T> actual) {
+		if (resourceSupplier instanceof Callable) {
+			try {
+				Callable<S> resourceCallable = (Callable<S>) resourceSupplier;
+				S resource = resourceCallable.call();
+				if (resource == null) {
+					Operators.complete(actual);
+				}
+				else {
+					Publisher<? extends T> p = deriveFluxFromResource(resource, resourceClosure);
+					UsingWhenSubscriber<? super T, S> subscriber = prepareSubscriberForResource(resource,
+							actual,
+							asyncComplete,
+							asyncError,
+							asyncCancel,
+							null);
+
+					p.subscribe(subscriber);
+				}
+			}
+			catch (Throwable e) {
+				Operators.error(actual, e);
+			}
+			return;
+		}
+
+		//trigger the resource creation and delay the subscription to actual
+		resourceSupplier.subscribe(new ResourceSubscriber(actual, resourceClosure, asyncComplete, asyncError, asyncCancel, resourceSupplier instanceof Mono));
+	}
+
+	@Override
+	public Object scanUnsafe(Attr key) {
+		return null; //no particular key to be represented, still useful in hooks
+	}
+
+	private interface UsingWhenParent<T> extends InnerOperator<T, T> {
+
+		void deferredComplete();
+
+		void deferredError(Throwable error);
+	}
+
 	static class ResourceSubscriber<S, T> extends DeferredSubscription
 			implements InnerConsumer<S> {
 
-		final CoreSubscriber<? super T>                                        actual;
-		final Function<? super S, ? extends Publisher<? extends T>>            resourceClosure;
-		final Function<? super S, ? extends Publisher<?>>                      asyncComplete;
+		final CoreSubscriber<? super T> actual;
+		final Function<? super S, ? extends Publisher<? extends T>> resourceClosure;
+		final Function<? super S, ? extends Publisher<?>> asyncComplete;
 		final BiFunction<? super S, ? super Throwable, ? extends Publisher<?>> asyncError;
 		@Nullable
-		final Function<? super S, ? extends Publisher<?>>                      asyncCancel;
-		final boolean                                                          isMonoSource;
+		final Function<? super S, ? extends Publisher<?>> asyncCancel;
+		final boolean isMonoSource;
 
 		Subscription resourceSubscription;
-		boolean      resourceProvided;
+		boolean resourceProvided;
 
 		UsingWhenSubscriber<? super T, S> closureSubscriber;
 
@@ -268,26 +275,22 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 
 	static class UsingWhenSubscriber<T, S> implements UsingWhenParent<T> {
 
-		//state that differs in the different variants
-		final CoreSubscriber<? super T>                                            actual;
-
-		volatile Subscription                                                      s;
-		static final AtomicReferenceFieldUpdater<UsingWhenSubscriber, Subscription>SUBSCRIPTION =
+		static final AtomicReferenceFieldUpdater<UsingWhenSubscriber, Subscription> SUBSCRIPTION =
 				AtomicReferenceFieldUpdater.newUpdater(UsingWhenSubscriber.class,
 						Subscription.class, "s");
-
+		static final AtomicIntegerFieldUpdater<UsingWhenSubscriber> CALLBACK_APPLIED = AtomicIntegerFieldUpdater.newUpdater(UsingWhenSubscriber.class, "callbackApplied");
+		//state that differs in the different variants
+		final CoreSubscriber<? super T> actual;
 		//rest of the state is always the same
-		final S                                                                resource;
-		final Function<? super S, ? extends Publisher<?>>                      asyncComplete;
+		final S resource;
+		final Function<? super S, ? extends Publisher<?>> asyncComplete;
 		final BiFunction<? super S, ? super Throwable, ? extends Publisher<?>> asyncError;
 		@Nullable
-		final Function<? super S, ? extends Publisher<?>>                      asyncCancel;
+		final Function<? super S, ? extends Publisher<?>> asyncCancel;
 		@Nullable
-		final DeferredSubscription                                             arbiter;
-
+		final DeferredSubscription arbiter;
+		volatile Subscription s;
 		volatile int callbackApplied;
-		static final AtomicIntegerFieldUpdater<UsingWhenSubscriber> CALLBACK_APPLIED = AtomicIntegerFieldUpdater.newUpdater(UsingWhenSubscriber.class, "callbackApplied");
-
 		/**
 		 * Also stores the onComplete terminal state as {@link Exceptions#TERMINATED}
 		 */
@@ -336,11 +339,11 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 					try {
 						if (asyncCancel != null) {
 							Flux.from(asyncCancel.apply(resource))
-							    .subscribe(new CancelInner(this));
+									.subscribe(new CancelInner(this));
 						}
 						else {
 							Flux.from(asyncComplete.apply(resource))
-							    .subscribe(new CancelInner(this));
+									.subscribe(new CancelInner(this));
 						}
 					}
 					catch (Throwable error) {
@@ -447,7 +450,7 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 	static final class RollbackInner implements InnerConsumer<Object> {
 
 		final UsingWhenParent parent;
-		final Throwable       rollbackCause;
+		final Throwable rollbackCause;
 
 		boolean done;
 
@@ -464,7 +467,7 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 		@Override
 		public void onSubscribe(Subscription s) {
 			Objects.requireNonNull(s, "Subscription cannot be null")
-			       .request(Long.MAX_VALUE);
+					.request(Long.MAX_VALUE);
 		}
 
 		@Override
@@ -514,7 +517,7 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 		@Override
 		public void onSubscribe(Subscription s) {
 			Objects.requireNonNull(s, "Subscription cannot be null")
-			       .request(Long.MAX_VALUE);
+					.request(Long.MAX_VALUE);
 		}
 
 		@Override
@@ -548,7 +551,7 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 
 	/**
 	 * Used	in the cancel path to still give the generated Publisher access to the Context
- 	 */
+	 */
 	static final class CancelInner implements InnerConsumer<Object> {
 
 		final UsingWhenParent parent;
@@ -565,7 +568,7 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 		@Override
 		public void onSubscribe(Subscription s) {
 			Objects.requireNonNull(s, "Subscription cannot be null")
-			       .request(Long.MAX_VALUE);
+					.request(Long.MAX_VALUE);
 		}
 
 		@Override
@@ -590,12 +593,5 @@ final class FluxUsingWhen<T, S> extends Flux<T> implements SourceProducer<T> {
 
 			return null;
 		}
-	}
-
-	private interface UsingWhenParent<T> extends InnerOperator<T, T> {
-
-		void deferredComplete();
-
-		void deferredError(Throwable error);
 	}
 }

@@ -21,12 +21,12 @@ import reactor.core.CoreSubscriber;
 /**
  * Wraps multiple Publishers into a ParallelFlux which runs them
  * in parallel.
- * 
+ *
  * @param <T> the value type
  */
-final class ParallelArraySource<T> extends ParallelFlux<T> implements SourceProducer<T>  {
+final class ParallelArraySource<T> extends ParallelFlux<T> implements SourceProducer<T> {
 	final Publisher<T>[] sources;
-	
+
 	ParallelArraySource(Publisher<T>[] sources) {
 		//noinspection ConstantConditions
 		if (sources == null || sources.length == 0) {
@@ -39,15 +39,15 @@ final class ParallelArraySource<T> extends ParallelFlux<T> implements SourceProd
 	public int parallelism() {
 		return sources.length;
 	}
-	
+
 	@Override
 	public void subscribe(CoreSubscriber<? super T>[] subscribers) {
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
-		
+
 		for (int i = 0; i < n; i++) {
 			Flux.from(sources[i]).subscribe(subscribers[i]);
 		}

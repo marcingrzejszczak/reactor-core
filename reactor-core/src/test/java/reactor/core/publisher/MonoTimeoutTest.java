@@ -29,12 +29,12 @@ public class MonoTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .timeout(Mono.never())
-		    .subscribe(ts);
+				.timeout(Mono.never())
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -42,12 +42,12 @@ public class MonoTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .timeout(Mono.empty())
-		    .subscribe(ts);
+				.timeout(Mono.empty())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(TimeoutException.class);
+				.assertNotComplete()
+				.assertError(TimeoutException.class);
 	}
 
 	@Test
@@ -55,13 +55,13 @@ public class MonoTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .timeout(Mono.error(new RuntimeException("forced " + "failure")))
-		    .subscribe(ts);
+				.timeout(Mono.error(new RuntimeException("forced " + "failure")))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class MonoTimeoutTest {
 		DirectProcessor<Integer> tp = DirectProcessor.create();
 
 		source.timeout(tp)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		tp.onNext(1);
 
@@ -81,8 +81,8 @@ public class MonoTimeoutTest {
 		source.onComplete();
 
 		ts.assertNoValues()
-		  .assertError(TimeoutException.class)
-		  .assertNotComplete();
+				.assertError(TimeoutException.class)
+				.assertNotComplete();
 	}
 
 
@@ -93,9 +93,9 @@ public class MonoTimeoutTest {
 	@Test
 	public void timeoutCanBeBoundWithCallback() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutCanBeBoundWithCallback)
-		            .thenAwait(Duration.ofMillis(500))
-		            .expectNext(-5)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(500))
+				.expectNext(-5)
+				.verifyComplete();
 	}
 
 	Mono<Integer> scenario_timeoutCanBeBoundWithCallback2() {
@@ -106,54 +106,54 @@ public class MonoTimeoutTest {
 	@Test
 	public void timeoutCanBeBoundWithCallback2() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutCanBeBoundWithCallback2)
-		            .thenAwait(Duration.ofMillis(500))
-		            .expectNext(-5)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(500))
+				.expectNext(-5)
+				.verifyComplete();
 	}
 
 	Mono<?> scenario_timeoutThrown() {
 		return Mono.never()
-		           .timeout(Duration.ofMillis(500));
+				.timeout(Duration.ofMillis(500));
 	}
 
 	@Test
 	public void MonoPropagatesErrorUsingAwait() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutThrown)
-		            .thenAwait(Duration.ofMillis(500))
-		            .verifyError(TimeoutException.class);
+				.thenAwait(Duration.ofMillis(500))
+				.verifyError(TimeoutException.class);
 	}
 
 	@Test
 	public void timeoutDurationMessageDefault() {
 		StepVerifier.withVirtualTime(() -> Mono.never()
-		                                       .timeout(Duration.ofHours(1)))
-		            .thenAwait(Duration.ofHours(2))
-		            .expectErrorMessage("Did not observe any item or terminal signal within " +
-				            "3600000ms in 'source(MonoNever)' (and no fallback has been " +
-				            "configured)")
-		            .verify();
+				.timeout(Duration.ofHours(1)))
+				.thenAwait(Duration.ofHours(2))
+				.expectErrorMessage("Did not observe any item or terminal signal within " +
+						"3600000ms in 'source(MonoNever)' (and no fallback has been " +
+						"configured)")
+				.verify();
 	}
 
 	@Test
 	public void timeoutDurationMessageWithName() {
 		StepVerifier.withVirtualTime(() -> Mono.never()
-		                                       .name("Name")
-		                                       .timeout(Duration.ofHours(1)))
-		            .thenAwait(Duration.ofHours(2))
-		            .expectErrorMessage("Did not observe any item or terminal signal within " +
-				            "3600000ms in 'Name' (and no fallback has been " +
-				            "configured)")
-		            .verify();
+				.name("Name")
+				.timeout(Duration.ofHours(1)))
+				.thenAwait(Duration.ofHours(2))
+				.expectErrorMessage("Did not observe any item or terminal signal within " +
+						"3600000ms in 'Name' (and no fallback has been " +
+						"configured)")
+				.verify();
 	}
 
 
 	@Test
 	public void timeoutNotDurationMessage() {
 		StepVerifier.create(Mono.never()
-		                        .timeout(Mono.just("immediate")))
-		            .expectErrorMessage("Did not observe any item or terminal signal within " +
-				            "first signal from a Publisher in 'source(MonoNever)' " +
-				            "(and no fallback has been configured)")
-		            .verify();
+				.timeout(Mono.just("immediate")))
+				.expectErrorMessage("Did not observe any item or terminal signal within " +
+						"first signal from a Publisher in 'source(MonoNever)' " +
+						"(and no fallback has been configured)")
+				.verify();
 	}
 }

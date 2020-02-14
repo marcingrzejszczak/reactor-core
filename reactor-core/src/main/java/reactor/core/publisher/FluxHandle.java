@@ -52,10 +52,10 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 
 	static final class HandleSubscriber<T, R>
 			implements InnerOperator<T, R>,
-			           Fuseable.ConditionalSubscriber<T>,
-			           SynchronousSink<R> {
+			Fuseable.ConditionalSubscriber<T>,
+			SynchronousSink<R> {
 
-		final CoreSubscriber<? super R>                 actual;
+		final CoreSubscriber<? super R> actual;
 		final BiConsumer<? super T, SynchronousSink<R>> handler;
 
 		boolean done;
@@ -111,8 +111,8 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 			if (v != null) {
 				actual.onNext(v);
 			}
-			if(stop){
-				if(error != null){
+			if (stop) {
+				if (error != null) {
 					Throwable e_ = Operators.onNextError(t, error, actual.currentContext(), s);
 					if (e_ != null) {
 						onError(e_);
@@ -127,7 +127,7 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 					onComplete();
 				}
 			}
-			else if(v == null){
+			else if (v == null) {
 				s.request(1L);
 			}
 		}
@@ -164,8 +164,8 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 			if (v != null) {
 				actual.onNext(v);
 			}
-			if(stop){
-				if(error != null){
+			if (stop) {
+				if (error != null) {
 					Throwable e_ = Operators.onNextError(t, error, actual.currentContext(), s);
 					if (e_ != null) {
 						onError(e_);
@@ -225,7 +225,7 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 
 		@Override
 		public void next(R o) {
-			if(data != null){
+			if (data != null) {
 				throw new IllegalStateException("Cannot emit more than one data");
 			}
 			if (stop) {
@@ -253,7 +253,7 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 		public void request(long n) {
 			s.request(n);
 		}
-		
+
 		@Override
 		public void cancel() {
 			s.cancel();
@@ -262,7 +262,7 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 
 	static final class HandleConditionalSubscriber<T, R>
 			implements Fuseable.ConditionalSubscriber<T>, InnerOperator<T, R>,
-			           SynchronousSink<R> {
+			SynchronousSink<R> {
 		final Fuseable.ConditionalSubscriber<? super R> actual;
 		final BiConsumer<? super T, SynchronousSink<R>> handler;
 
@@ -318,9 +318,9 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 			if (v != null) {
 				actual.onNext(v);
 			}
-			if(stop){
+			if (stop) {
 				done = true; //set done because we go through `actual` directly
-				if(error != null){
+				if (error != null) {
 					Throwable e_ = Operators.onNextError(t, error, actual.currentContext(), s);
 					if (e_ != null) {
 						actual.onError(e_);
@@ -335,7 +335,7 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 					actual.onComplete();
 				}
 			}
-			else if(v == null){
+			else if (v == null) {
 				s.request(1L);
 			}
 		}
@@ -373,9 +373,9 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 			if (v != null) {
 				emit = actual.tryOnNext(v);
 			}
-			if(stop){
+			if (stop) {
 				done = true; //set done because we go through `actual` directly
-				if(error != null){
+				if (error != null) {
 					Throwable e_ = Operators.onNextError(t, error, actual.currentContext(), s);
 					if (e_ != null) {
 						actual.onError(e_);
@@ -440,7 +440,7 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 
 		@Override
 		public void next(R o) {
-			if(data != null){
+			if (data != null) {
 				throw new IllegalStateException("Cannot emit more than one data");
 			}
 			if (stop) {
@@ -448,12 +448,12 @@ final class FluxHandle<T, R> extends InternalFluxOperator<T, R> {
 			}
 			data = Objects.requireNonNull(o, "data");
 		}
-		
+
 		@Override
 		public void request(long n) {
 			s.request(n);
 		}
-		
+
 		@Override
 		public void cancel() {
 			s.cancel();

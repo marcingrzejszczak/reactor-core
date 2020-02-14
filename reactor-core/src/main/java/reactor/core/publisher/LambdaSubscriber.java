@@ -35,17 +35,16 @@ import reactor.util.context.Context;
 final class LambdaSubscriber<T>
 		implements InnerConsumer<T>, Disposable {
 
-	final Consumer<? super T>            consumer;
-	final Consumer<? super Throwable>    errorConsumer;
-	final Runnable                       completeConsumer;
-	final Consumer<? super Subscription> subscriptionConsumer;
-	final Context                        initialContext;
-
-	volatile Subscription subscription;
 	static final AtomicReferenceFieldUpdater<LambdaSubscriber, Subscription> S =
 			AtomicReferenceFieldUpdater.newUpdater(LambdaSubscriber.class,
 					Subscription.class,
 					"subscription");
+	final Consumer<? super T> consumer;
+	final Consumer<? super Throwable> errorConsumer;
+	final Runnable completeConsumer;
+	final Consumer<? super Subscription> subscriptionConsumer;
+	final Context initialContext;
+	volatile Subscription subscription;
 
 	/**
 	 * Create a {@link Subscriber} reacting onNext, onError and onComplete. If no

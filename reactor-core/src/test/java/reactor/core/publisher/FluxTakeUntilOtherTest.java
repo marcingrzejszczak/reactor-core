@@ -36,7 +36,7 @@ public class FluxTakeUntilOtherTest {
 	@Test(expected = NullPointerException.class)
 	public void nullOther() {
 		Flux.never()
-		    .takeUntilOther(null);
+				.takeUntilOther(null);
 	}
 
 	@Test
@@ -44,12 +44,12 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.never())
-		    .subscribe(ts);
+				.takeUntilOther(Flux.never())
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -57,24 +57,24 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.never())
-		    .subscribe(ts);
+				.takeUntilOther(Flux.never())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -82,12 +82,12 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.empty())
-		    .subscribe(ts);
+				.takeUntilOther(Flux.empty())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -95,12 +95,12 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.empty())
-		    .subscribe(ts);
+				.takeUntilOther(Flux.empty())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -108,12 +108,12 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.range(1, 10))
-		    .subscribe(ts);
+				.takeUntilOther(Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -121,12 +121,12 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.range(1, 10))
-		    .subscribe(ts);
+				.takeUntilOther(Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -134,13 +134,13 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.error(new RuntimeException("forced " + "failure")))
-		    .subscribe(ts);
+				.takeUntilOther(Flux.error(new RuntimeException("forced " + "failure")))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -148,81 +148,84 @@ public class FluxTakeUntilOtherTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .takeUntilOther(Flux.error(new RuntimeException("forced " + "failure")))
-		    .subscribe(ts);
+				.takeUntilOther(Flux.error(new RuntimeException("forced " + "failure")))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
-	Flux<Integer> scenario_aFluxCanBeLimitedByTime(){
+	Flux<Integer> scenario_aFluxCanBeLimitedByTime() {
 		return Flux.range(0, 1000)
-		           .take(Duration.ofSeconds(2));
+				.take(Duration.ofSeconds(2));
 	}
 
 	@Test
-	public void aFluxCanBeLimitedByTime(){
+	public void aFluxCanBeLimitedByTime() {
 		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeLimitedByTime)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .expectNextCount(1000)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(2))
+				.expectNextCount(1000)
+				.verifyComplete();
 	}
 
-	Flux<Integer> scenario_aFluxCanBeLimitedByTime2(){
+	Flux<Integer> scenario_aFluxCanBeLimitedByTime2() {
 		return Flux.range(0, 1000)
-		           .take(Duration.ofMillis(2000));
+				.take(Duration.ofMillis(2000));
 	}
 
 	@Test
-	public void aFluxCanBeLimitedByTime2(){
+	public void aFluxCanBeLimitedByTime2() {
 		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeLimitedByTime2)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .expectNextCount(1000)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(2))
+				.expectNextCount(1000)
+				.verifyComplete();
 	}
+
 	@Test
-	public void aFluxCanBeLimitedByTime3(){
+	public void aFluxCanBeLimitedByTime3() {
 		StepVerifier.create(Flux.range(0, 1000).take(Duration.ofMillis(0L)))
-		            .thenAwait(Duration.ofSeconds(2))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(2))
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxTakeUntilOther.TakeUntilMainSubscriber<Integer> test =
-        		new FluxTakeUntilOther.TakeUntilMainSubscriber<>(actual);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxTakeUntilOther.TakeUntilMainSubscriber<Integer> test =
+				new FluxTakeUntilOther.TakeUntilMainSubscriber<>(actual);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        @SuppressWarnings("unchecked")
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		@SuppressWarnings("unchecked")
 		SerializedSubscriber<Integer> serialized = (SerializedSubscriber<Integer>) test.scan(Scannable.Attr.ACTUAL);
-        Assertions.assertThat(serialized).isNotNull();
-        Assertions.assertThat(serialized.actual()).isSameAs(actual);
+		Assertions.assertThat(serialized).isNotNull();
+		Assertions.assertThat(serialized.actual()).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanOtherSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxTakeUntilOther.TakeUntilMainSubscriber<Integer> main =
-        		new FluxTakeUntilOther.TakeUntilMainSubscriber<>(actual);
-        FluxTakeUntilOther.TakeUntilOtherSubscriber<Integer> test =
-        		new FluxTakeUntilOther.TakeUntilOtherSubscriber<>(main);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanOtherSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxTakeUntilOther.TakeUntilMainSubscriber<Integer> main =
+				new FluxTakeUntilOther.TakeUntilMainSubscriber<>(actual);
+		FluxTakeUntilOther.TakeUntilOtherSubscriber<Integer> test =
+				new FluxTakeUntilOther.TakeUntilOtherSubscriber<>(main);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        main.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		main.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

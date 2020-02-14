@@ -16,12 +16,12 @@
 
 package reactor.tools.agent;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Adds callSite info to every operator call (except "checkpoint").
@@ -39,78 +39,73 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class CallSiteInfoAddingMethodVisitor extends MethodVisitor {
 
-    static final String ADD_CALLSITE_INFO_METHOD = "(Lorg/reactivestreams/Publisher;Ljava/lang/String;)Lorg/reactivestreams/Publisher;";
+	static final String ADD_CALLSITE_INFO_METHOD = "(Lorg/reactivestreams/Publisher;Ljava/lang/String;)Lorg/reactivestreams/Publisher;";
+	final String currentMethod;
+	final String currentClassName;
+	final String currentSource;
+	final AtomicBoolean changed;
+	int currentLine = -1;
 
-    static boolean isCorePublisher(String className) {
-        switch (className) {
-            case "reactor/core/publisher/Flux":
-            case "reactor/core/publisher/Mono":
-            case "reactor/core/publisher/ParallelFlux":
-            case "reactor/core/publisher/GroupedFlux":
-                return true;
-            default:
-                return false;
-        }
-    }
+	CallSiteInfoAddingMethodVisitor(
+			MethodVisitor visitor,
+			String currentClassName,
+			String currentMethod,
+			String currentSource,
+			AtomicBoolean changed
+	) {
+		super(Opcodes.ASM7, visitor);
+		this.currentMethod = currentMethod;
+		this.currentClassName = currentClassName;
+		this.currentSource = currentSource;
+		this.changed = changed;
+	}
 
-    final String currentMethod;
+	static boolean isCorePublisher(String className) {
+		switch (className) {
+		case "reactor/core/publisher/Flux":
+		case "reactor/core/publisher/Mono":
+		case "reactor/core/publisher/ParallelFlux":
+		case "reactor/core/publisher/GroupedFlux":
+			return true;
+		default:
+			return false;
+		}
+	}
 
-    final String currentClassName;
+	@Override
+	public void visitLineNumber(int line, Label start) {
+		super.visitLineNumber(line, start);
+		currentLine = line;
+	}
 
-    final String currentSource;
+	@Override
+	public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+		super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+		if (isCorePublisher(owner)) {
+			if ("checkpoint".equals(name)) {
+				return;
+			}
+			String returnType = Type.getReturnType(descriptor).getInternalName();
+			if (!returnType.startsWith("reactor/core/publisher/")) {
+				return;
+			}
 
-    final AtomicBoolean changed;
+			changed.set(true);
 
-    int currentLine = -1;
-
-    CallSiteInfoAddingMethodVisitor(
-            MethodVisitor visitor,
-            String currentClassName,
-            String currentMethod,
-            String currentSource,
-            AtomicBoolean changed
-    ) {
-        super(Opcodes.ASM7, visitor);
-        this.currentMethod = currentMethod;
-        this.currentClassName = currentClassName;
-        this.currentSource = currentSource;
-        this.changed = changed;
-    }
-
-    @Override
-    public void visitLineNumber(int line, Label start) {
-        super.visitLineNumber(line, start);
-        currentLine = line;
-    }
-
-    @Override
-    public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-        if (isCorePublisher(owner)) {
-            if ("checkpoint".equals(name)) {
-                return;
-            }
-            String returnType = Type.getReturnType(descriptor).getInternalName();
-            if (!returnType.startsWith("reactor/core/publisher/")) {
-                return;
-            }
-
-            changed.set(true);
-
-            String callSite = String.format(
-                    "\t%s.%s\n\t%s.%s(%s:%d)\n",
-                    owner.replace("/", "."), name,
-                    currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
-            );
-            super.visitLdcInsn(callSite);
-            super.visitMethodInsn(
-                    Opcodes.INVOKESTATIC,
-                    "reactor/core/publisher/Hooks",
-                    "addCallSiteInfo",
-                    ADD_CALLSITE_INFO_METHOD,
-                    false
-            );
-            super.visitTypeInsn(Opcodes.CHECKCAST, returnType);
-        }
-    }
+			String callSite = String.format(
+					"\t%s.%s\n\t%s.%s(%s:%d)\n",
+					owner.replace("/", "."), name,
+					currentClassName.replace("/", "."), currentMethod, currentSource, currentLine
+			);
+			super.visitLdcInsn(callSite);
+			super.visitMethodInsn(
+					Opcodes.INVOKESTATIC,
+					"reactor/core/publisher/Hooks",
+					"addCallSiteInfo",
+					ADD_CALLSITE_INFO_METHOD,
+					false
+			);
+			super.visitTypeInsn(Opcodes.CHECKCAST, returnType);
+		}
+	}
 }

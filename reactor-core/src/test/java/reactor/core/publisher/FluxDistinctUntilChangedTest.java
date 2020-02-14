@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -40,7 +39,6 @@ import reactor.test.MockUtils;
 import reactor.test.StepVerifier;
 import reactor.test.publisher.FluxOperatorTest;
 import reactor.test.subscriber.AssertSubscriber;
-import reactor.test.util.RaceTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -86,12 +84,12 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .distinctUntilChanged(v -> v)
-		    .subscribe(ts);
+				.distinctUntilChanged(v -> v)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -99,30 +97,30 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .distinctUntilChanged(v -> v)
-		    .subscribe(ts);
+				.distinctUntilChanged(v -> v)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -130,12 +128,12 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.just(1, 1, 2, 2, 1, 1, 2, 2, 1, 2, 3, 3)
-		    .distinctUntilChanged(v -> v)
-		    .subscribe(ts);
+				.distinctUntilChanged(v -> v)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -143,30 +141,30 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.just(1, 1, 2, 2, 1, 1, 2, 2, 1, 2, 3, 3)
-		    .distinctUntilChanged(v -> v)
-		    .subscribe(ts);
+				.distinctUntilChanged(v -> v)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(4);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -174,25 +172,25 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .distinctUntilChanged(v -> v / 3)
-		    .subscribe(ts);
+				.distinctUntilChanged(v -> v / 3)
+				.subscribe(ts);
 
 		ts.assertValues(1, 3, 6, 9)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
-	
+
 	@Test
 	public void withKeyComparator() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .distinctUntilChanged(Function.identity(), (a,b) -> b - a < 4)
-		    .subscribe(ts);
+				.distinctUntilChanged(Function.identity(), (a, b) -> b - a < 4)
+				.subscribe(ts);
 
 		ts.assertValues(1, 5, 9)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -200,15 +198,15 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .distinctUntilChanged(v -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.distinctUntilChanged(v -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -216,15 +214,15 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .distinctUntilChanged(Function.identity(), (v1,v2) -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.distinctUntilChanged(Function.identity(), (v1, v2) -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -232,8 +230,8 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		DirectProcessor<Integer> dp = new DirectProcessor<>();
 
 		AssertSubscriber<Integer> ts = dp.distinctUntilChanged()
-		                                 .filter(v -> true)
-		                                 .subscribeWith(AssertSubscriber.create());
+				.filter(v -> true)
+				.subscribeWith(AssertSubscriber.create());
 
 		dp.onNext(1);
 		dp.onNext(2);
@@ -245,9 +243,10 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		DistinctUntilChangedSubscriber<String, Integer> test = new DistinctUntilChangedSubscriber<>(
-			actual, String::hashCode, Objects::equals);
+				actual, String::hashCode, Objects::equals);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 
@@ -292,23 +291,23 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		};
 
 		assertThat(foo).isNotEqualTo(bar)
-		               .hasSameHashCodeAs(bar);
+				.hasSameHashCodeAs(bar);
 
 		StepVerifier.create(Flux.just(foo, bar).distinctUntilChanged())
-		            .expectNext(foo, bar)
-		            .verifyComplete();
+				.expectNext(foo, bar)
+				.verifyComplete();
 	}
 
 	@Test
 	public void distinctUntilChangedDefaultDoesntRetainObjects() throws InterruptedException {
 		RetainedDetector retainedDetector = new RetainedDetector();
 		Flux<DistinctDefault> test = Flux.range(1, 100)
-		                                                  .map(i -> retainedDetector.tracked(new DistinctDefault(i)))
-		                                                  .distinctUntilChanged();
+				.map(i -> retainedDetector.tracked(new DistinctDefault(i)))
+				.distinctUntilChanged();
 
 		StepVerifier.create(test)
-		            .expectNextCount(100)
-		            .verifyComplete();
+				.expectNextCount(100)
+				.verifyComplete();
 
 		System.gc();
 		await().untilAsserted(() -> {
@@ -322,13 +321,13 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 	public void distinctUntilChangedDefaultErrorDoesntRetainObjects() throws InterruptedException {
 		RetainedDetector retainedDetector = new RetainedDetector();
 		Flux<DistinctDefaultError> test = Flux.range(1, 100)
-		                                                  .map(i -> retainedDetector.tracked(new DistinctDefaultError(i)))
-		                                                  .concatWith(Mono.error(new IllegalStateException("boom")))
-		                                                  .distinctUntilChanged();
+				.map(i -> retainedDetector.tracked(new DistinctDefaultError(i)))
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.distinctUntilChanged();
 
 		StepVerifier.create(test)
-		            .expectNextCount(100)
-		            .verifyErrorMessage("boom");
+				.expectNextCount(100)
+				.verifyErrorMessage("boom");
 
 		System.gc();
 		await().untilAsserted(() -> {
@@ -342,14 +341,14 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 	public void distinctUntilChangedDefaultCancelDoesntRetainObjects() throws InterruptedException {
 		RetainedDetector retainedDetector = new RetainedDetector();
 		Flux<DistinctDefaultCancel> test = Flux.range(1, 100)
-		                                                  .map(i -> retainedDetector.tracked(new DistinctDefaultCancel(i)))
-		                                                  .concatWith(Mono.error(new IllegalStateException("boom")))
-		                                                  .distinctUntilChanged()
-		                                                  .take(50);
+				.map(i -> retainedDetector.tracked(new DistinctDefaultCancel(i)))
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.distinctUntilChanged()
+				.take(50);
 
 		StepVerifier.create(test)
-		            .expectNextCount(50)
-		            .verifyComplete();
+				.expectNextCount(50)
+				.verifyComplete();
 
 		System.gc();
 		await().untilAsserted(() -> {
@@ -365,7 +364,7 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AtomicReference<DistinctDefaultCancel> fooRef = new AtomicReference<>(retainedDetector.tracked(new DistinctDefaultCancel(0)));
 
 		DistinctUntilChangedSubscriber<DistinctDefaultCancel, DistinctDefaultCancel> sub = new DistinctUntilChangedSubscriber<>(
-				new BaseSubscriber<DistinctDefaultCancel>() {}, Function.identity(), Objects::equals);
+				new BaseSubscriber<DistinctDefaultCancel>() { }, Function.identity(), Objects::equals);
 		sub.onSubscribe(Operators.emptySubscription());
 		sub.onNext(fooRef.getAndSet(null));
 
@@ -386,7 +385,7 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AtomicReference<DistinctDefaultCancel> fooRef = new AtomicReference<>(retainedDetector.tracked(new DistinctDefaultCancel(0)));
 
 		DistinctUntilChangedConditionalSubscriber<DistinctDefaultCancel, DistinctDefaultCancel> sub = new DistinctUntilChangedConditionalSubscriber<>(
-				Operators.toConditionalSubscriber(new BaseSubscriber<DistinctDefaultCancel>() {}), Function.identity(), Objects::equals);
+				Operators.toConditionalSubscriber(new BaseSubscriber<DistinctDefaultCancel>() { }), Function.identity(), Objects::equals);
 		sub.onSubscribe(Operators.emptySubscription());
 		sub.onNext(fooRef.getAndSet(null));
 
@@ -409,7 +408,8 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		DistinctUntilChangedSubscriber<DistinctDefaultCancel, DistinctDefaultCancel> sub = new DistinctUntilChangedSubscriber<>(
 				new BaseSubscriber<DistinctDefaultCancel>() {
 					@Override
-					protected void hookOnError(Throwable throwable) { }
+					protected void hookOnError(Throwable throwable) {
+					}
 				}, Function.identity(), Objects::equals);
 		sub.onSubscribe(Operators.emptySubscription());
 		sub.onNext(fooRef.getAndSet(null));
@@ -433,7 +433,8 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		DistinctUntilChangedConditionalSubscriber<DistinctDefaultCancel, DistinctDefaultCancel> sub = new DistinctUntilChangedConditionalSubscriber<>(
 				Operators.toConditionalSubscriber(new BaseSubscriber<DistinctDefaultCancel>() {
 					@Override
-					protected void hookOnError(Throwable throwable) { }
+					protected void hookOnError(Throwable throwable) {
+					}
 				}), Function.identity(), Objects::equals);
 		sub.onSubscribe(Operators.emptySubscription());
 		sub.onNext(fooRef.getAndSet(null));
@@ -455,7 +456,7 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AtomicReference<DistinctDefaultCancel> fooRef = new AtomicReference<>(retainedDetector.tracked(new DistinctDefaultCancel(0)));
 
 		DistinctUntilChangedSubscriber<DistinctDefaultCancel, DistinctDefaultCancel> sub = new DistinctUntilChangedSubscriber<>(
-				new BaseSubscriber<DistinctDefaultCancel>() {}, Function.identity(), Objects::equals);
+				new BaseSubscriber<DistinctDefaultCancel>() { }, Function.identity(), Objects::equals);
 		sub.onSubscribe(Operators.emptySubscription());
 		sub.onNext(fooRef.getAndSet(null));
 
@@ -476,7 +477,7 @@ public class FluxDistinctUntilChangedTest extends FluxOperatorTest<String, Strin
 		AtomicReference<DistinctDefaultCancel> fooRef = new AtomicReference<>(retainedDetector.tracked(new DistinctDefaultCancel(0)));
 
 		DistinctUntilChangedConditionalSubscriber<DistinctDefaultCancel, DistinctDefaultCancel> sub = new DistinctUntilChangedConditionalSubscriber<>(
-				Operators.toConditionalSubscriber(new BaseSubscriber<DistinctDefaultCancel>() {}), Function.identity(), Objects::equals);
+				Operators.toConditionalSubscriber(new BaseSubscriber<DistinctDefaultCancel>() { }), Function.identity(), Objects::equals);
 		sub.onSubscribe(Operators.emptySubscription());
 		sub.onNext(fooRef.getAndSet(null));
 

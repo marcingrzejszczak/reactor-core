@@ -45,9 +45,9 @@ public class FluxCancelOnTest {
 				}
 			});
 		})
-		    .cancelOn(Schedulers.single())
-		    .subscribeWith(AssertSubscriber.create())
-		    .cancel();
+				.cancelOn(Schedulers.single())
+				.subscribeWith(AssertSubscriber.create())
+				.cancel();
 
 		latch.await();
 		Assert.assertNull(threadHash.get());

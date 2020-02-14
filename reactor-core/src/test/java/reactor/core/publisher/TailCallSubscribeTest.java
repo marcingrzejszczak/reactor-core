@@ -16,6 +16,12 @@
 
 package reactor.core.publisher;
 
+import java.time.Duration;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
 import org.junit.After;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
@@ -25,114 +31,108 @@ import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 public class TailCallSubscribeTest {
 
-    private static Function<Flux<Object>, Flux<Object>> manyOperatorsOnFlux = flux -> {
-        for (int i = 0; i < 5; i++) {
-            flux = flux.<Object>map(Object::toString).filter(Objects::nonNull);
-        }
-        return flux;
-    };
+	private static Function<Flux<Object>, Flux<Object>> manyOperatorsOnFlux = flux -> {
+		for (int i = 0; i < 5; i++) {
+			flux = flux.<Object>map(Object::toString).filter(Objects::nonNull);
+		}
+		return flux;
+	};
 
-    private static Function<Mono<?>, Mono<Object>> manyOperatorsOnMono = mono -> {
-        for (int i = 0; i < 5; i++) {
-            mono = mono.<Object>map(Object::toString).filter(Objects::nonNull);
-        }
-        //noinspection unchecked
-        return (Mono) mono;
-    };
+	private static Function<Mono<?>, Mono<Object>> manyOperatorsOnMono = mono -> {
+		for (int i = 0; i < 5; i++) {
+			mono = mono.<Object>map(Object::toString).filter(Objects::nonNull);
+		}
+		//noinspection unchecked
+		return (Mono) mono;
+	};
 
-    @After
-    public void tearDown() {
-        Hooks.resetOnOperatorDebug();
-    }
+	@After
+	public void tearDown() {
+		Hooks.resetOnOperatorDebug();
+	}
 
-    @Test
-    public void testStackDepth() throws Exception {
-        StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
-        Mono
-                .from(stackCapturingPublisher)
-                .as(manyOperatorsOnMono)
-                .flux()
-                .as(manyOperatorsOnFlux)
-                .delayElements(Duration.ofSeconds(1))
-                .then()
-                .subscribe(new CancellingSubscriber());
+	@Test
+	public void testStackDepth() throws Exception {
+		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
+		Mono
+				.from(stackCapturingPublisher)
+				.as(manyOperatorsOnMono)
+				.flux()
+				.as(manyOperatorsOnFlux)
+				.delayElements(Duration.ofSeconds(1))
+				.then()
+				.subscribe(new CancellingSubscriber());
 
-        assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
-                .extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
-                .startsWith(
-                        tuple(Thread.class.getName(), "getStackTrace"),
-                        tuple(stackCapturingPublisher.getClass().getName(), "subscribe"),
-                        tuple(MonoFromPublisher.class.getName(), "subscribe"),
-                        tuple(Mono.class.getName(), "subscribe"),
-                        tuple(this.getClass().getName(), "testStackDepth")
-                );
-    }
+		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
+				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
+				.startsWith(
+						tuple(Thread.class.getName(), "getStackTrace"),
+						tuple(stackCapturingPublisher.getClass().getName(), "subscribe"),
+						tuple(MonoFromPublisher.class.getName(), "subscribe"),
+						tuple(Mono.class.getName(), "subscribe"),
+						tuple(this.getClass().getName(), "testStackDepth")
+				);
+	}
 
-    @Test
-    public void testDebugHook() throws Exception {
-        Hooks.onOperatorDebug();
-        testStackDepth();
-    }
+	@Test
+	public void testDebugHook() throws Exception {
+		Hooks.onOperatorDebug();
+		testStackDepth();
+	}
 
-    @Test
-    public void interop() throws Exception {
-        class CustomOperator implements Publisher<Object> {
-            final Flux<Object> flux;
+	@Test
+	public void interop() throws Exception {
+		class CustomOperator implements Publisher<Object> {
+			final Flux<Object> flux;
 
-            CustomOperator(Flux<Object> flux) {
-                this.flux = flux;
-            }
+			CustomOperator(Flux<Object> flux) {
+				this.flux = flux;
+			}
 
-            @Override
-            public void subscribe(Subscriber<? super Object> subscriber) {
-                flux.subscribe(subscriber);
-            }
-        }
-        StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
-        Mono.from(stackCapturingPublisher)
-                .as(manyOperatorsOnMono)
-                .flux()
-                .as(manyOperatorsOnFlux)
-                .transform(flux -> new CustomOperator(flux))
-                .as(manyOperatorsOnFlux)
-                .then()
-                .as(manyOperatorsOnMono)
-                .subscribe(new CancellingSubscriber());
+			@Override
+			public void subscribe(Subscriber<? super Object> subscriber) {
+				flux.subscribe(subscriber);
+			}
+		}
+		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
+		Mono.from(stackCapturingPublisher)
+				.as(manyOperatorsOnMono)
+				.flux()
+				.as(manyOperatorsOnFlux)
+				.transform(flux -> new CustomOperator(flux))
+				.as(manyOperatorsOnFlux)
+				.then()
+				.as(manyOperatorsOnMono)
+				.subscribe(new CancellingSubscriber());
 
-        assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
-                .extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
-                .startsWith(
-                        tuple(Thread.class.getName(), "getStackTrace"),
-                        tuple(stackCapturingPublisher.getClass().getName(), "subscribe"),
-                        tuple(MonoFromPublisher.class.getName(), "subscribe"),
-                        tuple(Flux.class.getName(), "subscribe"),
-                        tuple(CustomOperator.class.getName(), "subscribe"),
-                        tuple(FluxSource.class.getName(), "subscribe"),
-                        tuple(Mono.class.getName(), "subscribe"),
-                        tuple(this.getClass().getName(), "interop")
-                );
-    }
+		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
+				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
+				.startsWith(
+						tuple(Thread.class.getName(), "getStackTrace"),
+						tuple(stackCapturingPublisher.getClass().getName(), "subscribe"),
+						tuple(MonoFromPublisher.class.getName(), "subscribe"),
+						tuple(Flux.class.getName(), "subscribe"),
+						tuple(CustomOperator.class.getName(), "subscribe"),
+						tuple(FluxSource.class.getName(), "subscribe"),
+						tuple(Mono.class.getName(), "subscribe"),
+						tuple(this.getClass().getName(), "interop")
+				);
+	}
 
 	@Test
 	public void delaySubscription() throws Exception {
 		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
 
 		Flux.from(stackCapturingPublisher)
-		    .as(manyOperatorsOnFlux)
-		    .delaySubscription(Duration.ofMillis(1))
-		    .as(manyOperatorsOnFlux)
-		    .subscribe(new CancellingSubscriber(Duration.ofMillis(100)));
+				.as(manyOperatorsOnFlux)
+				.delaySubscription(Duration.ofMillis(1))
+				.as(manyOperatorsOnFlux)
+				.subscribe(new CancellingSubscriber(Duration.ofMillis(100)));
 
 		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
 				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
@@ -150,10 +150,11 @@ public class TailCallSubscribeTest {
 		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
 
 		Flux.from(stackCapturingPublisher)
-		    .as(manyOperatorsOnFlux)
-		    .doFirst(() -> {})
-		    .as(manyOperatorsOnFlux)
-		    .subscribe(new CancellingSubscriber());
+				.as(manyOperatorsOnFlux)
+				.doFirst(() -> {
+				})
+				.as(manyOperatorsOnFlux)
+				.subscribe(new CancellingSubscriber());
 
 		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
 				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
@@ -171,11 +172,11 @@ public class TailCallSubscribeTest {
 		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
 
 		Flux.from(stackCapturingPublisher)
-		    .as(manyOperatorsOnFlux)
-		    .bufferWhen(Mono.just(1), __ -> Mono.just(2))
-		    .cast(Object.class)
-		    .as(manyOperatorsOnFlux)
-		    .subscribe(new CancellingSubscriber());
+				.as(manyOperatorsOnFlux)
+				.bufferWhen(Mono.just(1), __ -> Mono.just(2))
+				.cast(Object.class)
+				.as(manyOperatorsOnFlux)
+				.subscribe(new CancellingSubscriber());
 
 		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
 				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
@@ -193,10 +194,10 @@ public class TailCallSubscribeTest {
 		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
 
 		Flux.from(stackCapturingPublisher)
-		    .as(manyOperatorsOnFlux)
-		    .repeat(1)
-		    .as(manyOperatorsOnFlux)
-		    .subscribe(new CancellingSubscriber(Duration.ofMillis(10)));
+				.as(manyOperatorsOnFlux)
+				.repeat(1)
+				.as(manyOperatorsOnFlux)
+				.subscribe(new CancellingSubscriber(Duration.ofMillis(10)));
 
 		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
 				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
@@ -218,10 +219,10 @@ public class TailCallSubscribeTest {
 		StackCapturingPublisher stackCapturingPublisher = new StackCapturingPublisher();
 
 		Flux.from(stackCapturingPublisher)
-		    .as(manyOperatorsOnFlux)
-		    .retry(1)
-		    .as(manyOperatorsOnFlux)
-		    .subscribe(new CancellingSubscriber(Duration.ofMillis(10)));
+				.as(manyOperatorsOnFlux)
+				.retry(1)
+				.as(manyOperatorsOnFlux)
+				.subscribe(new CancellingSubscriber(Duration.ofMillis(10)));
 
 		assertThat(stackCapturingPublisher.get(1, TimeUnit.SECONDS))
 				.extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
@@ -237,53 +238,54 @@ public class TailCallSubscribeTest {
 				);
 	}
 
-    private static class StackCapturingPublisher extends CompletableFuture<StackTraceElement[]> implements Publisher<Object> {
+	private static class StackCapturingPublisher extends CompletableFuture<StackTraceElement[]> implements Publisher<Object> {
 
-        @Override
-        public void subscribe(Subscriber<? super Object> subscriber) {
-            new Exception().printStackTrace(System.out);
-            complete(Thread.currentThread().getStackTrace());
-            subscriber.onSubscribe(Operators.emptySubscription());
-            subscriber.onComplete();
-        }
-    }
+		@Override
+		public void subscribe(Subscriber<? super Object> subscriber) {
+			new Exception().printStackTrace(System.out);
+			complete(Thread.currentThread().getStackTrace());
+			subscriber.onSubscribe(Operators.emptySubscription());
+			subscriber.onComplete();
+		}
+	}
 
-    private static class CancellingSubscriber implements Subscriber<Object> {
+	private static class CancellingSubscriber implements Subscriber<Object> {
 
-    	final Duration cancellationDelay;
+		final Duration cancellationDelay;
 
-	    volatile Disposable cancellation = Disposables.disposed();
+		volatile Disposable cancellation = Disposables.disposed();
 
-	    private CancellingSubscriber() {
-	    	this(Duration.ZERO);
-	    }
+		private CancellingSubscriber() {
+			this(Duration.ZERO);
+		}
 
-	    private CancellingSubscriber(Duration delay) {
-		    cancellationDelay = delay;
-	    }
+		private CancellingSubscriber(Duration delay) {
+			cancellationDelay = delay;
+		}
 
-	    @Override
-        public void onSubscribe(Subscription s) {
-	    	if (cancellationDelay.isZero()) {
-	    		s.cancel();
-		    } else {
-			    cancellation = Schedulers.parallel().schedule(s::cancel, cancellationDelay.toMillis(), TimeUnit.MILLISECONDS);
-		    }
-	    }
+		@Override
+		public void onSubscribe(Subscription s) {
+			if (cancellationDelay.isZero()) {
+				s.cancel();
+			}
+			else {
+				cancellation = Schedulers.parallel().schedule(s::cancel, cancellationDelay.toMillis(), TimeUnit.MILLISECONDS);
+			}
+		}
 
-        @Override
-        public void onNext(Object s) {
-        }
+		@Override
+		public void onNext(Object s) {
+		}
 
-        @Override
-        public void onError(Throwable throwable) {
-            throwable.printStackTrace();
-	        cancellation.dispose();
-        }
+		@Override
+		public void onError(Throwable throwable) {
+			throwable.printStackTrace();
+			cancellation.dispose();
+		}
 
-        @Override
-        public void onComplete() {
-	        cancellation.dispose();
-        }
-    }
+		@Override
+		public void onComplete() {
+			cancellation.dispose();
+		}
+	}
 }

@@ -65,17 +65,21 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker worker = scheduler.createWorker();
 		try {
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> scheduler.schedule(() -> { }, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> scheduler.schedule(() -> {
+					}, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> scheduler.schedulePeriodically(() -> { }, 100, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> scheduler.schedulePeriodically(() -> {
+					}, 100, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> worker.schedule(() -> { }, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> worker.schedule(() -> {
+					}, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> worker.schedulePeriodically(() -> { }, 100, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> worker.schedulePeriodically(() -> {
+					}, 100, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 		}
 		finally {
@@ -87,7 +91,9 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 	public void failingExecutorRejects() {
 		final IllegalStateException boom = new IllegalStateException("boom");
 		ExecutorScheduler scheduler = new ExecutorScheduler(
-				task -> { throw boom;},
+				task -> {
+					throw boom;
+				},
 				false
 		);
 
@@ -108,19 +114,22 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 				task -> {
 					if (count.incrementAndGet() % 2 == 0)
 						throw boom;
-					},
+				},
 				false
 		);
-		assertThatCode(() -> scheduler.schedule(() -> {}))
+		assertThatCode(() -> scheduler.schedule(() -> {
+		}))
 				.as("initial-no rejection")
 				.doesNotThrowAnyException();
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
 				.as("second-transient rejection")
-				.isThrownBy(() -> scheduler.schedule(() -> {}))
+				.isThrownBy(() -> scheduler.schedule(() -> {
+				}))
 				.withCause(boom);
 
-		assertThatCode(() -> scheduler.schedule(() -> {}))
+		assertThatCode(() -> scheduler.schedule(() -> {
+		}))
 				.as("third-no rejection")
 				.doesNotThrowAnyException();
 
@@ -170,16 +179,19 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 		};
 		ExecutorScheduler scheduler = new ExecutorScheduler(service, false);
 
-		assertThatCode(() -> scheduler.schedule(() -> {}))
+		assertThatCode(() -> scheduler.schedule(() -> {
+		}))
 				.as("initial-no rejection")
 				.doesNotThrowAnyException();
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
 				.as("second-transient rejection")
-				.isThrownBy(() -> scheduler.schedule(() -> {}))
+				.isThrownBy(() -> scheduler.schedule(() -> {
+				}))
 				.withCause(boom);
 
-		assertThatCode(() -> scheduler.schedule(() -> {}))
+		assertThatCode(() -> scheduler.schedule(() -> {
+		}))
 				.as("third-no rejection")
 				.doesNotThrowAnyException();
 
@@ -228,53 +240,23 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 		};
 		ExecutorScheduler scheduler = new ExecutorScheduler(service, false);
 
-		assertThatCode(() -> scheduler.schedule(() -> {}))
+		assertThatCode(() -> scheduler.schedule(() -> {
+		}))
 				.as("initial-no rejection")
 				.doesNotThrowAnyException();
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
 				.as("second-transient rejection")
-				.isThrownBy(() -> scheduler.schedule(() -> {}))
+				.isThrownBy(() -> scheduler.schedule(() -> {
+				}))
 				.withCause(boom);
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
 				.as("third scheduler terminated rejection")
-				.isThrownBy(() -> scheduler.schedule(() -> {}))
+				.isThrownBy(() -> scheduler.schedule(() -> {
+				}))
 				.isSameAs(Exceptions.failWithRejected())
 				.withNoCause();
-	}
-
-	static final class ScannableExecutor implements Executor, Scannable {
-
-		@Override
-		public void execute(@NotNull Runnable command) {
-			command.run();
-		}
-
-		@Override
-		public Object scanUnsafe(Attr key) {
-			if (key == Attr.CAPACITY) return 123;
-			if (key == Attr.BUFFERED) return 1024;
-			if (key == Attr.NAME) return toString();
-			return null;
-		}
-
-		@Override
-		public String toString() {
-			return "scannableExecutor";
-		}
-	}
-
-	static final class PlainExecutor implements Executor {
-		@Override
-		public void execute(@NotNull Runnable command) {
-			command.run();
-		}
-
-		@Override
-		public String toString() {
-			return "\"plain\"";
-		}
 	}
 
 	@Test
@@ -337,7 +319,6 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 		}
 	}
 
-
 	@Test
 	public void scanBuffered() throws InterruptedException {
 		ExecutorScheduler.ExecutorSchedulerWorker worker =
@@ -345,7 +326,12 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 
 		Runnable task = () -> {
 			System.out.println(Thread.currentThread().getName());
-			try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+			try {
+				Thread.sleep(1000);
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		};
 		try {
 			//the tasks are all added to the list and started on a dedicated thread
@@ -363,6 +349,39 @@ public class ExecutorSchedulerTest extends AbstractSchedulerTest {
 		}
 		finally {
 			worker.dispose();
+		}
+	}
+
+	static final class ScannableExecutor implements Executor, Scannable {
+
+		@Override
+		public void execute(@NotNull Runnable command) {
+			command.run();
+		}
+
+		@Override
+		public Object scanUnsafe(Attr key) {
+			if (key == Attr.CAPACITY) return 123;
+			if (key == Attr.BUFFERED) return 1024;
+			if (key == Attr.NAME) return toString();
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return "scannableExecutor";
+		}
+	}
+
+	static final class PlainExecutor implements Executor {
+		@Override
+		public void execute(@NotNull Runnable command) {
+			command.run();
+		}
+
+		@Override
+		public String toString() {
+			return "\"plain\"";
 		}
 	}
 }

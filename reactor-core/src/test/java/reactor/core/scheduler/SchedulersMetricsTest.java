@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import reactor.test.AutoDisposingRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,9 +55,9 @@ public class SchedulersMetricsTest {
 		afterTest.autoDispose(Schedulers.newParallel("B", 2));
 
 		assertThat(simpleMeterRegistry.getMeters()
-		                              .stream()
-		                              .map(m -> m.getId().getTag("name"))
-		                              .distinct())
+				.stream()
+				.map(m -> m.getId().getTag("name"))
+				.distinct())
 				.containsOnly(
 						"parallel(3,\"A\")-0",
 						"parallel(3,\"A\")-1",
@@ -78,9 +77,9 @@ public class SchedulersMetricsTest {
 		afterTest.autoDispose(Schedulers.newBoundedElastic(4, 100, "C").createWorker());
 
 		assertThat(simpleMeterRegistry.getMeters()
-		                              .stream()
-		                              .map(m -> m.getId().getTag(TAG_SCHEDULER_ID))
-		                              .distinct())
+				.stream()
+				.map(m -> m.getId().getTag(TAG_SCHEDULER_ID))
+				.distinct())
 				.containsOnly(
 						"parallel(4,\"A\")",
 						"parallel(4,\"A\")#1",
@@ -100,9 +99,9 @@ public class SchedulersMetricsTest {
 		afterTest.autoDispose(Schedulers.newParallel("A", 1));
 
 		assertThat(simpleMeterRegistry.getMeters()
-		                              .stream()
-		                              .map(m -> m.getId().getTag("name"))
-		                              .distinct())
+				.stream()
+				.map(m -> m.getId().getTag("name"))
+				.distinct())
 				.containsOnly(
 						"parallel(1,\"A\")-0",
 						"parallel(1,\"A\")#1-0",
@@ -127,9 +126,9 @@ public class SchedulersMetricsTest {
 
 		assertThat(
 				simpleMeterRegistry.getMeters()
-				                   .stream()
-				                   .map(m -> m.getId().getTag("name"))
-				                   .distinct()
+						.stream()
+						.map(m -> m.getId().getTag("name"))
+						.distinct()
 		)
 				.containsExactlyInAnyOrder(
 						"parallel(3,\"foo\")-0",
@@ -153,9 +152,9 @@ public class SchedulersMetricsTest {
 		Schedulers.decorateExecutorService(instance, service);
 
 		assertThat(simpleMeterRegistry.getMeters()
-		                              .stream()
-		                              .map(m -> m.getId().getTag("name"))
-		                              .distinct())
+				.stream()
+				.map(m -> m.getId().getTag("name"))
+				.distinct())
 				.containsOnly(
 						"boundedElastic(\"TWICE\",maxThreads=4,maxTaskQueued=100,ttl=1s)-0",
 						"boundedElastic(\"TWICE\",maxThreads=4,maxTaskQueued=100,ttl=1s)-1"
@@ -173,9 +172,9 @@ public class SchedulersMetricsTest {
 		Schedulers.disableMetrics();
 
 		assertThat(simpleMeterRegistry.getMeters()
-		                              .stream()
-		                              .map(m -> m.getId().getName())
-		                              .distinct())
+				.stream()
+				.map(m -> m.getId().getName())
+				.distinct())
 				.containsExactly("foo");
 	}
 
@@ -198,7 +197,7 @@ public class SchedulersMetricsTest {
 
 	@Test
 	@Parameters(method = "metricsSchedulers")
-    public void shouldReportExecutorMetrics(Supplier<Scheduler> schedulerSupplier, String type) {
+	public void shouldReportExecutorMetrics(Supplier<Scheduler> schedulerSupplier, String type) {
 		Scheduler scheduler = afterTest.autoDispose(schedulerSupplier.get());
 		final int taskCount = 3;
 
@@ -215,17 +214,17 @@ public class SchedulersMetricsTest {
 		// Use Awaitility because "count" is reported "eventually"
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			assertThat(counters.stream()
-			                   .mapToDouble(FunctionCounter::count)
-			                   .sum())
+					.mapToDouble(FunctionCounter::count)
+					.sum())
 					.isEqualTo(taskCount);
 		});
-    }
+	}
 
 	@Parameters(method = "metricsSchedulers")
 	@Test(timeout = 10_000)
 	public void shouldReportExecutionTimes(Supplier<Scheduler> schedulerSupplier, String type) {
-	    Scheduler scheduler = afterTest.autoDispose(schedulerSupplier.get());
-	    final int taskCount = 3;
+		Scheduler scheduler = afterTest.autoDispose(schedulerSupplier.get());
+		final int taskCount = 3;
 
 		Phaser phaser = new Phaser(1);
 		for (int i = 1; i <= taskCount; i++) {
@@ -251,7 +250,7 @@ public class SchedulersMetricsTest {
 		// Use Awaitility because "count" is reported "eventually"
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			assertThat(timers.stream()
-			                 .reduce(0d, (time, timer) -> time + timer.totalTime(TimeUnit.MILLISECONDS), Double::sum))
+					.reduce(0d, (time, timer) -> time + timer.totalTime(TimeUnit.MILLISECONDS), Double::sum))
 					.as("total durations")
 					.isEqualTo(600 + 400 + 200, offset(20.0d));
 			assertThat(timers.stream().mapToLong(Timer::count).sum())

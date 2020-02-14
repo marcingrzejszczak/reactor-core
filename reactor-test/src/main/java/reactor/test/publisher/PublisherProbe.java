@@ -48,6 +48,31 @@ import reactor.test.publisher.TestPublisher.Violation;
 public interface PublisherProbe<T> {
 
 	/**
+	 * Create a {@link PublisherProbe} out of a {@link Publisher}, ensuring that its
+	 * {@link #flux()} and {@link #mono()} versions will propagate signals from this
+	 * publisher while capturing subscription, cancellation and request events around it.
+	 *
+	 * @param source the source publisher to mimic and probe.
+	 * @param <T> the type of the source publisher.
+	 * @return a probe that mimics the publisher.
+	 */
+	static <T> PublisherProbe<T> of(Publisher<? extends T> source) {
+		return new DefaultPublisherProbe<>(source);
+	}
+
+	/**
+	 * Create a {@link PublisherProbe} of which {@link #flux()} and {@link #mono()}
+	 * versions will simply complete, capturing subscription, cancellation and request
+	 * events around them.
+	 *
+	 * @param <T> the type of the empty probe.
+	 * @return a probe that mimics an empty publisher.
+	 */
+	static <T> PublisherProbe<T> empty() {
+		return new DefaultPublisherProbe<>(Mono.empty());
+	}
+
+	/**
 	 * Check that the probe was never subscribed to, or throw an {@link AssertionError}.
 	 */
 	default void assertWasNotSubscribed() {
@@ -147,31 +172,6 @@ public interface PublisherProbe<T> {
 	 */
 	boolean wasRequested();
 
-	/**
-	 * Create a {@link PublisherProbe} out of a {@link Publisher}, ensuring that its
-	 * {@link #flux()} and {@link #mono()} versions will propagate signals from this
-	 * publisher while capturing subscription, cancellation and request events around it.
-	 *
-	 * @param source the source publisher to mimic and probe.
-	 * @param <T> the type of the source publisher.
-	 * @return a probe that mimics the publisher.
-	 */
-	static <T> PublisherProbe<T> of(Publisher<? extends T> source) {
-		return new DefaultPublisherProbe<>(source);
-	}
-
-	/**
-	 * Create a {@link PublisherProbe} of which {@link #flux()} and {@link #mono()}
-	 * versions will simply complete, capturing subscription, cancellation and request
-	 * events around them.
-	 *
-	 * @param <T> the type of the empty probe.
-	 * @return a probe that mimics an empty publisher.
-	 */
-	static <T> PublisherProbe<T> empty() {
-		return new DefaultPublisherProbe<>(Mono.empty());
-	}
-
 	final class DefaultPublisherProbe<T>
 			extends AtomicLongArray
 			implements PublisherProbe<T> {
@@ -191,17 +191,17 @@ public interface PublisherProbe<T> {
 		@Override
 		public Mono<T> mono() {
 			return Mono.from(delegate)
-			           .doOnSubscribe(sub -> incrementAndGet(SUBSCRIBED))
-			           .doOnCancel(() -> incrementAndGet(CANCELLED))
-			           .doOnRequest(l -> incrementAndGet(REQUESTED));
+					.doOnSubscribe(sub -> incrementAndGet(SUBSCRIBED))
+					.doOnCancel(() -> incrementAndGet(CANCELLED))
+					.doOnRequest(l -> incrementAndGet(REQUESTED));
 		}
 
 		@Override
 		public Flux<T> flux() {
 			return Flux.from(delegate)
-			           .doOnSubscribe(sub -> incrementAndGet(SUBSCRIBED))
-			           .doOnCancel(() -> incrementAndGet(CANCELLED))
-			           .doOnRequest(l -> incrementAndGet(REQUESTED));
+					.doOnSubscribe(sub -> incrementAndGet(SUBSCRIBED))
+					.doOnCancel(() -> incrementAndGet(CANCELLED))
+					.doOnRequest(l -> incrementAndGet(REQUESTED));
 		}
 
 		@Override

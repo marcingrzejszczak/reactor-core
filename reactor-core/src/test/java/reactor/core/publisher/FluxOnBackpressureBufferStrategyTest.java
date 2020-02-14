@@ -34,11 +34,16 @@ import reactor.test.StepVerifierOptions;
 import reactor.test.publisher.TestPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-import static reactor.core.publisher.BufferOverflowStrategy.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static reactor.core.publisher.BufferOverflowStrategy.DROP_LATEST;
+import static reactor.core.publisher.BufferOverflowStrategy.DROP_OLDEST;
+import static reactor.core.publisher.BufferOverflowStrategy.ERROR;
 
 public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
-                                                             BiFunction<Throwable, Object, Throwable> {
+		BiFunction<Throwable, Object, Throwable> {
 
 	private String droppedValue;
 	private Object hookCapturedValue;
@@ -75,29 +80,30 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		TestPublisher<String> tp2 = TestPublisher.createNoncompliant(TestPublisher.Violation.REQUEST_OVERFLOW);
 
 		final Flux<String> test1 = tp1.flux().onBackpressureBuffer(3, ERROR);
-		final Flux<String> test2 = tp2.flux().onBackpressureBuffer(3, s -> { }, ERROR);
+		final Flux<String> test2 = tp2.flux().onBackpressureBuffer(3, s -> {
+		}, ERROR);
 
 		StepVerifier.create(test1, StepVerifierOptions.create()
-		                                              .scenarioName("without consumer")
-		                                              .initialRequest(0))
-		            .expectSubscription()
-		            .then(() -> tp1.next("A", "B", "C", "D"))
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(3)
-		            .expectNext("A", "B", "C")
-		            .expectErrorMatches(Exceptions::isOverflow)
-		            .verify(Duration.ofSeconds(5));
+				.scenarioName("without consumer")
+				.initialRequest(0))
+				.expectSubscription()
+				.then(() -> tp1.next("A", "B", "C", "D"))
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(3)
+				.expectNext("A", "B", "C")
+				.expectErrorMatches(Exceptions::isOverflow)
+				.verify(Duration.ofSeconds(5));
 
 		StepVerifier.create(test2, StepVerifierOptions.create()
-		                                              .scenarioName("with consumer")
-		                                              .initialRequest(0))
-		            .expectSubscription()
-		            .then(() -> tp2.next("A", "B", "C", "D"))
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(3)
-		            .expectNext("A", "B", "C")
-		            .expectErrorMatches(Exceptions::isOverflow)
-		            .verify(Duration.ofSeconds(5));
+				.scenarioName("with consumer")
+				.initialRequest(0))
+				.expectSubscription()
+				.then(() -> tp2.next("A", "B", "C", "D"))
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(3)
+				.expectNext("A", "B", "C")
+				.expectErrorMatches(Exceptions::isOverflow)
+				.verify(Duration.ofSeconds(5));
 	}
 
 	@Test
@@ -108,24 +114,24 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 				processor, 2, this, DROP_LATEST);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over1", "over2")
-		            .expectComplete()
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over1", "over2")
+				.expectComplete()
+				.verify();
 
 		assertEquals("over3", droppedValue);
 		assertNull("unexpected hookCapturedValue", hookCapturedValue);
-		assertNull("unexpected hookCapturedError",hookCapturedError);
+		assertNull("unexpected hookCapturedError", hookCapturedError);
 	}
 
 	@Test
@@ -136,24 +142,24 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 				processor, 2, this, DROP_OLDEST);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over2", "over3")
-		            .expectComplete()
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over2", "over3")
+				.expectComplete()
+				.verify();
 
 		assertEquals("over1", droppedValue);
-		assertNull("unexpected hookCapturedValue",hookCapturedValue);
-		assertNull("unexpected hookCapturedError",hookCapturedError);
+		assertNull("unexpected hookCapturedValue", hookCapturedValue);
+		assertNull("unexpected hookCapturedError", hookCapturedError);
 	}
 
 	@Test
@@ -164,20 +170,20 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 				processor, 2, this, ERROR);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over1", "over2")
-		            .expectErrorMessage("The receiver is overrun by more signals than expected (bounded queue...)")
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over1", "over2")
+				.expectErrorMessage("The receiver is overrun by more signals than expected (bounded queue...)")
+				.verify();
 
 		assertEquals("over3", droppedValue);
 		assertEquals("over3", hookCapturedValue);
@@ -190,15 +196,15 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		AtomicInteger last = new AtomicInteger();
 
 		StepVerifier.create(Flux.range(1, 100)
-		                        .hide()
-		                        .onBackpressureBuffer(8, last::set, BufferOverflowStrategy.ERROR), 0)
+				.hide()
+				.onBackpressureBuffer(8, last::set, BufferOverflowStrategy.ERROR), 0)
 
-		            .thenRequest(7)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7)
-		            .then(() -> assertThat(last.get()).isEqualTo(16))
-		            .thenRequest(9)
-		            .expectNextCount(8)
-		            .verifyErrorMatches(Exceptions::isOverflow);
+				.thenRequest(7)
+				.expectNext(1, 2, 3, 4, 5, 6, 7)
+				.then(() -> assertThat(last.get()).isEqualTo(16))
+				.thenRequest(9)
+				.expectNextCount(8)
+				.verifyErrorMatches(Exceptions::isOverflow);
 	}
 
 	@Test
@@ -206,16 +212,16 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		AtomicInteger last = new AtomicInteger();
 
 		StepVerifier.create(Flux.range(1, 100)
-		                        .hide()
-		                        .onBackpressureBuffer(8, last::set,
-				                        BufferOverflowStrategy.DROP_OLDEST), 0)
+				.hide()
+				.onBackpressureBuffer(8, last::set,
+						BufferOverflowStrategy.DROP_OLDEST), 0)
 
-		            .thenRequest(7)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7)
-		            .then(() -> assertThat(last.get()).isEqualTo(92))
-		            .thenRequest(9)
-		            .expectNext(93, 94, 95, 96, 97, 98, 99, 100)
-		            .verifyComplete();
+				.thenRequest(7)
+				.expectNext(1, 2, 3, 4, 5, 6, 7)
+				.then(() -> assertThat(last.get()).isEqualTo(92))
+				.thenRequest(9)
+				.expectNext(93, 94, 95, 96, 97, 98, 99, 100)
+				.verifyComplete();
 	}
 
 	@Test
@@ -223,16 +229,16 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		AtomicInteger last = new AtomicInteger();
 
 		StepVerifier.create(Flux.range(1, 100)
-		                        .hide()
-		                        .onBackpressureBuffer(8, last::set,
-				                        BufferOverflowStrategy.DROP_LATEST), 0)
+				.hide()
+				.onBackpressureBuffer(8, last::set,
+						BufferOverflowStrategy.DROP_LATEST), 0)
 
-		            .thenRequest(7)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7)
-		            .then(() -> assertThat(last.get()).isEqualTo(100))
-		            .thenRequest(9)
-		            .expectNext(8, 9, 10, 11, 12, 13, 14, 15)
-		            .verifyComplete();
+				.thenRequest(7)
+				.expectNext(1, 2, 3, 4, 5, 6, 7)
+				.then(() -> assertThat(last.get()).isEqualTo(100))
+				.thenRequest(9)
+				.expectNext(8, 9, 10, 11, 12, 13, 14, 15)
+				.verifyComplete();
 	}
 
 
@@ -243,18 +249,18 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		AtomicInteger producedCounter = new AtomicInteger();
 
 		StepVerifier.create(testPublisher.flux()
-		                                 .doOnNext(i -> producedCounter.incrementAndGet())
-		                                 .onBackpressureBuffer(3, overflown::add, BufferOverflowStrategy.ERROR),
+						.doOnNext(i -> producedCounter.incrementAndGet())
+						.onBackpressureBuffer(3, overflown::add, BufferOverflowStrategy.ERROR),
 				StepVerifierOptions.create().initialRequest(0).checkUnderRequesting(false))
-		            .thenRequest(5)
-		            .then(() -> testPublisher.next(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .thenAwait() //at this point the buffer is overrun since the range request was unbounded
-		            .thenRequest(100) //requesting more empties the buffer before an overflow error is propagated
-		            .expectNext(6, 7, 8)
-		            .expectErrorMatches(Exceptions::isOverflow)
-		            .verifyThenAssertThat()
-		            .hasDroppedExactly(10, 11, 12, 13, 14, 15);
+				.thenRequest(5)
+				.then(() -> testPublisher.next(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
+				.expectNext(1, 2, 3, 4, 5)
+				.thenAwait() //at this point the buffer is overrun since the range request was unbounded
+				.thenRequest(100) //requesting more empties the buffer before an overflow error is propagated
+				.expectNext(6, 7, 8)
+				.expectErrorMatches(Exceptions::isOverflow)
+				.verifyThenAssertThat()
+				.hasDroppedExactly(10, 11, 12, 13, 14, 15);
 
 		//the rest, asserted above, is dropped because the source was cancelled
 		assertThat(overflown).as("passed to overflow handler").containsExactly(9);
@@ -266,24 +272,26 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		DirectProcessor<String> processor = DirectProcessor.create();
 
 		FluxOnBackpressureBufferStrategy<String> flux = new FluxOnBackpressureBufferStrategy<>(
-				processor, 2, v -> { throw new IllegalArgumentException("boom"); },
+				processor, 2, v -> {
+			throw new IllegalArgumentException("boom");
+		},
 				DROP_LATEST);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over1", "over2")
-		            .expectErrorMessage("boom")
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over1", "over2")
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
 		assertEquals("over3", hookCapturedValue);
@@ -296,24 +304,26 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		DirectProcessor<String> processor = DirectProcessor.create();
 
 		FluxOnBackpressureBufferStrategy<String> flux = new FluxOnBackpressureBufferStrategy<>(
-				processor, 2, v -> { throw new IllegalArgumentException("boom"); },
+				processor, 2, v -> {
+			throw new IllegalArgumentException("boom");
+		},
 				DROP_OLDEST);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over2", "over3")
-		            .expectErrorMessage("boom")
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over2", "over3")
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
 		assertEquals("over1", hookCapturedValue);
@@ -326,24 +336,26 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		DirectProcessor<String> processor = DirectProcessor.create();
 
 		FluxOnBackpressureBufferStrategy<String> flux = new FluxOnBackpressureBufferStrategy<>(
-				processor, 2, v -> { throw new IllegalArgumentException("boom"); },
+				processor, 2, v -> {
+			throw new IllegalArgumentException("boom");
+		},
 				ERROR);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over1", "over2")
-		            .expectErrorMessage("boom")
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over1", "over2")
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
 		assertEquals("over3", hookCapturedValue);
@@ -359,21 +371,21 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 				processor, 2, null, ERROR);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onNext("over4");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(2)
-		            .expectNext("over1", "over2")
-		            .expectErrorMatches(Exceptions::isOverflow)
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onNext("over4");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(2)
+				.expectNext("over1", "over2")
+				.expectErrorMatches(Exceptions::isOverflow)
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
 		assertEquals("over3", hookCapturedValue);
@@ -389,24 +401,24 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 				processor, 2, null, DROP_LATEST);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over1", "over2")
-		            .expectComplete()
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over1", "over2")
+				.expectComplete()
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
 		assertNull("unexpected hookCapturedValue", hookCapturedValue);
-		assertNull("unexpected hookCapturedError",hookCapturedError);
+		assertNull("unexpected hookCapturedError", hookCapturedError);
 	}
 
 	@Test
@@ -417,24 +429,24 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 				processor, 2, null, DROP_OLDEST);
 
 		StepVerifier.create(flux, 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over2", "over3")
-		            .expectComplete()
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over2", "over3")
+				.expectComplete()
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
-		assertNull("unexpected hookCapturedValue",hookCapturedValue);
-		assertNull("unexpected hookCapturedError",hookCapturedError);
+		assertNull("unexpected hookCapturedValue", hookCapturedValue);
+		assertNull("unexpected hookCapturedError", hookCapturedError);
 	}
 
 	@Test
@@ -442,24 +454,24 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 		DirectProcessor<String> processor = DirectProcessor.create();
 
 		StepVerifier.create(processor.onBackpressureBuffer(2, DROP_OLDEST), 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            processor.onNext("normal");
-			            processor.onNext("over1");
-			            processor.onNext("over2");
-			            processor.onNext("over3");
-			            processor.onComplete();
-		            })
-		            .expectNext("normal")
-		            .thenAwait()
-		            .thenRequest(3)
-		            .expectNext("over2", "over3")
-		            .expectComplete()
-		            .verify();
+				.thenRequest(1)
+				.then(() -> {
+					processor.onNext("normal");
+					processor.onNext("over1");
+					processor.onNext("over2");
+					processor.onNext("over3");
+					processor.onComplete();
+				})
+				.expectNext("normal")
+				.thenAwait()
+				.thenRequest(3)
+				.expectNext("over2", "over3")
+				.expectComplete()
+				.verify();
 
 		assertNull("unexpected droppedValue", droppedValue);
-		assertNull("unexpected hookCapturedValue",hookCapturedValue);
-		assertNull("unexpected hookCapturedError",hookCapturedError);
+		assertNull("unexpected hookCapturedValue", hookCapturedValue);
+		assertNull("unexpected hookCapturedError", hookCapturedError);
 	}
 
 	@Test
@@ -479,7 +491,8 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 	public void fluxOnBackpressureBufferStrategyRequiresStrategy() {
 		try {
 			Flux.just("foo").onBackpressureBuffer(1,
-					v -> { },
+					v -> {
+					},
 					null);
 			fail("expected NullPointerException");
 		}
@@ -489,31 +502,33 @@ public class FluxOnBackpressureBufferStrategyTest implements Consumer<String>,
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxOnBackpressureBufferStrategy.BackpressureBufferDropOldestSubscriber<Integer> test =
-        		new FluxOnBackpressureBufferStrategy.BackpressureBufferDropOldestSubscriber<>(actual,
-        				123, true, t -> {}, BufferOverflowStrategy.DROP_OLDEST);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxOnBackpressureBufferStrategy.BackpressureBufferDropOldestSubscriber<Integer> test =
+				new FluxOnBackpressureBufferStrategy.BackpressureBufferDropOldestSubscriber<>(actual,
+						123, true, t -> {
+				}, BufferOverflowStrategy.DROP_OLDEST);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.DELAY_ERROR)).isTrue();
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-        test.offer(9);
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.DELAY_ERROR)).isTrue();
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		test.offer(9);
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

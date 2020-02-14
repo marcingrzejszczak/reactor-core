@@ -40,11 +40,11 @@ public class FluxLimitRequestTest {
 	public void apiCall() {
 		LongAdder rCount = new LongAdder();
 		final Flux<Integer> source = Flux.range(1, 100)
-		                                 .doOnRequest(rCount::add);
+				.doOnRequest(rCount::add);
 
 		StepVerifier.create(source.limitRequest(3))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 
 		assertThat(rCount.longValue()).isEqualTo(3);
 	}
@@ -53,13 +53,13 @@ public class FluxLimitRequestTest {
 	public void unboundedDownstreamRequest() {
 		LongAdder rCount = new LongAdder();
 		final Flux<Integer> source = Flux.range(1, 100)
-		                                 .doOnRequest(rCount::add);
+				.doOnRequest(rCount::add);
 
 		Flux<Integer> test = new FluxLimitRequest<>(source, 3);
 
 		StepVerifier.create(test, Long.MAX_VALUE)
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 
 		assertThat(rCount.longValue())
 				.as("total request should match the limitRequest")
@@ -70,23 +70,23 @@ public class FluxLimitRequestTest {
 	public void boundedDownStreamRequestMatchesCap() {
 		LongAdder rCount = new LongAdder();
 		final Flux<Integer> source = Flux.range(1, 100)
-		                                 .doOnRequest(rCount::add);
+				.doOnRequest(rCount::add);
 
 		Flux<Integer> test = new FluxLimitRequest<>(source, 10);
 
 		StepVerifier.create(test, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(4)
-		            .expectNext(1, 2, 3, 4)
-		            .then(() -> assertThat(rCount.longValue())
-				            .as("request under cap should be propagated as is")
-				            .isEqualTo(4))
-		            .thenRequest(3)
-		            .expectNext(5, 6, 7)
-		            .thenRequest(3)
-		            .expectNext(8, 9, 10)
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(4)
+				.expectNext(1, 2, 3, 4)
+				.then(() -> assertThat(rCount.longValue())
+						.as("request under cap should be propagated as is")
+						.isEqualTo(4))
+				.thenRequest(3)
+				.expectNext(5, 6, 7)
+				.thenRequest(3)
+				.expectNext(8, 9, 10)
+				.verifyComplete();
 
 		assertThat(rCount.longValue())
 				.as("total request should match the limitRequest")
@@ -97,22 +97,22 @@ public class FluxLimitRequestTest {
 	public void boundedDownStreamRequestOverflowsCap() {
 		List<Long> requests = new ArrayList<>();
 		final Flux<Integer> source = Flux.range(1, 100)
-		                                 .doOnRequest(requests::add);
+				.doOnRequest(requests::add);
 
 		Flux<Integer> test = new FluxLimitRequest<>(source, 10);
 
 		StepVerifier.create(test, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .then(() -> assertThat(requests).as("no initial prefetch").isEmpty())
-		            .thenRequest(4)
-		            .expectNext(1, 2, 3, 4)
-		            .then(() -> assertThat(requests)
-				            .as("request under cap should be propagated as is")
-				            .containsExactly(4L))
-		            .thenRequest(18)
-		            .expectNext(5, 6, 7,8, 9, 10)
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.then(() -> assertThat(requests).as("no initial prefetch").isEmpty())
+				.thenRequest(4)
+				.expectNext(1, 2, 3, 4)
+				.then(() -> assertThat(requests)
+						.as("request under cap should be propagated as is")
+						.containsExactly(4L))
+				.thenRequest(18)
+				.expectNext(5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 
 		assertThat(requests)
 				.as("limitRequest should rebatch last request")
@@ -126,18 +126,18 @@ public class FluxLimitRequestTest {
 	public void extraneousSmallRequestsNotPropagatedAsZero() {
 		List<Long> requests = new ArrayList<>();
 		final Flux<Integer> source = Flux.range(1, 100)
-		                                 .doOnRequest(requests::add);
+				.doOnRequest(requests::add);
 
 		Flux<Integer> test = new FluxLimitRequest<>(source, 11);
 
 		StepVerifier.create(test, 0)
-		            .thenRequest(8)
-		            .thenRequest(2)
-		            .thenRequest(2)
-		            .thenRequest(2)
-		            .thenRequest(2)
-		            .expectNextCount(11)
-		            .verifyComplete();
+				.thenRequest(8)
+				.thenRequest(2)
+				.thenRequest(2)
+				.thenRequest(2)
+				.thenRequest(2)
+				.expectNextCount(11)
+				.verifyComplete();
 
 		assertThat(requests)
 				.as("limitRequest should not propagate extraneous requests as zeros")
@@ -153,8 +153,8 @@ public class FluxLimitRequestTest {
 				.limitRequest(3);
 
 		StepVerifier.create(test)
-		            .expectNextCount(3)
-		            .verifyComplete();
+				.expectNextCount(3)
+				.verifyComplete();
 
 		assertThat(cancelled.get()).as("source is cancelled").isTrue();
 	}
@@ -167,16 +167,16 @@ public class FluxLimitRequestTest {
 		LongAdder operatorRequested = new LongAdder();
 
 		Flux<Integer> test = Flux.range(1, 1000)
-		                         .doOnCancel(() -> sourceCancelled.set(true))
-		                         .doOnRequest(sourceRequested::add)
-		                         .limitRequest(10)
-		                         .doOnCancel(() -> operatorCancelled.set(true))
-		                         .doOnRequest(operatorRequested::add)
-		                         .take(3);
+				.doOnCancel(() -> sourceCancelled.set(true))
+				.doOnRequest(sourceRequested::add)
+				.limitRequest(10)
+				.doOnCancel(() -> operatorCancelled.set(true))
+				.doOnRequest(operatorRequested::add)
+				.take(3);
 
 		StepVerifier.create(test)
-		            .expectNextCount(3)
-		            .verifyComplete();
+				.expectNextCount(3)
+				.verifyComplete();
 
 		assertThat(operatorCancelled.get()).as("operator cancelled").isTrue();
 		assertThat(operatorRequested.longValue()).isEqualTo(Long.MAX_VALUE);
@@ -196,9 +196,9 @@ public class FluxLimitRequestTest {
 		TestPublisher<Integer> tp = TestPublisher.create();
 
 		StepVerifier.create(tp.flux().limitRequest(3))
-		            .then(() -> tp.next(1, 2, 3).error(new IllegalStateException("boom")))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.then(() -> tp.next(1, 2, 3).error(new IllegalStateException("boom")))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -206,9 +206,9 @@ public class FluxLimitRequestTest {
 		TestPublisher<Integer> tp = TestPublisher.create();
 
 		StepVerifier.create(tp.flux().limitRequest(4))
-		            .then(() -> tp.next(1, 2, 3).error(new IllegalStateException("boom")))
-		            .expectNext(1, 2, 3)
-		            .verifyErrorMessage("boom");
+				.then(() -> tp.next(1, 2, 3).error(new IllegalStateException("boom")))
+				.expectNext(1, 2, 3)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
@@ -216,9 +216,9 @@ public class FluxLimitRequestTest {
 		TestPublisher<Integer> tp = TestPublisher.create();
 
 		StepVerifier.create(tp.flux().limitRequest(4))
-		            .then(() -> tp.emit(1, 2, 3))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.then(() -> tp.emit(1, 2, 3))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -226,9 +226,9 @@ public class FluxLimitRequestTest {
 		TestPublisher<Integer> tp = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(tp.flux().limitRequest(3))
-		            .then(() -> tp.emit(1, 2, 3, 4))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.then(() -> tp.emit(1, 2, 3, 4))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -236,9 +236,9 @@ public class FluxLimitRequestTest {
 		TestPublisher<Integer> tp = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(tp.flux().limitRequest(3))
-		            .then(() -> tp.emit(1, 2, 3))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.then(() -> tp.emit(1, 2, 3))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -246,9 +246,9 @@ public class FluxLimitRequestTest {
 		TestPublisher<Integer> tp = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(tp.flux().limitRequest(3))
-		            .then(() -> tp.next(1, 2, 3).error(new IllegalStateException("boom")))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.then(() -> tp.next(1, 2, 3).error(new IllegalStateException("boom")))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -282,8 +282,8 @@ public class FluxLimitRequestTest {
 	public void raceRequest() {
 		List<Long> requests = Collections.synchronizedList(new ArrayList<>());
 		final Flux<Integer> flux = Flux.range(1, 1000)
-		                               .doOnRequest(requests::add)
-		                               .limitRequest(81);
+				.doOnRequest(requests::add)
+				.limitRequest(81);
 		BaseSubscriber<Integer> base = new BaseSubscriber<Integer>() {
 			@Override
 			protected void hookOnSubscribe(Subscription subscription) {

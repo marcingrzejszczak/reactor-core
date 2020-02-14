@@ -26,11 +26,9 @@ import org.assertj.core.data.Offset;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.test.subscriber.AssertSubscriber;
-import reactor.util.function.Tuple2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,11 +45,11 @@ public class MonoRunnableTest {
 
 		Mono.<Void>fromRunnable(() -> {
 		})
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -60,12 +58,12 @@ public class MonoRunnableTest {
 
 		Mono.<Void>fromRunnable(() -> {
 		})
-		    .hide()
-		    .subscribe(ts);
+				.hide()
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -73,8 +71,8 @@ public class MonoRunnableTest {
 	public void asyncRunnable() {
 		AtomicReference<Thread> t = new AtomicReference<>();
 		StepVerifier.create(Mono.fromRunnable(() -> t.set(Thread.currentThread()))
-		                        .subscribeOn(Schedulers.single()))
-		            .verifyComplete();
+				.subscribeOn(Schedulers.single()))
+				.verifyComplete();
 
 		assertThat(t).isNotNull();
 		assertThat(t).isNotEqualTo(Thread.currentThread());
@@ -84,8 +82,8 @@ public class MonoRunnableTest {
 	public void asyncRunnableBackpressured() {
 		AtomicReference<Thread> t = new AtomicReference<>();
 		StepVerifier.create(Mono.fromRunnable(() -> t.set(Thread.currentThread()))
-		                        .subscribeOn(Schedulers.single()), 0)
-		            .verifyComplete();
+				.subscribeOn(Schedulers.single()), 0)
+				.verifyComplete();
 
 		assertThat(t).isNotNull();
 		assertThat(t).isNotEqualTo(Thread.currentThread());
@@ -98,12 +96,12 @@ public class MonoRunnableTest {
 		Mono.fromRunnable(() -> {
 			throw new RuntimeException("forced failure");
 		})
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -112,19 +110,21 @@ public class MonoRunnableTest {
 
 		Mono.<Void>fromRunnable(() -> {
 		})
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNonFuseableSource()
-		  .assertNoValues();
+				.assertNoValues();
 	}
 
 	@Test
 	public void test() {
-		int c[] = { 0 };
+		int c[] = {0};
 		Flux.range(1, 1000)
-		    .flatMap(v -> Mono.fromRunnable(() -> { c[0]++; }))
-		    .ignoreElements()
-		    .block();
+				.flatMap(v -> Mono.fromRunnable(() -> {
+					c[0]++;
+				}))
+				.ignoreElements()
+				.block();
 
 		Assert.assertEquals(1000, c[0]);
 	}
@@ -134,13 +134,13 @@ public class MonoRunnableTest {
 	public void runnableCancelledBeforeRun() {
 		AtomicBoolean actual = new AtomicBoolean(true);
 		Mono<?> mono = Mono.fromRunnable(() -> actual.set(false))
-		                   .doOnSubscribe(Subscription::cancel);
+				.doOnSubscribe(Subscription::cancel);
 
 		StepVerifier.create(mono)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofSeconds(1))
-		            .thenCancel()
-		            .verify();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofSeconds(1))
+				.thenCancel()
+				.verify();
 
 		assertThat(actual).as("cancelled before run").isTrue();
 	}
@@ -158,11 +158,11 @@ public class MonoRunnableTest {
 				e.printStackTrace();
 			}
 		})
-		                      .doOnSubscribe(sub -> subscribeTs.set(-1 * System.nanoTime()))
-		                      .doFinally(fin -> subscribeTs.addAndGet(System.nanoTime()));
+				.doOnSubscribe(sub -> subscribeTs.set(-1 * System.nanoTime()))
+				.doFinally(fin -> subscribeTs.addAndGet(System.nanoTime()));
 
 		StepVerifier.create(mono)
-		            .verifyComplete();
+				.verifyComplete();
 
 		assertThat(TimeUnit.NANOSECONDS.toMillis(subscribeTs.get())).isCloseTo(500L, Offset.offset(50L));
 	}

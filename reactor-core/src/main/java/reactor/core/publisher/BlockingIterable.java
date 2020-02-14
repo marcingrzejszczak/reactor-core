@@ -99,7 +99,7 @@ final class BlockingIterable<T> implements Iterable<T>, Scannable {
 		Spliterator<T> sp = Spliterators.spliteratorUnknownSize(it, 0);
 
 		return StreamSupport.stream(sp, false)
-		                    .onClose(it);
+				.onClose(it);
 	}
 
 	SubscriberIterator<T> createIterator() {
@@ -119,29 +119,22 @@ final class BlockingIterable<T> implements Iterable<T>, Scannable {
 	static final class SubscriberIterator<T>
 			implements InnerConsumer<T>, Iterator<T>, Runnable {
 
-		final Queue<T> queue;
-
-		final int batchSize;
-
-		final int limit;
-
-		final Lock lock;
-
-		final Condition condition;
-
-		long produced;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SubscriberIterator, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(SubscriberIterator.class,
 						Subscription.class,
 						"s");
-
+		final Queue<T> queue;
+		final int batchSize;
+		final int limit;
+		final Lock lock;
+		final Condition condition;
+		long produced;
+		volatile Subscription s;
 		volatile boolean done;
 		Throwable error;
 
-		 SubscriberIterator(Queue<T> queue, int batchSize) {
+		SubscriberIterator(Queue<T> queue, int batchSize) {
 			this.queue = queue;
 			this.batchSize = batchSize;
 			this.limit = Operators.unboundedOrLimit(batchSize);
@@ -194,7 +187,7 @@ final class BlockingIterable<T> implements Iterable<T>, Scannable {
 
 		@Override
 		public T next() {
-		 	// hasNext will start by checking the thread, so `next()` would be rejected on a NONBLOCKING thread
+			// hasNext will start by checking the thread, so `next()` would be rejected on a NONBLOCKING thread
 			if (hasNext()) {
 				T v = queue.poll();
 
@@ -272,7 +265,7 @@ final class BlockingIterable<T> implements Iterable<T>, Scannable {
 		@Nullable
 		public Object scanUnsafe(Attr key) {
 			if (key == Attr.TERMINATED) return done;
-			if (key == Attr.PARENT) return  s;
+			if (key == Attr.PARENT) return s;
 			if (key == Attr.CANCELLED) return s == Operators.cancelledSubscription();
 			if (key == Attr.PREFETCH) return batchSize;
 			if (key == Attr.ERROR) return error;

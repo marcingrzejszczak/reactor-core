@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FluxMapSignalTest extends FluxOperatorTest<String, String> {
 
 	@Test(expected = IllegalArgumentException.class)
-	public void allNull(){
+	public void allNull() {
 		Flux.never().flatMap(null, null, null);
 	}
 
@@ -63,97 +63,98 @@ public class FluxMapSignalTest extends FluxOperatorTest<String, String> {
 	}
 
 	@Test
-    public void completeOnlyBackpressured() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create(0L);
+	public void completeOnlyBackpressured() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create(0L);
 
-        new FluxMapSignal<>(Flux.empty(), null, null, () -> 1)
-        .subscribe(ts);
+		new FluxMapSignal<>(Flux.empty(), null, null, () -> 1)
+				.subscribe(ts);
 
-        ts.assertNoValues()
-        .assertNoError()
-        .assertNotComplete();
+		ts.assertNoValues()
+				.assertNoError()
+				.assertNotComplete();
 
-        ts.request(1);
+		ts.request(1);
 
-        ts.assertValues(1)
-        .assertNoError()
-        .assertComplete();
-    }
+		ts.assertValues(1)
+				.assertNoError()
+				.assertComplete();
+	}
 
-    @Test
-    public void errorOnlyBackpressured() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create(0L);
+	@Test
+	public void errorOnlyBackpressured() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create(0L);
 
-        new FluxMapSignal<>(Flux.error(new RuntimeException()), null, e -> 1, null)
-        .subscribe(ts);
+		new FluxMapSignal<>(Flux.error(new RuntimeException()), null, e -> 1, null)
+				.subscribe(ts);
 
-        ts.assertNoValues()
-        .assertNoError()
-        .assertNotComplete();
+		ts.assertNoValues()
+				.assertNoError()
+				.assertNotComplete();
 
-        ts.request(1);
+		ts.request(1);
 
-        ts.assertValues(1)
-        .assertNoError()
-        .assertComplete();
-    }
+		ts.assertValues(1)
+				.assertNoError()
+				.assertComplete();
+	}
 
 	@Test
 	public void flatMapSignal() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .flatMap(d -> Flux.just(d * 2),
-				                        e -> Flux.just(99),
-				                        () -> Flux.just(10)))
-		            .expectNext(2, 4, 6, 10)
-		            .verifyComplete();
+				.flatMap(d -> Flux.just(d * 2),
+						e -> Flux.just(99),
+						() -> Flux.just(10)))
+				.expectNext(2, 4, 6, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void flatMapSignalError() {
 		StepVerifier.create(Flux.just(1, 2, 3).concatWith(Flux.error(new Exception("test")))
-		                        .flatMap(d -> Flux.just(d * 2),
-				                        e -> Flux.just(99),
-				                        () -> Flux.just(10)))
-		            .expectNext(2, 4, 6, 99)
-		            .verifyComplete();
+				.flatMap(d -> Flux.just(d * 2),
+						e -> Flux.just(99),
+						() -> Flux.just(10)))
+				.expectNext(2, 4, 6, 99)
+				.verifyComplete();
 	}
 
 	@Test
 	public void flatMapSignal2() {
 		StepVerifier.create(Mono.just(1)
-		                        .flatMapMany(d -> Flux.just(d * 2),
-				                        e -> Flux.just(99),
-				                        () -> Flux.just(10)).doOnComplete(() -> {
-			System.out.println("test");
+				.flatMapMany(d -> Flux.just(d * 2),
+						e -> Flux.just(99),
+						() -> Flux.just(10)).doOnComplete(() -> {
+					System.out.println("test");
 				})
-		.log())
-		            .expectNext(2, 10)
-		            .verifyComplete();
+				.log())
+				.expectNext(2, 10)
+				.verifyComplete();
 	}
 
-    @Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxMapSignal<Object, Integer> main = new FluxMapSignal<>(Flux.empty(), null, null, () -> 1);
-        FluxMapSignal.FluxMapSignalSubscriber<Object, Integer> test =
-        		new FluxMapSignal.FluxMapSignalSubscriber<>(actual, main.mapperNext,
-				        main.mapperError, main.mapperComplete);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxMapSignal<Object, Integer> main = new FluxMapSignal<>(Flux.empty(), null, null, () -> 1);
+		FluxMapSignal.FluxMapSignalSubscriber<Object, Integer> test =
+				new FluxMapSignal.FluxMapSignalSubscriber<>(actual, main.mapperNext,
+						main.mapperError, main.mapperComplete);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0); // RS: TODO non-zero size
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0); // RS: TODO non-zero size
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
 
-    }
+	}
 }

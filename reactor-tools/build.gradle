@@ -20,120 +20,120 @@ apply plugin: 'org.unbroken-dome.test-sets'
 description = 'Reactor Tools'
 
 testSets {
-    jarFileTest
+	jarFileTest
 }
 
 configurations {
-    shaded
+	shaded
 }
 project.tasks.test.classpath += configurations.shaded
 
 dependencies {
-    compile project(':reactor-core')
+	compile project(':reactor-core')
 
-    shaded 'org.ow2.asm:asm:7.1'
-    shaded 'org.ow2.asm:asm-util:7.1'
-    shaded 'org.ow2.asm:asm-commons:7.1'
-    shaded 'net.bytebuddy:byte-buddy-agent:1.9.6'
-    for (dependency in project.configurations.shaded.dependencies) {
-        compileOnly(dependency)
-    }
+	shaded 'org.ow2.asm:asm:7.1'
+	shaded 'org.ow2.asm:asm-util:7.1'
+	shaded 'org.ow2.asm:asm-commons:7.1'
+	shaded 'net.bytebuddy:byte-buddy-agent:1.9.6'
+	for (dependency in project.configurations.shaded.dependencies) {
+		compileOnly(dependency)
+	}
 
-    testCompile 'junit:junit:4.12'
-    testCompile "org.assertj:assertj-core:$assertJVersion"
-    testCompile 'cglib:cglib:3.3.0'
+	testCompile 'junit:junit:4.12'
+	testCompile "org.assertj:assertj-core:$assertJVersion"
+	testCompile 'cglib:cglib:3.3.0'
 
-    jarFileTestCompile 'org.assertj:assertj-core:3.12.2' //FIXME bump in root and use property
-    jarFileTestCompile 'junit:junit:4.12'
+	jarFileTestCompile 'org.assertj:assertj-core:3.12.2' //FIXME bump in root and use property
+	jarFileTestCompile 'junit:junit:4.12'
 }
 
 test {
-    // Creates a JVM per test because the agent can be installed only once
-    forkEvery = 1
-    maxParallelForks = 1
-    jvmArgs = [
-            "-Xverify:all",
-            JavaVersion.current().isJava9Compatible()
-                    ? "-Xlog:redefine+class*=warning"
-                    : "-XX:TraceRedefineClasses=2"
-    ]
+	// Creates a JVM per test because the agent can be installed only once
+	forkEvery = 1
+	maxParallelForks = 1
+	jvmArgs = [
+			"-Xverify:all",
+			JavaVersion.current().isJava9Compatible()
+					? "-Xlog:redefine+class*=warning"
+					: "-XX:TraceRedefineClasses=2"
+	]
 
-    testLogging {
-        displayGranularity 1
-        showStackTraces = true
-        showStandardStreams = true
-        exceptionFormat = 'full'
-        events "STARTED", "PASSED", "FAILED", "SKIPPED"
-    }
+	testLogging {
+		displayGranularity 1
+		showStackTraces = true
+		showStandardStreams = true
+		exceptionFormat = 'full'
+		events "STARTED", "PASSED", "FAILED", "SKIPPED"
+	}
 }
 
 jar {
-    archiveClassifier.set('original')
+	archiveClassifier.set('original')
 }
 
 shadowJar {
-    classifier = null
+	classifier = null
 
-    dependsOn(project.tasks.jar)
-    manifest {
-        inheritFrom project.tasks.jar.manifest
-    }
+	dependsOn(project.tasks.jar)
+	manifest {
+		inheritFrom project.tasks.jar.manifest
+	}
 
-    configurations = [project.configurations.shaded]
+	configurations = [project.configurations.shaded]
 
-    project.afterEvaluate {
-        dependencies {
-            def shadedDependencies = project.configurations
-                    .shaded
-                    .dependencies
-                    .collect { "${it.group}:${it.name}".toString() }
-                    .toSet()
+	project.afterEvaluate {
+		dependencies {
+			def shadedDependencies = project.configurations
+											.shaded
+											.dependencies
+											.collect { "${it.group}:${it.name}".toString() }
+											.toSet()
 
-            // Exclude every compile-scoped dependency (including the transitive ones)
-            for (id in project.configurations.compile.resolvedConfiguration.resolvedArtifacts*.moduleVersion*.id) {
-                def module = "${id.group}:${id.name}".toString()
-                if (!shadedDependencies.contains(module)) {
-                    project.configurations.shaded.exclude(group: id.group, module: id.name)
-                    exclude(dependency(module))
-                }
-            }
-        }
-    }
+			// Exclude every compile-scoped dependency (including the transitive ones)
+			for (id in project.configurations.compile.resolvedConfiguration.resolvedArtifacts*.moduleVersion*.id) {
+				def module = "${id.group}:${id.name}".toString()
+				if (!shadedDependencies.contains(module)) {
+					project.configurations.shaded.exclude(group: id.group, module: id.name)
+					exclude(dependency(module))
+				}
+			}
+		}
+	}
 
-    exclude 'module-info.class'
-    exclude 'META-INF/*'
-    exclude 'META-INF/maven*/**'
-    exclude 'META-INF/versions/*'
+	exclude 'module-info.class'
+	exclude 'META-INF/*'
+	exclude 'META-INF/maven*/**'
+	exclude 'META-INF/versions/*'
 }
 
 project.tasks.build.dependsOn(shadowJar)
 
 task relocateShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation) {
-    target = tasks.shadowJar
-    prefix = "reactor.tools.shaded"
+	target = tasks.shadowJar
+	prefix = "reactor.tools.shaded"
 }
 
 tasks.shadowJar.dependsOn tasks.relocateShadowJar
 
 project.tasks.jarFileTest.configure {
-    systemProperty("jarFile", shadowJar.outputs.files.singleFile)
-    dependsOn(shadowJar)
+	systemProperty("jarFile", shadowJar.outputs.files.singleFile)
+	dependsOn(shadowJar)
 }
 project.tasks.check.dependsOn(jarFileTest)
 
 task shadedJarTest(type: Test) {
-    testClassesDirs = sourceSets.test.output.classesDirs
+	testClassesDirs = sourceSets.test.output.classesDirs
 
-    Set<? super File> mainOutputs = [
-            project.sourceSets.main.output.resourcesDir,
-            project.sourceSets.main.java.outputDir,
-    ]
+	Set<? super File> mainOutputs = [
+			project.sourceSets.main.output.resourcesDir,
+			project.sourceSets.main.java.outputDir,
+	]
 
-    classpath = shadowJar.outputs.files
-    // Exclude main outputs since we have the shaded JAR on the classpath already
-    classpath += sourceSets.test.runtimeClasspath.filter { !(it in mainOutputs) }
+	classpath = shadowJar.outputs.files
+	// Exclude main outputs since we have the shaded JAR on the classpath already
+	classpath += sourceSets.test.runtimeClasspath.filter { !(it in mainOutputs) }
 
-    dependsOn(shadowJar)
+	dependsOn(shadowJar)
 }
 project.tasks.check.dependsOn(shadedJarTest)
 

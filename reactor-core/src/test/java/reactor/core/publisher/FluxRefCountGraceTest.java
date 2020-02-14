@@ -41,16 +41,17 @@ public class FluxRefCountGraceTest {
 		AtomicBoolean unexpectedCancellation = new AtomicBoolean();
 
 		Flux<Integer> test = Flux.range(0, 100)
-		                         .delayElements(Duration.ofMillis(2))
-		                         .publish()
-		                         .refCount(1, Duration.ofMillis(1))
-		                         .onBackpressureBuffer(); //known to potentially cancel twice, but that's another issue
+				.delayElements(Duration.ofMillis(2))
+				.publish()
+				.refCount(1, Duration.ofMillis(1))
+				.onBackpressureBuffer(); //known to potentially cancel twice, but that's another issue
 
-		test.subscribe(v -> {}, e -> unexpectedCancellation.set(true));
+		test.subscribe(v -> {
+		}, e -> unexpectedCancellation.set(true));
 
 		StepVerifier.create(test.take(3))
-		            .expectNextCount(3)
-		            .verifyComplete();
+				.expectNextCount(3)
+				.verifyComplete();
 
 		assertThat(unexpectedCancellation).as("unexpected cancellation").isFalse();
 	}
@@ -74,11 +75,11 @@ public class FluxRefCountGraceTest {
 				.doOnSubscribe(s -> subCount.incrementAndGet());
 
 		StepVerifier.create(flux.publish()
-		                        .refCount(1, Duration.ofMillis(500))
-		                        .retry(1))
-		            .expectNext(0, 1, 0, 1)
-		            .expectErrorMessage("boom on subscribe #2")
-		            .verify(Duration.ofSeconds(1));
+				.refCount(1, Duration.ofMillis(500))
+				.retry(1))
+				.expectNext(0, 1, 0, 1)
+				.expectErrorMessage("boom on subscribe #2")
+				.verify(Duration.ofSeconds(1));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1385
@@ -100,11 +101,11 @@ public class FluxRefCountGraceTest {
 				.doOnSubscribe(s -> subCount.incrementAndGet());
 
 		StepVerifier.create(flux.publish()
-		                        .refCount(1, Duration.ofMillis(500))
-		                        .repeat(1))
-		            .expectNext(0, 1, 0, 1)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(1));
+				.refCount(1, Duration.ofMillis(500))
+				.repeat(1))
+				.expectNext(0, 1, 0, 1)
+				.expectComplete()
+				.verify(Duration.ofSeconds(1));
 
 		assertThat(subCount).hasValue(2);
 	}
@@ -122,13 +123,13 @@ public class FluxRefCountGraceTest {
 		final Runnable subscriber1 = () -> {
 			for (int i = 0; i < 100_000; i++) {
 				testFlux.next().doOnNext(signal -> signalCount1.incrementAndGet())
-				        .subscribe();
+						.subscribe();
 			}
 		};
 		final Runnable subscriber2 = () -> {
 			for (int i = 0; i < 100_000; i++) {
 				testFlux.next().doOnNext(signal -> signalCount2.incrementAndGet())
-				        .subscribe();
+						.subscribe();
 			}
 		};
 
@@ -150,13 +151,13 @@ public class FluxRefCountGraceTest {
 		final Runnable subscriber1 = () -> {
 			for (int i = 0; i < 100_000; i++) {
 				testFlux.next().doOnNext(signal -> signalCount1.incrementAndGet())
-				        .subscribe();
+						.subscribe();
 			}
 		};
 		final Runnable subscriber2 = () -> {
 			for (int i = 0; i < 100_000; i++) {
 				testFlux.next().doOnNext(signal -> signalCount2.incrementAndGet())
-				        .subscribe();
+						.subscribe();
 			}
 		};
 
@@ -168,9 +169,9 @@ public class FluxRefCountGraceTest {
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.error(new IllegalStateException("boom"))
-		                        .publish()
-				                .refCount(1, Duration.ofMillis(500)))
-		            .verifyErrorMessage("boom");
+				.publish()
+				.refCount(1, Duration.ofMillis(500)))
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
@@ -181,15 +182,15 @@ public class FluxRefCountGraceTest {
 		p.subscribe(ts1);
 
 		ts1.assertValues(1, 2, 3, 4, 5)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		p.subscribe(ts2);
 
 		ts2.assertValues(1, 2, 3, 4, 5)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -218,7 +219,7 @@ public class FluxRefCountGraceTest {
 		p.subscribe().dispose();
 		p.subscribe().dispose();
 		p.subscribe().dispose();
-		
+
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		p.subscribe(ts1);
 
@@ -234,11 +235,11 @@ public class FluxRefCountGraceTest {
 	@Test
 	public void testFusion() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .replay()
-		                        .refCount(1, Duration.ofSeconds(1)))
-		            .expectFusion()
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.replay()
+				.refCount(1, Duration.ofSeconds(1)))
+				.expectFusion()
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 
@@ -251,8 +252,8 @@ public class FluxRefCountGraceTest {
 		TestPublisher<Integer> publisher = TestPublisher.create();
 
 		Flux<Integer> source = publisher.flux()
-		                                .doFinally(termination::set)
-		                                .doOnSubscribe(s -> subscriptionCount.incrementAndGet());
+				.doFinally(termination::set)
+				.doOnSubscribe(s -> subscriptionCount.incrementAndGet());
 
 		Flux<Integer> refCounted = source.publish().refCount(2, Duration.ofMillis(800));
 
@@ -300,8 +301,8 @@ public class FluxRefCountGraceTest {
 		TestPublisher<Integer> publisher = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		Flux<Integer> source = publisher.flux()
-		                                .doFinally(termination::set)
-		                                .doOnSubscribe(s -> subscriptionCount.incrementAndGet());
+				.doFinally(termination::set)
+				.doOnSubscribe(s -> subscriptionCount.incrementAndGet());
 
 		Flux<Integer> refCounted = source.publish().refCount(2, Duration.ofMillis(500));
 
@@ -345,8 +346,8 @@ public class FluxRefCountGraceTest {
 		VirtualTimeScheduler scheduler = VirtualTimeScheduler.create();
 		Duration gracePeriod = Duration.ofMillis(10);
 		Flux<String> f = Flux.just("hello world")
-		                     .replay(1)
-		                     .refCount(1, gracePeriod, scheduler);
+				.replay(1)
+				.refCount(1, gracePeriod, scheduler);
 
 		AssertSubscriber<String> s = AssertSubscriber.create();
 		f.subscribe(s);
@@ -354,8 +355,8 @@ public class FluxRefCountGraceTest {
 		scheduler.advanceTimeBy(gracePeriod);
 
 		StepVerifier.create(f.next())
-		            .expectNext("hello world")
-		            .verifyComplete();
+				.expectNext("hello world")
+				.verifyComplete();
 
 		scheduler.advanceTimeBy(gracePeriod);
 

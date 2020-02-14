@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.reactivestreams.Subscription;
-import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.util.annotation.Nullable;
@@ -65,7 +64,7 @@ final class FluxMap<T, R> extends InternalFluxOperator<T, R> {
 	static final class MapSubscriber<T, R>
 			implements InnerOperator<T, R> {
 
-		final CoreSubscriber<? super R>        actual;
+		final CoreSubscriber<? super R> actual;
 		final Function<? super T, ? extends R> mapper;
 
 		boolean done;
@@ -165,7 +164,7 @@ final class FluxMap<T, R> extends InternalFluxOperator<T, R> {
 			implements Fuseable.ConditionalSubscriber<T>, InnerOperator<T, R> {
 
 		final Fuseable.ConditionalSubscriber<? super R> actual;
-		final Function<? super T, ? extends R>          mapper;
+		final Function<? super T, ? extends R> mapper;
 
 		boolean done;
 

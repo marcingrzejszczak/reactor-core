@@ -48,12 +48,10 @@ import static org.junit.Assert.assertFalse;
 
 public class FluxMergeSequentialTest {
 
+	final Function<Integer, Flux<Integer>> toJust = Flux::just;
+	final Function<Integer, Flux<Integer>> toRange = t -> Flux.range(t, 2);
 	AssertSubscriber<Object> ts;
 	AssertSubscriber<Object> tsBp;
-
-	final Function<Integer, Flux<Integer>> toJust = Flux::just;
-
-	final Function<Integer, Flux<Integer>> toRange = t -> Flux.range(t, 2);
 
 	@Before
 	public void before() {
@@ -64,35 +62,35 @@ public class FluxMergeSequentialTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .hide()
-		                        .flatMapSequential(t -> Flux.range(t, 2)))
-		            .expectNext(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
-		            .verifyComplete();
+				.hide()
+				.flatMapSequential(t -> Flux.range(t, 2)))
+				.expectNext(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalFusedSync() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .flatMapSequential(t -> Flux.range(t, 2)))
-		            .expectNext(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
-		            .verifyComplete();
+				.flatMapSequential(t -> Flux.range(t, 2)))
+				.expectNext(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalFusedAsync() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .subscribeWith(UnicastProcessor.create())
-		                        .flatMapSequential(t -> Flux.range(t, 2)))
-		            .expectNext(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
-		            .verifyComplete();
+				.subscribeWith(UnicastProcessor.create())
+				.flatMapSequential(t -> Flux.range(t, 2)))
+				.expectNext(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalBackpressured() {
 		AssertSubscriber<Integer> ts = Flux.range(1, 5)
-		                                   .hide()
-		                                   .flatMapSequential(t -> Flux.range(t, 2))
-		                                   .subscribeWith(AssertSubscriber.create(3));
+				.hide()
+				.flatMapSequential(t -> Flux.range(t, 2))
+				.subscribeWith(AssertSubscriber.create(3));
 
 		ts.assertValues(1, 2, 2);
 
@@ -113,16 +111,16 @@ public class FluxMergeSequentialTest {
 	@Test
 	public void normalDelayEnd() {
 		Flux.range(1, 5)
-		        .flatMapSequentialDelayError(t -> Flux.range(t, 2), 32, 32)
-		        .subscribeWith(AssertSubscriber.create())
-		        .assertComplete().assertValues(1, 2, 2, 3, 3, 4, 4, 5, 5, 6);
+				.flatMapSequentialDelayError(t -> Flux.range(t, 2), 32, 32)
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete().assertValues(1, 2, 2, 3, 3, 4, 4, 5, 5, 6);
 	}
 
 	@Test
 	public void normalDelayEndBackpressured() {
 		AssertSubscriber<Integer> ts = Flux.range(1, 5)
-		                                   .flatMapSequentialDelayError(t -> Flux.range(t, 2), 32, 32)
-		                                   .subscribeWith(AssertSubscriber.create(3));
+				.flatMapSequentialDelayError(t -> Flux.range(t, 2), 32, 32)
+				.subscribeWith(AssertSubscriber.create(3));
 
 		ts.assertValues(1, 2, 2);
 
@@ -145,7 +143,7 @@ public class FluxMergeSequentialTest {
 		final DirectProcessor<Integer> inner = DirectProcessor.create();
 
 		AssertSubscriber<Integer> ts = main.flatMapSequentialDelayError(t -> inner, 32, 32)
-		                                   .subscribeWith(AssertSubscriber.create());
+				.subscribeWith(AssertSubscriber.create());
 
 		main.onNext(1);
 		main.onNext(2);
@@ -162,7 +160,7 @@ public class FluxMergeSequentialTest {
 		inner.onComplete();
 
 		ts.assertValues(2, 3, 2, 3)
-		  .assertErrorMessage("Forced failure");
+				.assertErrorMessage("Forced failure");
 	}
 
 	@Test
@@ -171,7 +169,7 @@ public class FluxMergeSequentialTest {
 		final DirectProcessor<Integer> inner = DirectProcessor.create();
 
 		AssertSubscriber<Integer> ts = main.flatMapSequential(t -> inner)
-		                                   .subscribeWith(AssertSubscriber.create());
+				.subscribeWith(AssertSubscriber.create());
 
 		main.onNext(1);
 		main.onNext(2);
@@ -194,11 +192,11 @@ public class FluxMergeSequentialTest {
 	public void longEager() {
 
 		Flux.range(1, 2 * Queues.SMALL_BUFFER_SIZE)
-		        .flatMapSequential(v -> Flux.just(1))
-		        .subscribeWith(AssertSubscriber.create())
-		        .assertValueCount(2 * Queues.SMALL_BUFFER_SIZE)
-		        .assertNoError()
-		        .assertComplete();
+				.flatMapSequential(v -> Flux.just(1))
+				.subscribeWith(AssertSubscriber.create())
+				.assertValueCount(2 * Queues.SMALL_BUFFER_SIZE)
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -410,7 +408,9 @@ public class FluxMergeSequentialTest {
 
 	@Test
 	public void testMapperThrows() {
-		Flux.just(1).flatMapSequential(t -> { throw new RuntimeException(); }).subscribe(ts);
+		Flux.just(1).flatMapSequential(t -> {
+			throw new RuntimeException();
+		}).subscribe(ts);
 
 		ts.assertNoValues();
 		ts.assertNotComplete();
@@ -450,7 +450,7 @@ public class FluxMergeSequentialTest {
 	@Test
 	public void testAsynchronousRun() {
 		Flux.range(1, 2).flatMapSequential(t -> Flux.range(1, 1000)
-		                                            .subscribeOn(Schedulers.single())
+				.subscribeOn(Schedulers.single())
 		).publishOn(Schedulers.elastic()).subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
@@ -465,12 +465,12 @@ public class FluxMergeSequentialTest {
 		final AtomicBoolean once = new AtomicBoolean();
 
 		subject.flatMapSequential(Flux::just)
-		       .doOnNext(t -> {
-			       if (once.compareAndSet(false, true)) {
-				       subject.onNext(2);
-			       }
-		       })
-		       .subscribe(ts);
+				.doOnNext(t -> {
+					if (once.compareAndSet(false, true)) {
+						subject.onNext(2);
+					}
+				})
+				.subscribe(ts);
 
 		subject.onNext(1);
 
@@ -486,10 +486,10 @@ public class FluxMergeSequentialTest {
 		AssertSubscriber<Object> ts = AssertSubscriber.create(0);
 
 		Flux.just(1).hide()
-		    .flatMapSequential(t -> Flux.range(1, Queues.SMALL_BUFFER_SIZE * 2)
-		                                .doOnNext(t1 -> count.getAndIncrement())
-		                                .hide())
-		    .subscribe(ts);
+				.flatMapSequential(t -> Flux.range(1, Queues.SMALL_BUFFER_SIZE * 2)
+						.doOnNext(t1 -> count.getAndIncrement())
+						.hide())
+				.subscribe(ts);
 
 		ts.assertNoError();
 		ts.assertNoValues();
@@ -501,8 +501,8 @@ public class FluxMergeSequentialTest {
 	public void testMaxConcurrent5() {
 		final List<Long> requests = new ArrayList<>();
 		Flux.range(1, 100).doOnRequest(requests::add)
-		    .flatMapSequential(toJust, 5, Queues.SMALL_BUFFER_SIZE)
-		    .subscribe(ts);
+				.flatMapSequential(toJust, 5, Queues.SMALL_BUFFER_SIZE)
+				.subscribe(ts);
 
 		ts.assertNoError();
 		ts.assertValueCount(100);
@@ -523,7 +523,7 @@ public class FluxMergeSequentialTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.mergeSequential(Arrays.asList(source, source, source), 1, 1)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 1, 1);
 		ts.assertNoError();
@@ -548,7 +548,7 @@ public class FluxMergeSequentialTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.mergeSequential(Flux.just(source, source, source), 1, 1)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 1, 1);
 		ts.assertNoError();
@@ -561,19 +561,21 @@ public class FluxMergeSequentialTest {
 		Flux<Integer> source = Flux.just(1);
 		try {
 			Flux.mergeSequential(Arrays.asList(source, source, source), 1, -99);
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			assertEquals("prefetch > 0 required but it was -99", ex.getMessage());
 		}
 
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Test
 	public void mappingBadPrefetch() throws Exception {
 		Flux<Integer> source = Flux.just(1);
 		try {
 			Flux.just(source, source, source).flatMapSequential(Flux.identityFunction(), 10, -99);
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			assertEquals("prefetch > 0 required but it was -99", ex.getMessage());
 		}
 
@@ -582,23 +584,23 @@ public class FluxMergeSequentialTest {
 	@Test
 	public void mergeSequentialZero() {
 		Flux.mergeSequential(Collections.<Flux<Integer>>emptyList())
-		        .subscribeWith(AssertSubscriber.create())
-		        .assertComplete().assertValues();
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete().assertValues();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void mergeSequentialOne() {
 		Flux.mergeSequential(Arrays.asList(Flux.just(1)))
-		        .subscribeWith(AssertSubscriber.create())
-		        .assertComplete().assertValues(1);
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete().assertValues(1);
 	}
 
 	@Test
 	public void mergeSequentialTwo() {
 		Flux.mergeSequential(Arrays.asList(Flux.just(1), Flux.just(2)))
-		        .subscribeWith(AssertSubscriber.create())
-		        .assertComplete().assertValues(1, 2);
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete().assertValues(1, 2);
 	}
 
 	@Test
@@ -606,8 +608,8 @@ public class FluxMergeSequentialTest {
 		StepVerifier.create(Flux.mergeSequential(128,
 				Flux.just(1).concatWith(Flux.error(new Exception("test"))),
 				Flux.just(2)))
-		            .expectNext(1)
-		            .verifyErrorMessage("test");
+				.expectNext(1)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -615,33 +617,33 @@ public class FluxMergeSequentialTest {
 		StepVerifier.create(Flux.mergeSequentialDelayError(128,
 				Flux.just(1).concatWith(Flux.error(new Exception("test"))),
 				Flux.just(2)))
-		            .expectNext(1, 2)
-	                .verifyErrorMessage("test");
+				.expectNext(1, 2)
+				.verifyErrorMessage("test");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void mergeSequentialIterable() {
 		Flux.mergeSequential(Arrays.asList(Flux.just(1), Flux.just(2)))
-		        .subscribeWith(AssertSubscriber.create())
-		        .assertComplete().assertValues(1, 2);
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete().assertValues(1, 2);
 	}
 
 	@Test
 	public void mergeSequentialTwoDelayIterableError() {
 		StepVerifier.create(Flux.mergeSequentialDelayError(
 				Arrays.asList(Flux.just(1).concatWith(Flux.error(new Exception("test"))),
-				Flux.just(2)), 128, 128))
-		            .expectNext(1, 2)
-		            .verifyErrorMessage("test");
+						Flux.just(2)), 128, 128))
+				.expectNext(1, 2)
+				.verifyErrorMessage("test");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void mergeSequentialPublisher2() {
 		Flux.mergeSequential(Flux.just(Flux.just(1), Flux.just(2)))
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertComplete().assertValues(1, 2);
+				.subscribeWith(AssertSubscriber.create())
+				.assertComplete().assertValues(1, 2);
 	}
 
 	@Test
@@ -649,8 +651,8 @@ public class FluxMergeSequentialTest {
 		StepVerifier.create(Flux.mergeSequentialDelayError(
 				Flux.just(Flux.just(1).concatWith(Flux.error(new Exception("test"))),
 						Flux.just(2)), 128, 128))
-		            .expectNext(1, 2)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -658,21 +660,21 @@ public class FluxMergeSequentialTest {
 		Scheduler scheduler = Schedulers.elastic();
 		AtomicBoolean comparisonFailure = new AtomicBoolean();
 		long count = Flux.range(0, 500)
-		                 .flatMapSequential(i -> {
-			                 //ensure each pack of 100 is delayed in inverse order
-			                 Duration sleep = Duration.ofMillis(600 - i % 100);
-			                 return Mono.delay(sleep)
-			                            .then(Mono.just(i))
-			                            .subscribeOn(scheduler);
-		                 })
-		                 .zipWith(Flux.range(0, Integer.MAX_VALUE))
-		                 .doOnNext(i -> {
-			                 if (!Objects.equals(i.getT1(), i.getT2())) {
+				.flatMapSequential(i -> {
+					//ensure each pack of 100 is delayed in inverse order
+					Duration sleep = Duration.ofMillis(600 - i % 100);
+					return Mono.delay(sleep)
+							.then(Mono.just(i))
+							.subscribeOn(scheduler);
+				})
+				.zipWith(Flux.range(0, Integer.MAX_VALUE))
+				.doOnNext(i -> {
+					if (!Objects.equals(i.getT1(), i.getT2())) {
 //				                 System.out.println(i);
-				                 comparisonFailure.set(true);
-			                 }
-		                 })
-		                 .count().block();
+						comparisonFailure.set(true);
+					}
+				})
+				.count().block();
 
 		assertEquals(500L, count);
 		assertFalse(comparisonFailure.get());
@@ -692,23 +694,24 @@ public class FluxMergeSequentialTest {
 						badQueueSupplier);
 
 		StepVerifier.create(fluxMergeSequential.zipWith(Flux.range(0, Integer.MAX_VALUE)))
-		            .expectErrorMatches(e -> e instanceof IllegalStateException &&
-		                e.getMessage().startsWith("Too many subscribers for fluxMergeSequential on item: ") &&
-		                e.getMessage().endsWith("; subscribers: 32"))
-		            .verify();
+				.expectErrorMatches(e -> e instanceof IllegalStateException &&
+						e.getMessage().startsWith("Too many subscribers for fluxMergeSequential on item: ") &&
+						e.getMessage().endsWith("; subscribers: 32"))
+				.verify();
 	}
+
 	@Test
-	public void mergeEmpty(){
+	public void mergeEmpty() {
 		StepVerifier.create(Flux.mergeSequential())
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 
 	@Test
-	public void mergeOne(){
+	public void mergeOne() {
 		StepVerifier.create(Flux.mergeSequential(Flux.just(1)))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -719,9 +722,9 @@ public class FluxMergeSequentialTest {
 						Flux.just(1, 2),
 						Flux.<Integer>error(new Exception("test")),
 						Flux.just(3, 4))
-				    .flatMapSequentialDelayError(f -> f, 4, 4))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+						.flatMapSequentialDelayError(f -> f, 4, 4))
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -732,9 +735,9 @@ public class FluxMergeSequentialTest {
 						Flux.just(1, 2),
 						Mono.<Integer>error(new Exception("test")),
 						Flux.just(3, 4))
-				    .flatMapSequentialDelayError(f -> f, 4, 4))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+						.flatMapSequentialDelayError(f -> f, 4, 4))
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -746,10 +749,10 @@ public class FluxMergeSequentialTest {
 								Flux.just(1, 2),
 								Flux.error(new Exception("test")),
 								Flux.just(3, 4))
-				, 4, 4)
+						, 4, 4)
 		)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -761,10 +764,10 @@ public class FluxMergeSequentialTest {
 								Flux.just(1, 2),
 								Mono.error(new Exception("test")),
 								Flux.just(3, 4))
-				, 4, 4)
+						, 4, 4)
 		)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -789,64 +792,66 @@ public class FluxMergeSequentialTest {
 
 		final Flux<Object> merge = Flux.range(1, 5)
 				.flatMapSequential(i -> Mono.never()
-				                            .doOnCancel(() -> System.out.println("Cancelling #" + i + ", remaining " + cancelCounter.decrementAndGet())));
+						.doOnCancel(() -> System.out.println("Cancelling #" + i + ", remaining " + cancelCounter.decrementAndGet())));
 
 		merge.subscribe().dispose();
 
 		assertThat(cancelCounter).as("cancellation remaining").hasValue(0);
 	}
 
-    @Test
-    public void scanMain() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxMergeSequential.MergeSequentialMain<Integer, Integer> test =
-        		new FluxMergeSequential.MergeSequentialMain<Integer, Integer>(actual, i -> Mono.just(i),
-        				5, 123, ErrorMode.BOUNDARY, Queues.unbounded());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanMain() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxMergeSequential.MergeSequentialMain<Integer, Integer> test =
+				new FluxMergeSequential.MergeSequentialMain<Integer, Integer>(actual, i -> Mono.just(i),
+						5, 123, ErrorMode.BOUNDARY, Queues.unbounded());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.DELAY_ERROR)).isTrue();
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(5);
-        test.subscribers.add(new FluxMergeSequential.MergeSequentialInner<>(test, 123));
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.DELAY_ERROR)).isTrue();
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(5);
+		test.subscribers.add(new FluxMergeSequential.MergeSequentialInner<>(test, 123));
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    @Test
-    public void scanInner() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxMergeSequential.MergeSequentialMain<Integer, Integer> main =
-        		new FluxMergeSequential.MergeSequentialMain<Integer, Integer>(actual, i -> Mono.just(i),
-        				5, 123, ErrorMode.IMMEDIATE, Queues.unbounded());
-        FluxMergeSequential.MergeSequentialInner<Integer> inner =
-        		new FluxMergeSequential.MergeSequentialInner<>(main, 123);
-        Subscription parent = Operators.emptySubscription();
-        inner.onSubscribe(parent);
+	@Test
+	public void scanInner() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxMergeSequential.MergeSequentialMain<Integer, Integer> main =
+				new FluxMergeSequential.MergeSequentialMain<Integer, Integer>(actual, i -> Mono.just(i),
+						5, 123, ErrorMode.IMMEDIATE, Queues.unbounded());
+		FluxMergeSequential.MergeSequentialInner<Integer> inner =
+				new FluxMergeSequential.MergeSequentialInner<>(main, 123);
+		Subscription parent = Operators.emptySubscription();
+		inner.onSubscribe(parent);
 
-        assertThat(inner.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
-        assertThat(inner.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(inner.scan(Scannable.Attr.PREFETCH)).isEqualTo(123);
-        inner.queue = new ConcurrentLinkedQueue<>();
-        inner.queue.add(1);
-        assertThat(inner.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(inner.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+		assertThat(inner.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(inner.scan(Scannable.Attr.PREFETCH)).isEqualTo(123);
+		inner.queue = new ConcurrentLinkedQueue<>();
+		inner.queue.add(1);
+		assertThat(inner.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        assertThat(inner.scan(Scannable.Attr.ERROR)).isNull();
-        assertThat(inner.scan(Scannable.Attr.TERMINATED)).isFalse();
-        inner.queue.clear();
-        inner.setDone();
-        assertThat(inner.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(inner.scan(Scannable.Attr.ERROR)).isNull();
+		assertThat(inner.scan(Scannable.Attr.TERMINATED)).isFalse();
+		inner.queue.clear();
+		inner.setDone();
+		assertThat(inner.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        assertThat(inner.scan(Scannable.Attr.CANCELLED)).isFalse();
-        inner.cancel();
-        assertThat(inner.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(inner.scan(Scannable.Attr.CANCELLED)).isFalse();
+		inner.cancel();
+		assertThat(inner.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

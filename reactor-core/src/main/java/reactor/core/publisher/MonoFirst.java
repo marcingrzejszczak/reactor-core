@@ -31,7 +31,7 @@ import reactor.util.annotation.Nullable;
  *
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class MonoFirst<T> extends Mono<T> implements SourceProducer<T>  {
+final class MonoFirst<T> extends Mono<T> implements SourceProducer<T> {
 
 	final Mono<? extends T>[] array;
 
@@ -103,7 +103,7 @@ final class MonoFirst<T> extends Mono<T> implements SourceProducer<T>  {
 
 				try {
 					p = Objects.requireNonNull(it.next(),
-					"The Publisher returned by the iterator is null");
+							"The Publisher returned by the iterator is null");
 				}
 				catch (Throwable e) {
 					Operators.error(actual, Operators.onOperatorError(e,

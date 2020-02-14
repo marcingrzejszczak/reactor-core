@@ -35,7 +35,7 @@ import reactor.util.annotation.Nullable;
 final class MonoSingle<T> extends MonoFromFluxOperator<T, T>
 		implements Fuseable {
 
-	final T       defaultValue;
+	final T defaultValue;
 	final boolean completeOnEmpty;
 
 	MonoSingle(Flux<? extends T> source) {
@@ -58,10 +58,10 @@ final class MonoSingle<T> extends MonoFromFluxOperator<T, T>
 		return new SingleSubscriber<>(actual, defaultValue, completeOnEmpty);
 	}
 
-	static final class SingleSubscriber<T> extends Operators.MonoSubscriber<T, T>  {
+	static final class SingleSubscriber<T> extends Operators.MonoSubscriber<T, T> {
 
 		@Nullable
-		final T       defaultValue;
+		final T defaultValue;
 		final boolean completeOnEmpty;
 
 		Subscription s;
@@ -70,6 +70,14 @@ final class MonoSingle<T> extends MonoFromFluxOperator<T, T>
 
 		boolean done;
 
+		SingleSubscriber(CoreSubscriber<? super T> actual,
+				@Nullable T defaultValue,
+				boolean completeOnEmpty) {
+			super(actual);
+			this.defaultValue = defaultValue;
+			this.completeOnEmpty = completeOnEmpty;
+		}
+
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
@@ -77,14 +85,6 @@ final class MonoSingle<T> extends MonoFromFluxOperator<T, T>
 			if (key == Attr.PARENT) return s;
 
 			return super.scanUnsafe(key);
-		}
-
-		SingleSubscriber(CoreSubscriber<? super T> actual,
-				@Nullable T defaultValue,
-				boolean completeOnEmpty) {
-			super(actual);
-			this.defaultValue = defaultValue;
-			this.completeOnEmpty = completeOnEmpty;
 		}
 
 		@Override

@@ -79,7 +79,7 @@ final class FluxSkipWhile<T> extends InternalFluxOperator<T, T> {
 				return;
 			}
 
-			if (skipped){
+			if (skipped) {
 				actual.onNext(t);
 				return;
 			}
@@ -174,7 +174,7 @@ final class FluxSkipWhile<T> extends InternalFluxOperator<T, T> {
 		public void request(long n) {
 			s.request(n);
 		}
-		
+
 		@Override
 		public void cancel() {
 			s.cancel();

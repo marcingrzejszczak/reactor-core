@@ -27,7 +27,7 @@ import reactor.core.CoreSubscriber;
  */
 final class MonoSwitchIfEmpty<T> extends InternalMonoOperator<T, T> {
 
-    final Mono<? extends T> other;
+	final Mono<? extends T> other;
 
 	MonoSwitchIfEmpty(Mono<? extends T> source, Mono<? extends T> other) {
 		super(source);

@@ -39,7 +39,7 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
 		return defaultOptions.fusionMode(Fuseable.ASYNC)
-		                     .prefetch(Queues.XS_BUFFER_SIZE);
+				.prefetch(Queues.XS_BUFFER_SIZE);
 	}
 
 	@Override
@@ -135,11 +135,11 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 
 		Flux.combineLatest(a -> a[0].toString(), Flux.just(1))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues("1")
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -148,11 +148,11 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 
 		Flux.combineLatest(Collections.singleton(Flux.just(1)), a -> a[0].toString())
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues("1")
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -164,7 +164,7 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 		ts.requestedFusionMode(Fuseable.ANY);
 
 		Flux.combineLatest(dp1, dp2, (a, b) -> a + b)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		dp1.onNext(1);
 		dp1.onNext(2);
@@ -179,37 +179,37 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 		dp2.onComplete();
 
 		ts.assertFuseableSource()
-		  .assertFusionMode(Fuseable.ASYNC)
-		  .assertValues(12, 22, 32, 33);
+				.assertFusionMode(Fuseable.ASYNC)
+				.assertValues(12, 22, 32, 33);
 	}
 
 	@Test
 	public void combineLatest() {
 		StepVerifier.create(Flux.combineLatest(obj -> (int) obj[0], Flux.just(1)))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void combineLatestEmpty() {
 		StepVerifier.create(Flux.combineLatest(obj -> (int) obj[0]))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void combineLatestHide() {
 		StepVerifier.create(Flux.combineLatest(obj -> (int) obj[0],
 				Flux.just(1)
-				    .hide()))
-		            .expectNext(1)
-		            .verifyComplete();
+						.hide()))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void combineLatest2() {
 		StepVerifier.create(Flux.combineLatest(Flux.just(1), Flux.just(2), (a, b) -> a))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -218,8 +218,8 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 				Flux.just(2),
 				Flux.just(3),
 				obj -> (int) obj[0]))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -229,8 +229,8 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 				Flux.just(3),
 				Flux.just(4),
 				obj -> (int) obj[0]))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -241,8 +241,8 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 				Flux.just(4),
 				Flux.just(5),
 				obj -> (int) obj[0]))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -254,8 +254,8 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 				Flux.just(5),
 				Flux.just(6),
 				obj -> (int) obj[0]))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -266,10 +266,13 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 
 	@Test
 	public void scanMain() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 
 		FluxCombineLatest.CombineLatestCoordinator<String, Integer> test = new FluxCombineLatest.CombineLatestCoordinator<>(
-				actual, arr -> { throw new IllegalStateException("boomArray");}, 123, Queues.<FluxCombineLatest.SourceAndArray>one().get(), 456);
+				actual, arr -> {
+			throw new IllegalStateException("boomArray");
+		}, 123, Queues.<FluxCombineLatest.SourceAndArray>one().get(), 456);
 		test.request(2L);
 		test.error = new IllegalStateException("boom"); //most straightforward way to set it as otherwise it is drained
 
@@ -287,7 +290,8 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 
 	@Test
 	public void scanInner() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxCombineLatest.CombineLatestCoordinator<String, Integer> main = new FluxCombineLatest.CombineLatestCoordinator<>(
 				actual, arr -> arr.length, 123, Queues.<FluxCombineLatest.SourceAndArray>one().get(), 456);
 
@@ -308,11 +312,11 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 	public void singleSourceNormalWithFuseableDownstream() {
 		StepVerifier.create(
 				Flux.combineLatest(Collections.singletonList(Flux.just(1, 2, 3).hide()), (arr) -> arr[0].toString())
-				    //the map is Fuseable and sees the combine as fuseable too
-				    .map(x -> x + "!")
-				    .collectList())
-		            .assertNext(l -> assertThat(l).containsExactly("1!", "2!", "3!"))
-		            .verifyComplete();
+						//the map is Fuseable and sees the combine as fuseable too
+						.map(x -> x + "!")
+						.collectList())
+				.assertNext(l -> assertThat(l).containsExactly("1!", "2!", "3!"))
+				.verifyComplete();
 	}
 
 	@Test
@@ -321,11 +325,11 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 				Flux.combineLatest(
 						Collections.singletonList(Flux.just(1, 2, 3).hide()),
 						(arr) -> arr[0].toString())
-				    //the collectList is NOT Fuseable
-				    .collectList()
+						//the collectList is NOT Fuseable
+						.collectList()
 		)
-		            .assertNext(l -> assertThat(l).containsExactly("1", "2", "3"))
-		            .verifyComplete();
+				.assertNext(l -> assertThat(l).containsExactly("1", "2", "3"))
+				.verifyComplete();
 	}
 
 	@Test
@@ -334,10 +338,10 @@ public class FluxCombineLatestTest extends FluxOperatorTest<String, String> {
 				Flux.combineLatest(
 						Collections.singletonList(Flux.just(1, 2, 3)),
 						(arr) -> arr[0].toString())
-				    //the map is Fuseable and sees the combine as fuseable too
-				    .map(x -> x + "!")
-				    .collectList())
-		            .assertNext(l -> assertThat(l).containsExactly("1!", "2!", "3!"))
-		            .verifyComplete();
+						//the map is Fuseable and sees the combine as fuseable too
+						.map(x -> x + "!")
+						.collectList())
+				.assertNext(l -> assertThat(l).containsExactly("1!", "2!", "3!"))
+				.verifyComplete();
 	}
 }

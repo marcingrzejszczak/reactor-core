@@ -39,12 +39,12 @@ public class Tuple7Test {
 		Tuple7<String, Integer, Integer, Integer, Integer, Integer, Integer> base =
 				Tuples.of("Foo", 200, 300, 400, 500, 600, 700);
 
-		Tuple2<?,?> mapped = base.mapT1(String::length);
+		Tuple2<?, ?> mapped = base.mapT1(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(3, base.getT2(), base.getT3(), base.getT4(),
-				                  base.getT5(), base.getT6(), base.getT7());
+				.hasSize(7)
+				.containsExactly(3, base.getT2(), base.getT3(), base.getT4(),
+						base.getT5(), base.getT6(), base.getT7());
 	}
 
 	@Test
@@ -52,12 +52,12 @@ public class Tuple7Test {
 		Tuple7<Integer, String, Integer, Integer, Integer, Integer, Integer> base =
 				Tuples.of(100, "Foo", 300, 400, 500, 600, 700);
 
-		Tuple2<?,?> mapped = base.mapT2(String::length);
+		Tuple2<?, ?> mapped = base.mapT2(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(base.getT1(), 3, base.getT3(), base.getT4(),
-				                  base.getT5(), base.getT6(), base.getT7());
+				.hasSize(7)
+				.containsExactly(base.getT1(), 3, base.getT3(), base.getT4(),
+						base.getT5(), base.getT6(), base.getT7());
 	}
 
 	@Test
@@ -65,12 +65,12 @@ public class Tuple7Test {
 		Tuple7<Integer, Integer, String, Integer, Integer, Integer, Integer> base =
 				Tuples.of(100, 200, "Foo", 400, 500, 600, 700);
 
-		Tuple2<?,?> mapped = base.mapT3(String::length);
+		Tuple2<?, ?> mapped = base.mapT3(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(base.getT1(), base.getT2(), 3, base.getT4(),
-				                  base.getT5(), base.getT6(), base.getT7());
+				.hasSize(7)
+				.containsExactly(base.getT1(), base.getT2(), 3, base.getT4(),
+						base.getT5(), base.getT6(), base.getT7());
 	}
 
 	@Test
@@ -78,12 +78,12 @@ public class Tuple7Test {
 		Tuple7<Integer, Integer, Integer, String, Integer, Integer, Integer> base =
 				Tuples.of(100, 200, 300, "Foo", 500, 600, 700);
 
-		Tuple2<?,?> mapped = base.mapT4(String::length);
+		Tuple2<?, ?> mapped = base.mapT4(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), 3,
-				                  base.getT5(), base.getT6(), base.getT7());
+				.hasSize(7)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), 3,
+						base.getT5(), base.getT6(), base.getT7());
 	}
 
 	@Test
@@ -91,12 +91,12 @@ public class Tuple7Test {
 		Tuple7<Integer, Integer, Integer, Integer, String, Integer, Integer> base =
 				Tuples.of(100, 200, 300, 400, "Foo", 600, 700);
 
-		Tuple2<?,?> mapped = base.mapT5(String::length);
+		Tuple2<?, ?> mapped = base.mapT5(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
-				                  3, base.getT6(), base.getT7());
+				.hasSize(7)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
+						3, base.getT6(), base.getT7());
 	}
 
 	@Test
@@ -104,12 +104,12 @@ public class Tuple7Test {
 		Tuple7<Integer, Integer, Integer, Integer, Integer, String, Integer> base =
 				Tuples.of(100, 200, 300, 400, 500, "Foo", 700);
 
-		Tuple2<?,?> mapped = base.mapT6(String::length);
+		Tuple2<?, ?> mapped = base.mapT6(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
-				                  base.getT5(), 3, base.getT7());
+				.hasSize(7)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
+						base.getT5(), 3, base.getT7());
 	}
 
 	@Test
@@ -117,19 +117,19 @@ public class Tuple7Test {
 		Tuple7<Integer, Integer, Integer, Integer, Integer, Integer, String> base =
 				Tuples.of(100, 200, 300, 400, 500, 600, "Foo");
 
-		Tuple2<?,?> mapped = base.mapT7(String::length);
+		Tuple2<?, ?> mapped = base.mapT7(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(7)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
-				                  base.getT5(), base.getT6(), 3);
+				.hasSize(7)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
+						base.getT5(), base.getT6(), 3);
 	}
 
 	@Test
 	public void mapT7Null() {
 		assertThatNullPointerException().isThrownBy(() ->
 				Tuples.of(1, 2, 3, 4, 5, 6, 7)
-				      .mapT7(i -> null)
+						.mapT7(i -> null)
 		).withMessage("t7");
 	}
 
@@ -160,7 +160,7 @@ public class Tuple7Test {
 	@Test
 	public void equalityOfNullOrWrongClass() {
 		assertThat(full).isNotEqualTo(null)
-		                .isNotEqualTo("foo");
+				.isNotEqualTo("foo");
 	}
 
 	@Test
@@ -173,7 +173,7 @@ public class Tuple7Test {
 	@Test
 	public void sanityTestHashcode() {
 		Tuple7<Integer, Integer, Integer, Integer, Integer, Integer, Integer> same = new Tuple7<>(1, 2, 3, 4, 5, 6, 7);
-		Tuple7<Integer, Integer, Integer, Integer, Integer, Integer, Integer> different = new Tuple7<>(1, 2, 3, 4, 5, 6,1);
+		Tuple7<Integer, Integer, Integer, Integer, Integer, Integer, Integer> different = new Tuple7<>(1, 2, 3, 4, 5, 6, 1);
 
 		assertThat(full.hashCode())
 				.isEqualTo(same.hashCode())

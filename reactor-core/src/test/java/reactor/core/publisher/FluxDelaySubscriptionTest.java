@@ -37,7 +37,7 @@ public class FluxDelaySubscriptionTest {
 
 	@Test(expected = NullPointerException.class)
 	public void otherNull() {
-		Flux.never().delaySubscription((Publisher<?>)null);
+		Flux.never().delaySubscription((Publisher<?>) null);
 	}
 
 	@Test
@@ -45,12 +45,12 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.just(1))
-		    .subscribe(ts);
+				.delaySubscription(Flux.just(1))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -58,29 +58,29 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.just(1))
-		    .subscribe(ts);
+				.delaySubscription(Flux.just(1))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -88,12 +88,12 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.range(1, 10))
-		    .subscribe(ts);
+				.delaySubscription(Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -101,29 +101,29 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.range(1, 10))
-		    .subscribe(ts);
+				.delaySubscription(Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -131,12 +131,12 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.empty())
-		    .subscribe(ts);
+				.delaySubscription(Flux.empty())
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -144,29 +144,29 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.empty())
-		    .subscribe(ts);
+				.delaySubscription(Flux.empty())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -174,48 +174,49 @@ public class FluxDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .delaySubscription(Flux.never())
-		    .subscribe(ts);
+				.delaySubscription(Flux.never())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 
-
-	Flux<Integer> scenario_delayedTrigger(){
+	Flux<Integer> scenario_delayedTrigger() {
 		return Flux.just(1)
-		           .delaySubscription(Duration.ofSeconds(3));
+				.delaySubscription(Duration.ofSeconds(3));
 	}
 
 	@Test
 	public void delayedTrigger() {
 		StepVerifier.withVirtualTime(this::scenario_delayedTrigger)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNext(1)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
-	Flux<Integer> scenario_delayedTrigger2(){
+	Flux<Integer> scenario_delayedTrigger2() {
 		return Flux.just(1)
-		           .delaySubscription(Duration.ofMillis(50));
+				.delaySubscription(Duration.ofMillis(50));
 	}
 
 	@Test
 	public void delayedTrigger2() {
 		StepVerifier.withVirtualTime(this::scenario_delayedTrigger2)
-		            .thenAwait(Duration.ofMillis(50))
-		            .expectNext(1)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(50))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void scanMainSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(100));
 		FluxDelaySubscription.DelaySubscriptionOtherSubscriber<String, Integer> arbiter = new FluxDelaySubscription.DelaySubscriptionOtherSubscriber<String, Integer>(
-				actual, s -> {});
+				actual, s -> {
+		});
 		FluxDelaySubscription.DelaySubscriptionMainSubscriber<String> test = new FluxDelaySubscription.DelaySubscriptionMainSubscriber<String>(
 				actual, arbiter);
 
@@ -224,10 +225,12 @@ public class FluxDelaySubscriptionTest {
 
 	@Test
 	public void scanOtherSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(100));
 		FluxDelaySubscription.DelaySubscriptionOtherSubscriber<String, Integer> test = new FluxDelaySubscription.DelaySubscriptionOtherSubscriber<String, Integer>(
-				actual, s -> {});
+				actual, s -> {
+		});
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 

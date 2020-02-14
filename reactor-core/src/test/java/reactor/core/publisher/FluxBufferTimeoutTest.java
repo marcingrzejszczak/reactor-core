@@ -51,66 +51,67 @@ public class FluxBufferTimeoutTest {
 
 	Flux<List<Integer>> scenario_bufferWithTimeoutAccumulateOnTimeOrSize() {
 		return Flux.range(1, 6)
-		           .delayElements(Duration.ofMillis(300))
-		           .bufferTimeout(5, Duration.ofMillis(2000));
+				.delayElements(Duration.ofMillis(300))
+				.bufferTimeout(5, Duration.ofMillis(2000));
 	}
 
 	@Test
 	public void bufferWithTimeoutAccumulateOnTimeOrSize() {
 		StepVerifier.withVirtualTime(this::scenario_bufferWithTimeoutAccumulateOnTimeOrSize)
-		            .thenAwait(Duration.ofMillis(1500))
-		            .assertNext(s -> assertThat(s).containsExactly(1, 2, 3, 4, 5))
-		            .thenAwait(Duration.ofMillis(2000))
-		            .assertNext(s -> assertThat(s).containsExactly(6))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(1500))
+				.assertNext(s -> assertThat(s).containsExactly(1, 2, 3, 4, 5))
+				.thenAwait(Duration.ofMillis(2000))
+				.assertNext(s -> assertThat(s).containsExactly(6))
+				.verifyComplete();
 	}
 
 	Flux<List<Integer>> scenario_bufferWithTimeoutAccumulateOnTimeOrSize2() {
 		return Flux.range(1, 6)
-		           .delayElements(Duration.ofMillis(300))
-		           .bufferTimeout(5, Duration.ofMillis(2000));
+				.delayElements(Duration.ofMillis(300))
+				.bufferTimeout(5, Duration.ofMillis(2000));
 	}
 
 	@Test
 	public void bufferWithTimeoutAccumulateOnTimeOrSize2() {
 		StepVerifier.withVirtualTime(this::scenario_bufferWithTimeoutAccumulateOnTimeOrSize2)
-		            .thenAwait(Duration.ofMillis(1500))
-		            .assertNext(s -> assertThat(s).containsExactly(1, 2, 3, 4, 5))
-		            .thenAwait(Duration.ofMillis(2000))
-		            .assertNext(s -> assertThat(s).containsExactly(6))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(1500))
+				.assertNext(s -> assertThat(s).containsExactly(1, 2, 3, 4, 5))
+				.thenAwait(Duration.ofMillis(2000))
+				.assertNext(s -> assertThat(s).containsExactly(6))
+				.verifyComplete();
 	}
 
 	Flux<List<Integer>> scenario_bufferWithTimeoutThrowingExceptionOnTimeOrSizeIfDownstreamDemandIsLow() {
 		return Flux.range(1, 6)
-		           .delayElements(Duration.ofMillis(300))
-		           .bufferTimeout(5, Duration.ofMillis(100));
+				.delayElements(Duration.ofMillis(300))
+				.bufferTimeout(5, Duration.ofMillis(100));
 	}
 
 	@Test
 	public void bufferWithTimeoutThrowingExceptionOnTimeOrSizeIfDownstreamDemandIsLow() {
 		StepVerifier.withVirtualTime(this::scenario_bufferWithTimeoutThrowingExceptionOnTimeOrSizeIfDownstreamDemandIsLow, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(300))
-		            .thenRequest(1)
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .assertNext(s -> assertThat(s).containsExactly(1))
-		            .expectNoEvent(Duration.ofMillis(300))
-		            .verifyErrorSatisfies(e ->
-				            assertThat(e)
-						            .hasMessage("Could not emit buffer due to lack of requests")
-						            .isInstanceOf(IllegalStateException.class)
-		            );
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(300))
+				.thenRequest(1)
+				.expectNoEvent(Duration.ofMillis(100))
+				.assertNext(s -> assertThat(s).containsExactly(1))
+				.expectNoEvent(Duration.ofMillis(300))
+				.verifyErrorSatisfies(e ->
+						assertThat(e)
+								.hasMessage("Could not emit buffer due to lack of requests")
+								.isInstanceOf(IllegalStateException.class)
+				);
 	}
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 
 		final Scheduler.Worker worker = Schedulers.elastic()
-		                                          .createWorker();
+				.createWorker();
 		FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>> test = new FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>>(
-						actual, 123, 1000,
+				actual, 123, 1000,
 				worker, ArrayList::new);
 
 		try {
@@ -151,7 +152,8 @@ public class FluxBufferTimeoutTest {
 	@Test
 	public void shouldShowActualSubscriberDemand() {
 		Subscription[] subscriptionsHolder = new Subscription[1];
-		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {}, null, s -> subscriptionsHolder[0] = s);
+		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, s -> subscriptionsHolder[0] = s);
 
 		FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>> test = new FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>>(
 				actual, 123, 1000, Schedulers.elastic().createWorker(), ArrayList::new);
@@ -167,7 +169,8 @@ public class FluxBufferTimeoutTest {
 	@Test
 	public void downstreamDemandShouldBeAbleToDecreaseOnFullBuffer() {
 		Subscription[] subscriptionsHolder = new Subscription[1];
-		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {}, null, s -> subscriptionsHolder[0] = s);
+		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, s -> subscriptionsHolder[0] = s);
 
 		FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>> test = new FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>>(
 				actual, 5, 1000, Schedulers.elastic().createWorker(), ArrayList::new);
@@ -187,7 +190,8 @@ public class FluxBufferTimeoutTest {
 	@Test
 	public void downstreamDemandShouldBeAbleToDecreaseOnTimeSpan() {
 		Subscription[] subscriptionsHolder = new Subscription[1];
-		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {}, null, s -> subscriptionsHolder[0] = s);
+		CoreSubscriber<List<String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, s -> subscriptionsHolder[0] = s);
 
 		VirtualTimeScheduler timeScheduler = VirtualTimeScheduler.getOrSet();
 		FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>> test = new FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>>(
@@ -214,22 +218,22 @@ public class FluxBufferTimeoutTest {
 		VirtualTimeScheduler scheduler = VirtualTimeScheduler.create();
 
 		Flux<List<String>> flux = emitter.doOnRequest(requestedOutstanding::addAndGet)
-		                                 .bufferTimeout(5, Duration.ofMillis(100), scheduler)
-		                                 .doOnNext(list -> requestedOutstanding.addAndGet(0 - list.size()));
+				.bufferTimeout(5, Duration.ofMillis(100), scheduler)
+				.doOnNext(list -> requestedOutstanding.addAndGet(0 - list.size()));
 
 		StepVerifier.withVirtualTime(() -> flux, () -> scheduler, 0)
-		            .expectSubscription()
-		            .then(() -> assertThat(requestedOutstanding.get()).isEqualTo(0))
-		            .thenRequest(2)
-		            .then(() -> assertThat(requestedOutstanding.get()).isEqualTo(10))
-		            .then(() -> sink.next("a"))
-		            .thenAwait(Duration.ofMillis(100))
-		            .assertNext(s -> assertThat(s).containsExactly("a"))
-		            .then(() -> assertThat(requestedOutstanding.get()).isEqualTo(9))
-		            .thenRequest(1)
-		            .then(() -> assertThat(requestedOutstanding.get()).isEqualTo(10))
-		            .thenCancel()
-		            .verify();
+				.expectSubscription()
+				.then(() -> assertThat(requestedOutstanding.get()).isEqualTo(0))
+				.thenRequest(2)
+				.then(() -> assertThat(requestedOutstanding.get()).isEqualTo(10))
+				.then(() -> sink.next("a"))
+				.thenAwait(Duration.ofMillis(100))
+				.assertNext(s -> assertThat(s).containsExactly("a"))
+				.then(() -> assertThat(requestedOutstanding.get()).isEqualTo(9))
+				.thenRequest(1)
+				.then(() -> assertThat(requestedOutstanding.get()).isEqualTo(10))
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
@@ -257,16 +261,17 @@ public class FluxBufferTimeoutTest {
 		test.onNext(String.valueOf(123));
 
 		assertThat(capturedException.get()).isInstanceOf(IllegalStateException.class)
-		                                   .hasMessage("Unrequested element received");
+				.hasMessage("Unrequested element received");
 	}
 
 	@Test
 	public void scanSubscriberCancelled() {
 		CoreSubscriber<List<String>>
-				actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+				actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 
 		FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>> test = new FluxBufferTimeout.BufferTimeoutSubscriber<String, List<String>>(
-						actual, 123, 1000, Schedulers.elastic().createWorker(), ArrayList::new);
+				actual, 123, 1000, Schedulers.elastic().createWorker(), ArrayList::new);
 
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
 		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
@@ -309,20 +314,20 @@ public class FluxBufferTimeoutTest {
 		scheduler.dispose();
 
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .bufferTimeout(4, Duration.ofMillis(500), scheduler))
-		            .expectError(RejectedExecutionException.class)
-		            .verify(Duration.ofSeconds(1));
+				.bufferTimeout(4, Duration.ofMillis(500), scheduler))
+				.expectError(RejectedExecutionException.class)
+				.verify(Duration.ofSeconds(1));
 	}
 
 	@Test
 	public void discardOnCancel() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatWith(Mono.never())
-		                        .bufferTimeout(10, Duration.ofMillis(100)))
-		            .thenAwait(Duration.ofMillis(10))
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.concatWith(Mono.never())
+				.bufferTimeout(10, Duration.ofMillis(100)))
+				.thenAwait(Duration.ofMillis(10))
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 
 	@Test
@@ -333,11 +338,11 @@ public class FluxBufferTimeoutTest {
 						.flux()
 						.bufferTimeout(10, Duration.ofMillis(200)),
 				StepVerifierOptions.create().initialRequest(0))
-		            .then(() -> testPublisher.emit(1, 2, 3))
-		            .thenAwait(Duration.ofMillis(250))
-		            .expectErrorMatches(Exceptions::isOverflow)
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.then(() -> testPublisher.emit(1, 2, 3))
+				.thenAwait(Duration.ofMillis(250))
+				.expectErrorMatches(Exceptions::isOverflow)
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 
 	@Test
@@ -345,20 +350,20 @@ public class FluxBufferTimeoutTest {
 		Scheduler scheduler = Schedulers.newSingle("discardOnTimerRejected");
 
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .doOnNext(n -> scheduler.dispose())
-		                        .bufferTimeout(10, Duration.ofMillis(100), scheduler))
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(RejectedExecutionException.class))
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1);
+				.doOnNext(n -> scheduler.dispose())
+				.bufferTimeout(10, Duration.ofMillis(100), scheduler))
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(RejectedExecutionException.class))
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1);
 	}
 
 	@Test
 	public void discardOnError() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .concatWith(Mono.error(new IllegalStateException("boom")))
-		                        .bufferTimeout(10, Duration.ofMillis(100)))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3);
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.bufferTimeout(10, Duration.ofMillis(100)))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3);
 	}
 }

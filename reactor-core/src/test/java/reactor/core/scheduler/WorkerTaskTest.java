@@ -39,7 +39,8 @@ public class WorkerTaskTest {
 	@Test
 	public void dispose() {
 		Disposable.Composite set = Disposables.composite();
-		WorkerTask run = new WorkerTask(() -> {}, set);
+		WorkerTask run = new WorkerTask(() -> {
+		}, set);
 		set.add(run);
 
 		assertThat(run.isDisposed()).isFalse();
@@ -52,7 +53,8 @@ public class WorkerTaskTest {
 	@Test
 	public void disposeRun() {
 		Disposable.Composite set = Disposables.composite();
-		WorkerTask run = new WorkerTask(() -> {}, set);
+		WorkerTask run = new WorkerTask(() -> {
+		}, set);
 		set.add(run);
 
 		assertThat(run.isDisposed()).isFalse();
@@ -67,7 +69,8 @@ public class WorkerTaskTest {
 	public void setFutureCancelRace() {
 		for (int i = 0; i < RACE_DEFAULT_LOOPS; i++) {
 			Disposable.Composite set = Disposables.composite();
-			final WorkerTask run = new WorkerTask(() -> {}, set);
+			final WorkerTask run = new WorkerTask(() -> {
+			}, set);
 			set.add(run);
 
 			final FutureTask<Object> ft = new FutureTask<>(() -> {
@@ -87,7 +90,8 @@ public class WorkerTaskTest {
 	public void setFutureRunRace() {
 		for (int i = 0; i < RACE_DEFAULT_LOOPS; i++) {
 			Disposable.Composite set = Disposables.composite();
-			final WorkerTask run = new WorkerTask(() -> {}, set);
+			final WorkerTask run = new WorkerTask(() -> {
+			}, set);
 			set.add(run);
 
 			final FutureTask<Object> ft = new FutureTask<>(() -> {
@@ -107,7 +111,8 @@ public class WorkerTaskTest {
 	public void disposeRace() {
 		for (int i = 0; i < RACE_DEFAULT_LOOPS; i++) {
 			Disposable.Composite set = Disposables.composite();
-			final WorkerTask run = new WorkerTask(() -> {}, set);
+			final WorkerTask run = new WorkerTask(() -> {
+			}, set);
 			set.add(run);
 
 			Runnable r1 = run::dispose;
@@ -122,7 +127,8 @@ public class WorkerTaskTest {
 	public void runDispose() {
 		for (int i = 0; i < RACE_DEFAULT_LOOPS; i++) {
 			Disposable.Composite set = Disposables.composite();
-			final WorkerTask run = new WorkerTask(() -> {}, set);
+			final WorkerTask run = new WorkerTask(() -> {
+			}, set);
 			set.add(run);
 
 			Runnable r1 = run::call;
@@ -151,9 +157,11 @@ public class WorkerTaskTest {
 			run.run();
 
 			fail("Should have thrown!");
-		} catch (IllegalStateException ex) {
+		}
+		catch (IllegalStateException ex) {
 			assertThat(ex).hasMessage("Second");
-		} finally {
+		}
+		finally {
 			Thread.currentThread().setUncaughtExceptionHandler(null);
 		}
 		assertThat(run.isDisposed()).as("isDisposed").isTrue();
@@ -183,47 +191,56 @@ public class WorkerTaskTest {
 			assertThat(errors.get(0))
 					.isInstanceOf(IllegalStateException.class)
 					.hasMessage("First");
-		} finally {
+		}
+		finally {
 			Schedulers.resetOnHandleError();
 		}
 	}
 
 	@Test
 	public void withoutParentDisposed() {
-		WorkerTask run = new WorkerTask(() -> {}, null);
+		WorkerTask run = new WorkerTask(() -> {
+		}, null);
 		run.dispose();
 		run.call();
 	}
 
 	@Test
 	public void withParentDisposed() {
-		WorkerTask run = new WorkerTask(() -> {}, Disposables.composite());
+		WorkerTask run = new WorkerTask(() -> {
+		}, Disposables.composite());
 		run.dispose();
 		run.call();
 	}
 
 	@Test
 	public void withFutureDisposed() {
-		WorkerTask run = new WorkerTask(() -> {}, null);
-		run.setFuture(new FutureTask<Void>(() -> {}, null));
+		WorkerTask run = new WorkerTask(() -> {
+		}, null);
+		run.setFuture(new FutureTask<Void>(() -> {
+		}, null));
 		run.dispose();
 		run.call();
 	}
 
 	@Test
 	public void withFutureDisposed2() {
-		WorkerTask run = new WorkerTask(() -> {}, null);
+		WorkerTask run = new WorkerTask(() -> {
+		}, null);
 		run.dispose();
-		run.setFuture(new FutureTask<Void>(() -> {}, null));
+		run.setFuture(new FutureTask<Void>(() -> {
+		}, null));
 		run.call();
 	}
 
 	@Test
 	public void withFutureDisposed3() {
-		WorkerTask run = new WorkerTask(() -> {}, null);
+		WorkerTask run = new WorkerTask(() -> {
+		}, null);
 		run.dispose();
 		WorkerTask.THREAD.set(run, Thread.currentThread());
-		run.setFuture(new FutureTask<Void>(() -> {}, null));
+		run.setFuture(new FutureTask<Void>(() -> {
+		}, null));
 		run.call();
 	}
 
@@ -231,7 +248,8 @@ public class WorkerTaskTest {
 	public void runFuture() {
 		for (int i = 0; i < RACE_DEFAULT_LOOPS; i++) {
 			Disposable.Composite set = Disposables.composite();
-			final WorkerTask run = new WorkerTask(() -> {}, set);
+			final WorkerTask run = new WorkerTask(() -> {
+			}, set);
 			set.add(run);
 
 			final FutureTask<Void> ft = new FutureTask<>(() -> {
@@ -256,10 +274,12 @@ public class WorkerTaskTest {
 			Runnable r0 = () -> {
 				set.dispose();
 				if (sync.decrementAndGet() != 0) {
-					while (sync.get() != 0) { }
+					while (sync.get() != 0) {
+					}
 				}
 				if (syncb.decrementAndGet() != 0) {
-					while (syncb.get() != 0) { }
+					while (syncb.get() != 0) {
+					}
 				}
 				for (int j = 0; j < 1000; j++) {
 					if (Thread.currentThread().isInterrupted()) {
@@ -276,11 +296,13 @@ public class WorkerTaskTest {
 
 			Runnable r2 = () -> {
 				if (sync.decrementAndGet() != 0) {
-					while (sync.get() != 0) { }
+					while (sync.get() != 0) {
+					}
 				}
 				run.setFuture(ft);
 				if (syncb.decrementAndGet() != 0) {
-					while (syncb.get() != 0) { }
+					while (syncb.get() != 0) {
+					}
 				}
 			};
 
@@ -292,7 +314,8 @@ public class WorkerTaskTest {
 
 	@Test
 	public void disposeAfterRun() {
-		final WorkerTask run = new WorkerTask(() -> {}, null);
+		final WorkerTask run = new WorkerTask(() -> {
+		}, null);
 
 		run.run();
 		assertThat((Future<?>) WorkerTask.FUTURE.get(run)).isEqualTo(WorkerTask.FINISHED);
@@ -303,7 +326,8 @@ public class WorkerTaskTest {
 
 	@Test
 	public void syncDisposeIdempotent() {
-		final WorkerTask run = new WorkerTask(() -> {}, null);
+		final WorkerTask run = new WorkerTask(() -> {
+		}, null);
 		WorkerTask.THREAD.set(run, Thread.currentThread());
 
 		run.dispose();
@@ -316,7 +340,8 @@ public class WorkerTaskTest {
 
 	@Test
 	public void asyncDisposeIdempotent() {
-		final WorkerTask run = new WorkerTask(() -> {}, null);
+		final WorkerTask run = new WorkerTask(() -> {
+		}, null);
 
 		run.dispose();
 		assertThat((Future<?>) WorkerTask.FUTURE.get(run))
@@ -334,7 +359,8 @@ public class WorkerTaskTest {
 
 	@Test
 	public void noParentIsDisposed() {
-		WorkerTask run = new WorkerTask(() -> {}, null);
+		WorkerTask run = new WorkerTask(() -> {
+		}, null);
 		assertThat(run.isDisposed()).as("not yet disposed").isFalse();
 		run.run();
 		assertThat(run.isDisposed()).as("isDisposed").isTrue();
@@ -343,7 +369,8 @@ public class WorkerTaskTest {
 	@Test
 	public void withParentIsDisposed() {
 		Disposable.Composite set = Disposables.composite();
-		WorkerTask run = new WorkerTask(() -> {}, set);
+		WorkerTask run = new WorkerTask(() -> {
+		}, set);
 		set.add(run);
 
 		assertThat(run.isDisposed()).as("not yet disposed").isFalse();

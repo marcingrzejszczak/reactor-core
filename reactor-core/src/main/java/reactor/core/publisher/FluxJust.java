@@ -52,7 +52,7 @@ import reactor.util.annotation.Nullable;
  */
 final class FluxJust<T> extends Flux<T>
 		implements Fuseable.ScalarCallable<T>, Fuseable,
-		           SourceProducer<T> {
+		SourceProducer<T> {
 
 	final T value;
 
@@ -77,11 +77,11 @@ final class FluxJust<T> extends Flux<T>
 	}
 
 	static final class WeakScalarSubscription<T> implements QueueSubscription<T>,
-	                                                        InnerProducer<T>{
+			InnerProducer<T> {
 
-		boolean terminado;
-		final T                     value;
+		final T value;
 		final CoreSubscriber<? super T> actual;
+		boolean terminado;
 
 		WeakScalarSubscription(@Nullable T value, CoreSubscriber<? super T> actual) {
 			this.value = value;

@@ -62,17 +62,21 @@ public class ImmediateSchedulerTest extends AbstractSchedulerTest {
 		Worker worker = scheduler.createWorker();
 		try {
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> scheduler.schedule(() -> { }, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> scheduler.schedule(() -> {
+					}, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> scheduler.schedulePeriodically(() -> { }, 100, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> scheduler.schedulePeriodically(() -> {
+					}, 100, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> worker.schedule(() -> { }, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> worker.schedule(() -> {
+					}, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 			assertThatExceptionOfType(RejectedExecutionException.class)
-					.isThrownBy(() -> worker.schedulePeriodically(() -> { }, 100, 100, TimeUnit.MILLISECONDS))
+					.isThrownBy(() -> worker.schedulePeriodically(() -> {
+					}, 100, 100, TimeUnit.MILLISECONDS))
 					.isSameAs(Exceptions.failWithRejectedNotTimeCapable());
 		}
 		finally {

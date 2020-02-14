@@ -70,6 +70,191 @@ import reactor.util.concurrent.WaitStrategy;
 @SuppressWarnings("deprecation")
 public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 
+	@SuppressWarnings("rawtypes")
+	static final Supplier FACTORY = (Supplier<Slot>) Slot::new;
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<WorkQueueProcessor> REPLAYING =
+			AtomicIntegerFieldUpdater
+					.newUpdater(WorkQueueProcessor.class, "replaying");
+	static final Logger log = Loggers.getLogger(WorkQueueProcessor.class);
+	/**
+	 * Instance
+	 */
+
+	final RingBuffer.Sequence workSequence =
+			RingBuffer.newSequence(RingBuffer.INITIAL_CURSOR_VALUE);
+	final Queue<Object> claimedDisposed = new ConcurrentLinkedQueue<>();
+	final WaitStrategy writeWait;
+	volatile int replaying;
+
+	@SuppressWarnings("unchecked")
+	WorkQueueProcessor(
+			@Nullable ThreadFactory threadFactory,
+			@Nullable ExecutorService executor,
+			ExecutorService requestTaskExecutor,
+			int bufferSize, WaitStrategy waitStrategy, boolean share,
+			boolean autoCancel) {
+		super(bufferSize, threadFactory,
+				executor, requestTaskExecutor,
+				autoCancel,
+				share,
+				FACTORY,
+				waitStrategy);
+
+		this.writeWait = waitStrategy;
+
+		ringBuffer.addGatingSequence(workSequence);
+	}
+
+	/**
+	 * Create a new {@link WorkQueueProcessor} {@link Builder} with default properties.
+	 * @return new WorkQueueProcessor builder
+	 */
+	public final static <T> Builder<T> builder() {
+		return new Builder<>();
+	}
+
+	/**
+	 * Create a new WorkQueueProcessor using {@link Queues#SMALL_BUFFER_SIZE} backlog size,
+	 * blockingWait Strategy and auto-cancel. <p> A new Cached ThreadExecutorPool will be
+	 * implicitly created.
+	 * @param <E> Type of processed signals
+	 * @return a fresh processor
+	 */
+	public static <E> WorkQueueProcessor<E> create() {
+		return WorkQueueProcessor.<E>builder().build();
+	}
+
+	/**
+	 * Create a new WorkQueueProcessor using the passed buffer size, blockingWait
+	 * Strategy and auto-cancel. <p> A new Cached ThreadExecutorPool will be implicitly
+	 * created and will use the passed name to qualify the created threads.
+	 * @param name Use a new Cached ExecutorService and assign this name to the created
+	 * threads
+	 * @param bufferSize A Backlog Size to mitigate slow subscribers
+	 * @param <E> Type of processed signals
+	 * @return a fresh processor
+	 */
+	public static <E> WorkQueueProcessor<E> create(String name, int bufferSize) {
+		return WorkQueueProcessor.<E>builder().name(name).bufferSize(bufferSize).build();
+	}
+
+	/**
+	 * Create a new shared WorkQueueProcessor using the passed buffer size, blockingWait
+	 * Strategy and auto-cancel. <p> A Shared Processor authorizes concurrent onNext calls
+	 * and is suited for multi-threaded publisher that will fan-in data. <p> A new Cached
+	 * ThreadExecutorPool will be implicitly created and will use the passed name to
+	 * qualify the created threads.
+	 * @param name Use a new Cached ExecutorService and assign this name to the created
+	 * threads
+	 * @param bufferSize A Backlog Size to mitigate slow subscribers
+	 * @param <E> Type of processed signals
+	 * @return a fresh processor
+	 */
+	public static <E> WorkQueueProcessor<E> share(String name, int bufferSize) {
+		return WorkQueueProcessor.<E>builder().share(true).name(name).bufferSize(bufferSize).build();
+	}
+
+	/**
+	 * This method will attempt to compute the maximum amount of subscribers a
+	 * {@link WorkQueueProcessor} can accommodate based on a given {@link ExecutorService}.
+	 * <p>
+	 * It can only accurately detect this for {@link ThreadPoolExecutor} and
+	 * {@link ForkJoinPool} instances, and will return {@link Integer#MIN_VALUE} for other
+	 * executor implementations.
+	 *
+	 * @param executor the executor to attempt to introspect.
+	 * @return the maximum number of subscribers the executor can accommodate if it can
+	 * be computed, or {@link Integer#MIN_VALUE} if it cannot be determined.
+	 */
+	static int bestEffortMaxSubscribers(ExecutorService executor) {
+		int maxSubscribers = Integer.MIN_VALUE;
+		if (executor instanceof ThreadPoolExecutor) {
+			maxSubscribers = ((ThreadPoolExecutor) executor).getMaximumPoolSize();
+		}
+		else if (executor instanceof ForkJoinPool) {
+			maxSubscribers = ((ForkJoinPool) executor).getParallelism();
+		}
+		return maxSubscribers;
+	}
+
+	@Override
+	public void subscribe(final CoreSubscriber<? super E> actual) {
+		Objects.requireNonNull(actual, "subscribe");
+
+		if (!alive()) {
+			TopicProcessor.coldSource(ringBuffer, null, error, workSequence).subscribe(
+					actual);
+			return;
+		}
+
+		final WorkQueueInner<E> signalProcessor =
+				new WorkQueueInner<>(actual, this);
+		try {
+
+			incrementSubscribers();
+
+			//bind eventProcessor sequence to observe the ringBuffer
+			signalProcessor.sequence.set(workSequence.getAsLong());
+			ringBuffer.addGatingSequence(signalProcessor.sequence);
+
+			//best effort to prevent starting the subscriber thread if we can detect the pool is too small
+			int maxSubscribers = bestEffortMaxSubscribers(executor);
+			if (maxSubscribers > Integer.MIN_VALUE && subscriberCount > maxSubscribers) {
+				throw new IllegalStateException("The executor service could not accommodate" +
+						" another subscriber, detected limit " + maxSubscribers);
+			}
+
+			executor.execute(signalProcessor);
+		}
+		catch (Throwable t) {
+			decrementSubscribers();
+			ringBuffer.removeGatingSequence(signalProcessor.sequence);
+			if (RejectedExecutionException.class.isAssignableFrom(t.getClass())) {
+				TopicProcessor.coldSource(ringBuffer, t, error, workSequence).subscribe(
+						actual);
+			}
+			else {
+				Operators.error(actual, t);
+			}
+		}
+	}
+
+	@Override
+	public Flux<E> drain() {
+		return TopicProcessor.coldSource(ringBuffer, null, error, workSequence);
+	}
+
+	@Override
+	protected void doError(Throwable t) {
+		writeWait.signalAllWhenBlocking();
+		//ringBuffer.markAsTerminated();
+	}
+
+	@Override
+	protected void doComplete() {
+		writeWait.signalAllWhenBlocking();
+		//ringBuffer.markAsTerminated();
+	}
+
+	@Override
+	protected void requestTask(Subscription s) {
+		requestTaskExecutor.execute(createRequestTask(s, this,
+				null, ringBuffer::getMinimumGatingSequence));
+	}
+
+	@Override
+	public long getPending() {
+		return (getBufferSize() - ringBuffer.getPending()) + claimedDisposed.size();
+	}
+
+	@Override
+	public void run() {
+		if (!alive()) {
+			WaitStrategy.alert();
+		}
+	}
+
 	/**
 	 * {@link WorkQueueProcessor} builder that can be used to create new
 	 * processors. Instantiate it through the {@link WorkQueueProcessor#builder()} static
@@ -83,13 +268,13 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 	@Deprecated
 	public final static class Builder<T> {
 
-		String          name;
+		String name;
 		ExecutorService executor;
 		ExecutorService requestTaskExecutor;
-		int             bufferSize;
-		WaitStrategy    waitStrategy;
-		boolean         share;
-		boolean         autoCancel;
+		int bufferSize;
+		WaitStrategy waitStrategy;
+		boolean share;
+		boolean autoCancel;
 
 		Builder() {
 			this.bufferSize = Queues.SMALL_BUFFER_SIZE;
@@ -121,9 +306,9 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 				throw new IllegalArgumentException("bufferSize must be a power of 2 : " + bufferSize);
 			}
 
-			if (bufferSize < 1){
+			if (bufferSize < 1) {
 				throw new IllegalArgumentException("bufferSize must be strictly positive, " +
-						"was: "+bufferSize);
+						"was: " + bufferSize);
 			}
 			this.bufferSize = bufferSize;
 			return this;
@@ -208,195 +393,6 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 	}
 
 	/**
-	 * Create a new {@link WorkQueueProcessor} {@link Builder} with default properties.
-	 * @return new WorkQueueProcessor builder
-	 */
-	public final static <T> Builder<T> builder() {
-		return new Builder<>();
-	}
-
-	/**
-	 * Create a new WorkQueueProcessor using {@link Queues#SMALL_BUFFER_SIZE} backlog size,
-	 * blockingWait Strategy and auto-cancel. <p> A new Cached ThreadExecutorPool will be
-	 * implicitly created.
-	 * @param <E> Type of processed signals
-	 * @return a fresh processor
-	 */
-	public static <E> WorkQueueProcessor<E> create() {
-		return WorkQueueProcessor.<E>builder().build();
-	}
-
-	/**
-	 * Create a new WorkQueueProcessor using the passed buffer size, blockingWait
-	 * Strategy and auto-cancel. <p> A new Cached ThreadExecutorPool will be implicitly
-	 * created and will use the passed name to qualify the created threads.
-	 * @param name Use a new Cached ExecutorService and assign this name to the created
-	 * threads
-	 * @param bufferSize A Backlog Size to mitigate slow subscribers
-	 * @param <E> Type of processed signals
-	 * @return a fresh processor
-	 */
-	public static <E> WorkQueueProcessor<E> create(String name, int bufferSize) {
-		return WorkQueueProcessor.<E>builder().name(name).bufferSize(bufferSize).build();
-	}
-
-	/**
-	 * Create a new shared WorkQueueProcessor using the passed buffer size, blockingWait
-	 * Strategy and auto-cancel. <p> A Shared Processor authorizes concurrent onNext calls
-	 * and is suited for multi-threaded publisher that will fan-in data. <p> A new Cached
-	 * ThreadExecutorPool will be implicitly created and will use the passed name to
-	 * qualify the created threads.
-	 * @param name Use a new Cached ExecutorService and assign this name to the created
-	 * threads
-	 * @param bufferSize A Backlog Size to mitigate slow subscribers
-	 * @param <E> Type of processed signals
-	 * @return a fresh processor
-	 */
-	public static <E> WorkQueueProcessor<E> share(String name, int bufferSize) {
-		return WorkQueueProcessor.<E>builder().share(true).name(name).bufferSize(bufferSize).build();
-	}
-
-	@SuppressWarnings("rawtypes")
-    static final Supplier FACTORY = (Supplier<Slot>) Slot::new;
-
-	/**
-	 * Instance
-	 */
-
-	final RingBuffer.Sequence workSequence =
-			RingBuffer.newSequence(RingBuffer.INITIAL_CURSOR_VALUE);
-
-	final Queue<Object> claimedDisposed = new ConcurrentLinkedQueue<>();
-
-	final WaitStrategy writeWait;
-
-	volatile int replaying;
-
-	@SuppressWarnings("rawtypes")
-    static final AtomicIntegerFieldUpdater<WorkQueueProcessor> REPLAYING =
-			AtomicIntegerFieldUpdater
-					.newUpdater(WorkQueueProcessor.class, "replaying");
-
-	@SuppressWarnings("unchecked")
-	WorkQueueProcessor(
-			@Nullable ThreadFactory threadFactory,
-			@Nullable ExecutorService executor,
-			ExecutorService requestTaskExecutor,
-			int bufferSize, WaitStrategy waitStrategy, boolean share,
-	                                boolean autoCancel) {
-		super(bufferSize, threadFactory,
-				executor, requestTaskExecutor,
-				autoCancel,
-				share,
-				FACTORY,
-				waitStrategy);
-
-		this.writeWait = waitStrategy;
-
-		ringBuffer.addGatingSequence(workSequence);
-	}
-
-	@Override
-	public void subscribe(final CoreSubscriber<? super E> actual) {
-		Objects.requireNonNull(actual, "subscribe");
-
-		if (!alive()) {
-			TopicProcessor.coldSource(ringBuffer, null, error, workSequence).subscribe(
-					actual);
-			return;
-		}
-
-		final WorkQueueInner<E> signalProcessor =
-				new WorkQueueInner<>(actual, this);
-		try {
-
-			incrementSubscribers();
-
-			//bind eventProcessor sequence to observe the ringBuffer
-			signalProcessor.sequence.set(workSequence.getAsLong());
-			ringBuffer.addGatingSequence(signalProcessor.sequence);
-
-			//best effort to prevent starting the subscriber thread if we can detect the pool is too small
-			int maxSubscribers = bestEffortMaxSubscribers(executor);
-			if (maxSubscribers > Integer.MIN_VALUE && subscriberCount > maxSubscribers) {
-				throw new IllegalStateException("The executor service could not accommodate" +
-						" another subscriber, detected limit " + maxSubscribers);
-			}
-
-			executor.execute(signalProcessor);
-		}
-		catch (Throwable t) {
-			decrementSubscribers();
-			ringBuffer.removeGatingSequence(signalProcessor.sequence);
-			if(RejectedExecutionException.class.isAssignableFrom(t.getClass())){
-				TopicProcessor.coldSource(ringBuffer, t, error, workSequence).subscribe(
-						actual);
-			}
-			else {
-				Operators.error(actual, t);
-			}
-		}
-	}
-
-	/**
-	 * This method will attempt to compute the maximum amount of subscribers a
-	 * {@link WorkQueueProcessor} can accommodate based on a given {@link ExecutorService}.
-	 * <p>
-	 * It can only accurately detect this for {@link ThreadPoolExecutor} and
-	 * {@link ForkJoinPool} instances, and will return {@link Integer#MIN_VALUE} for other
-	 * executor implementations.
-	 *
-	 * @param executor the executor to attempt to introspect.
-	 * @return the maximum number of subscribers the executor can accommodate if it can
-	 * be computed, or {@link Integer#MIN_VALUE} if it cannot be determined.
-	 */
-	static int bestEffortMaxSubscribers(ExecutorService executor) {
-		int maxSubscribers = Integer.MIN_VALUE;
-		if (executor instanceof ThreadPoolExecutor) {
-			maxSubscribers = ((ThreadPoolExecutor) executor).getMaximumPoolSize();
-		}
-		else if (executor instanceof ForkJoinPool) {
-			maxSubscribers = ((ForkJoinPool) executor).getParallelism();
-		}
-		return maxSubscribers;
-	}
-
-	@Override
-	public Flux<E> drain() {
-		return TopicProcessor.coldSource(ringBuffer, null, error, workSequence);
-	}
-
-	@Override
-	protected void doError(Throwable t) {
-		writeWait.signalAllWhenBlocking();
-		//ringBuffer.markAsTerminated();
-	}
-
-	@Override
-	protected void doComplete() {
-		writeWait.signalAllWhenBlocking();
-		//ringBuffer.markAsTerminated();
-	}
-
-	@Override
-	protected void requestTask(Subscription s) {
-		requestTaskExecutor.execute(createRequestTask(s, this,
-				null, ringBuffer::getMinimumGatingSequence));
-	}
-
-	@Override
-	public long getPending() {
-		return (getBufferSize() - ringBuffer.getPending()) + claimedDisposed.size();
-	}
-
-	@Override
-	public void run() {
-		if (!alive()) {
-			WaitStrategy.alert();
-		}
-	}
-
-	/**
 	 * Disruptor WorkProcessor port that deals with pending demand. <p> Convenience class
 	 * for handling the batching semantics of consuming entries from a {@link
 	 * RingBuffer} <p>
@@ -468,7 +464,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 
 				//while(processor.alive() && processor.upstreamSubscription == null);
 				Thread.currentThread()
-				      .setContextClassLoader(processor.contextClassLoader);
+						.setContextClassLoader(processor.contextClassLoader);
 				subscriber.onSubscribe(this);
 
 				long cachedAvailableSequence = Long.MIN_VALUE;
@@ -479,10 +475,10 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 
 				if (!EventLoopProcessor.waitRequestOrTerminalEvent(pendingRequest, barrier, running, sequence,
 						waiter) && replay(unbounded)) {
-					if(!running.get()){
+					if (!running.get()) {
 						return;
 					}
-					if(processor.terminated == SHUTDOWN) {
+					if (processor.terminated == SHUTDOWN) {
 						if (processor.ringBuffer.getAsLong() == -1L) {
 							if (processor.error != null) {
 								subscriber.onError(processor.error);
@@ -493,7 +489,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 						}
 					}
 					else if (processor.terminated == FORCED_SHUTDOWN) {
-							return;
+						return;
 					}
 				}
 
@@ -505,7 +501,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 						// this prevents the sequence getting too far forward if an error
 						// is thrown from the WorkHandler
 						if (processedSequence) {
-							if(!running.get()){
+							if (!running.get()) {
 								break;
 							}
 							processedSequence = false;
@@ -538,12 +534,11 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 							processedSequence = true;
 							subscriber.onNext(event.value);
 
-
 						}
 						else {
 							processor.readWait.signalAllWhenBlocking();
-								cachedAvailableSequence =
-										barrier.waitFor(nextSequence, waiter);
+							cachedAvailableSequence =
+									barrier.waitFor(nextSequence, waiter);
 
 						}
 
@@ -552,7 +547,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 						if (ce instanceof InterruptedException) {
 							Thread.currentThread().interrupt();
 						}
-						if (Exceptions.isCancel(ce)){
+						if (Exceptions.isCancel(ce)) {
 							reschedule(event);
 							break;
 						}
@@ -564,7 +559,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 						if (!running.get()) {
 							break;
 						}
-						if(processor.terminated == SHUTDOWN) {
+						if (processor.terminated == SHUTDOWN) {
 							if (processor.error != null) {
 								processedSequence = true;
 								subscriber.onError(processor.error);
@@ -577,7 +572,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 							}
 						}
 						else if (processor.terminated == FORCED_SHUTDOWN) {
-								break;
+							break;
 						}
 						//processedSequence = true;
 						//continue event-loop
@@ -589,10 +584,10 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 				processor.decrementSubscribers();
 				running.set(false);
 
-				if(!processedSequence) {
+				if (!processedSequence) {
 					processor.claimedDisposed.add(sequence);
 				}
-				else{
+				else {
 					processor.ringBuffer.removeGatingSequence(sequence);
 				}
 
@@ -623,7 +618,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 						if (v instanceof RingBuffer.Sequence) {
 							s = (RingBuffer.Sequence) v;
 							long cursor = s.getAsLong() + 1L;
-							if(cursor > processor.ringBuffer.getAsLong()){
+							if (cursor > processor.ringBuffer.getAsLong()) {
 								processor.readWait.signalAllWhenBlocking();
 								return !processor.alive() && processor.ringBuffer.getPending() == 0;
 							}
@@ -643,7 +638,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 						readNextEvent(unbounded);
 						subscriber.onNext((T) v);
 						processor.claimedDisposed.poll();
-						if(s != null){
+						if (s != null) {
 							processor.ringBuffer.removeGatingSequence(s);
 							s = null;
 						}
@@ -682,7 +677,7 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 		}
 
 		void readNextEvent(final boolean unbounded) {
-				//pause until request
+			//pause until request
 			while ((!unbounded && getAndSub(pendingRequest, 1L) == 0L)) {
 				if (!isRunning()) {
 					WaitStrategy.alert();
@@ -695,10 +690,10 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
-			if (key == Attr.PARENT ) return processor;
-			if (key == Attr.ACTUAL ) return subscriber;
+			if (key == Attr.PARENT) return processor;
+			if (key == Attr.ACTUAL) return subscriber;
 			if (key == Attr.PREFETCH) return Integer.MAX_VALUE;
-			if (key == Attr.TERMINATED ) return processor.isTerminated();
+			if (key == Attr.TERMINATED) return processor.isTerminated();
 			if (key == Attr.CANCELLED) return !running.get();
 			if (key == Attr.REQUESTED_FROM_DOWNSTREAM) return pendingRequest.getAsLong();
 
@@ -720,7 +715,5 @@ public final class WorkQueueProcessor<E> extends EventLoopProcessor<E> {
 		}
 
 	}
-
-	static final Logger log = Loggers.getLogger(WorkQueueProcessor.class);
 
 }

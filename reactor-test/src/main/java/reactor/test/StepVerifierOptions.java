@@ -37,18 +37,18 @@ import reactor.util.context.Context;
  */
 public class StepVerifierOptions {
 
+	final Map<Class<?>, Extractor<?>> extractorMap = new LinkedHashMap<>();
 	@Nullable
 	private String scenarioName = null;
-
 	private boolean checkUnderRequesting = true;
 	private long initialRequest = Long.MAX_VALUE;
 	private Supplier<? extends VirtualTimeScheduler> vtsLookup = null;
 	private Context initialContext;
-
 	@Nullable
 	private ToStringConverter objectFormatter = null;
 
-	final Map<Class<?>, Extractor<?>> extractorMap = new LinkedHashMap<>();
+	private StepVerifierOptions() {
+	} //disable constructor
 
 	/**
 	 * Create a new default set of options for a {@link StepVerifier} that can be tuned
@@ -57,8 +57,6 @@ public class StepVerifierOptions {
 	public static StepVerifierOptions create() {
 		return new StepVerifierOptions();
 	}
-
-	private StepVerifierOptions() { } //disable constructor
 
 	/**
 	 * Activate or deactivate the {@link StepVerifier} check of request amount

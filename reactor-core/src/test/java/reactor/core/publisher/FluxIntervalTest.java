@@ -53,18 +53,18 @@ public class FluxIntervalTest {
 			AssertSubscriber<Long> ts = AssertSubscriber.create();
 
 			ts.values()
-			  .add(System.currentTimeMillis());
+					.add(System.currentTimeMillis());
 
 			Flux.interval(Duration.ofMillis(100), Duration.ofMillis(100), exec)
-			    .take(5)
-			    .map(v -> System.currentTimeMillis())
-			    .subscribe(ts);
+					.take(5)
+					.map(v -> System.currentTimeMillis())
+					.subscribe(ts);
 
 			ts.await(Duration.ofSeconds(5));
 
 			ts.assertValueCount(5)
-			  .assertNoError()
-			  .assertComplete();
+					.assertNoError()
+					.assertComplete();
 
 			List<Long> list = ts.values();
 			for (int i = 0; i < list.size() - 1; i++) {
@@ -83,111 +83,112 @@ public class FluxIntervalTest {
 
 	Flux<Integer> flatMapScenario() {
 		return Flux.interval(Duration.ofSeconds(3))
-		           .flatMap(v -> Flux.fromIterable(Arrays.asList("A"))
-		                      .flatMap(w -> Mono.fromCallable(() -> Arrays.asList(1, 2))
-		                                        .subscribeOn(Schedulers.parallel())
-		                                        .flatMapMany(Flux::fromIterable))).log();
+				.flatMap(v -> Flux.fromIterable(Arrays.asList("A"))
+						.flatMap(w -> Mono.fromCallable(() -> Arrays.asList(1, 2))
+								.subscribeOn(Schedulers.parallel())
+								.flatMapMany(Flux::fromIterable))).log();
 	}
 
 	@Test
 	public void flatMap() throws Exception {
 		StepVerifier.withVirtualTime(this::flatMapScenario)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNext(1)
-		            .expectNext(2)
-		            .thenCancel()
-		            .verify();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNext(1)
+				.expectNext(2)
+				.thenCancel()
+				.verify();
 	}
 
-	Flux<Long> scenario2(){
+	Flux<Long> scenario2() {
 		return Flux.interval(Duration.ofMillis(500));
 	}
 
 	@Test
 	public void normal2() {
 		StepVerifier.withVirtualTime(this::scenario2)
-		            .thenAwait(Duration.ofMillis(5_000))
-		            .expectNextCount(10)
-		            .thenCancel()
-		            .verify();
+				.thenAwait(Duration.ofMillis(5_000))
+				.expectNextCount(10)
+				.thenCancel()
+				.verify();
 	}
 
-	Flux<Long> scenario3(){
+	Flux<Long> scenario3() {
 		return Flux.interval(Duration.ofMillis(500), Duration.ofMillis(1000));
 	}
 
 	@Test
 	public void normal3() {
 		StepVerifier.withVirtualTime(this::scenario3)
-		            .thenAwait(Duration.ofMillis(1500))
-		            .expectNext(0L)
-		            .thenAwait(Duration.ofSeconds(4))
-		            .expectNextCount(4)
-		            .thenCancel()
-		            .verify();
+				.thenAwait(Duration.ofMillis(1500))
+				.expectNext(0L)
+				.thenAwait(Duration.ofSeconds(4))
+				.expectNextCount(4)
+				.thenCancel()
+				.verify();
 	}
 
-	Flux<Long> scenario4(){
+	Flux<Long> scenario4() {
 		return Flux.interval(Duration.ofMillis(500), Duration.ofMillis(1000));
 	}
 
 	@Test
 	public void normal4() {
 		StepVerifier.withVirtualTime(this::scenario4)
-		            .thenAwait(Duration.ofMillis(1500))
-		            .expectNext(0L)
-		            .thenAwait(Duration.ofSeconds(4))
-		            .expectNextCount(4)
-		            .thenCancel()
-		            .verify();
+				.thenAwait(Duration.ofMillis(1500))
+				.expectNext(0L)
+				.thenAwait(Duration.ofSeconds(4))
+				.expectNextCount(4)
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
-    public void scanIntervalRunnable() {
+	public void scanIntervalRunnable() {
 		Scheduler.Worker worker = Schedulers.single().createWorker();
 
 		try {
-        CoreSubscriber<Long> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxInterval.IntervalRunnable test = new FluxInterval.IntervalRunnable(actual, worker);
+			CoreSubscriber<Long> actual = new LambdaSubscriber<>(null, e -> {
+			}, null, null);
+			FluxInterval.IntervalRunnable test = new FluxInterval.IntervalRunnable(actual, worker);
 
-        assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(worker);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+			assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(worker);
+			assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+			assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+			test.cancel();
+			assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
 		}
 		finally {
 			worker.dispose();
 		}
-    }
+	}
 
-    @Test
-    public void scanOperator() {
-	    final Flux<Long> interval = Flux.interval(Duration.ofSeconds(1));
+	@Test
+	public void scanOperator() {
+		final Flux<Long> interval = Flux.interval(Duration.ofSeconds(1));
 
-	    assertThat(interval).isInstanceOf(Scannable.class);
-	    assertThat(((Scannable) interval).scan(Scannable.Attr.RUN_ON))
-			    .isSameAs(Schedulers.parallel());
-    }
+		assertThat(interval).isInstanceOf(Scannable.class);
+		assertThat(((Scannable) interval).scan(Scannable.Attr.RUN_ON))
+				.isSameAs(Schedulers.parallel());
+	}
 
-    @Test
+	@Test
 	public void tickOverflow() {
 		StepVerifier.withVirtualTime(() ->
 				Flux.interval(Duration.ofMillis(50))
-				    .delayUntil(i -> Mono.delay(Duration.ofMillis(250))))
-		            .thenAwait(Duration.ofMinutes(1))
-		            .expectNextCount(6)
-		            .verifyErrorMessage("Could not emit tick 32 due to lack of requests (interval doesn't support small downstream requests that replenish slower than the ticks)");
-    }
+						.delayUntil(i -> Mono.delay(Duration.ofMillis(250))))
+				.thenAwait(Duration.ofMinutes(1))
+				.expectNextCount(6)
+				.verifyErrorMessage("Could not emit tick 32 due to lack of requests (interval doesn't support small downstream requests that replenish slower than the ticks)");
+	}
 
-    @Test
+	@Test
 	public void shouldBeAbleToScheduleIntervalsWithLowGranularity() {
 		StepVerifier.create(Flux.interval(Duration.ofNanos(1)))
-		            .expectSubscription()
-		            .expectNext(0L)
-		            .expectNext(1L)
-		            .expectNext(2L)
-		            .thenCancel()
-		            .verify();
-    }
+				.expectSubscription()
+				.expectNext(0L)
+				.expectNext(1L)
+				.expectNext(2L)
+				.thenCancel()
+				.verify();
+	}
 }

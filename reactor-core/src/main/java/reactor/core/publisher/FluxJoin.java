@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.reactivestreams.Publisher;
@@ -93,57 +92,37 @@ final class FluxJoin<TLeft, TRight, TLeftEnd, TRightEnd, R> extends
 	static final class JoinSubscription<TLeft, TRight, TLeftEnd, TRightEnd, R>
 			implements JoinSupport<R> {
 
-		final Queue<Object>               queue;
-		final BiPredicate<Object, Object> queueBiOffer;
-
-		final Disposable.Composite cancellations;
-
-		final Map<Integer, TLeft> lefts;
-
-		final Map<Integer, TRight> rights;
-
-		final Function<? super TLeft, ? extends Publisher<TLeftEnd>> leftEnd;
-
-		final Function<? super TRight, ? extends Publisher<TRightEnd>> rightEnd;
-
-		final BiFunction<? super TLeft, ? super TRight, ? extends R> resultSelector;
-		final CoreSubscriber<? super R>                                  actual;
-
-		volatile int wip;
-
 		static final AtomicIntegerFieldUpdater<JoinSubscription> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(JoinSubscription.class, "wip");
-
-		volatile int active;
-
 		static final AtomicIntegerFieldUpdater<JoinSubscription> ACTIVE =
 				AtomicIntegerFieldUpdater.newUpdater(JoinSubscription.class,
 						"active");
-
-		volatile long requested;
-
 		static final AtomicLongFieldUpdater<JoinSubscription> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(JoinSubscription.class,
 						"requested");
-
-		volatile Throwable error;
-
 		static final AtomicReferenceFieldUpdater<JoinSubscription, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(JoinSubscription.class,
 						Throwable.class,
 						"error");
-
-		int leftIndex;
-
-		int rightIndex;
-
 		static final Integer LEFT_VALUE = 1;
-
 		static final Integer RIGHT_VALUE = 2;
-
 		static final Integer LEFT_CLOSE = 3;
-
 		static final Integer RIGHT_CLOSE = 4;
+		final Queue<Object> queue;
+		final BiPredicate<Object, Object> queueBiOffer;
+		final Disposable.Composite cancellations;
+		final Map<Integer, TLeft> lefts;
+		final Map<Integer, TRight> rights;
+		final Function<? super TLeft, ? extends Publisher<TLeftEnd>> leftEnd;
+		final Function<? super TRight, ? extends Publisher<TRightEnd>> rightEnd;
+		final BiFunction<? super TLeft, ? super TRight, ? extends R> resultSelector;
+		final CoreSubscriber<? super R> actual;
+		volatile int wip;
+		volatile int active;
+		volatile long requested;
+		volatile Throwable error;
+		int leftIndex;
+		int rightIndex;
 
 		@SuppressWarnings("unchecked")
 		JoinSubscription(CoreSubscriber<? super R> actual,

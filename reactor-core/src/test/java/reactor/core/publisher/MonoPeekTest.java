@@ -34,7 +34,7 @@ public class MonoPeekTest {
 		AtomicReference<Throwable> ref = new AtomicReference<>();
 
 		mp.doOnSuccessOrError((s, f) -> ref.set(f))
-		  .subscribe();
+				.subscribe();
 
 		assertThat(ref.get()).hasMessage("test");
 	}
@@ -45,7 +45,7 @@ public class MonoPeekTest {
 		AtomicReference<String> ref = new AtomicReference<>();
 
 		mp.doOnSuccessOrError((s, f) -> ref.set(s))
-		  .subscribe();
+				.subscribe();
 
 		assertThat(ref.get()).isEqualToIgnoringCase("test");
 	}
@@ -56,7 +56,7 @@ public class MonoPeekTest {
 		AtomicInteger invoked = new AtomicInteger();
 
 		mp.doOnTerminate(invoked::incrementAndGet)
-		  .subscribe();
+				.subscribe();
 
 		assertThat(invoked.get()).isEqualTo(1);
 	}
@@ -67,7 +67,7 @@ public class MonoPeekTest {
 		AtomicInteger invoked = new AtomicInteger();
 
 		mp.doOnTerminate(invoked::incrementAndGet)
-		  .subscribe();
+				.subscribe();
 
 		assertThat(invoked.get()).isEqualTo(1);
 	}
@@ -78,7 +78,7 @@ public class MonoPeekTest {
 		AtomicReference<String> ref = new AtomicReference<>();
 
 		mp.doOnSuccess(ref::set)
-		  .subscribe();
+				.subscribe();
 
 		assertThat(ref.get()).isEqualToIgnoringCase("test");
 	}
@@ -89,10 +89,10 @@ public class MonoPeekTest {
 		AtomicReference<Long> ref = new AtomicReference<>();
 
 		StepVerifier.create(mp.doOnRequest(ref::set), 0)
-		            .thenAwait()
-		            .thenRequest(123)
-		            .expectNext("test")
-		            .verifyComplete();
+				.thenAwait()
+				.thenRequest(123)
+				.expectNext("test")
+				.verifyComplete();
 
 		assertThat(ref.get()).isEqualTo(123);
 	}
@@ -103,8 +103,8 @@ public class MonoPeekTest {
 		AtomicReference<Subscription> ref = new AtomicReference<>();
 
 		StepVerifier.create(mp.doOnSubscribe(ref::set))
-		            .expectNext("test")
-		            .verifyComplete();
+				.expectNext("test")
+				.verifyComplete();
 
 		assertThat(ref.get()).isNotNull();
 	}
@@ -115,13 +115,9 @@ public class MonoPeekTest {
 		AtomicReference<Throwable> ref = new AtomicReference<>();
 
 		mp.doOnError(ref::set)
-		  .subscribe();
+				.subscribe();
 
 		assertThat(ref.get()).hasMessage("test");
-	}
-
-	final static class TestException extends Exception {
-
 	}
 
 	@Test
@@ -130,7 +126,7 @@ public class MonoPeekTest {
 		AtomicReference<Throwable> ref = new AtomicReference<>();
 
 		mp.doOnError(TestException.class, ref::set)
-		  .subscribe();
+				.subscribe();
 
 		assertThat(ref.get()).isInstanceOf(TestException.class);
 	}
@@ -141,7 +137,7 @@ public class MonoPeekTest {
 		AtomicReference<Throwable> ref = new AtomicReference<>();
 
 		MonoProcessor<String> processor = mp.doOnError(RuntimeException.class, ref::set)
-		                                    .toProcessor();
+				.toProcessor();
 		processor.subscribe();
 		assertThat(processor.getError()).isInstanceOf(TestException.class);
 
@@ -152,7 +148,7 @@ public class MonoPeekTest {
 	public void onMonoSuccessNullDoOnSuccess() {
 		Mono<String> mp = Mono.just("test");
 		mp.doOnSuccess(null)
-		  .subscribe();
+				.subscribe();
 	}
 
 	@Test
@@ -160,9 +156,14 @@ public class MonoPeekTest {
 		assertThatExceptionOfType(RuntimeException.class)
 				.isThrownBy(() ->
 						Mono.error(new NullPointerException("boom"))
-						    .doOnSuccess(aValue -> {})
-						    .subscribe())
+								.doOnSuccess(aValue -> {
+								})
+								.subscribe())
 				.withCauseInstanceOf(NullPointerException.class)
 				.matches(Exceptions::isErrorCallbackNotImplemented, "ErrorCallbackNotImplemented");
+	}
+
+	final static class TestException extends Exception {
+
 	}
 }

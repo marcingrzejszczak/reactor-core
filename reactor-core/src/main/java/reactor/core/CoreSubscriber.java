@@ -41,7 +41,7 @@ public interface CoreSubscriber<T> extends Subscriber<T> {
 	 *
 	 * @return a resolved context or {@link Context#empty()}
 	 */
-	default Context currentContext(){
+	default Context currentContext() {
 		return Context.empty();
 	}
 

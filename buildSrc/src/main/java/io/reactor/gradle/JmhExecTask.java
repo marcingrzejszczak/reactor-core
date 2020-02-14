@@ -43,7 +43,7 @@ class JmhExecTask extends JavaExec {
 		return include;
 	}
 
-	@Option(option = "include", description="configure bench inclusion using substring")
+	@Option(option = "include", description = "configure bench inclusion using substring")
 	public void setInclude(String include) {
 		this.include = include;
 	}
@@ -114,10 +114,10 @@ class JmhExecTask extends JavaExec {
 			args(fullInclude);
 		}
 
-		if(exclude != null) {
+		if (exclude != null) {
 			args("-e", exclude);
 		}
-		if(verify != null) { // execute benchmarks with the minimum amount of execution (only to check if they are working)
+		if (verify != null) { // execute benchmarks with the minimum amount of execution (only to check if they are working)
 			System.out.println("Running in verify mode");
 			args("-f", 1);
 			args("-wi", 1);
@@ -125,15 +125,15 @@ class JmhExecTask extends JavaExec {
 		}
 		args("-foe", "true"); //fail-on-error
 		args("-v", "NORMAL"); //verbosity [SILENT, NORMAL, EXTRA]
-		if(profilers != null) {
+		if (profilers != null) {
 			for (String prof : profilers.split(",")) {
 				args("-prof", prof);
 			}
 		}
 		args("-jvmArgsPrepend", "-Xmx3072m");
 		args("-jvmArgsPrepend", "-Xms3072m");
-		if(jmhJvmArgs != null) {
-			for(String jvmArg : jmhJvmArgs.split(" ")) {
+		if (jmhJvmArgs != null) {
+			for (String jvmArg : jmhJvmArgs.split(" ")) {
 				args("-jvmArgsPrepend", jvmArg);
 			}
 		}

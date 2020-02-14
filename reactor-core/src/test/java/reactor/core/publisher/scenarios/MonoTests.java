@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,15 +47,19 @@ import static org.junit.Assert.assertTrue;
  */
 public class MonoTests {
 
+	private static Mono<Integer> handle(String t) {
+		return Mono.just(t.length());
+	}
+
 	@Test
 	public void errorContinueOnMonoReduction() {
 		AtomicReference<Tuple2<Class, Object>> ref = new AtomicReference<>();
 		StepVerifier.create(Flux.just(1, 0, 2)
-		                        .map(v -> 100 / v)
-		                        .reduce((a, b) -> a + b)
-		                        .onErrorContinue(ArithmeticException.class, (t, v) -> ref.set(Tuples.of(t.getClass(), v))))
-		            .expectNext(100 + 50)
-		            .verifyComplete();
+				.map(v -> 100 / v)
+				.reduce((a, b) -> a + b)
+				.onErrorContinue(ArithmeticException.class, (t, v) -> ref.set(Tuples.of(t.getClass(), v))))
+				.expectNext(100 + 50)
+				.verifyComplete();
 
 		Assertions.assertThat(ref).hasValue(Tuples.of(ArithmeticException.class, 0));
 	}
@@ -66,13 +69,13 @@ public class MonoTests {
 		List<String> discardOrder = Collections.synchronizedList(new ArrayList<>(2));
 
 		StepVerifier.create(Mono.just(1)
-		                        .hide() //hide both avoid the fuseable AND tryOnNext usage
-		                        .filter(i -> i % 2 == 0)
-		                        .doOnDiscard(Number.class, i -> discardOrder.add("FIRST"))
-		                        .doOnDiscard(Integer.class, i -> discardOrder.add("SECOND"))
+				.hide() //hide both avoid the fuseable AND tryOnNext usage
+				.filter(i -> i % 2 == 0)
+				.doOnDiscard(Number.class, i -> discardOrder.add("FIRST"))
+				.doOnDiscard(Integer.class, i -> discardOrder.add("SECOND"))
 		)
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		Assertions.assertThat(discardOrder).containsExactly("FIRST", "SECOND");
 	}
@@ -81,12 +84,12 @@ public class MonoTests {
 	public void testDoOnEachSignal() {
 		List<Signal<Integer>> signals = new ArrayList<>(4);
 		Mono<Integer> mono = Mono.just(1)
-		                         .doOnEach(signals::add);
+				.doOnEach(signals::add);
 		StepVerifier.create(mono)
-		            .expectSubscription()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.expectSubscription()
+				.expectNext(1)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 
 		assertThat(signals.size(), is(2));
 		assertThat("onNext", signals.get(0).get(), is(1));
@@ -97,11 +100,11 @@ public class MonoTests {
 	public void testDoOnEachEmpty() {
 		List<Signal<Integer>> signals = new ArrayList<>(4);
 		Mono<Integer> mono = Mono.<Integer>empty()
-		                         .doOnEach(signals::add);
+				.doOnEach(signals::add);
 		StepVerifier.create(mono)
-		            .expectSubscription()
-		            .expectComplete()
-		            .verify();
+				.expectSubscription()
+				.expectComplete()
+				.verify();
 
 		assertThat(signals.size(), is(1));
 		assertTrue("onComplete expected", signals.get(0).isOnComplete());
@@ -114,9 +117,9 @@ public class MonoTests {
 		Mono<Integer> mono = Mono.<Integer>error(new IllegalArgumentException("foo"))
 				.doOnEach(signals::add);
 		StepVerifier.create(mono)
-		            .expectSubscription()
-		            .expectErrorMessage("foo")
-		            .verify();
+				.expectSubscription()
+				.expectErrorMessage("foo")
+				.verify();
 
 		assertThat(signals.size(), is(1));
 		assertTrue("onError expected", signals.get(0).isOnError());
@@ -133,12 +136,12 @@ public class MonoTests {
 	public void testDoOnEachSignalToSubscriber() {
 		AssertSubscriber<Integer> peekSubscriber = AssertSubscriber.create();
 		Mono<Integer> mono = Mono.just(1)
-		                         .doOnEach(s -> s.accept(peekSubscriber));
+				.doOnEach(s -> s.accept(peekSubscriber));
 		StepVerifier.create(mono)
-		            .expectSubscription()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.expectSubscription()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 
 		peekSubscriber.assertNotSubscribed();
 		peekSubscriber.assertValues(1);
@@ -165,12 +168,12 @@ public class MonoTests {
 			Mono.fromCallable(() -> {
 				throw new RuntimeException("Some Exception");
 			})
-			    .subscribeOn(Schedulers.parallel())
-			    .doOnError(t -> latch1.countDown())
-			    .doOnSuccess(v -> latch2.countDown())
-			    .block();
+					.subscribeOn(Schedulers.parallel())
+					.doOnError(t -> latch1.countDown())
+					.doOnSuccess(v -> latch2.countDown())
+					.block();
 		}
-		catch (RuntimeException re){
+		catch (RuntimeException re) {
 
 		}
 		assertThat("Error latch was counted down", latch1.await(1, TimeUnit.SECONDS), is(true));
@@ -183,21 +186,21 @@ public class MonoTests {
 			Thread.sleep(400);
 			return "hello";
 		})
-		               .subscribeOn(Schedulers.parallel())
-		               .then(Mono.just("world"))
-		               .block();
+				.subscribeOn(Schedulers.parallel())
+				.then(Mono.just("world"))
+				.block();
 		assertThat("Alternate mono not seen", h, is("world"));
 	}
 
 	@Test
 	public void promiseDelays() throws Exception {
 		Tuple2<Long, String> h = Mono.delay(Duration.ofMillis(3000))
-		                             .log("time1")
-		                             .map(d -> "Spring wins")
-		                             .or(Mono.delay(Duration.ofMillis(2000)).log("time2").map(d -> "Spring Reactive"))
-		                             .flatMap(t -> Mono.just(t+ " world"))
-		                             .elapsed()
-		                             .block();
+				.log("time1")
+				.map(d -> "Spring wins")
+				.or(Mono.delay(Duration.ofMillis(2000)).log("time2").map(d -> "Spring Reactive"))
+				.flatMap(t -> Mono.just(t + " world"))
+				.elapsed()
+				.block();
 		assertThat("Alternate mono not seen", h.getT2(), is("Spring Reactive world"));
 		System.out.println(h.getT1());
 	}
@@ -211,33 +214,29 @@ public class MonoTests {
 		assertThat("Failed", successCountDownLatch.await(10, TimeUnit.SECONDS));
 	}
 
-	private static Mono<Integer> handle(String t) {
-		return Mono.just(t.length());
-	}
-
 	@Test
 	public void testMonoAndFunction() {
 		StepVerifier.create(Mono.just("source")
-		                        .zipWhen(t -> handle(t)))
-		            .expectNextMatches(pair -> pair.getT1().equals("source") && pair.getT2() == 6)
-		            .expectComplete()
-		            .verify();
+				.zipWhen(t -> handle(t)))
+				.expectNextMatches(pair -> pair.getT1().equals("source") && pair.getT2() == 6)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void testMonoAndFunctionEmpty() {
 		StepVerifier.create(
 				Mono.<String>empty().zipWhen(MonoTests::handle))
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void testMonoAndFunctionRightSideEmpty() {
 		StepVerifier.create(
 				Mono.just("foo").zipWhen(t -> Mono.empty()))
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -250,12 +249,12 @@ public class MonoTests {
 		Assertions.assertThat(source).hasValue(0);
 
 		Assertions.assertThat(mono.block())
-		          .isEqualTo(source.get())
-		          .isEqualTo(1);
+				.isEqualTo(source.get())
+				.isEqualTo(1);
 
 		Assertions.assertThat(mono.block())
-		          .isEqualTo(source.get())
-		          .isEqualTo(2);
+				.isEqualTo(source.get())
+				.isEqualTo(2);
 	}
 
 	@Test
@@ -268,21 +267,21 @@ public class MonoTests {
 		Assertions.assertThat(source).hasValue(0);
 
 		Assertions.assertThat(mono.block())
-		          .isEqualTo(source.get())
-		          .isEqualTo(1);
+				.isEqualTo(source.get())
+				.isEqualTo(1);
 
 		Assertions.assertThat(mono.block())
-		          .isEqualTo(source.get())
-		          .isEqualTo(2);
+				.isEqualTo(source.get())
+				.isEqualTo(2);
 	}
 
 	@Test
 	public void monoCacheContextHistory() {
 		AtomicInteger contextFillCount = new AtomicInteger();
 		Mono<String> cached = Mono.subscriberContext()
-		                          .map(ctx -> ctx.getOrDefault("a", "BAD"))
-		                          .cache()
-		                          .subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
+				.map(ctx -> ctx.getOrDefault("a", "BAD"))
+				.cache()
+				.subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
 
 		//at first pass, the context is captured
 		String cacheMiss = cached.block();

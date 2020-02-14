@@ -73,8 +73,8 @@ public class ConsoleLoggerTest {
 		assertThat(errContent.size()).isZero();
 		assertThat(outContent.toString())
 				.startsWith("[TRACE] (" + Thread.currentThread().getName() + ") with cause - java.lang.IllegalStateException: cause" +
-				"\njava.lang.IllegalStateException: cause\n" +
-				"\tat reactor.util.ConsoleLoggerTest");
+						"\njava.lang.IllegalStateException: cause\n" +
+						"\tat reactor.util.ConsoleLoggerTest");
 	}
 
 	@Test

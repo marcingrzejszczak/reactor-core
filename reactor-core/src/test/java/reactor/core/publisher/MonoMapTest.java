@@ -24,6 +24,8 @@ import reactor.test.subscriber.AssertSubscriber;
 
 public class MonoMapTest extends MonoOperatorTest<String, String> {
 
+	final Mono<Integer> just = Mono.just(1);
+
 	@Override
 	protected List<Scenario<String, String>> scenarios_operatorSuccess() {
 		return Arrays.asList(
@@ -34,11 +36,9 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 	@Override
 	protected List<Scenario<String, String>> scenarios_operatorError() {
 		return Arrays.asList(
-				scenario(f -> f.map(a ->  null))
+				scenario(f -> f.map(a -> null))
 		);
 	}
-
-	final Mono<Integer> just = Mono.just(1);
 
 	@Test(expected = NullPointerException.class)
 	public void nullSource() {
@@ -55,11 +55,11 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		just.map(v -> v + 1)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(2)
-		  .assertComplete();
+				.assertValues(2)
+				.assertComplete();
 	}
 
 	@Test
@@ -67,17 +67,17 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		just.map(v -> v + 1)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertNoError()
-		  .assertValues(2)
-		  .assertComplete();
+				.assertValues(2)
+				.assertComplete();
 	}
 
 	@Test
@@ -87,12 +87,12 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		just.map(v -> {
 			throw new RuntimeException("forced failure");
 		})
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertErrorMessage("forced failure")
+				.assertNoValues()
+				.assertNotComplete();
 	}
 
 	@Test
@@ -100,11 +100,11 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		just.map(v -> null)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertError(NullPointerException.class)
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertNotComplete();
 	}
 
 	@Test
@@ -112,13 +112,13 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		just
-		    .map(v -> v + 1)
-		    .filter(v -> (v & 1) == 0)
-		    .subscribe(ts);
+				.map(v -> v + 1)
+				.filter(v -> (v & 1) == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -126,19 +126,19 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create(0);
 
 		just
-		    .map(v -> v + 1)
-		    .filter(v -> (v & 1) == 0)
-		    .subscribe(ts);
+				.map(v -> v + 1)
+				.filter(v -> (v & 1) == 0)
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -146,14 +146,14 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		just
-		    .hide()
-		    .map(v -> v + 1)
-		    .filter(v -> (v & 1) == 0)
-		    .subscribe(ts);
+				.hide()
+				.map(v -> v + 1)
+				.filter(v -> (v & 1) == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -161,20 +161,20 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create(0);
 
 		just
-		    .hide()
-		    .map(v -> v + 1)
-		    .filter(v -> (v & 1) == 0)
-		    .subscribe(ts);
+				.hide()
+				.map(v -> v + 1)
+				.filter(v -> (v & 1) == 0)
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -182,16 +182,16 @@ public class MonoMapTest extends MonoOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create(0);
 
 		just
-		    .hide()
-		    .map(v -> v + 1)
-		    .hide()
-		    .filter(v -> (v & 1) == 0)
-		    .subscribe(ts);
+				.hide()
+				.map(v -> v + 1)
+				.hide()
+				.filter(v -> (v & 1) == 0)
+				.subscribe(ts);
 
 		ts.request(1);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 }

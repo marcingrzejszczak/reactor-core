@@ -48,108 +48,115 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 
 	@Test
 	public void empty() {
-		StepVerifier.create(Flux.empty().onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {}))
-		            .verifyComplete();
+		StepVerifier.create(Flux.empty().onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+		}))
+				.verifyComplete();
 	}
 
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.error(new IOException())
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {}))
-		            .verifyError(IOException.class);
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+				}))
+				.verifyError(IOException.class);
 	}
 
 	@Test
 	public void errorDelayed() {
 		StepVerifier.create(Flux.just(1)
-		                        .concatWith(Flux.error(new IOException()))
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {}),
-		0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .expectNext(1)
-		            .verifyError(IOException.class);
+						.concatWith(Flux.error(new IOException()))
+						.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+						}),
+				0)
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.expectNext(1)
+				.verifyError(IOException.class);
 	}
 
 	@Test
 	public void normal1() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {}))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+				}))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal1SingleStep() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {})
-		                        .limitRate(1))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+				})
+				.limitRate(1))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal2() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {}, Schedulers.single()))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+				}, Schedulers.single()))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal2SingleStep() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {}, Schedulers.single())
-		                        .limitRate(1))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+				}, Schedulers.single())
+				.limitRate(1))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal3() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), 10, this, Schedulers.single()))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), 10, this, Schedulers.single()))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal3SingleStep() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), 10, this, Schedulers.single())
-		                        .limitRate(1))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), 10, this, Schedulers.single())
+				.limitRate(1))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal4() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this, Schedulers.single()))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this, Schedulers.single()))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal4SingleStep() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this, Schedulers.single())
-		                        .limitRate(1))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this, Schedulers.single())
+				.limitRate(1))
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void bufferLimit() {
 		StepVerifier.create(Flux.range(1, 5)
-				.onBackpressureBuffer(Duration.ofMinutes(1), 1, this, Schedulers.single()),
+						.onBackpressureBuffer(Duration.ofMinutes(1), 1, this, Schedulers.single()),
 				0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(1)
-		            .expectNext(5)
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(1)
+				.expectNext(5)
+				.verifyComplete();
 
 		assertThat(evicted).containsExactly(1, 2, 3, 4);
 	}
@@ -159,21 +166,21 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 		TestPublisher<Integer> tp = TestPublisher.create();
 		StepVerifier.withVirtualTime(() ->
 				tp.flux().onBackpressureBuffer(Duration.ofSeconds(1), 1, this, VirtualTimeScheduler.get()), 0)
-		            .expectSubscription()
-		            .then(() -> tp.next(1))
-		            .expectNoEvent(Duration.ofMillis(500))
-		            .then(() -> tp.next(2))
-		            .expectNoEvent(Duration.ofMillis(500))
-		            .then(() -> tp.next(3))
-		            .expectNoEvent(Duration.ofMillis(500))
-		            .then(() -> tp.next(4))
-		            .expectNoEvent(Duration.ofMillis(500))
-		            .then(() -> tp.next(5))
-		            .expectNoEvent(Duration.ofMillis(500))
-		            .then(tp::complete)
-		            .thenRequest(1)
-		            .expectNext(5)
-		            .verifyComplete();
+				.expectSubscription()
+				.then(() -> tp.next(1))
+				.expectNoEvent(Duration.ofMillis(500))
+				.then(() -> tp.next(2))
+				.expectNoEvent(Duration.ofMillis(500))
+				.then(() -> tp.next(3))
+				.expectNoEvent(Duration.ofMillis(500))
+				.then(() -> tp.next(4))
+				.expectNoEvent(Duration.ofMillis(500))
+				.then(() -> tp.next(5))
+				.expectNoEvent(Duration.ofMillis(500))
+				.then(tp::complete)
+				.thenRequest(1)
+				.expectNext(5)
+				.verifyComplete();
 
 		assertThat(evicted).containsExactly(1, 2, 3, 4);
 	}
@@ -181,22 +188,23 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 	@Test
 	public void take() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {})
-		                        .take(2))
-		            .expectNext(1, 2)
-		            .verifyComplete();
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, v -> {
+				})
+				.take(2))
+				.expectNext(1, 2)
+				.verifyComplete();
 	}
 
 	@Test
 	public void cancelEvictAll() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .log()
-				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this,
-						Schedulers.single()),
+						.log()
+						.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this,
+								Schedulers.single()),
 				0)
-		            .thenAwait(Duration.ofMillis(100)) //small hiccup to cancel after the prefetch
-		            .thenCancel()
-		            .verify();
+				.thenAwait(Duration.ofMillis(100)) //small hiccup to cancel after the prefetch
+				.thenCancel()
+				.verify();
 
 		assertThat(evicted).containsExactly(1, 2, 3, 4, 5);
 	}
@@ -204,13 +212,13 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 	@Test
 	public void timeoutEvictAll() {
 		StepVerifier.withVirtualTime(() -> Flux.range(1, 5)
-		                                       .onBackpressureBuffer(Duration.ofSeconds(1), Integer.MAX_VALUE, this, VirtualTimeScheduler.get()),
+						.onBackpressureBuffer(Duration.ofSeconds(1), Integer.MAX_VALUE, this, VirtualTimeScheduler.get()),
 				0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofSeconds(1))
-		            .thenAwait(Duration.ofMinutes(1))
-		            .thenRequest(1)
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofSeconds(1))
+				.thenAwait(Duration.ofMinutes(1))
+				.thenRequest(1)
+				.verifyComplete();
 
 		assertThat(evicted).containsExactly(1, 2, 3, 4, 5);
 	}
@@ -220,15 +228,15 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 		AtomicReference<Subscription> subscription = new AtomicReference<>();
 		TestPublisher<Integer> tp = TestPublisher.create();
 		StepVerifier.withVirtualTime(() -> tp.flux()
-		                                     .doOnSubscribe(subscription::set)
-		                                     .onBackpressureBuffer(Duration.ofSeconds(1), 10, i -> {
-			                                     evicted.add(i);
-			                                     subscription.get().cancel();
-		                                     }, VirtualTimeScheduler.get()),
+						.doOnSubscribe(subscription::set)
+						.onBackpressureBuffer(Duration.ofSeconds(1), 10, i -> {
+							evicted.add(i);
+							subscription.get().cancel();
+						}, VirtualTimeScheduler.get()),
 				0)
-		            .then(() -> tp.emit(1, 2, 3, 4, 5))
-		            .thenAwait(Duration.ofMinutes(1))
-		            .verifyComplete();
+				.then(() -> tp.emit(1, 2, 3, 4, 5))
+				.thenAwait(Duration.ofMinutes(1))
+				.verifyComplete();
 
 		tp.assertCancelled();
 		assertThat(evicted).containsExactly(1, 2, 3, 4, 5);
@@ -239,24 +247,24 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 
 		TestPublisher<Integer> tp = TestPublisher.create();
 		StepVerifier.withVirtualTime(() -> tp.flux()
-		                                     .onBackpressureBuffer(Duration.ofSeconds(1), 10, i -> {
-			                                     throw new IllegalStateException(i.toString());
-		                                     }),
+						.onBackpressureBuffer(Duration.ofSeconds(1), 10, i -> {
+							throw new IllegalStateException(i.toString());
+						}),
 				0)
-		            .then(() -> tp.emit(1, 2, 3, 4, 5))
-		            .thenAwait(Duration.ofMinutes(1))
-		            .thenRequest(1)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrors(5)
-		            .hasDroppedErrorsSatisfying(c -> {
-			            Iterator<Throwable> it = c.iterator();
-			            for (int i = 1; it.hasNext(); i++) {
-			            	assertThat(it.next())
-						            .isInstanceOf(IllegalStateException.class)
-						            .hasMessage("" + i);
-			            }
-		            });
+				.then(() -> tp.emit(1, 2, 3, 4, 5))
+				.thenAwait(Duration.ofMinutes(1))
+				.thenRequest(1)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrors(5)
+				.hasDroppedErrorsSatisfying(c -> {
+					Iterator<Throwable> it = c.iterator();
+					for (int i = 1; it.hasNext(); i++) {
+						assertThat(it.next())
+								.isInstanceOf(IllegalStateException.class)
+								.hasMessage("" + i);
+					}
+				});
 	}
 
 	@Test
@@ -264,19 +272,19 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 		List<Integer> seen = Collections.synchronizedList(new ArrayList<>());
 
 		Flux.range(1, 5)
-		    .onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this, Schedulers.single())
-		    .subscribe(new BaseSubscriber<Integer>() {
-			    @Override
-			    protected void hookOnSubscribe(Subscription subscription) {
-				    request(1);
-			    }
+				.onBackpressureBuffer(Duration.ofMinutes(1), Integer.MAX_VALUE, this, Schedulers.single())
+				.subscribe(new BaseSubscriber<Integer>() {
+					@Override
+					protected void hookOnSubscribe(Subscription subscription) {
+						request(1);
+					}
 
-			    @Override
-			    protected void hookOnNext(Integer value) {
-			    	seen.add(value);
-				    cancel();
-			    }
-		    });
+					@Override
+					protected void hookOnNext(Integer value) {
+						seen.add(value);
+						cancel();
+					}
+				});
 
 		assertThat(seen).containsExactly(1);
 	}
@@ -286,36 +294,37 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 		TestPublisher<Integer> tp = TestPublisher.create();
 
 		StepVerifier.withVirtualTime(() -> tp.flux()
-		                                     .onBackpressureBuffer(Duration.ofMillis(600),
-				                                     5, this).log(),
+						.onBackpressureBuffer(Duration.ofMillis(600),
+								5, this).log(),
 				0)
-		            .expectSubscription()
-		            .then(() -> tp.next(1,2, 3, 4, 5, 6, 7)) //evict 2 elements
-		            .then(() -> assertThat(evicted).containsExactly(1, 2))
-		            .thenAwait(Duration.ofMillis(500))
-		            .then(() -> tp.emit(8, 9, 10))
-		            .thenAwait(Duration.ofMillis(100)) // evict elements older than 8
-		            .then(() -> assertThat(evicted).containsExactly(1, 2, 3, 4, 5, 6, 7))
-		            .thenRequest(10)
-		            .expectNext(8, 9, 10)
-		            .verifyComplete();
+				.expectSubscription()
+				.then(() -> tp.next(1, 2, 3, 4, 5, 6, 7)) //evict 2 elements
+				.then(() -> assertThat(evicted).containsExactly(1, 2))
+				.thenAwait(Duration.ofMillis(500))
+				.then(() -> tp.emit(8, 9, 10))
+				.thenAwait(Duration.ofMillis(100)) // evict elements older than 8
+				.then(() -> assertThat(evicted).containsExactly(1, 2, 3, 4, 5, 6, 7))
+				.thenRequest(10)
+				.expectNext(8, 9, 10)
+				.verifyComplete();
 	}
-
 
 
 	@Test
 	public void gh1194() {
 		StepVerifier.withVirtualTime(() ->
 				Flux.just("1", "not requested", "not requested")
-				    .onBackpressureBuffer(Duration.ofSeconds(1), 3, s -> {}), 1)
-		            .expectNext("1")
-		            .thenAwait(Duration.ofSeconds(1))
-		            .verifyComplete();
+						.onBackpressureBuffer(Duration.ofSeconds(1), 3, s -> {
+						}), 1)
+				.expectNext("1")
+				.thenAwait(Duration.ofSeconds(1))
+				.verifyComplete();
 	}
 
 	@Test
 	public void scanOperator() {
-		Scannable test  = (Scannable) Flux.never().onBackpressureBuffer(Duration.ofSeconds(1), 123, v -> {}, Schedulers.single());
+		Scannable test = (Scannable) Flux.never().onBackpressureBuffer(Duration.ofSeconds(1), 123, v -> {
+		}, Schedulers.single());
 
 		assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
 	}
@@ -323,7 +332,8 @@ public class FluxOnBackpressureBufferTimeoutTest implements Consumer<Object> {
 	@Test
 	public void scanSubscriber() {
 		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, null, null, null);
-		BackpressureBufferTimeoutSubscriber<String> test = new BackpressureBufferTimeoutSubscriber<>(actual, Duration.ofSeconds(1), Schedulers.immediate(), 123, v -> {});
+		BackpressureBufferTimeoutSubscriber<String> test = new BackpressureBufferTimeoutSubscriber<>(actual, Duration.ofSeconds(1), Schedulers.immediate(), 123, v -> {
+		});
 		Subscription s = Operators.emptySubscription();
 		test.onSubscribe(s);
 

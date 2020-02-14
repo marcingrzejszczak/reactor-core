@@ -29,10 +29,8 @@ import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.Fuseable;
 import reactor.core.Scannable;
-import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.test.publisher.FluxOperatorTest;
-import reactor.test.publisher.TestPublisher;
 import reactor.test.subscriber.AssertSubscriber;
 import reactor.util.concurrent.Queues;
 import reactor.util.context.Context;
@@ -49,7 +47,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
 		return defaultOptions.prefetch(Queues.SMALL_BUFFER_SIZE)
-		                     .fusionModeThreadBarrier(Fuseable.ANY);
+				.fusionModeThreadBarrier(Fuseable.ANY);
 	}
 
 	@Override
@@ -60,7 +58,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 				})),
 
 				scenario(f -> f.publish(p -> null))
-					,
+				,
 
 				scenario(f -> f.publish(p -> Flux.error(exception()))),
 
@@ -80,7 +78,6 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 
 				scenario(f -> f.publish(p -> p.subscribeWith(UnicastProcessor.create()), 256))
 						.fusionMode(Fuseable.ASYNC),
-
 
 
 				scenario(f -> f.publish(p -> p, 1))
@@ -111,15 +108,15 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 
 					return f;
 				})).shouldHitDropErrorHookAfterTerminate(false)
-				   .shouldHitDropNextHookAfterTerminate(false)
+						.shouldHitDropNextHookAfterTerminate(false)
 
 		);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void failPrefetch(){
+	public void failPrefetch() {
 		Flux.never()
-	        .publish(f -> f, -1);
+				.publish(f -> f, -1);
 	}
 
 	@Test
@@ -128,11 +125,11 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		range(1, 5).publish(o -> zip((Object[] a) -> (Integer) a[0] + (Integer) a[1], o, o.skip(1)))
-		           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1 + 2, 2 + 3, 3 + 4, 4 + 5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -141,13 +138,13 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		range(1, 5).hide()
-		           .publish(o -> zip((Object[] a) -> (Integer) a[0] + (Integer) a[1], o, o
-				           .skip(1)))
-		           .subscribe(ts);
+				.publish(o -> zip((Object[] a) -> (Integer) a[0] + (Integer) a[1], o, o
+						.skip(1)))
+				.subscribe(ts);
 
 		ts.assertValues(1 + 2, 2 + 3, 3 + 4, 4 + 5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -159,7 +156,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 				UnicastProcessor.create(Queues.<Integer>get(16).get());
 
 		up.publish(o -> zip((Object[] a) -> (Integer) a[0] + (Integer) a[1], o, o.skip(1)))
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		up.onNext(1);
 		up.onNext(2);
@@ -169,8 +166,8 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		up.onComplete();
 
 		ts.assertValues(1 + 2, 2 + 3, 3 + 4, 4 + 5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -180,7 +177,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		EmitterProcessor<Integer> sp = EmitterProcessor.create();
 
 		sp.publish(o -> Flux.<Integer>never())
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		Assert.assertTrue("Not subscribed?", sp.downstreamCount() != 0);
 
@@ -196,7 +193,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		EmitterProcessor<Integer> sp = EmitterProcessor.create();
 
 		sp.publish(o -> Flux.<Integer>empty())
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		Assert.assertFalse("Still subscribed?", sp.downstreamCount() == 1);
 	}
@@ -206,7 +203,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Tuple2<Integer, Integer>> ts = AssertSubscriber.create();
 
 		range(1, 9).transform(o -> zip(o, o.skip(1)))
-		           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(Tuples.of(1, 2),
 				Tuples.of(2, 3),
@@ -216,7 +213,7 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 				Tuples.of(6, 7),
 				Tuples.of(7, 8),
 				Tuples.of(8, 9))
-		  .assertComplete();
+				.assertComplete();
 	}
 
 	@Test
@@ -225,14 +222,14 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 		ts.requestedFusionMode(Fuseable.ANY);
 
 		Flux.never()
-		    .publish(o -> range(1, 5))
-		    .subscribe(ts);
+				.publish(o -> range(1, 5))
+				.subscribe(ts);
 
 		ts.assertFuseableSource()
-		  .assertFusionMode(Fuseable.SYNC)
-		  .assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertFusionMode(Fuseable.SYNC)
+				.assertValues(1, 2, 3, 4, 5)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -275,112 +272,116 @@ public class FluxPublishMulticastTest extends FluxOperatorTest<String, String> {
 
 	@Test
 	public void syncCancelBeforeComplete() {
-	    assertThat(Flux.just(Flux.just(1).publish(v -> v)).flatMap(v -> v).blockLast()).isEqualTo(1);
+		assertThat(Flux.just(Flux.just(1).publish(v -> v)).flatMap(v -> v).blockLast()).isEqualTo(1);
 	}
 
-    @Test
-    public void normalCancelBeforeComplete() {
-        assertThat(Flux.just(Flux.just(1).hide().publish(v -> v)).flatMap(v -> v).blockLast()).isEqualTo(1);
-    }
+	@Test
+	public void normalCancelBeforeComplete() {
+		assertThat(Flux.just(Flux.just(1).hide().publish(v -> v)).flatMap(v -> v).blockLast()).isEqualTo(1);
+	}
 
 	@Test
-    public void scanMulticaster() {
-        FluxPublishMulticast.FluxPublishMulticaster<Integer> test =
-        		new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMulticaster() {
+		FluxPublishMulticast.FluxPublishMulticaster<Integer> test =
+				new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(123);
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0);
-        test.queue.add(1);
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(123);
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0);
+		test.queue.add(1);
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-        test.error = new IllegalArgumentException("boom");
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        test.onComplete();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+		test.error = new IllegalArgumentException("boom");
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		test.onComplete();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.terminate();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.terminate();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanMulticastInner() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+	public void scanMulticastInner() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxPublishMulticast.FluxPublishMulticaster<Integer> parent =
-        		new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
-        FluxPublishMulticast.PublishMulticastInner<Integer> test =
-        		new FluxPublishMulticast.PublishMulticastInner<>(parent, actual);
+				new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
+		FluxPublishMulticast.PublishMulticastInner<Integer> test =
+				new FluxPublishMulticast.PublishMulticastInner<>(parent, actual);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        test.request(789);
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(789);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		test.request(789);
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(789);
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
-
-	@Test
-    public void scanCancelMulticaster() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-		FluxPublishMulticast.FluxPublishMulticaster<Integer> parent =
-        		new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
-        FluxPublishMulticast.CancelMulticaster<Integer> test =
-        		new FluxPublishMulticast.CancelMulticaster<>(actual, parent);
-        Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
-
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanCancelFuseableMulticaster() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+	public void scanCancelMulticaster() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxPublishMulticast.FluxPublishMulticaster<Integer> parent =
-        		new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
-        FluxPublishMulticast.CancelFuseableMulticaster<Integer> test =
-        		new FluxPublishMulticast.CancelFuseableMulticaster<>(actual, parent);
-        Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
+				new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
+		FluxPublishMulticast.CancelMulticaster<Integer> test =
+				new FluxPublishMulticast.CancelMulticaster<>(actual, parent);
+		Subscription sub = Operators.emptySubscription();
+		test.onSubscribe(sub);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+	}
 
-    @Test
+	@Test
+	public void scanCancelFuseableMulticaster() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxPublishMulticast.FluxPublishMulticaster<Integer> parent =
+				new FluxPublishMulticast.FluxPublishMulticaster<>(123, Queues.<Integer>unbounded(), Context.empty());
+		FluxPublishMulticast.CancelFuseableMulticaster<Integer> test =
+				new FluxPublishMulticast.CancelFuseableMulticaster<>(actual, parent);
+		Subscription sub = Operators.emptySubscription();
+		test.onSubscribe(sub);
+
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+	}
+
+	@Test
 	public void gh870() throws Exception {
-	    CountDownLatch cancelled = new CountDownLatch(1);
-	    StepVerifier.create(Flux.<Integer>create(sink -> {
-		    int i = 0;
-		    sink.onCancel(cancelled::countDown);
-		    try {
-			    while (true) {
-				    sink.next(i++);
-				    Thread.sleep(1);
-				    if (sink.isCancelled()) {
-					    break;
-				    }
-			    }
-		    } catch (InterruptedException e) {
-			    sink.error(e);
-		    }
-	    })
+		CountDownLatch cancelled = new CountDownLatch(1);
+		StepVerifier.create(Flux.<Integer>create(sink -> {
+			int i = 0;
+			sink.onCancel(cancelled::countDown);
+			try {
+				while (true) {
+					sink.next(i++);
+					Thread.sleep(1);
+					if (sink.isCancelled()) {
+						break;
+					}
+				}
+			}
+			catch (InterruptedException e) {
+				sink.error(e);
+			}
+		})
 //                    .doOnCancel(() -> System.out.println("cancel 2"))
-			    .publish(Function.identity())
+				.publish(Function.identity())
 //                    .doOnCancel(() -> System.out.println("cancel 1"))
-			    .take(5))
-	                .expectNextCount(5)
-	                .verifyComplete();
+				.take(5))
+				.expectNextCount(5)
+				.verifyComplete();
 
-	    if (!cancelled.await(5, TimeUnit.SECONDS)) {
-		    fail("Flux.create() did not receive cancellation signal");
-	    }
-    }
+		if (!cancelled.await(5, TimeUnit.SECONDS)) {
+			fail("Flux.create() did not receive cancellation signal");
+		}
+	}
 }

@@ -37,9 +37,9 @@ public class MonoDetachTest {
 		AssertSubscriber<Integer> ts = new AssertSubscriber<>();
 
 		Mono.just(o)
-		    .map(x -> 1)
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.map(x -> 1)
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertValues(1);
 		ts.assertComplete();
@@ -59,8 +59,8 @@ public class MonoDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>();
 
 		Mono.error(new RuntimeException("forced failure"))
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertNoValues();
 		ts.assertErrorMessage("forced failure");
@@ -72,8 +72,8 @@ public class MonoDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>();
 
 		Mono.empty()
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertNoValues();
 		ts.assertNoError();
@@ -89,9 +89,9 @@ public class MonoDetachTest {
 		AssertSubscriber<Integer> ts = new AssertSubscriber<>(0L);
 
 		Mono.just(o)
-		    .map(x -> 1)
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.map(x -> 1)
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertNoValues();
 
@@ -118,8 +118,8 @@ public class MonoDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>(0);
 
 		Mono.just(o)
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.cancel();
 		o = null;
@@ -139,10 +139,10 @@ public class MonoDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>(0);
 
 		Mono.<Object>from(subscriber::set).onTerminateDetach()
-		                                  .subscribe(ts);
+				.subscribe(ts);
 
 		Flux.just(1)
-		    .subscribe(subscriber.get());
+				.subscribe(subscriber.get());
 
 		ts.request(1);
 

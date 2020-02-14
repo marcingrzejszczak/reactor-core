@@ -35,9 +35,9 @@ final class ParallelDoOnEach<T> extends ParallelFlux<T> implements Scannable {
 
 	final ParallelFlux<T> source;
 
-	final BiConsumer<Context, ? super T>         onNext;
+	final BiConsumer<Context, ? super T> onNext;
 	final BiConsumer<Context, ? super Throwable> onError;
-	final Consumer<Context>                      onComplete;
+	final Consumer<Context> onComplete;
 
 	ParallelDoOnEach(
 			ParallelFlux<T> source,

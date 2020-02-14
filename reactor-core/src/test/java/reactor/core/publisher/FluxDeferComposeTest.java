@@ -18,63 +18,62 @@ package reactor.core.publisher;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
-
 import reactor.test.subscriber.AssertSubscriber;
 
 public class FluxDeferComposeTest {
-    @Test
-    public void perSubscriberState() {
-        
-        Flux<Integer> source = Flux.just(10).transformDeferred(f -> {
-            AtomicInteger value = new AtomicInteger();
-            return f.map(v -> v + value.incrementAndGet());
-        });
-        
-        
-        for (int i = 0; i < 10; i++) {
-            AssertSubscriber<Integer> ts = AssertSubscriber.create();
-            
-            source.subscribe(ts);
-            
-            ts.assertValues(11)
-            .assertComplete()
-            .assertNoError();
-        }
-    }
-    
-    @Test
-    public void composerThrows() {
-        Flux<Integer> source = Flux.just(10).transformDeferred(f -> {
-            throw new RuntimeException("Forced failure");
-        });
-        
-        for (int i = 0; i < 10; i++) {
-            AssertSubscriber<Integer> ts = AssertSubscriber.create();
-            
-            source.subscribe(ts);
-            
-            ts.assertNoValues()
-            .assertNotComplete()
-            .assertError(RuntimeException.class);
-        }
-        
-    }
-    
-    @Test
-    public void composerReturnsNull() {
-        Flux<Integer> source = Flux.just(10).transformDeferred(f -> {
-            return null;
-        });
-        
-        for (int i = 0; i < 10; i++) {
-            AssertSubscriber<Integer> ts = AssertSubscriber.create();
-            
-            source.subscribe(ts);
-            
-            ts.assertNoValues()
-            .assertNotComplete()
-            .assertError(NullPointerException.class);
-        }
-        
-    }
+	@Test
+	public void perSubscriberState() {
+
+		Flux<Integer> source = Flux.just(10).transformDeferred(f -> {
+			AtomicInteger value = new AtomicInteger();
+			return f.map(v -> v + value.incrementAndGet());
+		});
+
+
+		for (int i = 0; i < 10; i++) {
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
+
+			source.subscribe(ts);
+
+			ts.assertValues(11)
+					.assertComplete()
+					.assertNoError();
+		}
+	}
+
+	@Test
+	public void composerThrows() {
+		Flux<Integer> source = Flux.just(10).transformDeferred(f -> {
+			throw new RuntimeException("Forced failure");
+		});
+
+		for (int i = 0; i < 10; i++) {
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
+
+			source.subscribe(ts);
+
+			ts.assertNoValues()
+					.assertNotComplete()
+					.assertError(RuntimeException.class);
+		}
+
+	}
+
+	@Test
+	public void composerReturnsNull() {
+		Flux<Integer> source = Flux.just(10).transformDeferred(f -> {
+			return null;
+		});
+
+		for (int i = 0; i < 10; i++) {
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
+
+			source.subscribe(ts);
+
+			ts.assertNoValues()
+					.assertNotComplete()
+					.assertError(NullPointerException.class);
+		}
+
+	}
 }

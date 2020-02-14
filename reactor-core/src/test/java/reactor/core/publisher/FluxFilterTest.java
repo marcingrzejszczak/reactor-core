@@ -61,13 +61,13 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 				scenario(f -> f.filter(d -> true)),
 
 				scenario(f -> f.filter(d -> false))
-					.receiverEmpty()
+						.receiverEmpty()
 		);
 	}
 
 	@Override
 	protected List<Scenario<String, String>> scenarios_errorFromUpstreamFailure() {
-		return  Arrays.asList(
+		return Arrays.asList(
 				scenario(f -> f.filter(d -> true))
 		);
 	}
@@ -80,7 +80,7 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 	@Test(expected = NullPointerException.class)
 	public void predicateNull() {
 		Flux.never()
-		    .filter(null);
+				.filter(null);
 	}
 
 	@Test
@@ -88,12 +88,12 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .filter(v -> v % 2 == 0)
-		    .subscribe(ts);
+				.filter(v -> v % 2 == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2, 4, 6, 8, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -101,18 +101,18 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(2);
 
 		Flux.range(1, 10)
-		    .filter(v -> v % 2 == 0)
-		    .subscribe(ts);
+				.filter(v -> v % 2 == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2, 4)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(2, 4, 6, 8, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -120,18 +120,18 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(2);
 
 		Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		    .filter(v -> v % 2 == 0)
-		    .subscribe(ts);
+				.filter(v -> v % 2 == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2, 4)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(2, 4, 6, 8, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -139,18 +139,18 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(2);
 
 		Flux.fromIterable(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-		    .filter(v -> v % 2 == 0)
-		    .subscribe(ts);
+				.filter(v -> v % 2 == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2, 4)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(2, 4, 6, 8, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -158,15 +158,15 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(2);
 
 		Flux.range(1, 10)
-		    .filter(v -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.filter(v -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -174,12 +174,12 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .filter(v -> (v & 1) == 0)
-		    .subscribe(ts);
+				.filter(v -> (v & 1) == 0)
+				.subscribe(ts);
 
 		ts.assertValues(2, 4, 6, 8, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -190,7 +190,7 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 				UnicastProcessor.create(new ConcurrentLinkedQueue<>());
 
 		up.filter(v -> (v & 1) == 0)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		for (int i = 1; i < 11; i++) {
 			up.onNext(i);
@@ -198,8 +198,8 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		up.onComplete();
 
 		ts.assertValues(2, 4, 6, 8, 10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -210,22 +210,22 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 				UnicastProcessor.create(new ConcurrentLinkedQueue<>());
 
 		Flux.just(1)
-		    .hide()
-		    .flatMap(w -> up.filter(v -> (v & 1) == 0))
-		    .subscribe(ts);
+				.hide()
+				.flatMap(w -> up.filter(v -> (v & 1) == 0))
+				.subscribe(ts);
 
 		up.onNext(1);
 		up.onNext(2);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		up.onComplete();
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -236,54 +236,55 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 				UnicastProcessor.create(new ConcurrentLinkedQueue<>());
 
 		Flux.just(1)
-		    .hide()
-		    .flatMap(w -> up.filter(v -> (v & 1) == 0), false, 1, 1)
-		    .subscribe(ts);
+				.hide()
+				.flatMap(w -> up.filter(v -> (v & 1) == 0), false, 1, 1)
+				.subscribe(ts);
 
 		up.onNext(1);
 		up.onNext(2);
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		up.onComplete();
 
 		ts.assertValues(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
-    @Test
-    public void scanSubscriber() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FilterSubscriber<String> test = new FilterSubscriber<>(actual, t -> true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FilterSubscriber<String> test = new FilterSubscriber<>(actual, t -> true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    @Test
-    public void scanConditionalSubscriber() {
-	    @SuppressWarnings("unchecked")
-	    Fuseable.ConditionalSubscriber<String> actual = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
-        FilterConditionalSubscriber<String> test = new FilterConditionalSubscriber<>(actual, t -> true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanConditionalSubscriber() {
+		@SuppressWarnings("unchecked")
+		Fuseable.ConditionalSubscriber<String> actual = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
+		FilterConditionalSubscriber<String> test = new FilterConditionalSubscriber<>(actual, t -> true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
 	@Test
 	public void failureStrategyResume() {
@@ -291,15 +292,15 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		try {
 			AtomicLong r = new AtomicLong();
 			StepVerifier.create(Flux.range(0, 2)
-			                        .doOnRequest(r::addAndGet)
-			                        .hide()
-			                        .filter(i -> 4 / i == 4), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(1)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.doOnRequest(r::addAndGet)
+					.hide()
+					.filter(i -> 4 / i == 4), 1)
+					.expectNoFusionSupport()
+					.expectNext(1)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 
 			assertThat(r.get()).as("amount requested").isEqualTo(2L);
 		}
@@ -313,14 +314,14 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .distinctUntilChanged()
-			                        .filter(i -> 4 / i == 4))
-			            .expectNoFusionSupport()
-			            .expectNext(1)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.distinctUntilChanged()
+					.filter(i -> 4 / i == 4))
+					.expectNoFusionSupport()
+					.expectNext(1)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -333,16 +334,16 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		try {
 			AtomicLong r = new AtomicLong();
 			StepVerifier.create(Flux.range(0, 2)
-			                        .doOnRequest(r::addAndGet)
-			                        .hide()
-			                        .filter(i -> 4 / i == 4)
-			                        .filter(i -> true), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(1)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.doOnRequest(r::addAndGet)
+					.hide()
+					.filter(i -> 4 / i == 4)
+					.filter(i -> true), 1)
+					.expectNoFusionSupport()
+					.expectNext(1)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 
 			assertThat(r.get()).as("amount requested").isEqualTo(2L);
 		}
@@ -356,15 +357,15 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .distinctUntilChanged()
-			                        .filter(i -> 4 / i == 4)
-			                        .filter(i -> true))
-			            .expectNoFusionSupport()
-			            .expectNext(1)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.distinctUntilChanged()
+					.filter(i -> 4 / i == 4)
+					.filter(i -> true))
+					.expectNoFusionSupport()
+					.expectNext(1)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -374,24 +375,26 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void discardOnNextPredicateFail() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .hide() //hide both avoid the fuseable AND tryOnNext usage
-		                        .filter(i -> { throw new IllegalStateException("boom"); })
+				.hide() //hide both avoid the fuseable AND tryOnNext usage
+				.filter(i -> {
+					throw new IllegalStateException("boom");
+				})
 		)
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1);
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1);
 	}
 
 	@Test
 	public void discardOnNextPredicateMiss() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .hide() //hide both avoid the fuseable AND tryOnNext usage
-		                        .filter(i -> i % 2 == 0)
+				.hide() //hide both avoid the fuseable AND tryOnNext usage
+				.filter(i -> i % 2 == 0)
 		)
-		            .expectNextCount(5)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 3, 5, 7, 9);
+				.expectNextCount(5)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 3, 5, 7, 9);
 	}
 
 	@Test
@@ -400,7 +403,9 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 		CoreSubscriber<Integer> actual = new AssertSubscriber<>(
 				Context.of(Hooks.KEY_ON_DISCARD, (Consumer<?>) discarded::add));
 		FilterSubscriber<Integer> subscriber =
-				new FilterSubscriber<>(actual, i -> { throw new IllegalStateException("boom"); });
+				new FilterSubscriber<>(actual, i -> {
+					throw new IllegalStateException("boom");
+				});
 		subscriber.onSubscribe(Operators.emptySubscription());
 
 		subscriber.tryOnNext(1);
@@ -426,33 +431,35 @@ public class FluxFilterTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void discardConditionalOnNextPredicateFail() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .hide()
-		                        .filter(i -> { throw new IllegalStateException("boom"); })
-		                        .filter(i -> true)
+				.hide()
+				.filter(i -> {
+					throw new IllegalStateException("boom");
+				})
+				.filter(i -> true)
 		)
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1);
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1);
 	}
 
 	@Test
 	public void discardConditionalOnNextPredicateMiss() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .hide()
-		                        .filter(i -> i % 2 == 0)
-		                        .filter(i -> true)
+				.hide()
+				.filter(i -> i % 2 == 0)
+				.filter(i -> true)
 		)
-		            .expectNextCount(5)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 3, 5, 7, 9);
+				.expectNextCount(5)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 3, 5, 7, 9);
 	}
 
 	@Test
 	public void discardConditionalTryOnNextPredicateFail() {
 		List<Object> discarded = new ArrayList<>();
 		Fuseable.ConditionalSubscriber<Integer> actual = new FluxPeekFuseableTest.ConditionalAssertSubscriber<>(
-						Context.of(Hooks.KEY_ON_DISCARD, (Consumer<?>) discarded::add));
+				Context.of(Hooks.KEY_ON_DISCARD, (Consumer<?>) discarded::add));
 
 		FilterConditionalSubscriber<Integer> subscriber =
 				new FilterConditionalSubscriber<>(actual, i -> {

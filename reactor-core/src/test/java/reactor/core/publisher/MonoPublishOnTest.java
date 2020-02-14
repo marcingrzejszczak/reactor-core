@@ -71,22 +71,22 @@ public class MonoPublishOnTest {
 
 			AssertSubscriber<Integer> assertSubscriber = new AssertSubscriber<>();
 			Mono.just(data)
-			    .publishOn(fromExecutorService(executor))
-			    .doOnNext(s -> {
-				    try {
-					    latch.await();
-				    }
-				    catch (InterruptedException e) {
-				    }
-			    })
-			    .publishOn(fromExecutor(executor))
-			    .subscribe(assertSubscriber);
+					.publishOn(fromExecutorService(executor))
+					.doOnNext(s -> {
+						try {
+							latch.await();
+						}
+						catch (InterruptedException e) {
+						}
+					})
+					.publishOn(fromExecutor(executor))
+					.subscribe(assertSubscriber);
 
 			executor.shutdownNow();
 
 			assertSubscriber.assertNoValues()
-			                .assertNoError()
-			                .assertNotComplete();
+					.assertNoError()
+					.assertNotComplete();
 
 			hookLatch.await();
 
@@ -126,30 +126,30 @@ public class MonoPublishOnTest {
 
 			AssertSubscriber<Integer> assertSubscriber = new AssertSubscriber<>();
 			Mono.just(data)
-			    .publishOn(fromExecutorService(executor))
-			    .doOnNext(s -> {
-				    try {
-					    latch.await();
-				    }
-				    catch (InterruptedException e) {
-					    throw Exceptions.propagate(exception);
-				    }
-			    })
-			    .publishOn(fromExecutor(executor))
-			    .subscribe(assertSubscriber);
+					.publishOn(fromExecutorService(executor))
+					.doOnNext(s -> {
+						try {
+							latch.await();
+						}
+						catch (InterruptedException e) {
+							throw Exceptions.propagate(exception);
+						}
+					})
+					.publishOn(fromExecutor(executor))
+					.subscribe(assertSubscriber);
 
 			executor.shutdownNow();
 
 			assertSubscriber.assertNoValues()
-			                .assertNoError()
-			                .assertNotComplete();
+					.assertNoError()
+					.assertNotComplete();
 
 			hookLatch.await();
 
 			assertThat(throwableInOnOperatorError.get(),
 					instanceOf(RejectedExecutionException.class));
 			Assert.assertSame(throwableInOnOperatorError.get()
-			                                            .getSuppressed()[0], exception);
+					.getSuppressed()[0], exception);
 		}
 		finally {
 			Hooks.resetOnOperatorError();
@@ -182,22 +182,22 @@ public class MonoPublishOnTest {
 
 			AssertSubscriber<Integer> assertSubscriber = new AssertSubscriber<>();
 			Mono.just(data)
-			    .publishOn(fromExecutorService(executor))
-			    .doOnNext(s -> {
-				    try {
-					    latch.await();
-				    }
-				    catch (InterruptedException e) {
-				    }
-			    })
-			    .publishOn(fromExecutorService(executor))
-			    .subscribe(assertSubscriber);
+					.publishOn(fromExecutorService(executor))
+					.doOnNext(s -> {
+						try {
+							latch.await();
+						}
+						catch (InterruptedException e) {
+						}
+					})
+					.publishOn(fromExecutorService(executor))
+					.subscribe(assertSubscriber);
 
 			executor.shutdownNow();
 
 			assertSubscriber.assertNoValues()
-			                .assertNoError()
-			                .assertNotComplete();
+					.assertNoError()
+					.assertNotComplete();
 
 			hookLatch.await();
 
@@ -237,30 +237,30 @@ public class MonoPublishOnTest {
 
 			AssertSubscriber<Integer> assertSubscriber = new AssertSubscriber<>();
 			Mono.just(data)
-			    .publishOn(fromExecutorService(executor))
-			    .doOnNext(s -> {
-				    try {
-					    latch.await();
-				    }
-				    catch (InterruptedException e) {
-					    throw Exceptions.propagate(exception);
-				    }
-			    })
-			    .publishOn(fromExecutorService(executor))
-			    .subscribe(assertSubscriber);
+					.publishOn(fromExecutorService(executor))
+					.doOnNext(s -> {
+						try {
+							latch.await();
+						}
+						catch (InterruptedException e) {
+							throw Exceptions.propagate(exception);
+						}
+					})
+					.publishOn(fromExecutorService(executor))
+					.subscribe(assertSubscriber);
 
 			executor.shutdownNow();
 
 			assertSubscriber.assertNoValues()
-			                .assertNoError()
-			                .assertNotComplete();
+					.assertNoError()
+					.assertNotComplete();
 
 			hookLatch.await();
 
 			assertThat(throwableInOnOperatorError.get(),
 					instanceOf(RejectedExecutionException.class));
 			Assert.assertSame(throwableInOnOperatorError.get()
-			                                            .getSuppressed()[0], exception);
+					.getSuppressed()[0], exception);
 		}
 		finally {
 			Hooks.resetOnOperatorError();
@@ -291,8 +291,8 @@ public class MonoPublishOnTest {
 
 			try {
 				Mono.just(1)
-				    .publishOn(fromExecutor(executor))
-				    .block();
+						.publishOn(fromExecutor(executor))
+						.block();
 				Assert.fail("Bubbling RejectedExecutionException expected");
 			}
 			catch (Exception e) {
@@ -331,8 +331,8 @@ public class MonoPublishOnTest {
 
 			try {
 				Mono.just(1)
-				    .publishOn(fromExecutor(executor))
-				    .block();
+						.publishOn(fromExecutor(executor))
+						.block();
 				Assert.fail("Bubbling RejectedExecutionException expected");
 			}
 			catch (Exception e) {
@@ -354,7 +354,8 @@ public class MonoPublishOnTest {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoPublishOn.PublishOnSubscriber<String> test = new MonoPublishOn.PublishOnSubscriber<>(
 				actual, Schedulers.single());
 		Subscription parent = Operators.emptySubscription();
@@ -371,7 +372,8 @@ public class MonoPublishOnTest {
 
 	@Test
 	public void scanSubscriberError() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoPublishOn.PublishOnSubscriber<String> test = new MonoPublishOn.PublishOnSubscriber<>(
 				actual, Schedulers.single());
 
@@ -383,15 +385,15 @@ public class MonoPublishOnTest {
 	@Test
 	public void error() {
 		StepVerifier.create(Mono.error(new RuntimeException("forced failure"))
-		                        .publishOn(Schedulers.single()))
-		            .verifyErrorMessage("forced failure");
+				.publishOn(Schedulers.single()))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void errorHide() {
 		StepVerifier.create(Mono.error(new RuntimeException("forced failure"))
-		                        .hide()
-		                        .publishOn(Schedulers.single()))
-		            .verifyErrorMessage("forced failure");
+				.hide()
+				.publishOn(Schedulers.single()))
+				.verifyErrorMessage("forced failure");
 	}
 }

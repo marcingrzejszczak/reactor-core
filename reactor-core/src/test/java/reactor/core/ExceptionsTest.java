@@ -16,28 +16,41 @@
 package reactor.core;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.function.Predicate;
 
 import org.junit.Before;
 import org.junit.Test;
-
 import reactor.core.publisher.Mono;
 import reactor.test.util.RaceTestUtils;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static reactor.core.Exceptions.*;
+import static reactor.core.Exceptions.BubblingException;
+import static reactor.core.Exceptions.CancelException;
+import static reactor.core.Exceptions.CompositeException;
+import static reactor.core.Exceptions.ErrorCallbackNotImplemented;
+import static reactor.core.Exceptions.NOT_TIME_CAPABLE_REJECTED_EXECUTION;
+import static reactor.core.Exceptions.REJECTED_EXECUTION;
+import static reactor.core.Exceptions.ReactiveException;
+import static reactor.core.Exceptions.TERMINATED;
+import static reactor.core.Exceptions.duplicateOnSubscribeException;
+import static reactor.core.Exceptions.errorCallbackNotImplemented;
 
 /**
  * @author Stephane Maldini
  */
 public class ExceptionsTest {
+
+	static final AtomicReferenceFieldUpdater<ExceptionsTest, Throwable> ADD_THROWABLE =
+			AtomicReferenceFieldUpdater.newUpdater(ExceptionsTest.class, Throwable.class, "addThrowable");
+	volatile Throwable addThrowable;
 
 	@Test
 	public void bubble() throws Exception {
@@ -140,6 +153,8 @@ public class ExceptionsTest {
 		assertThat(Exceptions.isBubbling(cancel)).as("cancel are bubbling").isTrue();
 	}
 
+	//TODO test terminate
+
 	@Test
 	public void nullOrNegativeRequestReferencesSpec() {
 		assertThat(Exceptions.nullOrNegativeRequestException(-3))
@@ -151,8 +166,6 @@ public class ExceptionsTest {
 		Throwable t = new RuntimeException("expected");
 		assertThat(Exceptions.propagate(t)).isSameAs(t);
 	}
-
-	//TODO test terminate
 
 	@Test
 	public void throwIfFatalThrowsBubbling() {
@@ -175,7 +188,7 @@ public class ExceptionsTest {
 
 	@Test
 	public void throwIfJvmFatal() {
-		VirtualMachineError fatal1 = new VirtualMachineError() {};
+		VirtualMachineError fatal1 = new VirtualMachineError() { };
 		ThreadDeath fatal2 = new ThreadDeath();
 		LinkageError fatal3 = new LinkageError();
 
@@ -202,7 +215,7 @@ public class ExceptionsTest {
 				.isInstanceOf(RuntimeException.class)
 				.isExactlyInstanceOf(CompositeException.class)
 				.hasMessage("Multiple exceptions")
-	            .hasNoSuppressedExceptions();
+				.hasNoSuppressedExceptions();
 	}
 
 	@Test
@@ -213,20 +226,20 @@ public class ExceptionsTest {
 				.isInstanceOf(RuntimeException.class)
 				.isExactlyInstanceOf(CompositeException.class)
 				.hasMessage("Multiple exceptions")
-	            .hasSuppressedException(e1);
+				.hasSuppressedException(e1);
 	}
 
 	@Test
 	public void multipleWithTwoVararg() {
 		IOException e1 = new IOException("boom");
-		IllegalArgumentException  e2 = new IllegalArgumentException("boom");
+		IllegalArgumentException e2 = new IllegalArgumentException("boom");
 
 		assertThat(Exceptions.multiple(e1, e2))
 				.isInstanceOf(RuntimeException.class)
 				.isExactlyInstanceOf(CompositeException.class)
 				.hasMessage("Multiple exceptions")
-	            .hasSuppressedException(e1)
-	            .hasSuppressedException(e2);
+				.hasSuppressedException(e1)
+				.hasSuppressedException(e2);
 	}
 
 	@Test
@@ -236,7 +249,7 @@ public class ExceptionsTest {
 				.isInstanceOf(RuntimeException.class)
 				.isExactlyInstanceOf(CompositeException.class)
 				.hasMessage("Multiple exceptions")
-	            .hasNoSuppressedExceptions();
+				.hasNoSuppressedExceptions();
 	}
 
 	@Test
@@ -245,20 +258,20 @@ public class ExceptionsTest {
 				.isInstanceOf(RuntimeException.class)
 				.isExactlyInstanceOf(CompositeException.class)
 				.hasMessage("Multiple exceptions")
-	            .hasNoSuppressedExceptions();
+				.hasNoSuppressedExceptions();
 	}
 
 	@Test
 	public void multipleWithIterable() {
 		IOException e1 = new IOException("boom");
-		IllegalArgumentException  e2 = new IllegalArgumentException("boom");
+		IllegalArgumentException e2 = new IllegalArgumentException("boom");
 
 		assertThat(Exceptions.multiple(Arrays.asList(e1, e2)))
 				.isInstanceOf(RuntimeException.class)
 				.isExactlyInstanceOf(CompositeException.class)
 				.hasMessage("Multiple exceptions")
-	            .hasSuppressedException(e1)
-	            .hasSuppressedException(e2);
+				.hasSuppressedException(e1)
+				.hasSuppressedException(e2);
 	}
 
 	@Test
@@ -284,10 +297,6 @@ public class ExceptionsTest {
 		RuntimeException e1 = Exceptions.failWithCancel();
 		assertThat(Exceptions.unwrapMultiple(e1)).containsExactly(e1);
 	}
-
-	volatile Throwable addThrowable;
-	static final AtomicReferenceFieldUpdater<ExceptionsTest, Throwable> ADD_THROWABLE =
-			AtomicReferenceFieldUpdater.newUpdater(ExceptionsTest.class, Throwable.class, "addThrowable");
 
 	@Before
 	public void resetAddThrowable() {
@@ -487,21 +496,21 @@ public class ExceptionsTest {
 		Mono<String> errorMono1 = Mono.error(new IllegalStateException("expected1"));
 		Mono<String> errorMono2 = Mono.error(new IllegalStateException("expected2"));
 		Mono<Throwable> mono = Mono.zipDelayError(errorMono1, errorMono2)
-		                           .checkpoint("checkpoint")
-		                           .<Throwable>map(tuple -> new IllegalStateException("should have failed: " + tuple))
-		                           .onErrorResume(Mono::just);
+				.checkpoint("checkpoint")
+				.<Throwable>map(tuple -> new IllegalStateException("should have failed: " + tuple))
+				.onErrorResume(Mono::just);
 		Throwable compositeException = mono.block();
 
 		List<Throwable> exceptions = Exceptions.unwrapMultiple(compositeException);
 		List<Throwable> filteredExceptions = Exceptions.unwrapMultipleExcludingTracebacks(compositeException);
 
 		assertThat(exceptions).as("unfiltered composite has traceback")
-		                      .hasSize(3);
+				.hasSize(3);
 
 		assertThat(exceptions).filteredOn(e -> !Exceptions.isTraceback(e))
-		                      .as("filtered out tracebacks")
-		                      .containsExactlyElementsOf(filteredExceptions)
-		                      .hasSize(2)
-		                      .hasOnlyElementsOfType(IllegalStateException.class);
+				.as("filtered out tracebacks")
+				.containsExactlyElementsOf(filteredExceptions)
+				.hasSize(2)
+				.hasOnlyElementsOfType(IllegalStateException.class);
 	}
 }

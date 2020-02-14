@@ -99,10 +99,38 @@ public abstract class Schedulers {
 	 */
 	public static final int DEFAULT_BOUNDED_ELASTIC_QUEUESIZE =
 			Optional.ofNullable(System.getProperty("reactor.schedulers.defaultBoundedElasticQueueSize"))
-			        .map(Integer::parseInt)
-			        .orElse(100000);
-
+					.map(Integer::parseInt)
+					.orElse(100000);
+	// Internals
+	static final String ELASTIC = "elastic"; // IO stuff
+	static final String BOUNDED_ELASTIC = "boundedElastic"; // Blocking stuff with scale to zero
+	static final String PARALLEL = "parallel"; //scale up common tasks
+	static final String SINGLE = "single"; //non blocking tasks
+	static final String IMMEDIATE = "immediate";
+	static final String FROM_EXECUTOR = "fromExecutor";
+	static final String FROM_EXECUTOR_SERVICE = "fromExecutorService";
+	static final Factory DEFAULT = new Factory() { };
+	static final Map<String, BiFunction<Scheduler, ScheduledExecutorService, ScheduledExecutorService>>
+			DECORATORS = new LinkedHashMap<>();
+	static final Logger log = Loggers.getLogger(Schedulers.class);
+	private static final LinkedHashMap<String, Function<Runnable, Runnable>> onScheduleHooks = new LinkedHashMap<>(1);
 	static volatile BiConsumer<Thread, ? super Throwable> onHandleErrorHook;
+	// Cached schedulers in atomic references:
+	static AtomicReference<CachedScheduler> CACHED_ELASTIC = new AtomicReference<>();
+	static AtomicReference<CachedScheduler> CACHED_BOUNDED_ELASTIC = new AtomicReference<>();
+	static AtomicReference<CachedScheduler> CACHED_PARALLEL = new AtomicReference<>();
+	static AtomicReference<CachedScheduler> CACHED_SINGLE = new AtomicReference<>();
+	static volatile Factory factory = DEFAULT;
+	static final Supplier<Scheduler> ELASTIC_SUPPLIER =
+			() -> newElastic(ELASTIC, ElasticScheduler.DEFAULT_TTL_SECONDS, true);
+	static final Supplier<Scheduler> BOUNDED_ELASTIC_SUPPLIER =
+			() -> newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE,
+					BOUNDED_ELASTIC, BoundedElasticScheduler.DEFAULT_TTL_SECONDS, true);
+	static final Supplier<Scheduler> PARALLEL_SUPPLIER =
+			() -> newParallel(PARALLEL, DEFAULT_POOL_SIZE, true);
+	static final Supplier<Scheduler> SINGLE_SUPPLIER = () -> newSingle(SINGLE, true);
+	@Nullable
+	private static Function<Runnable, Runnable> onScheduleHook;
 
 	/**
 	 * Create a {@link Scheduler} which uses a backing {@link Executor} to schedule
@@ -135,7 +163,7 @@ public abstract class Schedulers {
 	 * @return a new {@link Scheduler}
 	 */
 	public static Scheduler fromExecutor(Executor executor, boolean trampoline) {
-		if(!trampoline && executor instanceof ExecutorService){
+		if (!trampoline && executor instanceof ExecutorService) {
 			return fromExecutorService((ExecutorService) executor);
 		}
 		return new ExecutorScheduler(executor, trampoline);
@@ -320,7 +348,6 @@ public abstract class Schedulers {
 	public static Scheduler newElastic(int ttlSeconds, ThreadFactory threadFactory) {
 		return factory.newElastic(ttlSeconds, threadFactory);
 	}
-
 
 	/**
 	 * {@link Scheduler} that dynamically creates a bounded number of ExecutorService-based
@@ -614,7 +641,7 @@ public abstract class Schedulers {
 	/**
 	 * Re-apply default factory to {@link Schedulers}
 	 */
-	public static void resetFactory(){
+	public static void resetFactory() {
 		setFactory(DEFAULT);
 	}
 
@@ -868,115 +895,6 @@ public abstract class Schedulers {
 	}
 
 	/**
-	 * Public factory hook to override Schedulers behavior globally
-	 */
-	public interface Factory {
-
-		/**
-		 * {@link Scheduler} that dynamically creates Workers resources and caches
-		 * eventually, reusing them once the Workers have been shut down.
-		 * <p>
-		 * The maximum number of created workers is unbounded.
-		 *
-		 * @param ttlSeconds Time-to-live for an idle {@link reactor.core.scheduler.Scheduler.Worker}
-		 * @param threadFactory a {@link ThreadFactory} to use
-		 *
-		 * @return a new {@link Scheduler} that dynamically creates Workers resources and
-		 * caches eventually, reusing them once the Workers have been shut down
-		 */
-		default Scheduler newElastic(int ttlSeconds, ThreadFactory threadFactory) {
-			return new ElasticScheduler(threadFactory, ttlSeconds);
-		}
-
-		/**
-		 * {@link Scheduler} that dynamically creates a bounded number of ExecutorService-based
-		 * Workers, reusing them once the Workers have been shut down. The underlying (user or daemon)
-		 * threads can be evicted if idle for more than {@code ttlSeconds}.
-		 * <p>
-		 * The maximum number of created thread pools is bounded by the provided {@code cap}.
-		 *
-		 * @param threadCap maximum number of underlying threads to create
-		 * @param queuedTaskCap maximum number of tasks to enqueue when no more threads can be created. Can be {@link Integer#MAX_VALUE} for unbounded enqueueing.
-		 * @param threadFactory a {@link ThreadFactory} to use each thread initialization
-		 * @param ttlSeconds Time-to-live for an idle {@link reactor.core.scheduler.Scheduler.Worker}
-		 *
-		 * @return a new {@link Scheduler} that dynamically create workers with an upper bound to
-		 * the number of backing threads, reuses threads and evict idle ones
-		 */
-		default Scheduler newBoundedElastic(int threadCap, int queuedTaskCap, ThreadFactory threadFactory, int ttlSeconds) {
-			return new BoundedElasticScheduler(threadCap, queuedTaskCap, threadFactory, ttlSeconds);
-		}
-
-		/**
-		 * {@link Scheduler} that hosts a fixed pool of workers and is suited for parallel
-		 * work.
-		 *
-		 * @param parallelism Number of pooled workers.
-		 * @param threadFactory a {@link ThreadFactory} to use for the fixed initialized
-		 * number of {@link Thread}
-		 *
-		 * @return a new {@link Scheduler} that hosts a fixed pool of workers and is
-		 * suited for parallel work
-		 */
-		default Scheduler newParallel(int parallelism, ThreadFactory threadFactory) {
-			return new ParallelScheduler(parallelism, threadFactory);
-		}
-
-		/**
-		 * {@link Scheduler} that hosts a single worker and is suited for non-blocking
-		 * work.
-		 *
-		 * @param threadFactory a {@link ThreadFactory} to use for the unique resource of
-		 * the {@link Scheduler}
-		 *
-		 * @return a new {@link Scheduler} that hosts a single worker
-		 */
-		default Scheduler newSingle(ThreadFactory threadFactory) {
-			return new SingleScheduler(threadFactory);
-		}
-	}
-
-	// Internals
-	static final String ELASTIC               = "elastic"; // IO stuff
-	static final String BOUNDED_ELASTIC       = "boundedElastic"; // Blocking stuff with scale to zero
-	static final String PARALLEL              = "parallel"; //scale up common tasks
-	static final String SINGLE                = "single"; //non blocking tasks
-	static final String IMMEDIATE             = "immediate";
-	static final String FROM_EXECUTOR         = "fromExecutor";
-	static final String FROM_EXECUTOR_SERVICE = "fromExecutorService";
-
-
-	// Cached schedulers in atomic references:
-	static AtomicReference<CachedScheduler> CACHED_ELASTIC         = new AtomicReference<>();
-	static AtomicReference<CachedScheduler> CACHED_BOUNDED_ELASTIC = new AtomicReference<>();
-	static AtomicReference<CachedScheduler> CACHED_PARALLEL        = new AtomicReference<>();
-	static AtomicReference<CachedScheduler> CACHED_SINGLE          = new AtomicReference<>();
-
-	static final Supplier<Scheduler> ELASTIC_SUPPLIER =
-			() -> newElastic(ELASTIC, ElasticScheduler.DEFAULT_TTL_SECONDS, true);
-
-	static final Supplier<Scheduler> BOUNDED_ELASTIC_SUPPLIER =
-			() -> newBoundedElastic(DEFAULT_BOUNDED_ELASTIC_SIZE, DEFAULT_BOUNDED_ELASTIC_QUEUESIZE,
-					BOUNDED_ELASTIC, BoundedElasticScheduler.DEFAULT_TTL_SECONDS, true);
-
-	static final Supplier<Scheduler> PARALLEL_SUPPLIER =
-			() -> newParallel(PARALLEL, DEFAULT_POOL_SIZE, true);
-
-	static final Supplier<Scheduler> SINGLE_SUPPLIER = () -> newSingle(SINGLE, true);
-
-	static final Factory DEFAULT = new Factory() { };
-
-	static final Map<String, BiFunction<Scheduler, ScheduledExecutorService, ScheduledExecutorService>>
-			DECORATORS = new LinkedHashMap<>();
-
-	static volatile Factory factory = DEFAULT;
-
-	private static final LinkedHashMap<String, Function<Runnable, Runnable>> onScheduleHooks = new LinkedHashMap<>(1);
-
-	@Nullable
-	private static Function<Runnable, Runnable> onScheduleHook;
-
-	/**
 	 * Get a {@link CachedScheduler} out of the {@code reference} or create one using the
 	 * {@link Supplier} if the reference is empty, effectively creating a single instance
 	 * to be reused as a default scheduler for the given {@code key} category.
@@ -1003,8 +921,6 @@ public abstract class Schedulers {
 		return reference.get();
 	}
 
-	static final Logger log = Loggers.getLogger(Schedulers.class);
-
 	static final void defaultUncaughtException(Thread t, Throwable e) {
 		Schedulers.log.error("Scheduler worker in group " + t.getThreadGroup().getName()
 				+ " failed with an uncaught exception", e);
@@ -1022,85 +938,6 @@ public abstract class Schedulers {
 		}
 		if (onHandleErrorHook != null) {
 			onHandleErrorHook.accept(thread, t);
-		}
-	}
-
-	static class CachedScheduler implements Scheduler, Supplier<Scheduler>, Scannable {
-
-		final Scheduler cached;
-		final String    stringRepresentation;
-
-		CachedScheduler(String key, Scheduler cached) {
-			this.cached = cached;
-			this.stringRepresentation = "Schedulers." + key + "()";
-		}
-
-		@Override
-		public Disposable schedule(Runnable task) {
-			return cached.schedule(task);
-		}
-
-		@Override
-		public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
-			return cached.schedule(task, delay, unit);
-		}
-
-		@Override
-		public Disposable schedulePeriodically(Runnable task,
-				long initialDelay,
-				long period,
-				TimeUnit unit) {
-			return cached.schedulePeriodically(task, initialDelay, period, unit);
-		}
-
-		@Override
-		public Worker createWorker() {
-			return cached.createWorker();
-		}
-
-		@Override
-		public long now(TimeUnit unit) {
-			return cached.now(unit);
-		}
-
-		@Override
-		public void start() {
-			cached.start();
-		}
-
-		@Override
-		public void dispose() {
-		}
-
-		@Override
-		public boolean isDisposed() {
-			return cached.isDisposed();
-		}
-
-		@Override
-		public String toString() {
-			return stringRepresentation;
-		}
-
-		@Override
-		public Object scanUnsafe(Attr key) {
-			if (Attr.NAME == key) return stringRepresentation;
-			return Scannable.from(cached).scanUnsafe(key);
-		}
-
-		/**
-		 * Get the {@link Scheduler} that is cached and wrapped inside this
-		 * {@link CachedScheduler}.
-		 *
-		 * @return the cached Scheduler
-		 */
-		@Override
-		public Scheduler get() {
-			return cached;
-		}
-
-		void _dispose() {
-			cached.dispose();
 		}
 	}
 
@@ -1196,7 +1033,7 @@ public abstract class Schedulers {
 			InstantPeriodicWorkerTask isr =
 					new InstantPeriodicWorkerTask(task, exec, tasks);
 			if (!tasks.add(isr)) {
-			  throw Exceptions.failWithRejected();
+				throw Exceptions.failWithRejected();
 			}
 			try {
 				Future<?> f;
@@ -1275,13 +1112,161 @@ public abstract class Schedulers {
 		}
 
 		if (executor instanceof ThreadPoolExecutor) {
-				final ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) executor;
-				if (key == Scannable.Attr.CAPACITY) return poolExecutor.getMaximumPoolSize();
-				if (key == Scannable.Attr.BUFFERED) return ((Long) (poolExecutor.getTaskCount() - poolExecutor.getCompletedTaskCount())).intValue();
-				if (key == Scannable.Attr.LARGE_BUFFERED) return poolExecutor.getTaskCount() - poolExecutor.getCompletedTaskCount();
+			final ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) executor;
+			if (key == Scannable.Attr.CAPACITY) return poolExecutor.getMaximumPoolSize();
+			if (key == Scannable.Attr.BUFFERED) return ((Long) (poolExecutor.getTaskCount() - poolExecutor.getCompletedTaskCount())).intValue();
+			if (key == Scannable.Attr.LARGE_BUFFERED) return poolExecutor.getTaskCount() - poolExecutor.getCompletedTaskCount();
 		}
 
 		return null;
+	}
+
+	/**
+	 * Public factory hook to override Schedulers behavior globally
+	 */
+	public interface Factory {
+
+		/**
+		 * {@link Scheduler} that dynamically creates Workers resources and caches
+		 * eventually, reusing them once the Workers have been shut down.
+		 * <p>
+		 * The maximum number of created workers is unbounded.
+		 *
+		 * @param ttlSeconds Time-to-live for an idle {@link reactor.core.scheduler.Scheduler.Worker}
+		 * @param threadFactory a {@link ThreadFactory} to use
+		 *
+		 * @return a new {@link Scheduler} that dynamically creates Workers resources and
+		 * caches eventually, reusing them once the Workers have been shut down
+		 */
+		default Scheduler newElastic(int ttlSeconds, ThreadFactory threadFactory) {
+			return new ElasticScheduler(threadFactory, ttlSeconds);
+		}
+
+		/**
+		 * {@link Scheduler} that dynamically creates a bounded number of ExecutorService-based
+		 * Workers, reusing them once the Workers have been shut down. The underlying (user or daemon)
+		 * threads can be evicted if idle for more than {@code ttlSeconds}.
+		 * <p>
+		 * The maximum number of created thread pools is bounded by the provided {@code cap}.
+		 *
+		 * @param threadCap maximum number of underlying threads to create
+		 * @param queuedTaskCap maximum number of tasks to enqueue when no more threads can be created. Can be {@link Integer#MAX_VALUE} for unbounded enqueueing.
+		 * @param threadFactory a {@link ThreadFactory} to use each thread initialization
+		 * @param ttlSeconds Time-to-live for an idle {@link reactor.core.scheduler.Scheduler.Worker}
+		 *
+		 * @return a new {@link Scheduler} that dynamically create workers with an upper bound to
+		 * the number of backing threads, reuses threads and evict idle ones
+		 */
+		default Scheduler newBoundedElastic(int threadCap, int queuedTaskCap, ThreadFactory threadFactory, int ttlSeconds) {
+			return new BoundedElasticScheduler(threadCap, queuedTaskCap, threadFactory, ttlSeconds);
+		}
+
+		/**
+		 * {@link Scheduler} that hosts a fixed pool of workers and is suited for parallel
+		 * work.
+		 *
+		 * @param parallelism Number of pooled workers.
+		 * @param threadFactory a {@link ThreadFactory} to use for the fixed initialized
+		 * number of {@link Thread}
+		 *
+		 * @return a new {@link Scheduler} that hosts a fixed pool of workers and is
+		 * suited for parallel work
+		 */
+		default Scheduler newParallel(int parallelism, ThreadFactory threadFactory) {
+			return new ParallelScheduler(parallelism, threadFactory);
+		}
+
+		/**
+		 * {@link Scheduler} that hosts a single worker and is suited for non-blocking
+		 * work.
+		 *
+		 * @param threadFactory a {@link ThreadFactory} to use for the unique resource of
+		 * the {@link Scheduler}
+		 *
+		 * @return a new {@link Scheduler} that hosts a single worker
+		 */
+		default Scheduler newSingle(ThreadFactory threadFactory) {
+			return new SingleScheduler(threadFactory);
+		}
+	}
+
+	static class CachedScheduler implements Scheduler, Supplier<Scheduler>, Scannable {
+
+		final Scheduler cached;
+		final String stringRepresentation;
+
+		CachedScheduler(String key, Scheduler cached) {
+			this.cached = cached;
+			this.stringRepresentation = "Schedulers." + key + "()";
+		}
+
+		@Override
+		public Disposable schedule(Runnable task) {
+			return cached.schedule(task);
+		}
+
+		@Override
+		public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
+			return cached.schedule(task, delay, unit);
+		}
+
+		@Override
+		public Disposable schedulePeriodically(Runnable task,
+				long initialDelay,
+				long period,
+				TimeUnit unit) {
+			return cached.schedulePeriodically(task, initialDelay, period, unit);
+		}
+
+		@Override
+		public Worker createWorker() {
+			return cached.createWorker();
+		}
+
+		@Override
+		public long now(TimeUnit unit) {
+			return cached.now(unit);
+		}
+
+		@Override
+		public void start() {
+			cached.start();
+		}
+
+		@Override
+		public void dispose() {
+		}
+
+		@Override
+		public boolean isDisposed() {
+			return cached.isDisposed();
+		}
+
+		@Override
+		public String toString() {
+			return stringRepresentation;
+		}
+
+		@Override
+		public Object scanUnsafe(Attr key) {
+			if (Attr.NAME == key) return stringRepresentation;
+			return Scannable.from(cached).scanUnsafe(key);
+		}
+
+		/**
+		 * Get the {@link Scheduler} that is cached and wrapped inside this
+		 * {@link CachedScheduler}.
+		 *
+		 * @return the cached Scheduler
+		 */
+		@Override
+		public Scheduler get() {
+			return cached;
+		}
+
+		void _dispose() {
+			cached.dispose();
+		}
 	}
 
 }

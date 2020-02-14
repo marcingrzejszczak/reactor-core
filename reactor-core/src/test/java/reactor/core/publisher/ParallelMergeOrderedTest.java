@@ -45,15 +45,15 @@ public class ParallelMergeOrderedTest {
 			final List<Integer> disordered = Collections.synchronizedList(new ArrayList<>());
 
 			List<Integer> reordered = Flux.fromIterable(ordered)
-			                         .hide()
-			                         .index()
-			                         .parallel(PARALLELISM)
-			                         .runOn(SCHEDULER)
-			                         .doOnNext(t2 -> disordered.add(t2.getT2()))
-			                         .ordered(Comparator.comparing(Tuple2::getT1))
-			                         .map(Tuple2::getT2)
-			                         .collectList()
-			                         .block();
+					.hide()
+					.index()
+					.parallel(PARALLELISM)
+					.runOn(SCHEDULER)
+					.doOnNext(t2 -> disordered.add(t2.getT2()))
+					.ordered(Comparator.comparing(Tuple2::getT1))
+					.map(Tuple2::getT2)
+					.collectList()
+					.block();
 
 			SCHEDULER.dispose();
 
@@ -88,7 +88,7 @@ public class ParallelMergeOrderedTest {
 	@Test
 	public void rejectPrefetchNegative() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new ParallelMergeOrdered<>(null,-1, null, null))
+				.isThrownBy(() -> new ParallelMergeOrdered<>(null, -1, null, null))
 				.withMessage("prefetch > 0 required but it was -1");
 	}
 
@@ -102,8 +102,8 @@ public class ParallelMergeOrderedTest {
 	@Test
 	public void getPrefetchAPI() {
 		Flux<Integer> test = Flux.range(1, 10)
-		                         .parallel()
-		                         .ordered(Comparator.naturalOrder(), 123);
+				.parallel()
+				.ordered(Comparator.naturalOrder(), 123);
 
 		assertThat(test.getPrefetch()).isEqualTo(123);
 	}
@@ -111,7 +111,7 @@ public class ParallelMergeOrderedTest {
 	@Test
 	public void scanUnsafe() {
 		ParallelFlux<Integer> source = Flux.range(1, 10)
-		                                   .parallel(2);
+				.parallel(2);
 		ParallelMergeOrdered<Integer> test = new ParallelMergeOrdered<>(source, 123, null, null);
 
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(source);

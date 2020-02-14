@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-@file:JvmName("MonoWhenFunctionsKt") // TODO Remove in next major version
+@file:JvmName("MonoWhenFunctionsKt")
+
+// TODO Remove in next major version
 package reactor.core.publisher
 
 import org.reactivestreams.Publisher

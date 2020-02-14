@@ -23,10 +23,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import javax.annotation.concurrent.Immutable;
-
 import org.junit.Test;
-
 import reactor.core.publisher.Signal;
 import reactor.test.ValueFormatters.Extractor;
 import reactor.test.ValueFormatters.ToStringConverter;
@@ -35,24 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class ValueFormattersTest {
-
-	/**
-	 * Enum with obscure toString and more meaningful alternative {@link String} representation.
-	 */
-	private static enum Obscure {
-
-		OB1("foo"), OB2("bar"), OB3("baz");
-
-		private final String alternative;
-
-		Obscure(String alternative) {
-			this.alternative = alternative;
-		}
-
-		public String getAlternative() {
-			return alternative;
-		}
-	}
 
 	@Test
 	public void classBasedNull() {
@@ -162,7 +141,6 @@ public class ValueFormattersTest {
 				.rejects(1L, "foo");
 	}
 
-
 	// == Extractor tests
 	@Test
 	public void signalDoesntConsiderNonSignal() {
@@ -264,7 +242,7 @@ public class ValueFormattersTest {
 	public void arrayDoesntConsiderArrayOfDifferentType() {
 		Extractor<Number[]> extractor = ValueFormatters.arrayExtractor(Number[].class);
 		ToStringConverter converter = ValueFormatters.forClass(Number.class, o -> o.getClass().getSimpleName());
-		String[] target = new String[] { "foo", "bar" };
+		String[] target = new String[] {"foo", "bar"};
 
 		assertThat(extractor.apply(target, converter))
 				.isEqualTo(target.toString());
@@ -274,7 +252,7 @@ public class ValueFormattersTest {
 	public void arrayDoesntConsiderNonMatchingContent() {
 		Extractor<Object[]> extractor = ValueFormatters.arrayExtractor(Object[].class);
 		ToStringConverter converter = ValueFormatters.forClass(String.class, s -> "" + s.length());
-		Object[] target = new Object[] { Obscure.OB1 };
+		Object[] target = new Object[] {Obscure.OB1};
 
 		assertThat(extractor.apply(target, converter))
 				.isEqualTo("[OB1]");
@@ -285,7 +263,7 @@ public class ValueFormattersTest {
 	public void arrayConvertsContentMatching() {
 		Extractor<Object[]> extractor = ValueFormatters.arrayExtractor(Object[].class);
 		ToStringConverter converter = ValueFormatters.forClass(Obscure.class, Obscure::getAlternative);
-		Object[] target = new Object[] { 1L, 2d, "foo", Obscure.OB2 };
+		Object[] target = new Object[] {1L, 2d, "foo", Obscure.OB2};
 
 		assertThat(extractor.apply(target, converter))
 				.isNotEqualTo(target.toString())
@@ -301,8 +279,6 @@ public class ValueFormattersTest {
 				.isThrownBy(() -> ValueFormatters.arrayExtractor(fakeArrayClass))
 				.withMessage("arrayClass must be array");
 	}
-
-	//== convertVarArgs tests
 
 	@Test
 	public void convertVarargsSignalNotExtractedIfConverterMatches() {
@@ -321,6 +297,8 @@ public class ValueFormattersTest {
 						.isEqualTo("ImmutableSignal=>onNext(OB1)")
 				);
 	}
+
+	//== convertVarArgs tests
 
 	@Test
 	public void convertVarargsIterableNotExtractedIfConverterMatches() {
@@ -342,7 +320,7 @@ public class ValueFormattersTest {
 	public void convertVarargsArrayNotExtractedIfConverterMatchesAndPassedAsSingleArg() {
 		Extractor<Object[]> extractor = ValueFormatters.arrayExtractor(Object[].class);
 		ToStringConverter converter = ValueFormatters.forClass(Object.class, o -> "<" + o + ">");
-		Object target = new Object[] { 1L, 2d, "foo", Obscure.OB2 };
+		Object target = new Object[] {1L, 2d, "foo", Obscure.OB2};
 
 		Object[] converted = ValueFormatters.convertVarArgs(converter, Collections.singleton(extractor), target);
 
@@ -388,5 +366,23 @@ public class ValueFormattersTest {
 				Collections.singleton(2L)))
 				.containsExactly("1", "<OB1>", "[<OB2>]", "[2]");
 
+	}
+
+	/**
+	 * Enum with obscure toString and more meaningful alternative {@link String} representation.
+	 */
+	private static enum Obscure {
+
+		OB1("foo"), OB2("bar"), OB3("baz");
+
+		private final String alternative;
+
+		Obscure(String alternative) {
+			this.alternative = alternative;
+		}
+
+		public String getAlternative() {
+			return alternative;
+		}
 	}
 }

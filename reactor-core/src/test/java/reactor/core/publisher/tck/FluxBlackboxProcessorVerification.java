@@ -43,21 +43,21 @@ public class FluxBlackboxProcessorVerification extends AbstractFluxVerification 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
 
 		return f.publishOn(sharedGroup)
-		        .parallel(2)
-		        .groups()
-		        .flatMap(stream -> stream.publishOn(asyncGroup)
-				                          .doOnNext(this::monitorThreadUse)
-				                          .scan((prev, next) -> next)
-				                          .map(integer -> -integer)
-				                          .filter(integer -> integer <= 0)
-				                          .map(integer -> -integer)
-				                          .bufferTimeout(batch, Duration.ofMillis(50))
-				                          .flatMap(Flux::fromIterable)
-				                          .flatMap(i -> Flux.zip(Flux.just(i), otherStream, combinator))
-				 )
-		        .publishOn(sharedGroup)
-		        .doAfterTerminate(asyncGroup::dispose)
-		        .doOnError(Throwable::printStackTrace);
+				.parallel(2)
+				.groups()
+				.flatMap(stream -> stream.publishOn(asyncGroup)
+						.doOnNext(this::monitorThreadUse)
+						.scan((prev, next) -> next)
+						.map(integer -> -integer)
+						.filter(integer -> integer <= 0)
+						.map(integer -> -integer)
+						.bufferTimeout(batch, Duration.ofMillis(50))
+						.flatMap(Flux::fromIterable)
+						.flatMap(i -> Flux.zip(Flux.just(i), otherStream, combinator))
+				)
+				.publishOn(sharedGroup)
+				.doAfterTerminate(asyncGroup::dispose)
+				.doOnError(Throwable::printStackTrace);
 	}
 
 	@BeforeMethod
@@ -66,7 +66,7 @@ public class FluxBlackboxProcessorVerification extends AbstractFluxVerification 
 	}
 
 	@AfterMethod
-	public void tearDown(){
+	public void tearDown() {
 		sharedGroup.dispose();
 	}
 

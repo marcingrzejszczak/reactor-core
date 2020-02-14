@@ -42,6 +42,60 @@ import reactor.util.context.Context;
 public abstract class Hooks {
 
 
+	static final Logger log = Loggers.getLogger(Hooks.class);
+	/**
+	 * A key that can be used to store a sequence-specific {@link Hooks#onErrorDropped(Consumer)}
+	 * hook in a {@link Context}, as a {@link Consumer Consumer&lt;Throwable&gt;}.
+	 */
+	static final String KEY_ON_ERROR_DROPPED = "reactor.onErrorDropped.local";
+	/**
+	 * A key that can be used to store a sequence-specific {@link Hooks#onNextDropped(Consumer)}
+	 * hook in a {@link Context}, as a {@link Consumer Consumer&lt;Object&gt;}.
+	 */
+	static final String KEY_ON_NEXT_DROPPED = "reactor.onNextDropped.local";
+	/**
+	 * A key that can be used to store a sequence-specific {@link Hooks#onOperatorError(BiFunction)}
+	 * hook in a {@link Context}, as a {@link BiFunction BiFunction&lt;Throwable, Object, Throwable&gt;}.
+	 */
+	static final String KEY_ON_OPERATOR_ERROR = "reactor.onOperatorError.local";
+	/**
+	 * A key that can be used to store a sequence-specific onDiscard(Consumer)
+	 * hook in a {@link Context}, as a {@link Consumer Consumer&lt;Object&gt;}.
+	 */
+	static final String KEY_ON_DISCARD = "reactor.onDiscard.local";
+	/**
+	 * A key that can be used to store a sequence-specific {@link Hooks#onOperatorError(BiFunction)}
+	 * hook THAT IS ONLY APPLIED TO Operators{@link Operators#onRejectedExecution(Throwable, Context) onRejectedExecution}
+	 * in a {@link Context}, as a {@link BiFunction BiFunction&lt;Throwable, Object, Throwable&gt;}.
+	 */
+	static final String KEY_ON_REJECTED_EXECUTION = "reactor.onRejectedExecution.local";
+	//For transformative hooks, allow to name them, keep track in an internal Map that retains insertion order
+	//internal use only as it relies on external synchronization
+	private static final LinkedHashMap<String, Function<? super Publisher<Object>, ? extends Publisher<Object>>> onEachOperatorHooks;
+	private static final LinkedHashMap<String, Function<? super Publisher<Object>, ? extends Publisher<Object>>> onLastOperatorHooks;
+	private static final LinkedHashMap<String, BiFunction<? super Throwable, Object, ? extends Throwable>> onOperatorErrorHooks;
+	//Hooks that are transformative
+	static Function<Publisher, Publisher> onEachOperatorHook;
+	static volatile Function<Publisher, Publisher> onLastOperatorHook;
+	static volatile BiFunction<? super Throwable, Object, ? extends Throwable> onOperatorErrorHook;
+	//Hooks that are just callbacks
+	static volatile Consumer<? super Throwable> onErrorDroppedHook;
+	static volatile Consumer<Object> onNextDroppedHook;
+	//Special hook that is between the two (strategy can be transformative, but not named)
+	static volatile OnNextFailureStrategy onNextErrorHook;
+	static boolean GLOBAL_TRACE =
+			Boolean.parseBoolean(System.getProperty("reactor.trace.operatorStacktrace",
+					"false"));
+	static boolean DETECT_CONTEXT_LOSS = false;
+
+	static {
+		onEachOperatorHooks = new LinkedHashMap<>(1);
+		onLastOperatorHooks = new LinkedHashMap<>(1);
+		onOperatorErrorHooks = new LinkedHashMap<>(1);
+	}
+
+	Hooks() {
+	}
 
 	/**
 	 * Add a {@link Publisher} operator interceptor for each operator created
@@ -152,10 +206,10 @@ public abstract class Hooks {
 		Objects.requireNonNull(c, "onErrorDroppedHook");
 		log.debug("Hooking new default : onErrorDropped");
 
-		synchronized(log) {
+		synchronized (log) {
 			if (onErrorDroppedHook != null) {
 				@SuppressWarnings("unchecked") Consumer<Throwable> _c =
-						((Consumer<Throwable>)onErrorDroppedHook).andThen(c);
+						((Consumer<Throwable>) onErrorDroppedHook).andThen(c);
 				onErrorDroppedHook = _c;
 			}
 			else {
@@ -272,7 +326,7 @@ public abstract class Hooks {
 		Objects.requireNonNull(c, "onNextDroppedHook");
 		log.debug("Hooking new default : onNextDropped");
 
-		synchronized(log) {
+		synchronized (log) {
 			if (onNextDroppedHook != null) {
 				onNextDroppedHook = onNextDroppedHook.andThen(c);
 			}
@@ -291,8 +345,10 @@ public abstract class Hooks {
 	public static void onNextDroppedFail() {
 		log.debug("Enabling failure mode for onNextDropped");
 
-		synchronized(log) {
-			onNextDroppedHook = n -> {throw Exceptions.failWithCancel();};
+		synchronized (log) {
+			onNextDroppedHook = n -> {
+				throw Exceptions.failWithCancel();
+			};
 		}
 	}
 
@@ -336,12 +392,12 @@ public abstract class Hooks {
 		log.debug("Hooking new default : onNextError");
 
 		if (onNextError instanceof OnNextFailureStrategy) {
-			synchronized(log) {
+			synchronized (log) {
 				onNextErrorHook = (OnNextFailureStrategy) onNextError;
 			}
 		}
 		else {
-			synchronized(log) {
+			synchronized (log) {
 				onNextErrorHook = new OnNextFailureStrategy.LambdaOnNextErrorStrategy(onNextError);
 			}
 		}
@@ -517,80 +573,17 @@ public abstract class Hooks {
 		return composite;
 	}
 
-	//Hooks that are transformative
-	static Function<Publisher, Publisher> onEachOperatorHook;
-	static volatile Function<Publisher, Publisher> onLastOperatorHook;
-	static volatile BiFunction<? super Throwable, Object, ? extends Throwable> onOperatorErrorHook;
-
-	//Hooks that are just callbacks
-	static volatile Consumer<? super Throwable> onErrorDroppedHook;
-	static volatile Consumer<Object>            onNextDroppedHook;
-
-	//Special hook that is between the two (strategy can be transformative, but not named)
-	static volatile OnNextFailureStrategy onNextErrorHook;
-
-
-	//For transformative hooks, allow to name them, keep track in an internal Map that retains insertion order
-	//internal use only as it relies on external synchronization
-	private static final LinkedHashMap<String, Function<? super Publisher<Object>, ? extends Publisher<Object>>> onEachOperatorHooks;
-	private static final LinkedHashMap<String, Function<? super Publisher<Object>, ? extends Publisher<Object>>> onLastOperatorHooks;
-	private static final LinkedHashMap<String, BiFunction<? super Throwable, Object, ? extends Throwable>> onOperatorErrorHooks;
-
 	//Immutable views on hook trackers, for testing purpose
 	static final Map<String, Function<? super Publisher<Object>, ? extends Publisher<Object>>> getOnEachOperatorHooks() {
 		return Collections.unmodifiableMap(onEachOperatorHooks);
 	}
+
 	static final Map<String, Function<? super Publisher<Object>, ? extends Publisher<Object>>> getOnLastOperatorHooks() {
 		return Collections.unmodifiableMap(onLastOperatorHooks);
 	}
+
 	static final Map<String, BiFunction<? super Throwable, Object, ? extends Throwable>> getOnOperatorErrorHooks() {
 		return Collections.unmodifiableMap(onOperatorErrorHooks);
-	}
-
-	static final Logger log = Loggers.getLogger(Hooks.class);
-
-	/**
-	 * A key that can be used to store a sequence-specific {@link Hooks#onErrorDropped(Consumer)}
-	 * hook in a {@link Context}, as a {@link Consumer Consumer&lt;Throwable&gt;}.
-	 */
-	static final String KEY_ON_ERROR_DROPPED = "reactor.onErrorDropped.local";
-	/**
-	 * A key that can be used to store a sequence-specific {@link Hooks#onNextDropped(Consumer)}
-	 * hook in a {@link Context}, as a {@link Consumer Consumer&lt;Object&gt;}.
-	 */
-	static final String KEY_ON_NEXT_DROPPED = "reactor.onNextDropped.local";
-	/**
-	 * A key that can be used to store a sequence-specific {@link Hooks#onOperatorError(BiFunction)}
-	 * hook in a {@link Context}, as a {@link BiFunction BiFunction&lt;Throwable, Object, Throwable&gt;}.
-	 */
-	static final String KEY_ON_OPERATOR_ERROR = "reactor.onOperatorError.local";
-
-	/**
-	 * A key that can be used to store a sequence-specific onDiscard(Consumer)
-	 * hook in a {@link Context}, as a {@link Consumer Consumer&lt;Object&gt;}.
-	 */
-	static final String KEY_ON_DISCARD = "reactor.onDiscard.local";
-
-	/**
-	 * A key that can be used to store a sequence-specific {@link Hooks#onOperatorError(BiFunction)}
-	 * hook THAT IS ONLY APPLIED TO Operators{@link Operators#onRejectedExecution(Throwable, Context) onRejectedExecution}
-	 * in a {@link Context}, as a {@link BiFunction BiFunction&lt;Throwable, Object, Throwable&gt;}.
-	 */
-	static final String KEY_ON_REJECTED_EXECUTION = "reactor.onRejectedExecution.local";
-
-	static boolean GLOBAL_TRACE =
-			Boolean.parseBoolean(System.getProperty("reactor.trace.operatorStacktrace",
-					"false"));
-
-	static boolean DETECT_CONTEXT_LOSS = false;
-
-	static {
-		onEachOperatorHooks = new LinkedHashMap<>(1);
-		onLastOperatorHooks = new LinkedHashMap<>(1);
-		onOperatorErrorHooks = new LinkedHashMap<>(1);
-	}
-
-	Hooks() {
 	}
 
 	/**

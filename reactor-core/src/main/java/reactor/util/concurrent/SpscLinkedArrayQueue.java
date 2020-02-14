@@ -43,23 +43,20 @@ import reactor.util.annotation.Nullable;
 final class SpscLinkedArrayQueue<T> extends AbstractQueue<T>
 		implements BiPredicate<T, T> {
 
-	final int mask;
-
-	volatile long producerIndex;
 	@SuppressWarnings("rawtypes")
 	static final AtomicLongFieldUpdater<SpscLinkedArrayQueue> PRODUCER_INDEX =
 			AtomicLongFieldUpdater.newUpdater(SpscLinkedArrayQueue.class,
 					"producerIndex");
-	AtomicReferenceArray<Object> producerArray;
-
-	volatile long consumerIndex;
 	@SuppressWarnings("rawtypes")
 	static final AtomicLongFieldUpdater<SpscLinkedArrayQueue> CONSUMER_INDEX =
 			AtomicLongFieldUpdater.newUpdater(SpscLinkedArrayQueue.class,
 					"consumerIndex");
-	AtomicReferenceArray<Object> consumerArray;
-
 	static final Object NEXT = new Object();
+	final int mask;
+	volatile long producerIndex;
+	AtomicReferenceArray<Object> producerArray;
+	volatile long consumerIndex;
+	AtomicReferenceArray<Object> consumerArray;
 
 	SpscLinkedArrayQueue(int linkSize) {
 		int c = Queues.ceilingNextPowerOfTwo(Math.max(8, linkSize));

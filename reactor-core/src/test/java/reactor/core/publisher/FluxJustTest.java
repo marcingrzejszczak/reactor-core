@@ -29,74 +29,75 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxJustTest {
 
-    @Test(expected = NullPointerException.class)
-    public void nullValue() {
-        Flux.just((Integer)null);
-    }
+	@Test(expected = NullPointerException.class)
+	public void nullValue() {
+		Flux.just((Integer) null);
+	}
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void valueSame() throws Exception {
-        Assert.assertSame(1, ((Callable<Integer>)Flux.just(1)).call());
-    }
+	@Test
+	@SuppressWarnings("unchecked")
+	public void valueSame() throws Exception {
+		Assert.assertSame(1, ((Callable<Integer>) Flux.just(1)).call());
+	}
 
-    @Test
-    public void normal() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create();
+	@Test
+	public void normal() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
-        Flux.just(1).subscribe(ts);
+		Flux.just(1).subscribe(ts);
 
-        ts.assertValues(1)
-          .assertComplete()
-          .assertNoError();
-    }
+		ts.assertValues(1)
+				.assertComplete()
+				.assertNoError();
+	}
 
-    @Test
-    public void normalBackpressured() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
+	@Test
+	public void normalBackpressured() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
-        Flux.just(1).subscribe(ts);
+		Flux.just(1).subscribe(ts);
 
-        ts.assertNoValues()
-          .assertNotComplete()
-          .assertNoError();
+		ts.assertNoValues()
+				.assertNotComplete()
+				.assertNoError();
 
-        ts.request(1);
+		ts.request(1);
 
-        ts.assertValues(1)
-          .assertComplete()
-          .assertNoError();
-    }
+		ts.assertValues(1)
+				.assertComplete()
+				.assertNoError();
+	}
 
-    @Test
-    public void fused() {
-        AssertSubscriber<Integer> ts = AssertSubscriber.create();
-        ts.requestedFusionMode(Fuseable.ANY);
+	@Test
+	public void fused() {
+		AssertSubscriber<Integer> ts = AssertSubscriber.create();
+		ts.requestedFusionMode(Fuseable.ANY);
 
-        Flux.just(1).subscribe(ts);
+		Flux.just(1).subscribe(ts);
 
-        ts.assertFuseableSource()
-        .assertFusionMode(Fuseable.SYNC)
-        .assertValues(1);
-    }
+		ts.assertFuseableSource()
+				.assertFusionMode(Fuseable.SYNC)
+				.assertValues(1);
+	}
 
-    @Test
-    public void fluxInitialValueAvailableImmediately() {
-        Flux<String> stream = Flux.just("test");
-        AtomicReference<String> value = new AtomicReference<>();
-        stream.subscribe(value::set);
-        assertThat(value.get()).isEqualTo("test");
-    }
+	@Test
+	public void fluxInitialValueAvailableImmediately() {
+		Flux<String> stream = Flux.just("test");
+		AtomicReference<String> value = new AtomicReference<>();
+		stream.subscribe(value::set);
+		assertThat(value.get()).isEqualTo("test");
+	}
 
-    @Test
-    public void scanOperator() {
-    	FluxJust<String> s = new FluxJust<>("foo");
-    	assertThat(s.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
-    }
+	@Test
+	public void scanOperator() {
+		FluxJust<String> s = new FluxJust<>("foo");
+		assertThat(s.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+	}
 
 	@Test
 	public void scanSubscription() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, sub -> sub.request(100));
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, sub -> sub.request(100));
 		FluxJust.WeakScalarSubscription<Integer> test = new FluxJust.WeakScalarSubscription<>(1, actual);
 
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);

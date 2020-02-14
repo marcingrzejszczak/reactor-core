@@ -45,7 +45,7 @@ final class ParallelLog<T> extends ParallelFlux<T> implements Scannable {
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
 		CoreSubscriber<? super T>[] parents = new CoreSubscriber[n];
 
@@ -54,13 +54,13 @@ final class ParallelLog<T> extends ParallelFlux<T> implements Scannable {
 		for (int i = 0; i < n; i++) {
 			if (conditional) {
 				parents[i] = new FluxPeekFuseable.PeekConditionalSubscriber<>(
-						(Fuseable.ConditionalSubscriber<T>)subscribers[i], log);
+						(Fuseable.ConditionalSubscriber<T>) subscribers[i], log);
 			}
 			else {
 				parents[i] = new FluxPeek.PeekSubscriber<>(subscribers[i], log);
 			}
 		}
-		
+
 		source.subscribe(parents);
 	}
 

@@ -16,7 +16,6 @@
 
 package reactor.core.publisher;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,13 +23,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
 import reactor.test.publisher.FluxOperatorTest;
 import reactor.test.subscriber.AssertSubscriber;
 import reactor.test.util.RaceTestUtils;
-import reactor.util.context.Context;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -86,13 +83,13 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 	@Test(expected = NullPointerException.class)
 	public void initialValueNull() {
 		Flux.never()
-		    .scan(null, (a, b) -> a);
+				.scan(null, (a, b) -> a);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void accumulatorNull() {
 		Flux.never()
-		    .scan(1, null);
+				.scan(1, null);
 	}
 
 	@Test
@@ -100,12 +97,12 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .scan(0, (a, b) -> b)
-		    .subscribe(ts);
+				.scan(0, (a, b) -> b)
+				.subscribe(ts);
 
 		ts.assertValues(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -113,30 +110,30 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .scan(0, (a, b) -> b)
-		    .subscribe(ts);
+				.scan(0, (a, b) -> b)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(0, 1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(8);
 
 		ts.assertValues(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -144,15 +141,15 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .scan(0, (a, b) -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.scan(0, (a, b) -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertValues(0)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -160,12 +157,12 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .scan(0, (a, b) -> null)
-		    .subscribe(ts);
+				.scan(0, (a, b) -> null)
+				.subscribe(ts);
 
 		ts.assertValues(0)
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -231,20 +228,21 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxScanSeed.ScanSeedSubscriber<Integer, Integer> test = new FluxScanSeed.ScanSeedSubscriber<>(actual,
-        		(i, j) -> i + j, 0);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxScanSeed.ScanSeedSubscriber<Integer, Integer> test = new FluxScanSeed.ScanSeedSubscriber<>(actual,
+				(i, j) -> i + j, 0);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
 	@Test
 	public void onlyConsumerPartOfRange() {
@@ -255,9 +253,9 @@ public class FluxScanSeedTest extends FluxOperatorTest<String, String> {
 			sink.next(2);
 			sink.next(3);
 		}).scan(0, (a, b) -> b)
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(0, 1, 2, 3)
-		  .assertNoError();
+				.assertNoError();
 	}
 }

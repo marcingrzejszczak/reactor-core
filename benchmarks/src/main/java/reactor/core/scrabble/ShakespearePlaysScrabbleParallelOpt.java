@@ -34,6 +34,8 @@ import reactor.math.MathFlux;
  */
 public class ShakespearePlaysScrabbleParallelOpt extends ShakespearePlaysScrabble {
 
+	Scheduler scheduler;
+
 	public static void main(String[] args) throws Exception {
 		ShakespearePlaysScrabbleParallelOpt s = new ShakespearePlaysScrabbleParallelOpt();
 		s.init();
@@ -46,7 +48,10 @@ public class ShakespearePlaysScrabbleParallelOpt extends ShakespearePlaysScrabbl
 		}
 	}
 
-	Scheduler scheduler;
+	static Flux<Integer> chars(String word) {
+		//return Flux.range(0, word.length()).map(i -> (int)word.charAt(i));
+		return new FluxCharSequence(word);
+	}
 
 	@Setup
 	public void localSetup() {
@@ -73,47 +78,47 @@ public class ShakespearePlaysScrabbleParallelOpt extends ShakespearePlaysScrabbl
 		// score of the same letters in a word
 		Function<Entry<Integer, MutableLong>, Integer> letterScore =
 				entry -> letterScores[entry.getKey() - 'a'] * Integer.min((int) entry.getValue()
-				                                                                     .get(),
+								.get(),
 						scrabbleAvailableLetters[entry.getKey() - 'a']);
 
 		Function<String, Flux<Integer>> toIntegerFlux = ShakespearePlaysScrabbleParallelOpt::chars;
 
 		// Histogram of the letters in a given word
 		Function<String, Mono<Map<Integer, MutableLong>>> histoOfLetters = word -> toIntegerFlux.apply(word)
-		                                                                                        .collect(HashMap::new,
-				                                                                                        (Map<Integer, MutableLong> map, Integer value) -> {
-					                                                                                        MutableLong
-							                                                                                        newValue =
-							                                                                                        map.get(value);
-					                                                                                        if (newValue == null) {
-						                                                                                        newValue =
-								                                                                                        new MutableLong();
-						                                                                                        map.put(value,
-								                                                                                        newValue);
-					                                                                                        }
-					                                                                                        newValue.incAndSet();
-				                                                                                        }
+				.collect(HashMap::new,
+						(Map<Integer, MutableLong> map, Integer value) -> {
+							MutableLong
+									newValue =
+									map.get(value);
+							if (newValue == null) {
+								newValue =
+										new MutableLong();
+								map.put(value,
+										newValue);
+							}
+							newValue.incAndSet();
+						}
 
-		                                                                                        );
+				);
 
 		// number of blanks for a given letter
 		Function<Entry<Integer, MutableLong>, Long> blank = entry -> Long.max(0L,
 				entry.getValue()
-				     .get() - scrabbleAvailableLetters[entry.getKey() - 'a']);
+						.get() - scrabbleAvailableLetters[entry.getKey() - 'a']);
 
 		// number of blanks for a given word
 		Function<String, Mono<Long>> nBlanks = word -> MathFlux.sumLong(histoOfLetters.apply(word)
-		                                                                              .flatMapIterable(Map::entrySet)
-		                                                                              .map(blank));
+				.flatMapIterable(Map::entrySet)
+				.map(blank));
 
 		// can a word be written with 2 blanks?
 		Function<String, Mono<Boolean>> checkBlanks = word -> nBlanks.apply(word)
-		                                                             .map(l -> l <= 2L);
+				.map(l -> l <= 2L);
 
 		// score taking blanks into account letterScore1
 		Function<String, Mono<Integer>> score2 = word -> MathFlux.sumInt(histoOfLetters.apply(word)
-		                                                                               .flatMapIterable(Map::entrySet)
-		                                                                               .map(letterScore));
+				.flatMapIterable(Map::entrySet)
+				.map(letterScore));
 
 		// Placing the word on the board
 		// Building the Fluxs of first and last letters
@@ -125,53 +130,48 @@ public class ShakespearePlaysScrabbleParallelOpt extends ShakespearePlaysScrabbl
 
 		// Bonus for double letter
 		Function<String, Mono<Integer>> bonusForDoubleLetter = word -> MathFlux.max(toBeMaxed.apply(word)
-		                                                                                     .map(scoreOfALetter));
+				.map(scoreOfALetter));
 
 		// score of the word put on the board
 		Function<String, Mono<Integer>> score3 =
 				word -> MathFlux.sumInt(Flux.concat(score2.apply(word), bonusForDoubleLetter.apply(word)))
-				                .map(v -> 2 * v + (word.length() == 7 ? 50 : 0));
+						.map(v -> 2 * v + (word.length() == 7 ? 50 : 0));
 
 		Function<Function<String, Mono<Integer>>, Mono<TreeMap<Integer, List<String>>>> buildHistoOnScore =
 				score -> Flux.fromIterable(shakespeareWords)
-				             .parallel()
-				             .runOn(scheduler)
-				             .filter(word -> scrabbleWords.contains(word) && checkBlanks.apply(word).block())
-				             .collect(() -> new TreeMap<>(Comparator.reverseOrder()),
-						             (TreeMap<Integer, List<String>> map, String word) -> {
-							             Integer key = score.apply(word)
-							                                .block();
-							             List<String> list = map.get(key);
-							             if (list == null) {
-								             list = new ArrayList<>();
-								             map.put(key, list);
-							             }
-							             list.add(word);
-						             })
-				             .reduce((m1, m2) -> {
-					             for (Map.Entry<Integer, List<String>> e : m2.entrySet()) {
-						             List<String> list = m1.get(e.getKey());
-						             if (list == null) {
-							             m1.put(e.getKey(), e.getValue());
-						             }
-						             else {
-							             list.addAll(e.getValue());
-						             }
-					             }
-					             return m1;
-				             });
+						.parallel()
+						.runOn(scheduler)
+						.filter(word -> scrabbleWords.contains(word) && checkBlanks.apply(word).block())
+						.collect(() -> new TreeMap<>(Comparator.reverseOrder()),
+								(TreeMap<Integer, List<String>> map, String word) -> {
+									Integer key = score.apply(word)
+											.block();
+									List<String> list = map.get(key);
+									if (list == null) {
+										list = new ArrayList<>();
+										map.put(key, list);
+									}
+									list.add(word);
+								})
+						.reduce((m1, m2) -> {
+							for (Map.Entry<Integer, List<String>> e : m2.entrySet()) {
+								List<String> list = m1.get(e.getKey());
+								if (list == null) {
+									m1.put(e.getKey(), e.getValue());
+								}
+								else {
+									list.addAll(e.getValue());
+								}
+							}
+							return m1;
+						});
 
 		// best key / value pairs
 		return buildHistoOnScore.apply(score3)
-		                        .flatMapIterable(Map::entrySet)
-		                        .take(3)
-		                        .collectList()
-		                        .block();
+				.flatMapIterable(Map::entrySet)
+				.take(3)
+				.collectList()
+				.block();
 
-	}
-
-	static Flux<Integer> chars(String word) {
-		//return Flux.range(0, word.length()).map(i -> (int)word.charAt(i));
-		return new FluxCharSequence(word);
 	}
 }

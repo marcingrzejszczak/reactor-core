@@ -44,15 +44,20 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 
 	final Consumer<SignalType> onFinally;
 
+	FluxDoFinally(Flux<? extends T> source, Consumer<SignalType> onFinally) {
+		super(source);
+		this.onFinally = onFinally;
+	}
+
 	@SuppressWarnings("unchecked")
 	static <T> CoreSubscriber<T> createSubscriber(
 			CoreSubscriber<? super T> s, Consumer<SignalType> onFinally,
 			boolean fuseable) {
 
 		if (fuseable) {
-			if(s instanceof ConditionalSubscriber) {
+			if (s instanceof ConditionalSubscriber) {
 				return new DoFinallyFuseableConditionalSubscriber<>(
-						(ConditionalSubscriber<?	super T>) s, onFinally);
+						(ConditionalSubscriber<? super T>) s, onFinally);
 			}
 			return new DoFinallyFuseableSubscriber<>(s, onFinally);
 		}
@@ -63,11 +68,6 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 		return new DoFinallySubscriber<>(s, onFinally);
 	}
 
-	FluxDoFinally(Flux<? extends T> source, Consumer<SignalType> onFinally) {
-		super(source);
-		this.onFinally = onFinally;
-	}
-
 	@Override
 	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
 		return createSubscriber(actual, onFinally, false);
@@ -75,15 +75,11 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 
 	static class DoFinallySubscriber<T> implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Consumer<SignalType> onFinally;
-
-		volatile int once;
-
 		static final AtomicIntegerFieldUpdater<DoFinallySubscriber> ONCE =
-			AtomicIntegerFieldUpdater.newUpdater(DoFinallySubscriber.class, "once");
-
+				AtomicIntegerFieldUpdater.newUpdater(DoFinallySubscriber.class, "once");
+		final CoreSubscriber<? super T> actual;
+		final Consumer<SignalType> onFinally;
+		volatile int once;
 		QueueSubscription<T> qs;
 
 		Subscription s;
@@ -111,7 +107,7 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 			if (Operators.validate(this.s, s)) {
 				this.s = s;
 				if (s instanceof QueueSubscription) {
-					this.qs = (QueueSubscription<T>)s;
+					this.qs = (QueueSubscription<T>) s;
 				}
 
 				actual.onSubscribe(this);
@@ -154,7 +150,8 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 			if (ONCE.compareAndSet(this, 0, 1)) {
 				try {
 					onFinally.accept(signalType);
-				} catch (Throwable ex) {
+				}
+				catch (Throwable ex) {
 					Exceptions.throwIfFatal(ex);
 					Operators.onErrorDropped(ex, actual.currentContext());
 				}
@@ -169,7 +166,7 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 	}
 
 	static class DoFinallyFuseableSubscriber<T> extends DoFinallySubscriber<T>
-		implements Fuseable, QueueSubscription<T> {
+			implements Fuseable, QueueSubscription<T> {
 
 		DoFinallyFuseableSubscriber(CoreSubscriber<? super T> actual, Consumer<SignalType> onFinally) {
 			super(actual, onFinally);
@@ -230,12 +227,12 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public boolean tryOnNext(T t) {
-			return ((ConditionalSubscriber<? super T>)actual).tryOnNext(t);
+			return ((ConditionalSubscriber<? super T>) actual).tryOnNext(t);
 		}
 	}
 
 	static final class DoFinallyFuseableConditionalSubscriber<T> extends DoFinallyFuseableSubscriber<T>
-		implements ConditionalSubscriber<T> {
+			implements ConditionalSubscriber<T> {
 
 		DoFinallyFuseableConditionalSubscriber(ConditionalSubscriber<? super T> actual,
 				Consumer<SignalType> onFinally) {
@@ -245,7 +242,7 @@ final class FluxDoFinally<T> extends InternalFluxOperator<T, T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public boolean tryOnNext(T t) {
-			return ((ConditionalSubscriber<? super T>)actual).tryOnNext(t);
+			return ((ConditionalSubscriber<? super T>) actual).tryOnNext(t);
 		}
 	}
 }

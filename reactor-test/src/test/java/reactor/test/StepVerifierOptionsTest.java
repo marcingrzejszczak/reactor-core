@@ -16,17 +16,11 @@
 
 package reactor.test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.junit.Test;
-
 import reactor.core.publisher.Signal;
 import reactor.test.ValueFormatters.Extractor;
 
@@ -84,8 +78,8 @@ public class StepVerifierOptionsTest {
 		});
 
 		assertThat(options.getExtractors()
-		                  .stream()
-		                  .map(e -> e.getTargetClass().getSimpleName()))
+				.stream()
+				.map(e -> e.getTargetClass().getSimpleName()))
 				.containsExactly("String", "Signal", "Iterable", "Object[]");
 	}
 
@@ -132,8 +126,8 @@ public class StepVerifierOptionsTest {
 		});
 
 		assertThat(options.getExtractors()
-		                  .stream()
-		                  .map(e -> e.getTargetClass().getSimpleName()))
+				.stream()
+				.map(e -> e.getTargetClass().getSimpleName()))
 				.containsExactly("Signal", "String", "Iterable", "Object[]");
 	}
 
@@ -164,11 +158,11 @@ public class StepVerifierOptionsTest {
 		};
 
 		options.extractor(extractorV1)
-		       .extractor(extractorV2);
+				.extractor(extractorV2);
 
 		assertThat(options.getExtractors()
-		                  .stream()
-		                  .map(e -> e.getTargetClass().getSimpleName()))
+				.stream()
+				.map(e -> e.getTargetClass().getSimpleName()))
 				.containsExactly("String", "Signal", "Iterable", "Object[]");
 
 		assertThat(options.getExtractors())

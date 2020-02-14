@@ -43,80 +43,80 @@ public class MonoCollectListTest {
 	static final Logger LOGGER = Loggers.getLogger(MonoCollectListTest.class);
 
 	@Test
-	public void aFluxCanBeSorted(){
+	public void aFluxCanBeSorted() {
 		List<Integer> vals = Flux.just(43, 32122, 422, 321, 43, 443311)
-		                         .collectSortedList()
-		                         .block();
+				.collectSortedList()
+				.block();
 
 		assertThat(vals).containsExactly(43, 43, 321, 422, 32122, 443311);
 	}
 
 	@Test
-	public void aFluxCanBeSorted2(){
+	public void aFluxCanBeSorted2() {
 		List<Integer> vals = Flux.just(1, 2, 3, 4)
-		                         .collectSortedList(Comparator.reverseOrder())
-		                         .block();
+				.collectSortedList(Comparator.reverseOrder())
+				.block();
 
-		assertThat(vals).containsExactly(4,3,2,1);
+		assertThat(vals).containsExactly(4, 3, 2, 1);
 	}
 
 	@Test
-	public void aFluxCanBeSorted3(){
+	public void aFluxCanBeSorted3() {
 		StepVerifier.create(Flux.just(43, 32122, 422, 321, 43, 443311)
-		                        .sort(Comparator.reverseOrder()))
-		            .expectNext(443311, 32122, 422, 321, 43, 43)
-		            .verifyComplete();
+				.sort(Comparator.reverseOrder()))
+				.expectNext(443311, 32122, 422, 321, 43, 43)
+				.verifyComplete();
 	}
 
 	@Test
-	public void aFluxCanBeSorted4(){
+	public void aFluxCanBeSorted4() {
 		StepVerifier.create(Flux.just(43, 32122, 422, 321, 43, 443311)
-		                        .sort())
-		            .expectNext(43, 43, 321, 422, 32122, 443311)
-		            .verifyComplete();
+				.sort())
+				.expectNext(43, 43, 321, 422, 32122, 443311)
+				.verifyComplete();
 	}
 
 	@Test
 	public void collectListOne() {
 		StepVerifier.create(Flux.just(1)
-		                        .collectList())
-		            .assertNext(d -> assertThat(d).containsExactly(1))
-	                .verifyComplete();
+				.collectList())
+				.assertNext(d -> assertThat(d).containsExactly(1))
+				.verifyComplete();
 
 	}
 
 	@Test
 	public void collectListEmpty() {
 		StepVerifier.create(Flux.empty()
-		                        .collectList())
-		            .assertNext(d -> assertThat(d).isEmpty())
-	                .verifyComplete();
+				.collectList())
+				.assertNext(d -> assertThat(d).isEmpty())
+				.verifyComplete();
 
 	}
 
 	@Test
 	public void collectListCallable() {
 		StepVerifier.create(Mono.fromCallable(() -> 1)
-		                        .flux()
-		                        .collectList())
-		            .assertNext(d -> assertThat(d).containsExactly(1))
-	                .verifyComplete();
+				.flux()
+				.collectList())
+				.assertNext(d -> assertThat(d).containsExactly(1))
+				.verifyComplete();
 
 	}
 
 	@Test
 	public void collectListError() {
 		StepVerifier.create(Flux.error(new Exception("test"))
-		                        .collectList())
-		            .verifyErrorMessage("test");
+				.collectList())
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void collectListErrorHide() {
 		StepVerifier.create(Flux.error(new Exception("test"))
-		                        .hide()
-		                        .collectList())
-		            .verifyErrorMessage("test");
+				.hide()
+				.collectList())
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1523
@@ -125,13 +125,13 @@ public class MonoCollectListTest {
 		TestPublisher<String> testPublisher = TestPublisher.createNoncompliant(CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(testPublisher.flux().collectList())
-		            .expectSubscription()
-		            .then(() -> testPublisher.emit("foo"))
-		            .then(() -> testPublisher.next("bar"))
-		            .assertNext(l -> assertThat(l).containsExactly("foo"))
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped("bar");
+				.expectSubscription()
+				.then(() -> testPublisher.emit("foo"))
+				.then(() -> testPublisher.next("bar"))
+				.assertNext(l -> assertThat(l).containsExactly("foo"))
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped("bar");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1523
@@ -140,18 +140,19 @@ public class MonoCollectListTest {
 		TestPublisher<String> testPublisher = TestPublisher.createNoncompliant(CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(testPublisher.flux().collectList())
-		            .expectSubscription()
-		            .then(() -> testPublisher.emit("foo"))
-		            .then(() -> testPublisher.error(new IllegalStateException("boom")))
-		            .assertNext(l -> assertThat(l).containsExactly("foo"))
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorOfType(IllegalStateException.class);
+				.expectSubscription()
+				.then(() -> testPublisher.emit("foo"))
+				.then(() -> testPublisher.error(new IllegalStateException("boom")))
+				.assertNext(l -> assertThat(l).containsExactly("foo"))
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrorOfType(IllegalStateException.class);
 	}
 
 	@Test
 	public void scanBufferAllSubscriber() {
-		CoreSubscriber<List<String>> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<List<String>> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoCollectListSubscriber<String> test = new MonoCollectListSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
@@ -174,31 +175,31 @@ public class MonoCollectListTest {
 	@Test
 	public void discardOnError() {
 		Mono<List<Integer>> test = Flux.range(1, 10)
-		                               .hide()
-		                               .map(i -> {
-			                               if (i == 5) throw new IllegalStateException("boom");
-			                               return i;
-		                               })
-		                               .collectList();
+				.hide()
+				.map(i -> {
+					if (i == 5) throw new IllegalStateException("boom");
+					return i;
+				})
+				.collectList();
 
 		StepVerifier.create(test)
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(1, 2, 3, 4);
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(1, 2, 3, 4);
 	}
 
 	@Test
 	public void discardOnCancel() {
 		Mono<List<Long>> test = Flux.interval(Duration.ofMillis(100))
-		                            .take(10)
-		                            .collectList();
+				.take(10)
+				.collectList();
 
 		StepVerifier.create(test)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(210))
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDiscardedExactly(0L, 1L);
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(210))
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDiscardedExactly(0L, 1L);
 	}
 
 
@@ -224,7 +225,7 @@ public class MonoCollectListTest {
 
 			testSubscriber.assertNoValues();
 			if (!extraneous.get()) {
-				LOGGER.info(""+subscriber.list);
+				LOGGER.info("" + subscriber.list);
 			}
 			assertThat(extraneous).as("released " + i).isTrue();
 		}

@@ -41,10 +41,10 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>();
 
 		Flux.just(o)
-		    .count()
-		    .flux()
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.count()
+				.flux()
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertValues(1L);
 		ts.assertComplete();
@@ -64,8 +64,8 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>();
 
 		Flux.error(new RuntimeException("forced failure"))
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertNoValues();
 		ts.assertErrorMessage("forced failure");
@@ -77,8 +77,8 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>();
 
 		Flux.empty()
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertNoValues();
 		ts.assertNoError();
@@ -90,8 +90,8 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>();
 
 		Flux.range(1, 1000)
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertValueCount(1000);
 		ts.assertNoError();
@@ -107,10 +107,10 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>(0L);
 
 		Flux.just(o)
-		    .count()
-		    .flux()
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.count()
+				.flux()
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.assertNoValues();
 
@@ -137,10 +137,10 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>(0);
 
 		Flux.just(o)
-		    .count()
-		    .flux()
-		    .onTerminateDetach()
-		    .subscribe(ts);
+				.count()
+				.flux()
+				.onTerminateDetach()
+				.subscribe(ts);
 
 		ts.cancel();
 		o = null;
@@ -160,12 +160,12 @@ public class FluxDetachTest {
 		AssertSubscriber<Object> ts = new AssertSubscriber<>(0);
 
 		Flux.<Object>from(subscriber::set).onTerminateDetach()
-		                                  .subscribe(ts);
+				.subscribe(ts);
 
 		ts.request(2);
 
 		Flux.range(1, 3)
-		    .subscribe(subscriber.get());
+				.subscribe(subscriber.get());
 
 		ts.assertValues(1, 2);
 
@@ -198,7 +198,8 @@ public class FluxDetachTest {
 
 	@Test
 	public void scanSubscriberCancelled() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxDetach.DetachSubscriber<String> test = new FluxDetach.DetachSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

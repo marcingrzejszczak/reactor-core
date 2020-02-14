@@ -18,7 +18,6 @@ package reactor.core.publisher;
 
 import org.junit.Test;
 import reactor.core.Scannable;
-import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 
@@ -53,13 +52,14 @@ public class ParallelPeekTest {
 		Flux<Integer> source = Flux.range(1, 1_000);
 		for (int i = 1; i < 33; i++) {
 			Flux<Integer> result = ParallelFlux.from(source, i)
-			                                   .doOnNext(d -> {})
-			                                   .filter(t -> true)
-			                                   .sequential();
+					.doOnNext(d -> {
+					})
+					.filter(t -> true)
+					.sequential();
 
 			StepVerifier.create(result)
-			            .expectNextCount(1_000)
-			            .verifyComplete();
+					.expectNextCount(1_000)
+					.verifyComplete();
 		}
 	}
 }

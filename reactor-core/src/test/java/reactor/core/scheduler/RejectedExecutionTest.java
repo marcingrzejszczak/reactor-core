@@ -116,9 +116,9 @@ public class RejectedExecutionTest {
 	@Test
 	public void publishOn() throws Exception {
 		Flux<Long> flux = Flux.interval(Duration.ofMillis(2)).take(255)
-		                      .publishOn(scheduler)
-		                      .doOnNext(i -> onNext(i))
-		                      .doOnError(e -> onError(e));
+				.publishOn(scheduler)
+				.doOnNext(i -> onNext(i))
+				.doOnError(e -> onError(e));
 
 		verifyRejectedExecutionConsistency(flux, 5);
 	}
@@ -126,10 +126,10 @@ public class RejectedExecutionTest {
 	@Test
 	public void publishOnFilter() throws Exception {
 		Flux<Long> flux = Flux.interval(Duration.ofMillis(2)).take(255)
-		                      .publishOn(scheduler)
-		                      .filter(t -> true)
-		                      .doOnNext(i -> onNext(i))
-		                      .doOnError(e -> onError(e));
+				.publishOn(scheduler)
+				.filter(t -> true)
+				.doOnNext(i -> onNext(i))
+				.doOnError(e -> onError(e));
 
 		verifyRejectedExecutionConsistency(flux, 5);
 	}
@@ -191,8 +191,8 @@ public class RejectedExecutionTest {
 	public void subscribeOn() throws Exception {
 		scheduler.tasksRemaining.set(1); //1 subscribe then request
 		Flux<Long> flux = Flux.interval(Duration.ofMillis(2))
-		                      .take(255)
-		                      .subscribeOn(scheduler);
+				.take(255)
+				.subscribeOn(scheduler);
 
 		CountDownLatch latch = new CountDownLatch(1);
 		flux.subscribe(new TestSub(latch));
@@ -214,8 +214,8 @@ public class RejectedExecutionTest {
 		//FIXME test with just, empty, callable, interval
 		scheduler.tasksRemaining.set(0); //1 subscribe then request
 		Mono<Long> flux = Mono.just(1L)
-		                      .hide()
-		                      .subscribeOn(scheduler);
+				.hide()
+				.subscribeOn(scheduler);
 
 		CountDownLatch latch = new CountDownLatch(1);
 		flux.subscribe(new TestSub(latch));
@@ -236,8 +236,8 @@ public class RejectedExecutionTest {
 	public void subscribeOnCallable() throws Exception {
 		scheduler.tasksRemaining.set(0);
 		Flux<Long> flux = Mono.fromCallable(() -> 1L)
-		                      .flux()
-		                      .subscribeOn(scheduler);
+				.flux()
+				.subscribeOn(scheduler);
 
 		CountDownLatch latch = new CountDownLatch(1);
 		flux.subscribe(new TestSub(latch));
@@ -258,7 +258,7 @@ public class RejectedExecutionTest {
 	public void subscribeOnEmpty() throws Exception {
 		scheduler.tasksRemaining.set(0); //1 subscribe
 		Flux<Long> flux = Flux.<Long>empty()
-		                      .subscribeOn(scheduler);
+				.subscribeOn(scheduler);
 
 		CountDownLatch latch = new CountDownLatch(1);
 		flux.subscribe(new TestSub(latch));
@@ -278,8 +278,8 @@ public class RejectedExecutionTest {
 	public void subscribeOnJust() throws Exception {
 		scheduler.tasksRemaining.set(0); //1 subscribe
 		Flux<Long> flux = Flux.just(1L)
-		                      .subscribeOn(scheduler)
-				              .doOnError(e -> onError(e));
+				.subscribeOn(scheduler)
+				.doOnError(e -> onError(e));
 
 		CountDownLatch latch = new CountDownLatch(1);
 		flux.subscribe(new TestSub(latch));
@@ -305,14 +305,14 @@ public class RejectedExecutionTest {
 	private void verifyRejectedExecutionConsistency(Publisher<Long> flux, int elementCount) {
 		scheduler.tasksRemaining.set(elementCount + 1);
 		StepVerifier verifier = StepVerifier.create(flux, 0)
-					.expectSubscription()
-					.thenRequest(elementCount)
-					.expectNext(0L) //0..elementCount-1
-					.expectNextCount(elementCount - 2)
-					.expectNext(elementCount - 1L)
-					.thenRequest(255)
-					.thenConsumeWhile(l -> true)
-					.expectError(RejectedExecutionException.class);
+				.expectSubscription()
+				.thenRequest(elementCount)
+				.expectNext(0L) //0..elementCount-1
+				.expectNextCount(elementCount - 2)
+				.expectNext(elementCount - 1L)
+				.thenRequest(255)
+				.thenConsumeWhile(l -> true)
+				.expectError(RejectedExecutionException.class);
 
 		verifier.verify(Duration.ofSeconds(5));
 
@@ -351,9 +351,8 @@ public class RejectedExecutionTest {
 
 	private class BoundedScheduler implements Scheduler {
 
-		AtomicInteger tasksRemaining = new AtomicInteger(Integer.MAX_VALUE);
-
 		final Scheduler actual;
+		AtomicInteger tasksRemaining = new AtomicInteger(Integer.MAX_VALUE);
 
 		BoundedScheduler(Scheduler actual) {
 			this.actual = actual;
@@ -434,7 +433,7 @@ public class RejectedExecutionTest {
 
 		@Override
 		protected void hookOnSubscribe(Subscription subscription) {
-			if(unbounded)
+			if (unbounded)
 				requestUnbounded();
 			else
 				request(1);
@@ -443,7 +442,7 @@ public class RejectedExecutionTest {
 		@Override
 		protected void hookOnNext(Long value) {
 			onNexts.add(value);
-			if(!unbounded)
+			if (!unbounded)
 				request(1);
 		}
 

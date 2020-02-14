@@ -64,12 +64,12 @@ public class FluxSkipTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .skip(5)
-		    .subscribe(ts);
+				.skip(5)
+				.subscribe(ts);
 
 		ts.assertValues(6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -77,24 +77,24 @@ public class FluxSkipTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 10)
-		    .skip(5)
-		    .subscribe(ts);
+				.skip(5)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(6, 7)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(10);
 
 		ts.assertValues(6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -102,40 +102,41 @@ public class FluxSkipTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .skip(Long.MAX_VALUE)
-		    .subscribe(ts);
+				.skip(Long.MAX_VALUE)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
-	public void aFluxCanBeSkipped(){
+	public void aFluxCanBeSkipped() {
 		StepVerifier.create(Flux.just("test", "test2", "test3")
-		                        .skip(1)
+				.skip(1)
 		)
-		            .expectNext("test2", "test3")
-		            .verifyComplete();
+				.expectNext("test2", "test3")
+				.verifyComplete();
 	}
 
 	@Test
-	public void aFluxCanBeSkippedZero(){
+	public void aFluxCanBeSkippedZero() {
 		StepVerifier.create(Flux.just("test", "test2", "test3")
-		                        .skip(0)
+				.skip(0)
 		)
-		            .expectNext("test", "test2", "test3")
-		            .verifyComplete();
+				.expectNext("test", "test2", "test3")
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSkip.SkipSubscriber<Integer> test = new FluxSkip.SkipSubscriber<>(actual, 7);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSkip.SkipSubscriber<Integer> test = new FluxSkip.SkipSubscriber<>(actual, 7);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+	}
 }

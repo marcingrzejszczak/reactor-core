@@ -19,7 +19,6 @@ package reactor.core.publisher;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import org.reactivestreams.Subscriber;
 import reactor.core.CoreSubscriber;
 import reactor.util.annotation.Nullable;
 
@@ -50,13 +49,11 @@ final class FluxErrorOnRequest<T> extends Flux<T> implements SourceProducer<T> {
 
 	static final class ErrorSubscription implements InnerProducer {
 
-		final CoreSubscriber<?> actual;
-
-		final Throwable error;
-
-		volatile int once;
 		static final AtomicIntegerFieldUpdater<ErrorSubscription> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(ErrorSubscription.class, "once");
+		final CoreSubscriber<?> actual;
+		final Throwable error;
+		volatile int once;
 
 		ErrorSubscription(CoreSubscriber<?> actual, Throwable error) {
 			this.actual = actual;

@@ -92,19 +92,15 @@ final class FluxRepeatWhen<T> extends InternalFluxOperator<T, T> {
 	static final class RepeatWhenMainSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Operators.DeferredSubscription otherArbiter;
-
-		final Subscriber<Long> signaller;
-
-		final CorePublisher<? extends T> source;
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<RepeatWhenMainSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(RepeatWhenMainSubscriber.class,
 						"wip");
-
+		final Operators.DeferredSubscription otherArbiter;
+		final Subscriber<Long> signaller;
+		final CorePublisher<? extends T> source;
+		volatile int wip;
 		Context context;
-		long    produced;
+		long produced;
 
 		RepeatWhenMainSubscriber(CoreSubscriber<? super T> actual,
 				Subscriber<Long> signaller,
@@ -201,9 +197,8 @@ final class FluxRepeatWhen<T> extends InternalFluxOperator<T, T> {
 	static final class RepeatWhenOtherSubscriber extends Flux<Long>
 			implements InnerConsumer<Object>, OptimizableOperator<Long, Long> {
 
-		RepeatWhenMainSubscriber<?> main;
-
 		final DirectProcessor<Long> completionSignal = new DirectProcessor<>();
+		RepeatWhenMainSubscriber<?> main;
 
 		@Override
 		public Context currentContext() {

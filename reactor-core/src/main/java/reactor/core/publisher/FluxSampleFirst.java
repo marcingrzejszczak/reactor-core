@@ -67,43 +67,36 @@ final class FluxSampleFirst<T, U> extends InternalFluxOperator<T, T> {
 
 	static final class SampleFirstMain<T, U> implements InnerOperator<T, T> {
 
-		final Function<? super T, ? extends Publisher<U>> throttler;
-		final CoreSubscriber<? super T>                   actual;
-		final Context                                     ctx;
-
-		volatile boolean gate;
-
-		volatile Subscription s;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleFirstMain, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(SampleFirstMain.class,
 						Subscription.class,
 						"s");
-
-		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleFirstMain, Subscription> OTHER =
 				AtomicReferenceFieldUpdater.newUpdater(SampleFirstMain.class,
 						Subscription.class,
 						"other");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SampleFirstMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(SampleFirstMain.class, "requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SampleFirstMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(SampleFirstMain.class, "wip");
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleFirstMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(SampleFirstMain.class,
 						Throwable.class,
 						"error");
+		final Function<? super T, ? extends Publisher<U>> throttler;
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		volatile boolean gate;
+		volatile Subscription s;
+		volatile Subscription other;
+		volatile long requested;
+		volatile int wip;
+		volatile Throwable error;
 
 		SampleFirstMain(CoreSubscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<U>> throttler) {

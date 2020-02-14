@@ -34,8 +34,8 @@ public class MonoFlatMapTest {
 		Mono.just(1).hide().flatMap(v -> Mono.just(2).hide()).subscribe(ts);
 
 		ts.assertValues(2)
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -43,8 +43,8 @@ public class MonoFlatMapTest {
 		TestPublisher<String> cancelTester = TestPublisher.create();
 
 		MonoProcessor<Integer> processor = cancelTester.mono()
-													   .flatMap(s -> Mono.just(s.length()))
-													   .toProcessor();
+				.flatMap(s -> Mono.just(s.length()))
+				.toProcessor();
 		processor.subscribe();
 		processor.cancel();
 
@@ -53,7 +53,8 @@ public class MonoFlatMapTest {
 
 	@Test
 	public void scanMain() {
-		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoFlatMap.FlatMapMain<String, Integer> test = new MonoFlatMap.FlatMapMain<>(
 				actual, s -> Mono.just(s.length()));
 		Subscription parent = Operators.emptySubscription();
@@ -75,7 +76,8 @@ public class MonoFlatMapTest {
 
 	@Test
 	public void scanInner() {
-		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Integer> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoFlatMap.FlatMapMain<String, Integer> main = new MonoFlatMap.FlatMapMain<>(actual, s
 				-> Mono.just(s.length()));
 		MonoFlatMap.FlatMapInner<Integer> test = new MonoFlatMap.FlatMapInner<>(main);
@@ -98,19 +100,19 @@ public class MonoFlatMapTest {
 	@Test
 	public void noWrappingOfCheckedExceptions() {
 		Mono.just("single")
-		    .flatMap(x -> Mono.error(new NoSuchMethodException()))
-		    .as(StepVerifier::create)
-		    .expectError(NoSuchMethodException.class)
-		    .verify();
+				.flatMap(x -> Mono.error(new NoSuchMethodException()))
+				.as(StepVerifier::create)
+				.expectError(NoSuchMethodException.class)
+				.verify();
 	}
 
 	@Test
 	public void noWrappingOfCheckedExceptions_hide() {
 		Mono.just("single")
-		    .hide()
-		    .flatMap(x -> Mono.error(new NoSuchMethodException()))
-		    .as(StepVerifier::create)
-		    .expectError(NoSuchMethodException.class)
-		    .verify();
+				.hide()
+				.flatMap(x -> Mono.error(new NoSuchMethodException()))
+				.as(StepVerifier::create)
+				.expectError(NoSuchMethodException.class)
+				.verify();
 	}
 }

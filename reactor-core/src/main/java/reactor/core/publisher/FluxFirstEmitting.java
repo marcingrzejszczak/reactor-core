@@ -169,14 +169,12 @@ final class FluxFirstEmitting<T> extends Flux<T> implements SourceProducer<T> {
 	static final class RaceCoordinator<T>
 			implements Subscription, Scannable {
 
-		final FirstEmittingSubscriber<T>[] subscribers;
-
-		volatile boolean cancelled;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RaceCoordinator> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(RaceCoordinator.class, "wip");
+		final FirstEmittingSubscriber<T>[] subscribers;
+		volatile boolean cancelled;
+		volatile int wip;
 
 		@SuppressWarnings("unchecked")
 		RaceCoordinator(int n) {

@@ -62,17 +62,17 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		Scheduler scheduler = Schedulers.newParallel("test", 3);
 
 		Flux.range(1, 100000)
-		    .parallel(3)
-		    .runOn(scheduler)
-		    .collect(ArrayList::new, ArrayList::add)
-		    .sequential()
-		    .reduce(0, (a, b) -> a + b.size())
-		    .subscribe(ts);
+				.parallel(3)
+				.runOn(scheduler)
+				.collect(ArrayList::new, ArrayList::add)
+				.sequential()
+				.reduce(0, (a, b) -> a + b.size())
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 		ts.assertValues(100_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -84,19 +84,19 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 100000)
-		    .hide()
-		    .parallel(3)
-		    .runOn(s)
-		    .collect(as, (a, b) -> a.add(b))
-		    .doOnNext(v -> System.out.println(v.size()))
-		    .sequential()
-		    .reduce(0, (a, b) -> a + b.size())
-		    .subscribe(ts);
+				.hide()
+				.parallel(3)
+				.runOn(s)
+				.collect(as, (a, b) -> a.add(b))
+				.doOnNext(v -> System.out.println(v.size()))
+				.sequential()
+				.reduce(0, (a, b) -> a + b.size())
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 		ts.assertValues(100_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -107,21 +107,21 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 100000)
-		    .hide()
-		    .publishOn(s)
-		    .parallel(3)
-		    .runOn(s)
-		    .hide()
-		    .collect(as, (a, b) -> a.add(b))
-		    .doOnNext(v -> System.out.println(v.size()))
-		    .sequential()
-		    .reduce(0, (a, b) -> a + b.size())
-		    .subscribe(ts);
+				.hide()
+				.publishOn(s)
+				.parallel(3)
+				.runOn(s)
+				.hide()
+				.collect(as, (a, b) -> a.add(b))
+				.doOnNext(v -> System.out.println(v.size()))
+				.sequential()
+				.reduce(0, (a, b) -> a + b.size())
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 		ts.assertValues(100_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -132,22 +132,22 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 100000)
-		    .hide()
-		    .publishOn(s)
-		    .parallel(3)
-		    .runOn(s)
-		    .filter(t -> true)
-		    .collect(as, (a, b) -> a.add(b))
-		    .doOnNext(v -> System.out.println(v.size()))
-		    .groups()
-		    .flatMap(v -> v)
-		    .reduce(0, (a, b) -> b.size() + a)
-		    .subscribe(ts);
+				.hide()
+				.publishOn(s)
+				.parallel(3)
+				.runOn(s)
+				.filter(t -> true)
+				.collect(as, (a, b) -> a.add(b))
+				.doOnNext(v -> System.out.println(v.size()))
+				.groups()
+				.flatMap(v -> v)
+				.reduce(0, (a, b) -> b.size() + a)
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 		ts.assertValues(100_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -159,20 +159,20 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 100000)
-		    .publishOn(s)
-		    .parallel(3)
-		    .runOn(s)
-		    .collect(as, (a, b) -> a.add(b))
-		    .doOnNext(v -> System.out.println(v.size()))
-		    .groups()
-		    .flatMap(v -> v)
-		    .reduce(0, (a, b) -> b.size() + a)
-		    .subscribe(ts);
+				.publishOn(s)
+				.parallel(3)
+				.runOn(s)
+				.collect(as, (a, b) -> a.add(b))
+				.doOnNext(v -> System.out.println(v.size()))
+				.groups()
+				.flatMap(v -> v)
+				.reduce(0, (a, b) -> b.size() + a)
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 		ts.assertValues(100_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -184,20 +184,20 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 100000)
-		    .publishOn(s)
-		    .parallel(3)
-		    .runOn(s)
-		    .collect(as, (a, b) -> a.add(b))
-		    .doOnNext(v -> System.out.println(v.size()))
-		    .groups()
-		    .flatMap(v -> v)
-		    .reduce(0, (a, b) -> b.size() + a)
-		    .subscribe(ts);
+				.publishOn(s)
+				.parallel(3)
+				.runOn(s)
+				.collect(as, (a, b) -> a.add(b))
+				.doOnNext(v -> System.out.println(v.size()))
+				.groups()
+				.flatMap(v -> v)
+				.reduce(0, (a, b) -> b.size() + a)
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 		ts.assertValues(100_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -207,27 +207,27 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		};
 
 		StepVerifier.create(Flux.range(1, 10)
-		                        .parallel(3)
-		                        .reduce(as, (a, b) -> b + a))
-		            .verifyErrorMessage("test");
+				.parallel(3)
+				.reduce(as, (a, b) -> b + a))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void failCombination() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .parallel(3)
-		                        .reduce(() -> 0, (a, b) -> {
-		                        	throw new RuntimeException("test");
-		                        }))
-		            .verifyErrorMessage("test");
+				.parallel(3)
+				.reduce(() -> 0, (a, b) -> {
+					throw new RuntimeException("test");
+				}))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void testPrefetch() {
 		assertThat(Flux.range(1, 10)
-		               .parallel(3)
-		               .reduce(() -> 0, (a, b) -> a + b)
-		               .getPrefetch()).isEqualTo(Integer.MAX_VALUE);
+				.parallel(3)
+				.reduce(() -> 0, (a, b) -> a + b)
+				.getPrefetch()).isEqualTo(Integer.MAX_VALUE);
 	}
 
 	@Test
@@ -259,8 +259,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 		ParallelReduceSeed.ParallelReduceSeedSubscriber<Integer, String> test = new ParallelReduceSeed.ParallelReduceSeedSubscriber<>(
 				subscriber, "", (s, i) -> s + i);
 
-		@SuppressWarnings("unchecked")
-		final CoreSubscriber<Integer>[] testSubscribers = new CoreSubscriber[1];
+		@SuppressWarnings("unchecked") final CoreSubscriber<Integer>[] testSubscribers = new CoreSubscriber[1];
 		testSubscribers[0] = test;
 		source.subscribe(testSubscribers);
 

@@ -28,6 +28,11 @@ import java.util.function.Function;
 @SuppressWarnings({"rawtypes"})
 public abstract class Tuples implements Function {
 
+	static final Tuples empty = new Tuples() { };
+
+	Tuples() {
+	}
+
 	/**
 	 * Create a {@link Tuple2} with the given array if it is small
 	 * enough to fit inside a {@link Tuple2} to {@link Tuple8}.
@@ -42,23 +47,23 @@ public abstract class Tuples implements Function {
 			throw new IllegalArgumentException("null or too small array, need between 2 and 8 values");
 		}
 
-		switch (list.length){
-			case 2:
-				return of(list[0], list[1]);
-			case 3:
-				return of(list[0], list[1], list[2]);
-			case 4:
-				return of(list[0], list[1], list[2], list[3]);
-			case 5:
-				return of(list[0], list[1], list[2], list[3], list[4]);
-			case 6:
-				return of(list[0], list[1], list[2], list[3], list[4], list[5]);
-			case 7:
-				return of(list[0], list[1], list[2], list[3], list[4], list[5], list[6]);
-			case 8:
-				return of(list[0], list[1], list[2], list[3], list[4], list[5], list[6], list[7]);
+		switch (list.length) {
+		case 2:
+			return of(list[0], list[1]);
+		case 3:
+			return of(list[0], list[1], list[2]);
+		case 4:
+			return of(list[0], list[1], list[2], list[3]);
+		case 5:
+			return of(list[0], list[1], list[2], list[3], list[4]);
+		case 6:
+			return of(list[0], list[1], list[2], list[3], list[4], list[5]);
+		case 7:
+			return of(list[0], list[1], list[2], list[3], list[4], list[5], list[6]);
+		case 8:
+			return of(list[0], list[1], list[2], list[3], list[4], list[5], list[6], list[7]);
 		}
-		throw new IllegalArgumentException("too many arguments ("+ list.length + "), need between 2 and 8 values");
+		throw new IllegalArgumentException("too many arguments (" + list.length + "), need between 2 and 8 values");
 	}
 
 	/**
@@ -255,7 +260,6 @@ public abstract class Tuples implements Function {
 		return empty;
 	}
 
-
 	/**
 	 * A converting function from Object array to {@link Tuple3}
 	 *
@@ -277,7 +281,7 @@ public abstract class Tuples implements Function {
 	 * @param <T2> The type of the second value.
 	 * @param <T3> The type of the third value.
 	 * @param <R> The type of the return value.
-     * @param delegate the function to delegate to
+	 * @param delegate the function to delegate to
 	 *
 	 * @return The unchecked conversion function to R.
 	 */
@@ -308,7 +312,7 @@ public abstract class Tuples implements Function {
 	 * @param <T3> The type of the third value.
 	 * @param <T4> The type of the fourth value.
 	 * @param <R> The type of the return value.
-     * @param delegate the function to delegate to
+	 * @param delegate the function to delegate to
 	 *
 	 * @return The unchecked conversion function to R.
 	 */
@@ -341,7 +345,7 @@ public abstract class Tuples implements Function {
 	 * @param <T4> The type of the fourth value.
 	 * @param <T5> The type of the fifth value.
 	 * @param <R> The type of the return value.
-     * @param delegate the function to delegate to
+	 * @param delegate the function to delegate to
 	 *
 	 * @return The unchecked conversion function to R.
 	 */
@@ -376,7 +380,7 @@ public abstract class Tuples implements Function {
 	 * @param <T5> The type of the fifth value.
 	 * @param <T6> The type of the sixth value.
 	 * @param <R> The type of the return value.
-     * @param delegate the function to delegate to
+	 * @param delegate the function to delegate to
 	 *
 	 * @return The unchecked conversion function to R.
 	 */
@@ -413,7 +417,7 @@ public abstract class Tuples implements Function {
 	 * @param <T6> The type of the sixth value.
 	 * @param <T7> The type of the seventh value.
 	 * @param <R> The type of the return value.
-     * @param delegate the function to delegate to
+	 * @param delegate the function to delegate to
 	 *
 	 * @return The unchecked conversion function to R.
 	 */
@@ -450,19 +454,14 @@ public abstract class Tuples implements Function {
 	 * @param <T5> The type of the fifth value.
 	 * @param <T6> The type of the sixth value.
 	 * @param <T7> The type of the seventh value.
-     * @param <T8> The type of the eighth value.
+	 * @param <T8> The type of the eighth value.
 	 * @param <R> The type of the return value.
-     * @param delegate the function to delegate to
+	 * @param delegate the function to delegate to
 	 *
 	 * @return The unchecked conversion function to {@link Tuple8}.
 	 */
 	public static <T1, T2, T3, T4, T5, T6, T7, T8, R> Function<Object[], R> fn8(final Function<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>, R> delegate) {
 		return objects -> delegate.apply(Tuples.<T1, T2, T3, T4, T5, T6, T7, T8>fn8().apply(objects));
-	}
-
-	@Override
-	public Tuple2 apply(Object o) {
-		return fromArray((Object[])o);
 	}
 
 	/**
@@ -489,8 +488,8 @@ public abstract class Tuples implements Function {
 		return sb;
 	}
 
-
-	static final Tuples   empty            = new Tuples(){};
-
-	Tuples(){}
+	@Override
+	public Tuple2 apply(Object o) {
+		return fromArray((Object[]) o);
+	}
 }

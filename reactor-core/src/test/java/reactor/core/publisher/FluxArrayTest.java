@@ -40,8 +40,8 @@ public class FluxArrayTest {
 		Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 	}
 
 	@Test
@@ -51,20 +51,20 @@ public class FluxArrayTest {
 		Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5)
-		  .assertNotComplete();
+				.assertValues(1, 2, 3, 4, 5)
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 	}
 
 	@Test
@@ -74,14 +74,14 @@ public class FluxArrayTest {
 		Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 
 		ts.request(10);
 
 		ts.assertNoError()
-		  .assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete();
+				.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.assertComplete();
 	}
 
 	@Test
@@ -91,8 +91,8 @@ public class FluxArrayTest {
 		Flux.just(1, 2, 3, 4, 5, null, 7, 8, 9, 10).subscribe(ts);
 
 		ts.assertError(NullPointerException.class)
-		  .assertValues(1, 2, 3, 4, 5)
-		  .assertNotComplete();
+				.assertValues(1, 2, 3, 4, 5)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -108,7 +108,7 @@ public class FluxArrayTest {
 
 		FluxArray.ArrayConditionalSubscription<Object> test =
 				new FluxArray.ArrayConditionalSubscription<>(subscriber,
-						new Object[]{"foo", "bar", "baz"});
+						new Object[] {"foo", "bar", "baz"});
 
 		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
@@ -135,11 +135,11 @@ public class FluxArrayTest {
 		Fuseable.ConditionalSubscriber<? super Object> subscriber = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
 		//the mock will not drain the request, so it can be tested
 		Mockito.when(subscriber.tryOnNext(Mockito.any()))
-		       .thenReturn(false);
+				.thenReturn(false);
 
 		FluxArray.ArrayConditionalSubscription<Object> test =
 				new FluxArray.ArrayConditionalSubscription<>(subscriber,
-						new Object[]{"foo", "bar", "baz"});
+						new Object[] {"foo", "bar", "baz"});
 
 		test.request(2);
 		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(2L);

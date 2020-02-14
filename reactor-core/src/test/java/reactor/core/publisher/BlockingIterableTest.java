@@ -35,8 +35,8 @@ import reactor.core.Scannable.Attr;
 import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class BlockingIterableTest {
 
@@ -45,7 +45,7 @@ public class BlockingIterableTest {
 		List<Integer> values = new ArrayList<>();
 
 		for (Integer i : Flux.range(1, 10)
-		                     .toIterable()) {
+				.toIterable()) {
 			values.add(i);
 		}
 
@@ -58,7 +58,7 @@ public class BlockingIterableTest {
 		List<Integer> values = new ArrayList<>();
 
 		for (Integer i : Flux.range(1, 10)
-		                     .toIterable(1, () -> q)) {
+				.toIterable(1, () -> q)) {
 			values.add(i);
 		}
 
@@ -92,8 +92,8 @@ public class BlockingIterableTest {
 		List<Integer> values = new ArrayList<>();
 
 		Flux.range(1, 10)
-		    .toStream()
-		    .forEach(values::add);
+				.toStream()
+				.forEach(values::add);
 
 		Assert.assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), values);
 	}
@@ -103,7 +103,7 @@ public class BlockingIterableTest {
 		List<Integer> values = new ArrayList<>();
 
 		FluxEmpty.<Integer>instance().toStream()
-		                             .forEach(values::add);
+				.forEach(values::add);
 
 		Assert.assertEquals(Collections.emptyList(), values);
 	}
@@ -113,9 +113,9 @@ public class BlockingIterableTest {
 		List<Integer> values = new ArrayList<>();
 
 		Flux.range(1, Integer.MAX_VALUE)
-		    .toStream()
-		    .limit(10)
-		    .forEach(values::add);
+				.toStream()
+				.limit(10)
+				.forEach(values::add);
 
 		Assert.assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), values);
 	}
@@ -125,9 +125,9 @@ public class BlockingIterableTest {
 		int n = 1_000_000;
 
 		Optional<Integer> opt = Flux.range(1, n)
-		                            .toStream()
-		                            .parallel()
-		                            .max(Integer::compare);
+				.toStream()
+				.parallel()
+				.max(Integer::compare);
 
 		Assert.assertTrue("No maximum?", opt.isPresent());
 		Assert.assertEquals((Integer) n, opt.get());
@@ -163,7 +163,7 @@ public class BlockingIterableTest {
 		subscriberIterator.onSubscribe(s);
 
 		assertThat(subscriberIterator.scan(Scannable.Attr.PARENT)).describedAs("PARENT")
-		                                                 .isSameAs(s);
+				.isSameAs(s);
 		assertThat(subscriberIterator.scan(Scannable.Attr.TERMINATED)).describedAs("TERMINATED").isFalse();
 		assertThat(subscriberIterator.scan(Scannable.Attr.CANCELLED)).describedAs("CANCELLED").isFalse();
 		assertThat(subscriberIterator.scan(Scannable.Attr.ERROR)).describedAs("ERROR").isNull();
@@ -200,12 +200,12 @@ public class BlockingIterableTest {
 		IllegalStateException error = new IllegalStateException("boom");
 
 		assertThat(test.scan(Scannable.Attr.ERROR)).describedAs("before ERROR")
-		                                                    .isNull();
+				.isNull();
 
 		test.onError(error);
 
 		assertThat(test.scan(Scannable.Attr.ERROR)).describedAs("after ERROR")
-		                                                       .isSameAs(error);
+				.isSameAs(error);
 		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 	}
 
@@ -230,11 +230,13 @@ public class BlockingIterableTest {
 			sink.next("b");
 			sink.complete();
 		})
-				.sort((a, b) -> { throw new IllegalStateException("boom"); });
+				.sort((a, b) -> {
+					throw new IllegalStateException("boom");
+				});
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> source.toStream()
-				                        .collect(Collectors.toSet()))
+						.collect(Collectors.toSet()))
 				.withMessage("boom");
 	}
 
@@ -251,18 +253,20 @@ public class BlockingIterableTest {
 
 		assertThatExceptionOfType(ArithmeticException.class)
 				.isThrownBy(() -> source.toStream(1)
-				                        .collect(Collectors.toSet()))
+						.collect(Collectors.toSet()))
 				.withMessage("/ by zero");
 	}
 
 	@Test(timeout = 1000)
 	public void gh841_streamFromIterable() {
-		Flux<String> source = Flux.fromIterable(Arrays.asList("a","b"))
-		                          .sort((a, b) -> { throw new IllegalStateException("boom"); });
+		Flux<String> source = Flux.fromIterable(Arrays.asList("a", "b"))
+				.sort((a, b) -> {
+					throw new IllegalStateException("boom");
+				});
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> source.toStream()
-				                        .collect(Collectors.toSet()))
+						.collect(Collectors.toSet()))
 				.withMessage("boom");
 	}
 
@@ -288,14 +292,16 @@ public class BlockingIterableTest {
 			sink.next("b");
 			sink.complete();
 		})
-				.collectSortedList((a, b) -> { throw new IllegalStateException("boom"); })
+				.collectSortedList((a, b) -> {
+					throw new IllegalStateException("boom");
+				})
 				.hide()
 				.flatMapIterable(Function.identity());
 
 		StepVerifier.create(source)
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		            .hasMessage("boom"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom"))
+				.verify();
 	}
 
 	@Test(timeout = 1000)
@@ -305,13 +311,15 @@ public class BlockingIterableTest {
 			sink.next("b");
 			sink.complete();
 		})
-				.collectSortedList((a, b) -> { throw new IllegalStateException("boom"); })
+				.collectSortedList((a, b) -> {
+					throw new IllegalStateException("boom");
+				})
 				.hide()
 				.flatMapIterable(Function.identity());
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> source.toStream()
-				                        .collect(Collectors.toSet()))
+						.collect(Collectors.toSet()))
 				.withMessage("boom");
 	}
 }

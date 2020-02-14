@@ -68,7 +68,7 @@ final class FluxBufferBoundary<T, U, C extends Collection<? super T>>
 					"The bufferSupplier returned a null buffer");
 		}
 		catch (Throwable e) {
-			Operators.error(actual, Operators.onOperatorError(e,  actual.currentContext()));
+			Operators.error(actual, Operators.onOperatorError(e, actual.currentContext()));
 			return null;
 		}
 
@@ -88,32 +88,27 @@ final class FluxBufferBoundary<T, U, C extends Collection<? super T>>
 	static final class BufferBoundaryMain<T, U, C extends Collection<? super T>>
 			implements InnerOperator<T, C> {
 
-		final Supplier<C>           bufferSupplier;
-		final CoreSubscriber<? super C> actual;
-		final Context ctx;
-
-		final BufferBoundaryOther<U> other;
-
-		C buffer;
-
-		volatile Subscription s;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<BufferBoundaryMain, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(BufferBoundaryMain.class,
 						Subscription.class,
 						"s");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferBoundaryMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BufferBoundaryMain.class, "requested");
+		final Supplier<C> bufferSupplier;
+		final CoreSubscriber<? super C> actual;
+		final Context ctx;
+		final BufferBoundaryOther<U> other;
+		C buffer;
+		volatile Subscription s;
+		volatile long requested;
 
 		BufferBoundaryMain(CoreSubscriber<? super C> actual,
 				C buffer,
 				Supplier<C> bufferSupplier) {
 			this.actual = actual;
-			this.ctx =  actual.currentContext();
+			this.ctx = actual.currentContext();
 			this.buffer = buffer;
 			this.bufferSupplier = bufferSupplier;
 			this.other = new BufferBoundaryOther<>(this);
@@ -175,7 +170,7 @@ final class FluxBufferBoundary<T, U, C extends Collection<? super T>>
 
 		@Override
 		public void onError(Throwable t) {
-			if(Operators.terminate(S, this)) {
+			if (Operators.terminate(S, this)) {
 				C b;
 				synchronized (this) {
 					b = buffer;
@@ -192,7 +187,7 @@ final class FluxBufferBoundary<T, U, C extends Collection<? super T>>
 
 		@Override
 		public void onComplete() {
-			if(Operators.terminate(S, this)) {
+			if (Operators.terminate(S, this)) {
 				C b;
 				synchronized (this) {
 					b = buffer;
@@ -210,16 +205,17 @@ final class FluxBufferBoundary<T, U, C extends Collection<? super T>>
 				}
 			}
 		}
+
 		void otherComplete() {
 			Subscription s = S.getAndSet(this, Operators.cancelledSubscription());
-			if(s != Operators.cancelledSubscription()) {
+			if (s != Operators.cancelledSubscription()) {
 				C b;
 				synchronized (this) {
 					b = buffer;
 					buffer = null;
 				}
 
-				if(s != null){
+				if (s != null) {
 					s.cancel();
 				}
 
@@ -234,16 +230,16 @@ final class FluxBufferBoundary<T, U, C extends Collection<? super T>>
 			}
 		}
 
-		void otherError(Throwable t){
+		void otherError(Throwable t) {
 			Subscription s = S.getAndSet(this, Operators.cancelledSubscription());
-			if(s != Operators.cancelledSubscription()) {
+			if (s != Operators.cancelledSubscription()) {
 				C b;
 				synchronized (this) {
 					b = buffer;
 					buffer = null;
 				}
 
-				if(s != null){
+				if (s != null) {
 					s.cancel();
 				}
 

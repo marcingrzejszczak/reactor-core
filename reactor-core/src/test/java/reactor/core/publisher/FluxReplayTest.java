@@ -28,7 +28,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.Exceptions;
@@ -45,6 +44,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class FluxReplayTest extends FluxOperatorTest<String, String> {
+
+	VirtualTimeScheduler vts;
 
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
@@ -69,18 +70,16 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void failPrefetch(){
+	public void failPrefetch() {
 		Flux.never()
-		    .replay( -1);
+				.replay(-1);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void failTime(){
+	public void failTime() {
 		Flux.never()
-		    .replay( Duration.ofDays(-1));
+				.replay(Duration.ofDays(-1));
 	}
-
-	VirtualTimeScheduler vts;
 
 	@Before
 	public void vtsStart() {
@@ -98,27 +97,27 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	public void cacheFlux() {
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay()
-		                                         .hide()
-		                                         .autoConnect()
-		                                         .hide()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay()
+				.hide()
+				.autoConnect()
+				.hide()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectNoFusionSupport()
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
@@ -126,52 +125,52 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	public void cacheFluxFused() {
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay()
-		                                         .autoConnect()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay()
+				.autoConnect()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectFusion(Fuseable.ANY)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ANY)
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .expectFusion(Fuseable.ANY)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ANY)
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
 	@Test
 	public void cacheFluxTTL() {
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay(Duration.ofMillis(2000))
-		                                         .hide()
-		                                         .autoConnect()
-		                                         .hide()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay(Duration.ofMillis(2000))
+				.hide()
+				.autoConnect()
+				.hide()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectNoFusionSupport()
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
@@ -179,51 +178,51 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	public void cacheFluxTTLFused() {
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay(Duration.ofMillis(2000))
-		                                         .autoConnect()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay(Duration.ofMillis(2000))
+				.autoConnect()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectFusion(Fuseable.ANY)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ANY)
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .expectFusion(Fuseable.ANY)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ANY)
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
 	@Test
 	public void cacheFluxTTLMillis() {
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay(Duration.ofMillis(2000), vts)
-		                                         .hide()
-		                                         .autoConnect()
-		                                         .hide()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay(Duration.ofMillis(2000), vts)
+				.hide()
+				.autoConnect()
+				.hide()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectNoFusionSupport()
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
@@ -231,51 +230,51 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	public void cacheFluxHistoryTTL() {
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay(2, Duration.ofMillis(2000))
-		                                         .hide()
-		                                         .autoConnect()
-		                                         .hide()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay(2, Duration.ofMillis(2000))
+				.hide()
+				.autoConnect()
+				.hide()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectNoFusionSupport()
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
 	@Test
 	public void cacheFluxHistoryTTLFused() {
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000))
-		                                         .replay(2, Duration.ofMillis(2000))
-		                                         .autoConnect()
-		                                         .elapsed();
+				.delayElements(Duration.ofMillis(1000))
+				.replay(2, Duration.ofMillis(2000))
+				.autoConnect()
+				.elapsed();
 
 		StepVerifier.create(source)
-		            .expectFusion(Fuseable.ANY)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ANY)
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .expectFusion(Fuseable.ANY)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ANY)
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(3)))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -285,8 +284,8 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 
 		ConnectableFlux<Integer> replay =
 				Flux.range(1, 5)
-				    .doOnRequest(requests::add)
-				    .replay(5);
+						.doOnRequest(requests::add)
+						.replay(5);
 
 		assertThat(requests).isEmpty();
 
@@ -304,8 +303,8 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 
 		ConnectableFlux<Integer> replay =
 				Flux.range(1, 5)
-				    .doOnRequest(requests::add)
-				    .replay(3);
+						.doOnRequest(requests::add)
+						.replay(3);
 
 		assertThat(requests).isEmpty();
 
@@ -324,13 +323,12 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 
 		ConnectableFlux<Integer> replay =
 				Flux.range(1, 100)
-				    .doOnRequest(requests::add)
-				    .replay(3);
+						.doOnRequest(requests::add)
+						.replay(3);
 
 		replay.take(13).subscribe(fiveThenEightSubscriber);
 		replay.subscribe(sevenThenEightSubscriber);
 		replay.connect();
-
 
 
 		assertThat(requests).startsWith(7L).doesNotContain(5L);
@@ -343,8 +341,8 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 
 		ConnectableFlux<Integer> replay =
 				Flux.range(1, 5)
-				    .doOnRequest(requests::add)
-				    .replay(3);
+						.doOnRequest(requests::add)
+						.replay(3);
 
 		assertThat(requests).isEmpty();
 
@@ -362,8 +360,8 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 
 		ConnectableFlux<Integer> replay =
 				Flux.range(1, 5)
-				    .doOnRequest(requests::add)
-				    .replay(3);
+						.doOnRequest(requests::add)
+						.replay(3);
 
 		assertThat(requests).isEmpty();
 
@@ -381,8 +379,8 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 
 		ConnectableFlux<Integer> replay =
 				Flux.range(1, 5)
-				    .doOnRequest(requests::add)
-				    .replay(3);
+						.doOnRequest(requests::add)
+						.replay(3);
 
 		assertThat(requests).isEmpty();
 
@@ -399,9 +397,12 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void cancel() {
 		ConnectableFlux<Integer> replay = UnicastProcessor.<Integer>create()
-		                                             .replay(2);
+				.replay(2);
 
-		replay.subscribe(v -> {}, e -> { throw Exceptions.propagate(e); });
+		replay.subscribe(v -> {
+		}, e -> {
+			throw Exceptions.propagate(e);
+		});
 
 		Disposable connected = replay.connect();
 
@@ -409,72 +410,73 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 		//propagated by connect().dispose()
 		assertThatExceptionOfType(RuntimeException.class)
 				.isThrownBy(connected::dispose)
-	            .withMessage("Disconnected");
+				.withMessage("Disconnected");
 
 		boolean cancelled = ((FluxReplay.ReplaySubscriber) connected).cancelled;
 		assertThat(cancelled).isTrue();
 	}
 
 	@Test
-    public void scanMain() {
-        Flux<Integer> parent = Flux.just(1).map(i -> i);
-        FluxReplay<Integer> test = new FluxReplay<>(parent, 25, 1000, Schedulers.single());
+	public void scanMain() {
+		Flux<Integer> parent = Flux.just(1).map(i -> i);
+		FluxReplay<Integer> test = new FluxReplay<>(parent, 25, 1000, Schedulers.single());
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(25);
-        Assertions.assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(25);
+		Assertions.assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
+	}
 
 	@Test
-    public void scanInner() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxReplay<Integer> main = new FluxReplay<>(Flux.just(1), 2, 1000, Schedulers.single());
-        FluxReplay.ReplaySubscriber<Integer> parent = new FluxReplay.ReplaySubscriber<>(new FluxReplay.UnboundedReplayBuffer<>(10), main);
-        FluxReplay.ReplayInner<Integer> test = new FluxReplay.ReplayInner<>(actual, parent, false);
-        parent.add(test);
-        parent.buffer.replay(test);
+	public void scanInner() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxReplay<Integer> main = new FluxReplay<>(Flux.just(1), 2, 1000, Schedulers.single());
+		FluxReplay.ReplaySubscriber<Integer> parent = new FluxReplay.ReplaySubscriber<>(new FluxReplay.UnboundedReplayBuffer<>(10), main);
+		FluxReplay.ReplayInner<Integer> test = new FluxReplay.ReplayInner<>(actual, parent, false);
+		parent.add(test);
+		parent.buffer.replay(test);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0); // RS: TODO non-zero size
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(0); // RS: TODO non-zero size
 		Assertions.assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
 
 		test.request(35);
-        Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.parent.terminate();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.parent.terminate();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanSubscriber() {
+	public void scanSubscriber() {
 		FluxReplay<Integer> parent = new FluxReplay<>(Flux.just(1), 2, 1000, Schedulers.single());
-        FluxReplay.ReplaySubscriber<Integer> test = new FluxReplay.ReplaySubscriber<>(new FluxReplay.UnboundedReplayBuffer<>(10), parent);
-        Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
+		FluxReplay.ReplaySubscriber<Integer> test = new FluxReplay.ReplaySubscriber<>(new FluxReplay.UnboundedReplayBuffer<>(10), parent);
+		Subscription sub = Operators.emptySubscription();
+		test.onSubscribe(sub);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
-        Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-        Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(Integer.MAX_VALUE);
-        test.buffer.add(1);
-        Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
+		Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		Assertions.assertThat(test.scan(Scannable.Attr.CAPACITY)).isEqualTo(Integer.MAX_VALUE);
+		test.buffer.add(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
-        test.onError(new IllegalStateException("boom"));
-        Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-        test.terminate();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
+		test.onError(new IllegalStateException("boom"));
+		Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+		test.terminate();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancelled = true;
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancelled = true;
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test(timeout = 5000)
 	public void cacheSingleSubscriberWithMultipleRequestsDoesntHang() {
@@ -490,17 +492,17 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void cacheNotOverrunByMaxPrefetch() {
 		Flux<Integer> s = Flux.range(1, 30)
-		                      .cache(5);
+				.cache(5);
 
 		StepVerifier.create(s, 10)
-		    .expectNextCount(10)
-		    .thenRequest(20)
-		    .expectNextCount(20)
-		    .verifyComplete();
+				.expectNextCount(10)
+				.thenRequest(20)
+				.expectNextCount(20)
+				.verifyComplete();
 
 		StepVerifier.create(s)
-		            .expectNextCount(5)
-		            .verifyComplete();
+				.expectNextCount(5)
+				.verifyComplete();
 	}
 
 	@Test
@@ -508,36 +510,36 @@ public class FluxReplayTest extends FluxOperatorTest<String, String> {
 		ConnectableFlux<Long> connectableFlux = Flux.just(1L, 2L, 3L, 4L).replay(2);
 
 		StepVerifier.create(connectableFlux, 1)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .then(connectableFlux::connect)
-		            .expectNext(1L)
-		            .thenRequest(10)
-		            .expectNext(2L, 3L, 4L)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(10));
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.then(connectableFlux::connect)
+				.expectNext(1L)
+				.thenRequest(10)
+				.expectNext(2L, 3L, 4L)
+				.expectComplete()
+				.verify(Duration.ofSeconds(10));
 
 		StepVerifier.create(connectableFlux, 1)
-		            .expectNext(3L)
-		            .thenRequest(10)
-		            .expectNext(4L)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(10));
+				.expectNext(3L)
+				.thenRequest(10)
+				.expectNext(4L)
+				.expectComplete()
+				.verify(Duration.ofSeconds(10));
 	}
 
 	@Test
 	public void ifNoSubscriptionBeforeConnectThenUnbounded() {
 		AtomicLong totalRequested = new AtomicLong();
 		ConnectableFlux<Integer> connectable = Flux.range(1, 10)
-		                                           .doOnRequest(totalRequested::addAndGet)
-		                                           .replay(2);
+				.doOnRequest(totalRequested::addAndGet)
+				.replay(2);
 
 		connectable.connect();
 
 		StepVerifier.create(connectable)
-		            .expectNext(9, 10)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(10));
+				.expectNext(9, 10)
+				.expectComplete()
+				.verify(Duration.ofSeconds(10));
 
 		assertThat(totalRequested).hasValue(Long.MAX_VALUE);
 	}

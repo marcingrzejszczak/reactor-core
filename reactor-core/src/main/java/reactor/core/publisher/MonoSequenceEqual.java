@@ -33,20 +33,20 @@ import reactor.util.context.Context;
 
 import static reactor.core.publisher.Operators.cancelledSubscription;
 
-final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer<Boolean>  {
-	final Publisher<? extends T>            first;
-	final Publisher<? extends T>            second;
+final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer<Boolean> {
+	final Publisher<? extends T> first;
+	final Publisher<? extends T> second;
 	final BiPredicate<? super T, ? super T> comparer;
-	final int                               prefetch;
+	final int prefetch;
 
 	MonoSequenceEqual(Publisher<? extends T> first, Publisher<? extends T> second,
 			BiPredicate<? super T, ? super T> comparer, int prefetch) {
 		this.first = Objects.requireNonNull(first, "first");
 		this.second = Objects.requireNonNull(second, "second");
 		this.comparer = Objects.requireNonNull(comparer, "comparer");
-		if(prefetch < 1){
+		if (prefetch < 1) {
 			throw new IllegalArgumentException("Buffer size must be strictly positive: " +
-					""+ prefetch);
+					"" + prefetch);
 		}
 		this.prefetch = prefetch;
 	}
@@ -66,28 +66,23 @@ final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer
 	}
 
 	static final class EqualCoordinator<T> implements InnerProducer<Boolean> {
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<EqualCoordinator> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(EqualCoordinator.class, "once");
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<EqualCoordinator> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(EqualCoordinator.class, "wip");
 		final CoreSubscriber<? super Boolean> actual;
 		final BiPredicate<? super T, ? super T> comparer;
 		final Publisher<? extends T> first;
 		final Publisher<? extends T> second;
 		final EqualSubscriber<T> firstSubscriber;
 		final EqualSubscriber<T> secondSubscriber;
-
 		volatile boolean cancelled;
-
 		volatile int once;
-		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<EqualCoordinator> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(EqualCoordinator.class, "once");
-
 		T v1;
-
 		T v2;
-
 		volatile int wip;
-		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<EqualCoordinator> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(EqualCoordinator.class, "wip");
 
 		EqualCoordinator(CoreSubscriber<? super Boolean> actual, int prefetch,
 				Publisher<? extends T> first, Publisher<? extends T> second,
@@ -181,10 +176,10 @@ final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer
 			final EqualSubscriber<T> s2 = secondSubscriber;
 			final Queue<T> q2 = s2.queue;
 
-			for (;;) {
+			for (; ; ) {
 
 				long r = 0L;
-				for (;;) {
+				for (; ; ) {
 					if (cancelled) {
 						q1.clear();
 						q2.clear();
@@ -243,7 +238,8 @@ final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer
 
 						try {
 							c = comparer.test(v1, v2);
-						} catch (Throwable ex) {
+						}
+						catch (Throwable ex) {
 							Exceptions.throwIfFatal(ex);
 							cancel(s1, q1, s2, q2);
 
@@ -286,18 +282,16 @@ final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer
 
 	static final class EqualSubscriber<T>
 			implements InnerConsumer<T> {
-		final EqualCoordinator<T> parent;
-		final Queue<T>            queue;
-		final int                 prefetch;
-
-		volatile boolean done;
-		Throwable error;
-
-		Subscription cachedSubscription;
-		volatile Subscription subscription;
 		static final AtomicReferenceFieldUpdater<EqualSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(EqualSubscriber.class,
 						Subscription.class, "subscription");
+		final EqualCoordinator<T> parent;
+		final Queue<T> queue;
+		final int prefetch;
+		volatile boolean done;
+		Throwable error;
+		Subscription cachedSubscription;
+		volatile Subscription subscription;
 
 		EqualSubscriber(EqualCoordinator<T> parent, int prefetch) {
 			this.parent = parent;
@@ -336,7 +330,7 @@ final class MonoSequenceEqual<T> extends Mono<Boolean> implements SourceProducer
 		public void onNext(T t) {
 			if (!queue.offer(t)) {
 				onError(Operators.onOperatorError(cachedSubscription, Exceptions
-						.failWithOverflow(Exceptions.BACKPRESSURE_ERROR_QUEUE_FULL), t,
+								.failWithOverflow(Exceptions.BACKPRESSURE_ERROR_QUEUE_FULL), t,
 						currentContext()));
 				return;
 			}

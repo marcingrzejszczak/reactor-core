@@ -36,7 +36,7 @@ final class Context1 implements CoreContext {
 		Objects.requireNonNull(key, "key");
 		Objects.requireNonNull(value, "value");
 
-		if(this.key.equals(key)){
+		if (this.key.equals(key)) {
 			return new Context1(key, value);
 		}
 
@@ -61,7 +61,7 @@ final class Context1 implements CoreContext {
 	@SuppressWarnings("unchecked")
 	public <T> T get(Object key) {
 		if (hasKey(key)) {
-			return (T)this.value;
+			return (T) this.value;
 		}
 		throw new NoSuchElementException("Context does not contain key: " + key);
 	}
@@ -88,6 +88,6 @@ final class Context1 implements CoreContext {
 
 	@Override
 	public String toString() {
-		return "Context1{" + key + '='+ value + '}';
+		return "Context1{" + key + '=' + value + '}';
 	}
 }

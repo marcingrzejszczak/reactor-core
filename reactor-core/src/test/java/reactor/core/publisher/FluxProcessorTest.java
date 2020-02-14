@@ -36,23 +36,23 @@ public class FluxProcessorTest {
 
 	@Test(expected = NullPointerException.class)
 	@SuppressWarnings("unchecked")
-	public void failNullSubscriber(){
+	public void failNullSubscriber() {
 		FluxProcessor.wrap(UnicastProcessor.create(), UnicastProcessor.create())
-	                 .subscribe((Subscriber)null);
+				.subscribe((Subscriber) null);
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void failNullUpstream(){
+	public void failNullUpstream() {
 		FluxProcessor.wrap(null, UnicastProcessor.create());
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void failNullDownstream(){
+	public void failNullDownstream() {
 		FluxProcessor.wrap(UnicastProcessor.create(), null);
 	}
 
 	@Test
-	public void testCapacity(){
+	public void testCapacity() {
 		assertThat(FluxProcessor.wrap(UnicastProcessor.create(), UnicastProcessor
 				.create()).getBufferSize())
 				.isEqualTo(Integer.MAX_VALUE);
@@ -60,57 +60,57 @@ public class FluxProcessorTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	public void normalBlackboxProcessor(){
+	public void normalBlackboxProcessor() {
 		UnicastProcessor<Integer> upstream = UnicastProcessor.create();
 		FluxProcessor<Integer, Integer> processor =
 				FluxProcessor.wrap(upstream, upstream.map(i -> i + 1)
-				                                     .filter(i -> i % 2 == 0));
+						.filter(i -> i % 2 == 0));
 
 		DelegateProcessor<Integer, Integer> delegateProcessor =
-				(DelegateProcessor<Integer, Integer>)processor;
+				(DelegateProcessor<Integer, Integer>) processor;
 
 		delegateProcessor.parents().findFirst().ifPresent(s ->
 				assertThat(s).isInstanceOf(FluxFilterFuseable.class));
 
 
 		StepVerifier.create(processor)
-		            .then(() -> Flux.just(1, 2, 3).subscribe(processor))
-		            .expectNext(2, 4)
-		            .verifyComplete();
+				.then(() -> Flux.just(1, 2, 3).subscribe(processor))
+				.expectNext(2, 4)
+				.verifyComplete();
 	}
 
 	@Test
-	public void disconnectedBlackboxProcessor(){
+	public void disconnectedBlackboxProcessor() {
 		UnicastProcessor<Integer> upstream = UnicastProcessor.create();
 		FluxProcessor<Integer, Integer> processor =
 				FluxProcessor.wrap(upstream, Flux.just(1));
 
 		StepVerifier.create(processor)
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
-	public void symmetricBlackboxProcessor(){
+	public void symmetricBlackboxProcessor() {
 		UnicastProcessor<Integer> upstream = UnicastProcessor.create();
 		FluxProcessor<Integer, Integer> processor =
 				FluxProcessor.wrap(upstream, upstream);
 
 		StepVerifier.create(processor)
-	                .then(() -> Flux.just(1).subscribe(processor))
-	                .expectNext(1)
-	                .verifyComplete();
+				.then(() -> Flux.just(1).subscribe(processor))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
-	public void errorSymmetricBlackboxProcessor(){
+	public void errorSymmetricBlackboxProcessor() {
 		UnicastProcessor<Integer> upstream = UnicastProcessor.create();
 		FluxProcessor<Integer, Integer> processor =
 				FluxProcessor.wrap(upstream, upstream);
 
 		StepVerifier.create(processor)
-	                .then(() -> Flux.<Integer>error(new Exception("test")).subscribe(processor))
-	                .verifyErrorMessage("test");
+				.then(() -> Flux.<Integer>error(new Exception("test")).subscribe(processor))
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -120,12 +120,12 @@ public class FluxProcessorTest {
 		CountDownLatch latch = new CountDownLatch(1);
 		Scheduler scheduler = Schedulers.parallel();
 		processor.publishOn(scheduler)
-		         .delaySubscription(Duration.ofMillis(1000))
-		         .limitRate(1)
-		         .subscribe(d -> {
-			         count.incrementAndGet();
-			         latch.countDown();
-		         });
+				.delaySubscription(Duration.ofMillis(1000))
+				.limitRate(1)
+				.subscribe(d -> {
+					count.incrementAndGet();
+					latch.countDown();
+				});
 
 		FluxSink<Integer> session = processor.sink();
 		session.next(1);
@@ -147,8 +147,8 @@ public class FluxProcessorTest {
 		Scheduler c = Schedulers.single();
 		for (int i = 0; i < subs; i++) {
 			processor.publishOn(c)
-			         .limitRate(1)
-			         .subscribe(d -> latch.countDown(), null, latch::countDown);
+					.limitRate(1)
+					.subscribe(d -> latch.countDown(), null, latch::countDown);
 		}
 
 		FluxSink<Integer> session = processor.sink();
@@ -161,9 +161,10 @@ public class FluxProcessorTest {
 		session.complete();
 
 		boolean waited = latch.await(5, TimeUnit.SECONDS);
-		Assert.assertTrue( "latch : " + latch.getCount(), waited);
+		Assert.assertTrue("latch : " + latch.getCount(), waited);
 		c.dispose();
 	}
+
 	@Test
 	public void testEmitter2() throws Throwable {
 		FluxProcessor<Integer, Integer> processor = EmitterProcessor.create();
@@ -174,9 +175,9 @@ public class FluxProcessorTest {
 		Scheduler c = Schedulers.single();
 		for (int i = 0; i < subs; i++) {
 			processor.publishOn(c)
-			         .doOnComplete(latch::countDown)
-			         .doOnNext(d -> latch.countDown())
-			         .subscribe();
+					.doOnComplete(latch::countDown)
+					.doOnNext(d -> latch.countDown())
+					.subscribe();
 		}
 
 		FluxSink<Integer> session = processor.sink();
@@ -189,7 +190,7 @@ public class FluxProcessorTest {
 		session.complete();
 
 		boolean waited = latch.await(5, TimeUnit.SECONDS);
-		Assert.assertTrue( "latch : " + latch.getCount(), waited);
+		Assert.assertTrue("latch : " + latch.getCount(), waited);
 		c.dispose();
 	}
 
@@ -208,42 +209,42 @@ public class FluxProcessorTest {
 
 		try {
 			StepVerifier.create(serialized)
-			            .then(() -> {
-				            w1.schedule(() -> serialized.onNext("test1"));
-				            try {
-					            latch2.await();
-				            }
-				            catch (InterruptedException e) {
-					            Assert.fail();
-				            }
-				            w2.schedule(() -> {
-					            serialized.onNext("test2");
-					            serialized.onNext("test3");
-					            serialized.onComplete();
-					            latch.countDown();
-				            });
-			            })
-			            .assertNext(s -> {
-				            AssertionsForClassTypes.assertThat(s).isEqualTo("test1");
-				            AssertionsForClassTypes.assertThat(ref.get()).isNotEqualTo(Thread.currentThread());
-				            ref.set(Thread.currentThread());
-				            latch2.countDown();
-				            try {
-					            latch.await();
-				            }
-				            catch (InterruptedException e) {
-					            Assert.fail();
-				            }
-			            })
-			            .assertNext(s -> {
-				            AssertionsForClassTypes.assertThat(ref.get()).isEqualTo(Thread.currentThread());
-				            AssertionsForClassTypes.assertThat(s).isEqualTo("test2");
-			            })
-			            .assertNext(s -> {
-				            AssertionsForClassTypes.assertThat(ref.get()).isEqualTo(Thread.currentThread());
-				            AssertionsForClassTypes.assertThat(s).isEqualTo("test3");
-			            })
-			            .verifyComplete();
+					.then(() -> {
+						w1.schedule(() -> serialized.onNext("test1"));
+						try {
+							latch2.await();
+						}
+						catch (InterruptedException e) {
+							Assert.fail();
+						}
+						w2.schedule(() -> {
+							serialized.onNext("test2");
+							serialized.onNext("test3");
+							serialized.onComplete();
+							latch.countDown();
+						});
+					})
+					.assertNext(s -> {
+						AssertionsForClassTypes.assertThat(s).isEqualTo("test1");
+						AssertionsForClassTypes.assertThat(ref.get()).isNotEqualTo(Thread.currentThread());
+						ref.set(Thread.currentThread());
+						latch2.countDown();
+						try {
+							latch.await();
+						}
+						catch (InterruptedException e) {
+							Assert.fail();
+						}
+					})
+					.assertNext(s -> {
+						AssertionsForClassTypes.assertThat(ref.get()).isEqualTo(Thread.currentThread());
+						AssertionsForClassTypes.assertThat(s).isEqualTo("test2");
+					})
+					.assertNext(s -> {
+						AssertionsForClassTypes.assertThat(ref.get()).isEqualTo(Thread.currentThread());
+						AssertionsForClassTypes.assertThat(s).isEqualTo("test3");
+					})
+					.verifyComplete();
 		}
 		finally {
 			w1.dispose();

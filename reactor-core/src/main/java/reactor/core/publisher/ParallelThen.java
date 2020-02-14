@@ -56,22 +56,20 @@ final class ParallelThen extends Mono<Void> implements Scannable, Fuseable {
 	static final class ThenMain
 			extends Operators.MonoSubscriber<Object, Void> {
 
-		final ThenInner[] subscribers;
-
-		volatile int remaining;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ThenMain>
-		             REMAINING = AtomicIntegerFieldUpdater.newUpdater(
+				REMAINING = AtomicIntegerFieldUpdater.newUpdater(
 				ThenMain.class,
 				"remaining");
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThenMain, Throwable>
 				ERROR = AtomicReferenceFieldUpdater.newUpdater(
 				ThenMain.class,
 				Throwable.class,
 				"error");
+		final ThenInner[] subscribers;
+		volatile int remaining;
+		volatile Throwable error;
 
 		ThenMain(CoreSubscriber<? super Void> subscriber, int n) {
 			super(subscriber);
@@ -101,11 +99,11 @@ final class ParallelThen extends Mono<Void> implements Scannable, Fuseable {
 		}
 
 		void innerError(Throwable ex) {
-			if(ERROR.compareAndSet(this, null, ex)){
+			if (ERROR.compareAndSet(this, null, ex)) {
 				cancel();
 				actual.onError(ex);
 			}
-			else if(error != ex) {
+			else if (error != ex) {
 				Operators.onErrorDropped(ex, actual.currentContext());
 			}
 		}
@@ -119,15 +117,14 @@ final class ParallelThen extends Mono<Void> implements Scannable, Fuseable {
 
 	static final class ThenInner implements InnerConsumer<Object> {
 
-		final ThenMain parent;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThenInner, Subscription>
 				S = AtomicReferenceFieldUpdater.newUpdater(
 				ThenInner.class,
 				Subscription.class,
 				"s");
+		final ThenMain parent;
+		volatile Subscription s;
 
 		ThenInner(ThenMain parent) {
 			this.parent = parent;

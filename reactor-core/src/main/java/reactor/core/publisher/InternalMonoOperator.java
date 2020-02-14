@@ -30,7 +30,7 @@ import reactor.util.annotation.Nullable;
  * @param <O> produced type
  */
 abstract class InternalMonoOperator<I, O> extends MonoOperator<I, O> implements Scannable,
-                                                                                OptimizableOperator<O, I> {
+		OptimizableOperator<O, I> {
 
 	@Nullable
 	final OptimizableOperator<?, I> optimizableOperator;

@@ -22,15 +22,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Before;
 import org.junit.Test;
-
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.GroupedFlux;
 import reactor.test.subscriber.AssertSubscriber;
+
+import static org.junit.Assert.assertEquals;
 
 public class FluxWindowConsistencyTest {
 
@@ -84,7 +83,8 @@ public class FluxWindowConsistencyTest {
 		mainSubscriber.values().get(index)
 				.doOnCancel(() -> innerCancelled.incrementAndGet())
 				.doOnComplete(() -> {
-					innerCompleted.incrementAndGet();})
+					innerCompleted.incrementAndGet();
+				})
 				.doOnTerminate(() -> innerTerminated.incrementAndGet())
 				.takeWhile(innerCancelPredicate).subscribe(s);
 
@@ -95,8 +95,8 @@ public class FluxWindowConsistencyTest {
 	private void subscribe(Flux<Flux<Integer>> windows) {
 		mainSubscriber = AssertSubscriber.create();
 		windows.doOnCancel(() -> mainCancelled.incrementAndGet())
-			   .doOnComplete(() -> mainCompleted.incrementAndGet())
-			   .doOnTerminate(() -> mainTerminated.incrementAndGet()).subscribe(mainSubscriber);
+				.doOnComplete(() -> mainCompleted.incrementAndGet())
+				.doOnTerminate(() -> mainTerminated.incrementAndGet()).subscribe(mainSubscriber);
 	}
 
 	private void subscribeGroups(Flux<GroupedFlux<Integer, Integer>> groups) {

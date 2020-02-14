@@ -31,14 +31,14 @@ public abstract class AbstractProcessorVerification extends org.reactivestreams.
 
 //	final ExecutorService executorService = Executors.newCachedThreadPool();
 
+	AbstractProcessorVerification() {
+		super(new TestEnvironment(500, envDefaultNoSignalsTimeoutMillis(), false));
+	}
+
 	@Override
 	public ExecutorService publisherExecutorService() {
 //		return executorService;
 		return Executors.newCachedThreadPool();
-	}
-
-	AbstractProcessorVerification() {
-		super(new TestEnvironment(500, envDefaultNoSignalsTimeoutMillis(), false));
 	}
 
 	@Override

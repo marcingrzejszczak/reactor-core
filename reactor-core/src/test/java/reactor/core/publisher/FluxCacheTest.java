@@ -33,24 +33,24 @@ public class FluxCacheTest {
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000)
-				                                         , vts)
-		                                         .cache()
-		                                         .elapsed(vts);
+				.delayElements(Duration.ofMillis(1000)
+						, vts)
+				.cache()
+				.elapsed(vts);
 
 		StepVerifier.withVirtualTime(() -> source, () -> vts, Long.MAX_VALUE)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.withVirtualTime(() -> source, () -> vts, Long.MAX_VALUE)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -58,23 +58,23 @@ public class FluxCacheTest {
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis(1000)
-				                                         , vts)
-		                                         .cache(Duration.ofMillis(2000), vts)
-		                                         .elapsed(vts);
+				.delayElements(Duration.ofMillis(1000)
+						, vts)
+				.cache(Duration.ofMillis(2000), vts)
+				.elapsed(vts);
 
 		StepVerifier.withVirtualTime(() -> source, () -> vts, Long.MAX_VALUE)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.withVirtualTime(() -> source, () -> vts, Long.MAX_VALUE)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -82,23 +82,23 @@ public class FluxCacheTest {
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 
 		Flux<Tuple2<Long, Integer>> source = Flux.just(1, 2, 3)
-		                                         .delayElements(Duration.ofMillis
-				                                         (1000), vts)
-		                                         .cache(2, Duration.ofMillis(2000), vts)
-		                                         .elapsed(vts);
+				.delayElements(Duration.ofMillis
+						(1000), vts)
+				.cache(2, Duration.ofMillis(2000), vts)
+				.elapsed(vts);
 
 		StepVerifier.withVirtualTime(() -> source, () -> vts, Long.MAX_VALUE)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 1)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 1000 && t.getT2() == 3)
+				.verifyComplete();
 
 		StepVerifier.withVirtualTime(() -> source, () -> vts, Long.MAX_VALUE)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
-		            .expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 2)
+				.expectNextMatches(t -> t.getT1() == 0 && t.getT2() == 3)
+				.verifyComplete();
 
 	}
 
@@ -108,32 +108,32 @@ public class FluxCacheTest {
 
 		AtomicInteger i = new AtomicInteger(0);
 		Flux<Integer> source = Flux.defer(() -> Flux.just(i.incrementAndGet()))
-		                           .cache(Duration.ofMillis(2000), vts);
+				.cache(Duration.ofMillis(2000), vts);
 
 		StepVerifier.create(source)
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 
 		StepVerifier.create(source)
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 
 		vts.advanceTimeBy(Duration.ofSeconds(3));
 
 		StepVerifier.create(source)
-		            .expectNext(2)
-		            .verifyComplete();
+				.expectNext(2)
+				.verifyComplete();
 	}
 
 	@Test
 	public void cacheContextHistory() {
 		AtomicInteger contextFillCount = new AtomicInteger();
 		Flux<String> cached = Flux.just(1, 2)
-		                          .flatMap(i -> Mono.subscriberContext()
-		                                            .map(ctx -> ctx.getOrDefault("a", "BAD"))
-		                          )
-		                          .cache(1)
-		                          .subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
+				.flatMap(i -> Mono.subscriberContext()
+						.map(ctx -> ctx.getOrDefault("a", "BAD"))
+				)
+				.cache(1)
+				.subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
 
 		//at first pass, the context is captured
 		String cacheMiss = cached.blockLast();
@@ -162,12 +162,12 @@ public class FluxCacheTest {
 
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 		Flux<String> cached = Flux.just(1)
-		                          .flatMap(i -> Mono.subscriberContext()
-		                                            .map(ctx -> ctx.getOrDefault("a", "BAD"))
-		                          )
-		                          .replay(Duration.ofMillis(500), vts)
-		                          .autoConnect()
-		                          .subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
+				.flatMap(i -> Mono.subscriberContext()
+						.map(ctx -> ctx.getOrDefault("a", "BAD"))
+				)
+				.replay(Duration.ofMillis(500), vts)
+				.autoConnect()
+				.subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
 
 		//at first pass, the context is captured
 		String cacheMiss = cached.blockLast();

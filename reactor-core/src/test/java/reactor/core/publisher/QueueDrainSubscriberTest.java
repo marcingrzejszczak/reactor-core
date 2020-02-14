@@ -38,12 +38,12 @@ public class QueueDrainSubscriberTest {
 		});
 
 		final FieldLayout fieldAfterRequested = layout.fields()
-		                                              .tailSet(requested.get())
-		                                              .stream()
-		                                              .skip(1)
-		                                              .filter(fl -> fl.name().length() >= 4)
-		                                              .findFirst()
-		                                              .get();
+				.tailSet(requested.get())
+				.stream()
+				.skip(1)
+				.filter(fl -> fl.name().length() >= 4)
+				.findFirst()
+				.get();
 
 		assertThat(layout.fields().headSet(wip.get()))
 				.as("wip pre-padding")
@@ -56,8 +56,8 @@ public class QueueDrainSubscriberTest {
 				.allSatisfy(fl -> assertThat(fl.name()).startsWith("p").endsWith("a"));
 
 		assertThat(layout.fields().subSet(requested.get(), fieldAfterRequested)
-		                 .stream()
-		                 .skip(1))
+				.stream()
+				.skip(1))
 				.as("requested post-padding")
 				.hasSize(15)
 				.allSatisfy(fl -> assertThat(fl.name()).startsWith("q").isNotEqualTo("queue"));

@@ -56,15 +56,12 @@ final class FluxRetry<T> extends InternalFluxOperator<T, T> {
 	static final class RetrySubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final CorePublisher<? extends T> source;
-
-		long remaining;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RetrySubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(RetrySubscriber.class, "wip");
-
+				AtomicIntegerFieldUpdater.newUpdater(RetrySubscriber.class, "wip");
+		final CorePublisher<? extends T> source;
+		long remaining;
+		volatile int wip;
 		long produced;
 
 		RetrySubscriber(CorePublisher<? extends T> source, CoreSubscriber<? super T> actual, long remaining) {
@@ -109,7 +106,8 @@ final class FluxRetry<T> extends InternalFluxOperator<T, T> {
 
 					source.subscribe(this);
 
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 		}
 	}

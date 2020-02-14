@@ -31,7 +31,6 @@ import static reactor.core.publisher.FluxMetrics.resolveTags;
 
 /**
  * Activate metrics gathering on a {@link Mono} (Fuseable version), assumes Micrometer is on the classpath.
-
  * @implNote Metrics.isInstrumentationAvailable() test should be performed BEFORE instantiating or referencing this
  * class, otherwise a {@link NoClassDefFoundError} will be thrown if Micrometer is not there.
  *
@@ -41,7 +40,7 @@ import static reactor.core.publisher.FluxMetrics.resolveTags;
 final class MonoMetricsFuseable<T> extends InternalMonoOperator<T, T> implements Fuseable {
 
 	final String name;
-	final Tags   tags;
+	final Tags tags;
 
 	final MeterRegistry registryCandidate;
 

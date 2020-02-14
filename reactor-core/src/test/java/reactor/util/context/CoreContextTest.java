@@ -33,7 +33,7 @@ public class CoreContextTest {
 		Context result = initial.putAll(other);
 
 		assertThat(result).isInstanceOf(CoreContext.class)
-		                  .isInstanceOf(Context4.class);
+				.isInstanceOf(Context4.class);
 		Context4 context4 = (Context4) result;
 
 		assertThat(context4.key1).as("key1").isEqualTo(1);

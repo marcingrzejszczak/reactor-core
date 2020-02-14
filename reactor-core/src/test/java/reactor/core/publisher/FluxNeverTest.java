@@ -33,9 +33,9 @@ public class FluxNeverTest {
 		FluxNever.<Integer>instance().subscribe(ts);
 
 		ts
-		  .assertSubscribed()
-		  .assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertSubscribed()
+				.assertNoValues()
+				.assertNoError()
+				.assertNotComplete();
 	}
 }

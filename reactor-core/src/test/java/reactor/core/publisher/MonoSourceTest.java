@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-
 import reactor.core.Fuseable;
 import reactor.core.Scannable;
 import reactor.test.StepVerifier;
@@ -36,7 +35,7 @@ public class MonoSourceTest {
 		Mono<Integer> m = Mono.from(Flux.empty());
 		assertTrue(m == Mono.<Integer>empty());
 		StepVerifier.create(m)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
@@ -44,8 +43,8 @@ public class MonoSourceTest {
 		Mono<Integer> m = Mono.from(Flux.just(1));
 		assertTrue(m instanceof MonoJust);
 		StepVerifier.create(m)
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -53,7 +52,7 @@ public class MonoSourceTest {
 		Mono<Integer> m = Mono.from(Flux.error(new Exception("test")));
 		assertTrue(m instanceof MonoError);
 		StepVerifier.create(m)
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -61,63 +60,63 @@ public class MonoSourceTest {
 		Mono<Integer> m = Mono.from(Flux.error(new Error("test")));
 		assertTrue(m instanceof MonoError);
 		StepVerifier.create(m)
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void justNext() {
 		StepVerifier.create(Mono.from(Flux.just(1, 2, 3)))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void asJustNext() {
 		StepVerifier.create(Flux.just(1, 2, 3).as(Mono::from))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoNext() {
 		StepVerifier.create(Flux.just(1, 2, 3).next())
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoDirect() {
 		StepVerifier.create(Flux.just(1).as(Mono::fromDirect))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoDirectHidden() {
 		StepVerifier.create(Flux.just(1).hide().as(Mono::fromDirect))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoDirectIdentity() {
 		StepVerifier.create(Mono.just(1).as(Mono::fromDirect))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoDirectPlainFuseable() {
 		StepVerifier.create(Mono.just(1).as(TestPubFuseable::new))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoDirectPlain() {
 		StepVerifier.create(Mono.just(1).as(TestPub::new))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -128,7 +127,7 @@ public class MonoSourceTest {
 		AtomicBoolean succeeded = new AtomicBoolean();
 
 		Mono<String> withCallback = Mono.just("foo")
-		                                .doOnNext(v -> emitted.set(true));
+				.doOnNext(v -> emitted.set(true));
 
 		Mono<String> original = withCallback
 				.doOnCancel(() -> cancelled.set(true))
@@ -137,13 +136,13 @@ public class MonoSourceTest {
 				.hide();
 
 		assertThat(withCallback).as("withCallback is not Callable")
-		                    .isNotInstanceOf(Fuseable.ScalarCallable.class)
-		                    .isNotInstanceOf(Callable.class);
+				.isNotInstanceOf(Fuseable.ScalarCallable.class)
+				.isNotInstanceOf(Callable.class);
 
 		assertThat(original).as("original is not callable Mono")
-		                  .isNotInstanceOf(Fuseable.class)
-		                  .isNotInstanceOf(Fuseable.ScalarCallable.class)
-		                  .isNotInstanceOf(Callable.class);
+				.isNotInstanceOf(Fuseable.class)
+				.isNotInstanceOf(Fuseable.ScalarCallable.class)
+				.isNotInstanceOf(Callable.class);
 
 		Flux<String> firstConversion = Flux.from(original);
 		Mono<String> secondConversion = Mono.from(firstConversion);
@@ -180,8 +179,8 @@ public class MonoSourceTest {
 
 		assertThat(secondConversion.block()).isEqualTo("foo");
 		assertThat(secondConversion).as("conversions not negated but equivalent")
-		                            .isNotSameAs(original)
-		                            .hasSameClassAs(original);
+				.isNotSameAs(original)
+				.hasSameClassAs(original);
 	}
 
 	@Test
@@ -217,41 +216,15 @@ public class MonoSourceTest {
 
 		assertThat(secondConversion.block()).isEqualTo("foo");
 		assertThat(secondConversion).as("conversions not negated but equivalent")
-		                            .isNotSameAs(original)
-		                            .hasSameClassAs(original);
-	}
-
-	final static class TestPubFuseable implements Publisher<Integer>, Fuseable {
-		final Mono<Integer> m;
-
-		TestPubFuseable(Mono<Integer> mono) {
-			this.m = mono;
-		}
-
-		@Override
-		public void subscribe(Subscriber<? super Integer> s) {
-			m.subscribe(s);
-		}
-	}
-
-	final static class TestPub implements Publisher<Integer>, Fuseable {
-		final Mono<Integer> m;
-
-		TestPub(Mono<Integer> mono) {
-			this.m = mono;
-		}
-
-		@Override
-		public void subscribe(Subscriber<? super Integer> s) {
-			m.subscribe(s);
-		}
+				.isNotSameAs(original)
+				.hasSameClassAs(original);
 	}
 
 	@Test
 	public void transform() {
 		StepVerifier.create(Mono.just(1).transform(m -> Flux.just(1, 2, 3)))
-	                .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -269,7 +242,6 @@ public class MonoSourceTest {
 		assertThat(Scannable.from(test).scan(Scannable.Attr.PARENT)).isSameAs(source);
 		assertThat(Scannable.from(test).scan(Scannable.Attr.ACTUAL)).isNull();
 	}
-
 
 	@Test
 	public void scanSubscriberHide() {
@@ -296,5 +268,31 @@ public class MonoSourceTest {
 
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(source);
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isNull();
+	}
+
+	final static class TestPubFuseable implements Publisher<Integer>, Fuseable {
+		final Mono<Integer> m;
+
+		TestPubFuseable(Mono<Integer> mono) {
+			this.m = mono;
+		}
+
+		@Override
+		public void subscribe(Subscriber<? super Integer> s) {
+			m.subscribe(s);
+		}
+	}
+
+	final static class TestPub implements Publisher<Integer>, Fuseable {
+		final Mono<Integer> m;
+
+		TestPub(Mono<Integer> mono) {
+			this.m = mono;
+		}
+
+		@Override
+		public void subscribe(Subscriber<? super Integer> s) {
+			m.subscribe(s);
+		}
 	}
 }

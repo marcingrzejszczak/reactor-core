@@ -48,7 +48,7 @@ final class MonoAny<T> extends MonoFromFluxOperator<T, Boolean>
 		return new AnySubscriber<T>(actual, predicate);
 	}
 
-	static final class AnySubscriber<T> extends Operators.MonoSubscriber<T, Boolean>  {
+	static final class AnySubscriber<T> extends Operators.MonoSubscriber<T, Boolean> {
 		final Predicate<? super T> predicate;
 
 		Subscription s;
@@ -97,7 +97,8 @@ final class MonoAny<T> extends MonoFromFluxOperator<T, Boolean>
 
 			try {
 				b = predicate.test(t);
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				done = true;
 				actual.onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
 				return;

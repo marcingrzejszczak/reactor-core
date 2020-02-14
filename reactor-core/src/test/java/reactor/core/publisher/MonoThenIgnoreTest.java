@@ -32,44 +32,44 @@ public class MonoThenIgnoreTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Mono.just(1)
-		                        .thenEmpty(Flux.empty()))
-		            .verifyComplete();
+				.thenEmpty(Flux.empty()))
+				.verifyComplete();
 	}
 
-	Publisher<Void> scenario(){
+	Publisher<Void> scenario() {
 		return Mono.just(1)
-		    .thenEmpty(Mono.delay(Duration.ofSeconds(123)).then());
+				.thenEmpty(Mono.delay(Duration.ofSeconds(123)).then());
 	}
 
 	@Test
 	public void normal3() {
 		StepVerifier.create(Mono.just(1)
-		                        .then())
-		            .verifyComplete();
+				.then())
+				.verifyComplete();
 	}
 
 	@Test
 	public void chained() {
 		StepVerifier.create(Mono.just(0)
-		                        .then(Mono.just(1))
-		                        .then(Mono.just(2)))
-		            .expectNext(2)
-		            .verifyComplete();
+				.then(Mono.just(1))
+				.then(Mono.just(2)))
+				.expectNext(2)
+				.verifyComplete();
 	}
 
 
 	@Test
-    public void thenReturn() {
-	    StepVerifier.create(Mono.just(0).thenReturn(2))
-                    .expectNext(2)
-                    .verifyComplete();
-    }
+	public void thenReturn() {
+		StepVerifier.create(Mono.just(0).thenReturn(2))
+				.expectNext(2)
+				.verifyComplete();
+	}
 
 	@Test
 	public void normalTime() {
 		StepVerifier.withVirtualTime(this::scenario)
-		            .thenAwait(Duration.ofSeconds(123))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(123))
+				.verifyComplete();
 	}
 
 	@Test
@@ -77,8 +77,8 @@ public class MonoThenIgnoreTest {
 		TestPublisher<String> cancelTester = TestPublisher.create();
 
 		MonoProcessor<Void> processor = cancelTester.flux()
-		                                            .then()
-		                                            .toProcessor();
+				.then()
+				.toProcessor();
 		processor.subscribe();
 		processor.cancel();
 
@@ -87,7 +87,8 @@ public class MonoThenIgnoreTest {
 
 	@Test
 	public void scanThenAcceptInner() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoIgnoreThen.ThenIgnoreMain<String> main = new MonoIgnoreThen.ThenIgnoreMain<>(actual, new Publisher[0], Mono.just("foo"));
 
 		MonoIgnoreThen.ThenAcceptInner<String> test = new MonoIgnoreThen.ThenAcceptInner<>(main);
@@ -108,7 +109,8 @@ public class MonoThenIgnoreTest {
 
 	@Test
 	public void scanThenIgnoreInner() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoIgnoreThen.ThenIgnoreMain<String> main = new MonoIgnoreThen.ThenIgnoreMain<>(actual, new Publisher[0], Mono.just("foo"));
 
 		MonoIgnoreThen.ThenIgnoreInner test = new MonoIgnoreThen.ThenIgnoreInner(main);
@@ -127,19 +129,19 @@ public class MonoThenIgnoreTest {
 	@Test
 	public void fluxThenMonoAndShift() {
 		StepVerifier.create(Flux.just("Good Morning", "Hello")
-		                        .then(Mono.just("Good Afternoon"))
-		                        .then(Mono.just("Bye")))
-		            .expectNext("Bye")
-		            .verifyComplete();
+				.then(Mono.just("Good Afternoon"))
+				.then(Mono.just("Bye")))
+				.expectNext("Bye")
+				.verifyComplete();
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/661
 	@Test
 	public void monoThenMonoAndShift() {
 		StepVerifier.create(Mono.just("Good Morning")
-		                        .then(Mono.just("Good Afternoon"))
-		                        .then(Mono.just("Bye")))
-		            .expectNext("Bye")
-		            .verifyComplete();
+				.then(Mono.just("Good Afternoon"))
+				.then(Mono.just("Bye")))
+				.expectNext("Bye")
+				.verifyComplete();
 	}
 }

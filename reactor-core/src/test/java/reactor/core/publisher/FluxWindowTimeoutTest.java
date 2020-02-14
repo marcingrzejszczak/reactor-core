@@ -39,96 +39,96 @@ public class FluxWindowTimeoutTest {
 
 	Flux<List<Integer>> scenario_windowWithTimeoutAccumulateOnTimeOrSize() {
 		return Flux.range(1, 6)
-		           .delayElements(Duration.ofMillis(300))
-		           .windowTimeout(5, Duration.ofMillis(2000))
-		           .concatMap(Flux::buffer);
+				.delayElements(Duration.ofMillis(300))
+				.windowTimeout(5, Duration.ofMillis(2000))
+				.concatMap(Flux::buffer);
 	}
 
 	@Test
 	public void windowWithTimeoutAccumulateOnTimeOrSize() {
 		StepVerifier.withVirtualTime(this::scenario_windowWithTimeoutAccumulateOnTimeOrSize)
-		            .thenAwait(Duration.ofMillis(1500))
-		            .assertNext(s -> assertThat(s).containsExactly(1, 2, 3, 4, 5))
-		            .thenAwait(Duration.ofMillis(2000))
-		            .assertNext(s -> assertThat(s).containsExactly(6))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(1500))
+				.assertNext(s -> assertThat(s).containsExactly(1, 2, 3, 4, 5))
+				.thenAwait(Duration.ofMillis(2000))
+				.assertNext(s -> assertThat(s).containsExactly(6))
+				.verifyComplete();
 	}
 
 	@Test
 	public void longEmptyEmitsEmptyWindowsRegularly() {
 		StepVerifier.withVirtualTime(() -> Mono.delay(Duration.ofMillis(350))
-		                                       .ignoreElement()
-		                                       .as(Flux::from)
-		                                       .windowTimeout(1000, Duration.ofMillis(100))
-		                                       .concatMap(Flux::collectList)
+				.ignoreElement()
+				.as(Flux::from)
+				.windowTimeout(1000, Duration.ofMillis(100))
+				.concatMap(Flux::collectList)
 		)
-		            .thenAwait(Duration.ofMinutes(1))
-		            .assertNext(l -> assertThat(l).isEmpty())
-	                .assertNext(l -> assertThat(l).isEmpty())
-	                .assertNext(l -> assertThat(l).isEmpty())
-	                .assertNext(l -> assertThat(l).isEmpty())
-	                .verifyComplete();
+				.thenAwait(Duration.ofMinutes(1))
+				.assertNext(l -> assertThat(l).isEmpty())
+				.assertNext(l -> assertThat(l).isEmpty())
+				.assertNext(l -> assertThat(l).isEmpty())
+				.assertNext(l -> assertThat(l).isEmpty())
+				.verifyComplete();
 	}
 
 	@Test
 	public void longDelaysStartEndEmitEmptyWindows() {
 		StepVerifier.withVirtualTime(() ->
-			Mono.just("foo")
-			    .delayElement(Duration.ofMillis(400 + 400 + 300))
-				.concatWith(Mono.delay(Duration.ofMillis(100 + 400 + 100)).then(Mono.empty()))
-				.windowTimeout(1000, Duration.ofMillis(400))
-				.concatMap(Flux::collectList)
+				Mono.just("foo")
+						.delayElement(Duration.ofMillis(400 + 400 + 300))
+						.concatWith(Mono.delay(Duration.ofMillis(100 + 400 + 100)).then(Mono.empty()))
+						.windowTimeout(1000, Duration.ofMillis(400))
+						.concatMap(Flux::collectList)
 		)
-		            .thenAwait(Duration.ofHours(1))
-	                .assertNext(l -> assertThat(l).isEmpty())
-	                .assertNext(l -> assertThat(l).isEmpty())
-	                .assertNext(l -> assertThat(l).containsExactly("foo"))
-	                .assertNext(l -> assertThat(l).isEmpty())
-	                .assertNext(l -> assertThat(l).isEmpty()) //closing window
-	                .verifyComplete();
+				.thenAwait(Duration.ofHours(1))
+				.assertNext(l -> assertThat(l).isEmpty())
+				.assertNext(l -> assertThat(l).isEmpty())
+				.assertNext(l -> assertThat(l).containsExactly("foo"))
+				.assertNext(l -> assertThat(l).isEmpty())
+				.assertNext(l -> assertThat(l).isEmpty()) //closing window
+				.verifyComplete();
 	}
 
 	@Test
 	public void windowWithTimeoutStartsTimerOnSubscription() {
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(300))
-				    .thenMany(Flux.range(1, 3))
-				    .delayElements(Duration.ofMillis(150))
-				    .concatWith(Flux.range(4, 10).delaySubscription(Duration.ofMillis(500)))
-				    .windowTimeout(10, Duration.ofMillis(500))
-				    .flatMap(Flux::collectList)
+						.thenMany(Flux.range(1, 3))
+						.delayElements(Duration.ofMillis(150))
+						.concatWith(Flux.range(4, 10).delaySubscription(Duration.ofMillis(500)))
+						.windowTimeout(10, Duration.ofMillis(500))
+						.flatMap(Flux::collectList)
 		)
-		            .expectSubscription()
-		            .thenAwait(Duration.ofSeconds(100))
-		            .assertNext(l -> assertThat(l).containsExactly(1))
-		            .assertNext(l -> assertThat(l).containsExactly(2, 3))
-		            .assertNext(l -> assertThat(l).containsExactly(4, 5, 6, 7, 8, 9, 10, 11, 12, 13))
-		            .assertNext(l -> assertThat(l).isEmpty())
-		            .verifyComplete();
+				.expectSubscription()
+				.thenAwait(Duration.ofSeconds(100))
+				.assertNext(l -> assertThat(l).containsExactly(1))
+				.assertNext(l -> assertThat(l).containsExactly(2, 3))
+				.assertNext(l -> assertThat(l).containsExactly(4, 5, 6, 7, 8, 9, 10, 11, 12, 13))
+				.assertNext(l -> assertThat(l).isEmpty())
+				.verifyComplete();
 	}
 
 	@Test
 	public void noDelayMultipleOfSize() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .windowTimeout(5, Duration.ofSeconds(1))
-		                        .concatMap(Flux::collectList)
+				.windowTimeout(5, Duration.ofSeconds(1))
+				.concatMap(Flux::collectList)
 		)
-		            .assertNext(l -> assertThat(l).containsExactly(1, 2, 3, 4, 5))
-		            .assertNext(l -> assertThat(l).containsExactly(6, 7, 8, 9, 10))
-		            .assertNext(l -> assertThat(l).isEmpty())
-		            .verifyComplete();
+				.assertNext(l -> assertThat(l).containsExactly(1, 2, 3, 4, 5))
+				.assertNext(l -> assertThat(l).containsExactly(6, 7, 8, 9, 10))
+				.assertNext(l -> assertThat(l).isEmpty())
+				.verifyComplete();
 	}
 
 	@Test
 	public void noDelayGreaterThanSize() {
 		StepVerifier.create(Flux.range(1, 12)
-		                        .windowTimeout(5, Duration.ofHours(1))
-		                        .concatMap(Flux::collectList)
+				.windowTimeout(5, Duration.ofHours(1))
+				.concatMap(Flux::collectList)
 		)
-		            .assertNext(l -> assertThat(l).containsExactly(1, 2, 3, 4, 5))
-		            .assertNext(l -> assertThat(l).containsExactly(6, 7, 8, 9, 10))
-		            .assertNext(l -> assertThat(l).containsExactly(11, 12))
-		            .verifyComplete();
+				.assertNext(l -> assertThat(l).containsExactly(1, 2, 3, 4, 5))
+				.assertNext(l -> assertThat(l).containsExactly(6, 7, 8, 9, 10))
+				.assertNext(l -> assertThat(l).containsExactly(11, 12))
+				.verifyComplete();
 	}
 
 	@Test
@@ -156,9 +156,9 @@ public class FluxWindowTimeoutTest {
 		};
 
 		StepVerifier.create(Flux.range(1, 3).hide()
-		                        .windowTimeout(10, Duration.ofMillis(500), testScheduler))
-		            .expectNextCount(1)
-		            .verifyError(RejectedExecutionException.class);
+				.windowTimeout(10, Duration.ofMillis(500), testScheduler))
+				.expectNextCount(1)
+				.verifyError(RejectedExecutionException.class);
 	}
 
 	@Test
@@ -168,10 +168,10 @@ public class FluxWindowTimeoutTest {
 				Flux.range(1, 10),
 				Flux.range(11, 5).delayElements(Duration.ofMillis(15))
 		)
-		    .windowTimeout(10, Duration.ofMillis(1)).concatMap(w -> w).log())
-		            .thenAwait(Duration.ofMillis(95))
-		            .expectNextCount(16)
-		.verifyComplete();
+				.windowTimeout(10, Duration.ofMillis(1)).concatMap(w -> w).log())
+				.thenAwait(Duration.ofMillis(95))
+				.expectNextCount(16)
+				.verifyComplete();
 	}
 
 	@Test
@@ -210,13 +210,13 @@ public class FluxWindowTimeoutTest {
 		};
 
 		StepVerifier.create(Flux.range(1, 3).hide()
-		                        .windowTimeout(2, Duration.ofSeconds(2), testScheduler)
-		                        .concatMap(w -> {
-		                        	reject.set(true);
-		                        	return w.collectList();
-		                        })
+				.windowTimeout(2, Duration.ofSeconds(2), testScheduler)
+				.concatMap(w -> {
+					reject.set(true);
+					return w.collectList();
+				})
 		)
-		            .verifyError(RejectedExecutionException.class);
+				.verifyError(RejectedExecutionException.class);
 	}
 
 	@Test
@@ -226,43 +226,11 @@ public class FluxWindowTimeoutTest {
 		assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.immediate());
 	}
 
-	private static final class MyWorker implements Scheduler.Worker, Scannable {
-
-		@Override
-		public void dispose() { }
-
-		@Override
-		public Object scanUnsafe(Attr key) { return null; }
-
-		@Override
-		public Disposable schedule(Runnable task) { return null; }
-	}
-
-	private static final class MyScheduler implements Scheduler, Scannable {
-
-		static final Worker WORKER = new MyWorker();
-
-		@Override
-		public Disposable schedule(Runnable task) {
-			task.run();
-			return Disposables.disposed();
-		}
-
-		@Override
-		public Worker createWorker() {
-			return WORKER;
-		}
-
-		@Override
-		public Object scanUnsafe(Attr key) {
-			return null;
-		}
-	}
-
 	@Test
-    public void scanMainSubscriber() {
+	public void scanMainSubscriber() {
 		Scheduler scheduler = new MyScheduler();
-		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxWindowTimeout.WindowTimeoutSubscriber<Integer> test = new FluxWindowTimeout.WindowTimeoutSubscriber<>(actual,
 				123, Long.MAX_VALUE, scheduler);
 		Subscription parent = Operators.emptySubscription();
@@ -287,5 +255,43 @@ public class FluxWindowTimeoutTest {
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
 		test.cancel();
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+	}
+
+	private static final class MyWorker implements Scheduler.Worker, Scannable {
+
+		@Override
+		public void dispose() {
+		}
+
+		@Override
+		public Object scanUnsafe(Attr key) {
+			return null;
+		}
+
+		@Override
+		public Disposable schedule(Runnable task) {
+			return null;
+		}
+	}
+
+	private static final class MyScheduler implements Scheduler, Scannable {
+
+		static final Worker WORKER = new MyWorker();
+
+		@Override
+		public Disposable schedule(Runnable task) {
+			task.run();
+			return Disposables.disposed();
+		}
+
+		@Override
+		public Worker createWorker() {
+			return WORKER;
+		}
+
+		@Override
+		public Object scanUnsafe(Attr key) {
+			return null;
+		}
+	}
 }

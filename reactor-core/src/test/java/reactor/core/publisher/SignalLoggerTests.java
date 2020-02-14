@@ -24,8 +24,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.reactivestreams.Subscription;
-
-import reactor.core.CoreTest;
 import reactor.core.Fuseable;
 import reactor.core.Fuseable.SynchronousSubscription;
 import reactor.core.Scannable;
@@ -36,7 +34,14 @@ import reactor.util.Loggers;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class SignalLoggerTests {
 
@@ -56,10 +61,10 @@ public class SignalLoggerTests {
 		signalLogger.safeLog(SignalType.ON_NEXT, 404);
 
 		Assertions.assertThat(logger.getOutContent())
-		          .contains("UnsupportedOperationException has been raised by the logging framework, does your log() placement make sense? " +
-				          "eg. 'window(2).log()' instead of 'window(2).flatMap(w -> w.log())' - " +
-				          "java.lang.UnsupportedOperationException: boom on integer")
-		          .contains("onNext(404)");
+				.contains("UnsupportedOperationException has been raised by the logging framework, does your log() placement make sense? " +
+						"eg. 'window(2).log()' instead of 'window(2).flatMap(w -> w.log())' - " +
+						"java.lang.UnsupportedOperationException: boom on integer")
+				.contains("onNext(404)");
 	}
 
 	@Test
@@ -71,9 +76,9 @@ public class SignalLoggerTests {
 		signalLogger.safeLog(SignalType.ON_NEXT, new FluxPeekFuseableTest.AssertQueueSubscription<>());
 
 		Assertions.assertThat(logger.getOutContent())
-		          .contains("A Fuseable Subscription has been passed to the logging framework, this is generally a sign of a misplaced log(), " +
-				          "eg. 'window(2).log()' instead of 'window(2).flatMap(w -> w.log())'")
-		          .contains("onNext(reactor.core.publisher.FluxPeekFuseableTest$AssertQueueSubscription");
+				.contains("A Fuseable Subscription has been passed to the logging framework, this is generally a sign of a misplaced log(), " +
+						"eg. 'window(2).log()' instead of 'window(2).flatMap(w -> w.log())'")
+				.contains("onNext(reactor.core.publisher.FluxPeekFuseableTest$AssertQueueSubscription");
 	}
 
 	@Test
@@ -87,17 +92,17 @@ public class SignalLoggerTests {
 				SignalType.ON_SUBSCRIBE);
 
 		StepVerifier.create(flux.doOnSubscribe(Objects.requireNonNull(signalLogger.onSubscribeCall())))
-		            .expectSubscription()
-		            .expectNext(1, 2, 3)
-		            .expectComplete()
-		            .verify();
+				.expectSubscription()
+				.expectNext(1, 2, 3)
+				.expectComplete()
+				.verify();
 
 		//verify that passing the subscription directly to logger would have considered
 		// it a Collection and thus failed with this custom Logger.
 		StepVerifier.create(flux.doOnSubscribe(s -> signalLogger.log(SignalType.ON_SUBSCRIBE, s)))
-		            .expectErrorMatches(t -> t instanceof UnsupportedOperationException &&
-				            t.getMessage().equals(Fuseable.QueueSubscription.NOT_SUPPORTED_MESSAGE))
-		            .verify();
+				.expectErrorMatches(t -> t instanceof UnsupportedOperationException &&
+						t.getMessage().equals(Fuseable.QueueSubscription.NOT_SUPPORTED_MESSAGE))
+				.verify();
 	}
 
 	@Test
@@ -113,16 +118,16 @@ public class SignalLoggerTests {
 				SignalType.ON_NEXT);
 
 		StepVerifier.create(flux.doOnNext(Objects.requireNonNull(signalLogger.onNextCall())))
-		            .expectNextCount(2)
-		            .expectComplete()
-		            .verify();
+				.expectNextCount(2)
+				.expectComplete()
+				.verify();
 
 		//verify that passing the QueueSubscription directly to logger would have considered
 		// it a Collection and thus failed with this custom Logger.
 		StepVerifier.create(flux.doOnNext(w -> signalLogger.log(SignalType.ON_NEXT, w)))
-		            .expectErrorMatches(t -> t instanceof UnsupportedOperationException &&
-				            t.getMessage().equals(Fuseable.QueueSubscription.NOT_SUPPORTED_MESSAGE))
-		            .verify();
+				.expectErrorMatches(t -> t instanceof UnsupportedOperationException &&
+						t.getMessage().equals(Fuseable.QueueSubscription.NOT_SUPPORTED_MESSAGE))
+				.verify();
 	}
 
 	@Test
@@ -155,10 +160,12 @@ public class SignalLoggerTests {
 	public void anonymousSubscriptionAsString() {
 		Subscription s = new Subscription() {
 			@Override
-			public void request(long n) {}
+			public void request(long n) {
+			}
 
 			@Override
-			public void cancel() {}
+			public void cancel() {
+			}
 		};
 
 		assertThat(SignalLogger.subscriptionAsString(s), is("SignalLoggerTests$2"));
@@ -296,7 +303,7 @@ public class SignalLoggerTests {
 		Logger mockLogger = Mockito.mock(Logger.class);
 
 		source.log(mockLogger, level, false, SignalType.ON_NEXT)
-		      .subscribe();
+				.subscribe();
 
 		verify(mockLogger, only()).warn(anyString(), eq(SignalType.ON_NEXT),
 				eq("foo"));
@@ -311,7 +318,7 @@ public class SignalLoggerTests {
 		Logger mockLogger = Mockito.mock(Logger.class);
 
 		source.log(mockLogger, level, false, SignalType.ON_NEXT)
-		      .subscribe();
+				.subscribe();
 
 		verify(mockLogger, only()).warn(anyString(), eq(SignalType.ON_NEXT),
 				eq("foo"));
@@ -320,17 +327,23 @@ public class SignalLoggerTests {
 
 	private void demonstrateLogError() {
 		Loggers.getLogger("logError.default")
-		       .warn("The following logs should demonstrate similar error output, but respectively at ERROR, DEBUG and TRACE levels");
+				.warn("The following logs should demonstrate similar error output, but respectively at ERROR, DEBUG and TRACE levels");
 		Mono<Object> error = Mono.error(new IllegalStateException("boom"));
 
 		error.log("logError.default")
-		     .subscribe(v -> {}, e -> {});
+				.subscribe(v -> {
+				}, e -> {
+				});
 
 		error.log("logError.fine", Level.FINE)
-		     .subscribe(v -> {}, e -> {});
+				.subscribe(v -> {
+				}, e -> {
+				});
 
 		error.log("logError.finest", Level.FINEST)
-		     .subscribe(v -> {}, e -> {});
+				.subscribe(v -> {
+				}, e -> {
+				});
 	}
 
 	//=========================================================
@@ -356,7 +369,8 @@ public class SignalLoggerTests {
 			for (final Object o : c) {
 				if (isFirst) {
 					isFirst = false;
-				} else {
+				}
+				else {
 					str.append(", ");
 				}
 				str.append(o);

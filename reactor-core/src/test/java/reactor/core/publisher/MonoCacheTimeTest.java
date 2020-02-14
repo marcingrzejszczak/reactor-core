@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
-
 import reactor.core.Disposable;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
@@ -93,9 +92,18 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		AtomicInteger onEmptyTtl = new AtomicInteger();
 
 		Mono<Integer> cached = new MonoCacheTime<>(source,
-				v -> { onNextTtl.incrementAndGet(); return Duration.ofMillis(100 * v);},
-				e -> { onErrorTtl.incrementAndGet(); return Duration.ofMillis(300);},
-				() -> { onEmptyTtl.incrementAndGet(); return Duration.ZERO;} ,
+				v -> {
+					onNextTtl.incrementAndGet();
+					return Duration.ofMillis(100 * v);
+				},
+				e -> {
+					onErrorTtl.incrementAndGet();
+					return Duration.ofMillis(300);
+				},
+				() -> {
+					onEmptyTtl.incrementAndGet();
+					return Duration.ZERO;
+				},
 				Schedulers.parallel());
 
 		cached.block();
@@ -136,16 +144,25 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		AtomicInteger count = new AtomicInteger();
 
 		Mono<Integer> source = Mono.fromCallable(count::incrementAndGet)
-		                           .filter(i -> i > 1);
+				.filter(i -> i > 1);
 
 		AtomicInteger onNextTtl = new AtomicInteger();
 		AtomicInteger onErrorTtl = new AtomicInteger();
 		AtomicInteger onEmptyTtl = new AtomicInteger();
 
 		Mono<Integer> cached = new MonoCacheTime<>(source,
-				v -> { onNextTtl.incrementAndGet(); return Duration.ofMillis(100 * v);},
-				e -> { onErrorTtl.incrementAndGet(); return Duration.ofMillis(4000);},
-				() -> { onEmptyTtl.incrementAndGet(); return Duration.ofMillis(300);} ,
+				v -> {
+					onNextTtl.incrementAndGet();
+					return Duration.ofMillis(100 * v);
+				},
+				e -> {
+					onErrorTtl.incrementAndGet();
+					return Duration.ofMillis(4000);
+				},
+				() -> {
+					onEmptyTtl.incrementAndGet();
+					return Duration.ofMillis(300);
+				},
 				Schedulers.parallel());
 
 		assertThat(cached.block())
@@ -192,12 +209,12 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(ArithmeticException.class)
-				            .hasNoSuppressedExceptions())
-		            .verifyThenAssertThat()
-		            .hasDropped(0)
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(ArithmeticException.class)
+						.hasNoSuppressedExceptions())
+				.verifyThenAssertThat()
+				.hasDropped(0)
+				.hasNotDroppedErrors();
 	}
 
 	@Test
@@ -205,17 +222,19 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		Mono<Integer> cached = new MonoCacheTime<>(Mono.empty(),
 				Duration::ofSeconds,
 				t -> Duration.ofSeconds(10),
-				() -> { throw new IllegalStateException("boom"); },
+				() -> {
+					throw new IllegalStateException("boom");
+				},
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("boom")
-				            .hasNoSuppressedExceptions())
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom")
+						.hasNoSuppressedExceptions())
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 	}
 
 	@Test
@@ -223,18 +242,20 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		Throwable exception = new IllegalArgumentException("foo");
 		Mono<Integer> cached = new MonoCacheTime<>(Mono.error(exception),
 				Duration::ofSeconds,
-				t -> { throw new IllegalStateException("boom"); },
+				t -> {
+					throw new IllegalStateException("boom");
+				},
 				() -> Duration.ZERO,
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("boom")
-				            .hasSuppressedException(exception))
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom")
+						.hasSuppressedException(exception))
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 	}
 
 	@Test
@@ -251,23 +272,23 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("transient")
-				            .hasNoSuppressedExceptions())
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("transient")
+						.hasNoSuppressedExceptions())
+				.verify();
 
 		StepVerifier.create(cached)
-		            .expectNext(2)
-		            .expectComplete()
-		            .verify();
+				.expectNext(2)
+				.expectComplete()
+				.verify();
 
 		assertThat(cached.block())
 				.as("cached after cache miss")
 				.isEqualTo(2);
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Test
@@ -284,22 +305,22 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("transient")
-				            .hasNoSuppressedExceptions())
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("transient")
+						.hasNoSuppressedExceptions())
+				.verify();
 
 		StepVerifier.create(cached)
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		assertThat(cached.block())
 				.as("cached after cache miss")
 				.isNull();
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Test
@@ -317,24 +338,24 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("transient")
-				            .hasSuppressedException(exception))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("transient")
+						.hasSuppressedException(exception))
+				.verify();
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalArgumentException.class)
-				            .hasMessage("foo"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalArgumentException.class)
+						.hasMessage("foo"))
+				.verify();
 
 		assertThatExceptionOfType(IllegalArgumentException.class)
 				.as("cached after cache miss")
 				.isThrownBy(cached::block);
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Test
@@ -351,27 +372,27 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("transient")
-				            .hasNoSuppressedExceptions())
-		            .verifyThenAssertThat()
-		            .hasDropped(1)
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("transient")
+						.hasNoSuppressedExceptions())
+				.verifyThenAssertThat()
+				.hasDropped(1)
+				.hasNotDroppedErrors();
 
 		StepVerifier.create(cached)
-		            .expectNext(2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.expectNext(2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 		assertThat(cached.block())
 				.as("cached after cache miss")
 				.isEqualTo(2);
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Test
@@ -388,26 +409,26 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("transient")
-				            .hasNoSuppressedExceptions())
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("transient")
+						.hasNoSuppressedExceptions())
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 
 		StepVerifier.create(cached)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 		assertThat(cached.block())
 				.as("cached after cache miss")
 				.isNull();
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Test
@@ -425,28 +446,28 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("transient")
-				            .hasSuppressedException(exception))
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("transient")
+						.hasSuppressedException(exception))
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalArgumentException.class)
-				            .hasMessage("foo"))
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalArgumentException.class)
+						.hasMessage("foo"))
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 		assertThatExceptionOfType(IllegalArgumentException.class)
 				.as("cached after cache miss")
 				.isThrownBy(cached::block);
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Test
@@ -467,22 +488,22 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				Schedulers.parallel());
 
 		StepVerifier.create(cached)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("boom"))
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom"))
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 
 		StepVerifier.create(cached)
-		            .expectNext(2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.expectNext(2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 		assertThat(count).as("source invocations")
-		                 .hasValue(2);
+				.hasValue(2);
 	}
 
 	@Override
@@ -497,20 +518,20 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		Mono<Integer> source = Mono.defer(() -> Mono.just(subCount.incrementAndGet()));
 
 		Mono<Integer> cached = source.cache(Duration.ofMillis(100), vts)
-		                             .hide();
+				.hide();
 
 		StepVerifier.create(cached)
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .as("first subscription caches 1")
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.as("first subscription caches 1")
+				.verifyComplete();
 
 		vts.advanceTimeBy(Duration.ofMillis(110));
 
 		StepVerifier.create(cached)
-		            .expectNext(2)
-		            .as("cached value should expire")
-		            .verifyComplete();
+				.expectNext(2)
+				.as("cached value should expire")
+				.verifyComplete();
 
 		assertThat(subCount.get()).isEqualTo(2);
 	}
@@ -521,18 +542,18 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		Mono<Integer> source = Mono.defer(() -> Mono.just(subCount.incrementAndGet()));
 
 		Mono<Integer> cached = source.cache(Duration.ofMillis(100))
-		                             .hide();
+				.hide();
 
 		StepVerifier.create(cached)
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .as("first subscription caches 1")
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.as("first subscription caches 1")
+				.verifyComplete();
 
 		StepVerifier.create(cached)
-		            .expectNext(1)
-		            .as("second subscription uses cache")
-		            .verifyComplete();
+				.expectNext(1)
+				.as("second subscription uses cache")
+				.verifyComplete();
 
 		assertThat(subCount.get()).isEqualTo(1);
 	}
@@ -549,17 +570,17 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				.filter(always -> true);
 
 		StepVerifier.create(cached)
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .as("first subscription caches 1")
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.as("first subscription caches 1")
+				.verifyComplete();
 
 		vts.advanceTimeBy(Duration.ofMillis(110));
 
 		StepVerifier.create(cached)
-		            .expectNext(2)
-		            .as("cached value should expire")
-		            .verifyComplete();
+				.expectNext(2)
+				.as("cached value should expire")
+				.verifyComplete();
 
 		assertThat(subCount.get()).isEqualTo(2);
 	}
@@ -574,15 +595,15 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 				.filter(always -> true);
 
 		StepVerifier.create(cached)
-		            .expectNoFusionSupport()
-		            .expectNext(1)
-		            .as("first subscription caches 1")
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.expectNext(1)
+				.as("first subscription caches 1")
+				.verifyComplete();
 
 		StepVerifier.create(cached)
-		            .expectNext(1)
-		            .as("second subscription uses cache")
-		            .verifyComplete();
+				.expectNext(1)
+				.as("second subscription uses cache")
+				.verifyComplete();
 
 		assertThat(subCount.get()).isEqualTo(1);
 	}
@@ -591,8 +612,8 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 	public void totalCancelDoesntCancelSource() {
 		AtomicInteger cancelled = new AtomicInteger();
 		Mono<Object> cached = Mono.never()
-		                          .doOnCancel(cancelled::incrementAndGet)
-		                          .cache(Duration.ofMillis(200));
+				.doOnCancel(cancelled::incrementAndGet)
+				.cache(Duration.ofMillis(200));
 
 		Disposable d1 = cached.subscribe();
 		Disposable d2 = cached.subscribe();
@@ -609,9 +630,9 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		AtomicInteger subscribed = new AtomicInteger();
 		TestPublisher<Integer> source = TestPublisher.create();
 		Mono<Integer> cached = source.mono()
-		                             .doOnSubscribe(s -> subscribed.incrementAndGet())
-		                            .doOnCancel(cancelled::incrementAndGet)
-		                            .cache(Duration.ofMillis(200));
+				.doOnSubscribe(s -> subscribed.incrementAndGet())
+				.doOnCancel(cancelled::incrementAndGet)
+				.cache(Duration.ofMillis(200));
 
 		Disposable d1 = cached.subscribe();
 		Disposable d2 = cached.subscribe();
@@ -623,9 +644,9 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		assertThat(subscribed.get()).isEqualTo(1);
 
 		StepVerifier.create(cached)
-		            .then(() -> source.emit(100))
-		            .expectNext(100)
-		            .verifyComplete();
+				.then(() -> source.emit(100))
+				.expectNext(100)
+				.verifyComplete();
 
 		assertThat(cancelled.get()).isEqualTo(0);
 		assertThat(subscribed.get()).isEqualTo(1);
@@ -635,8 +656,8 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 	public void partialCancelDoesntCancelSource() {
 		AtomicInteger cancelled = new AtomicInteger();
 		Mono<Object> cached = Mono.never()
-		                          .doOnCancel(cancelled::incrementAndGet)
-		                          .cache(Duration.ofMillis(200));
+				.doOnCancel(cancelled::incrementAndGet)
+				.cache(Duration.ofMillis(200));
 
 		Disposable d1 = cached.subscribe();
 		Disposable d2 = cached.subscribe();
@@ -756,8 +777,8 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		AtomicInteger contextFillCount = new AtomicInteger();
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 		Mono<Context> cached = Mono.subscriberContext()
-		                           .as(m -> new MonoCacheTime<>(m, Duration.ofMillis(500), vts))
-		                           .subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
+				.as(m -> new MonoCacheTime<>(m, Duration.ofMillis(500), vts))
+				.subscriberContext(ctx -> ctx.put("a", "GOOD" + contextFillCount.incrementAndGet()));
 
 		//at first pass, the context is captured
 		String cacheMiss = cached.map(x -> x.getOrDefault("a", "BAD")).block();
@@ -796,9 +817,9 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 		assertThat(virtualTimeScheduler.getScheduledTaskCount()).isZero().as("initial scheduled count");
 
 		cachedMono.repeat(5)
-		          .as(StepVerifier::create)
-		          .expectNext(1, 1, 1, 1, 1, 1)
-		          .verifyComplete();
+				.as(StepVerifier::create)
+				.expectNext(1, 1, 1, 1, 1, 1)
+				.verifyComplete();
 
 		assertThat(virtualTimeScheduler.getScheduledTaskCount()).isZero().as("post repeat scheduled count");
 	}
@@ -813,9 +834,9 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 
 		assertThat(virtualTimeScheduler.getScheduledTaskCount()).isZero().as("initial scheduled count");
 		cachedMono.repeat(5)
-		          .as(StepVerifier::create)
-		          .expectNext(1, 1, 1, 1, 1, 1)
-		          .verifyComplete();
+				.as(StepVerifier::create)
+				.expectNext(1, 1, 1, 1, 1, 1)
+				.verifyComplete();
 		assertThat(virtualTimeScheduler.getScheduledTaskCount()).isOne().as("once cached scheduled count");
 	}
 
@@ -829,9 +850,9 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 
 		assertThat(virtualTimeScheduler.getScheduledTaskCount()).isZero().as("initial scheduled count");
 		cachedMono.repeat(5)
-		          .as(StepVerifier::create)
-		          .expectNext(1, 2, 3, 4, 5, 6)
-		          .verifyComplete();
+				.as(StepVerifier::create)
+				.expectNext(1, 2, 3, 4, 5, 6)
+				.verifyComplete();
 		assertThat(virtualTimeScheduler.getScheduledTaskCount()).isZero().as("once cache skipped scheduled count");
 	}
 
@@ -839,7 +860,7 @@ public class MonoCacheTimeTest extends MonoOperatorTest<String, String> {
 	public void noTtlCancelDoesntCancelSource() {
 		AtomicInteger cancelled = new AtomicInteger();
 		Mono<Object> cached = new MonoCacheTime<>(Mono.never()
-		                          .doOnCancel(cancelled::incrementAndGet));
+				.doOnCancel(cancelled::incrementAndGet));
 
 		Disposable d1 = cached.subscribe();
 		Disposable d2 = cached.subscribe();

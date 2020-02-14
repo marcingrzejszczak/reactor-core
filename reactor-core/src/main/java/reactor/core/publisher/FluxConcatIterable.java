@@ -69,14 +69,12 @@ final class FluxConcatIterable<T> extends Flux<T> implements SourceProducer<T> {
 	static final class ConcatIterableSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Iterator<? extends Publisher<? extends T>> it;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatIterableSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ConcatIterableSubscriber.class,
 						"wip");
-
+		final Iterator<? extends Publisher<? extends T>> it;
+		volatile int wip;
 		long produced;
 
 		ConcatIterableSubscriber(CoreSubscriber<? super T> actual,

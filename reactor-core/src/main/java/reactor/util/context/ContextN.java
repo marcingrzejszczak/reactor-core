@@ -127,7 +127,7 @@ final class ContextN extends LinkedHashMap<Object, Object>
 		if (o != null) {
 			return o;
 		}
-		throw new NoSuchElementException("Context does not contain key: "+key);
+		throw new NoSuchElementException("Context does not contain key: " + key);
 	}
 
 	@Override
@@ -154,7 +154,7 @@ final class ContextN extends LinkedHashMap<Object, Object>
 			return newContext;
 		}
 
-		Context[] holder = new Context[]{base};
+		Context[] holder = new Context[] {base};
 		forEach((k, v) -> holder[0] = holder[0].put(k, v));
 		return holder[0];
 	}

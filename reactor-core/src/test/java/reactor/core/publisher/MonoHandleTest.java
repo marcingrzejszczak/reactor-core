@@ -25,32 +25,33 @@ public class MonoHandleTest {
 	@Test
 	public void normal() {
 		Mono.just(1)
-		    .handle((v, s) -> s.next(v * 2))
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertContainValues(singleton(2))
-		    .assertNoError()
-		    .assertComplete();
+				.handle((v, s) -> s.next(v * 2))
+				.subscribeWith(AssertSubscriber.create())
+				.assertContainValues(singleton(2))
+				.assertNoError()
+				.assertComplete();
 	}
+
 	@Test
 	public void normalHide() {
 		Mono.just(1)
-		    .hide()
-		    .handle((v, s) -> s.next(v * 2))
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertContainValues(singleton(2))
-		    .assertNoError()
-		    .assertComplete();
+				.hide()
+				.handle((v, s) -> s.next(v * 2))
+				.subscribeWith(AssertSubscriber.create())
+				.assertContainValues(singleton(2))
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
 	public void filterNullMapResult() {
 
 		Mono.just(1)
-		    .handle((v, s) -> { /*ignore*/ })
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertValueCount(0)
-		    .assertNoError()
-		    .assertComplete();
+				.handle((v, s) -> { /*ignore*/ })
+				.subscribeWith(AssertSubscriber.create())
+				.assertValueCount(0)
+				.assertNoError()
+				.assertComplete();
 	}
 
 }

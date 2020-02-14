@@ -17,7 +17,6 @@
 package reactor.core.publisher;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -40,8 +39,18 @@ import reactor.core.Fuseable;
 import reactor.test.StepVerifier;
 import reactor.test.subscriber.AssertSubscriber;
 
-import static org.assertj.core.api.Assertions.*;
-import static reactor.core.publisher.FluxMetrics.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static reactor.core.publisher.FluxMetrics.METER_FLOW_DURATION;
+import static reactor.core.publisher.FluxMetrics.METER_ON_NEXT_DELAY;
+import static reactor.core.publisher.FluxMetrics.METER_REQUESTED;
+import static reactor.core.publisher.FluxMetrics.METER_SUBSCRIBED;
+import static reactor.core.publisher.FluxMetrics.REACTOR_DEFAULT_NAME;
+import static reactor.core.publisher.FluxMetrics.TAG_CANCEL;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_COMPLETE;
+import static reactor.core.publisher.FluxMetrics.TAG_ON_ERROR;
+import static reactor.core.publisher.FluxMetrics.TAG_SEQUENCE_NAME;
 
 public class FluxMetricsFuseableTest {
 
@@ -155,8 +164,8 @@ public class FluxMetricsFuseableTest {
 
 		//test meters
 		Timer terminationTimer = registry.find(METER_FLOW_DURATION)
-		                          .tags(Tags.of(TAG_ON_COMPLETE))
-		                          .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		assertThat(terminationTimer).isNotNull();
 		assertThat(terminationTimer.max(TimeUnit.MILLISECONDS)).as("terminate max delay").isEqualTo(323);
@@ -188,12 +197,12 @@ public class FluxMetricsFuseableTest {
 
 		clock.add(Duration.ofMillis(123));
 		assertThatIllegalStateException().isThrownBy(fuseableSubscriber::poll)
-		                                 .withMessage("AssertQueueSubscriber poll error");
+				.withMessage("AssertQueueSubscriber poll error");
 
 		//test meters
 		Timer terminationTimer = registry.find(METER_FLOW_DURATION)
-		                          .tags(Tags.of(TAG_ON_ERROR))
-		                          .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		assertThat(terminationTimer).isNotNull();
 		assertThat(terminationTimer.max(TimeUnit.MILLISECONDS)).as("terminate max delay").isEqualTo(323);
@@ -235,9 +244,9 @@ public class FluxMetricsFuseableTest {
 	public void splitMetricsOnNameFuseable() {
 		final Flux<Integer> unnamedSource = Flux.just(0).map(v -> 100 / v);
 		final Flux<Integer> namedSource = Flux.range(1, 40)
-		                                      .map(i -> 100 / (40 - i))
-		                                      .name("foo");
-		
+				.map(i -> 100 / (40 - i))
+				.name("foo");
+
 		final Flux<Integer> unnamed = new FluxMetricsFuseable<>(unnamedSource, registry)
 				.onErrorResume(e -> Mono.empty());
 		final Flux<Integer> named = new FluxMetricsFuseable<>(namedSource, registry)
@@ -267,11 +276,11 @@ public class FluxMetricsFuseableTest {
 	@Test
 	public void usesTagsFuseable() {
 		Flux<Integer> source = Flux.range(1, 8)
-		                           .tag("tag1", "A")
-		                           .name("usesTags")
-		                           .tag("tag2", "foo");
+				.tag("tag1", "A")
+				.name("usesTags")
+				.tag("tag2", "foo");
 		new FluxMetricsFuseable<>(source, registry)
-		    .blockLast();
+				.blockLast();
 
 		Timer meter = registry
 				.find(METER_ON_NEXT_DELAY)
@@ -288,7 +297,7 @@ public class FluxMetricsFuseableTest {
 	public void onNextTimerCountsFuseable() {
 		Flux<Integer> source = Flux.range(1, 123);
 		new FluxMetricsFuseable<>(source, registry)
-		    .blockLast();
+				.blockLast();
 
 		Timer nextMeter = registry
 				.find(METER_ON_NEXT_DELAY)
@@ -299,15 +308,15 @@ public class FluxMetricsFuseableTest {
 
 		Flux<Integer> source2 = Flux.range(1, 10);
 		new FluxMetricsFuseable<>(source2, registry)
-		    .take(3)
-		    .blockLast();
+				.take(3)
+				.blockLast();
 
 		assertThat(nextMeter.count()).isEqualTo(126L);
 
 		Flux<Integer> source3 = Flux.range(1, 1000)
-		    .name("foo");
+				.name("foo");
 		new FluxMetricsFuseable<>(source3, registry)
-		    .blockLast();
+				.blockLast();
 
 		assertThat(nextMeter.count())
 				.as("notTakingNamedIntoAccount")
@@ -318,44 +327,44 @@ public class FluxMetricsFuseableTest {
 	@Test
 	public void subscribeToCompleteFuseable() {
 		Flux<String> source = Flux.just(1)
-		                          .doOnNext(v -> {
-			                          try {
-				                          Thread.sleep(100);
-			                          }
-			                          catch (InterruptedException e) {
-				                          e.printStackTrace();
-			                          }
-		                          })
-		                          .map(i -> "foo");
+				.doOnNext(v -> {
+					try {
+						Thread.sleep(100);
+					}
+					catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				})
+				.map(i -> "foo");
 		StepVerifier.create(new FluxMetricsFuseable<>(source, registry))
-		            .expectFusion(Fuseable.SYNC) //just only supports SYNC
-		            .expectNext("foo")
-		            .verifyComplete();
+				.expectFusion(Fuseable.SYNC) //just only supports SYNC
+				.expectNext("foo")
+				.verifyComplete();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer.max(TimeUnit.MILLISECONDS))
-				.as("subscribe to complete timer")
-				.isGreaterThanOrEqualTo(100);
+					.as("subscribe to complete timer")
+					.isGreaterThanOrEqualTo(100);
 
 			softly.assertThat(stcErrorTimer)
-				.as("subscribe to error timer lazily registered")
-				.isNull();
+					.as("subscribe to error timer lazily registered")
+					.isNull();
 
 			softly.assertThat(stcCancelTimer)
-				.as("subscribe to cancel timer")
-				.isNull();
+					.as("subscribe to cancel timer")
+					.isNull();
 		});
 	}
 
@@ -363,36 +372,36 @@ public class FluxMetricsFuseableTest {
 	public void subscribeToErrorFuseable() {
 		//not really fuseable, goes through onError path, but tests FluxMetricsFuseable at least
 		Flux<Long> source = Flux.just(0L)
-		                        .delayElements(Duration.ofMillis(100))
-		                        .map(v -> 100 / v);
+				.delayElements(Duration.ofMillis(100))
+				.map(v -> 100 / v);
 		new FluxMetricsFuseable<>(source, registry)
-		    .onErrorReturn(-1L)
-		    .blockLast();
+				.onErrorReturn(-1L)
+				.blockLast();
 
 		Timer stcCompleteTimer = registry.find(METER_FLOW_DURATION)
-		                                 .tags(Tags.of(TAG_ON_COMPLETE))
-		                                 .timer();
+				.tags(Tags.of(TAG_ON_COMPLETE))
+				.timer();
 
 		Timer stcErrorTimer = registry.find(METER_FLOW_DURATION)
-		                              .tags(Tags.of(TAG_ON_ERROR))
-		                              .timer();
+				.tags(Tags.of(TAG_ON_ERROR))
+				.timer();
 
 		Timer stcCancelTimer = registry.find(METER_FLOW_DURATION)
-		                               .tags(Tags.of(TAG_CANCEL))
-		                               .timer();
+				.tags(Tags.of(TAG_CANCEL))
+				.timer();
 
 		SoftAssertions.assertSoftly(softly -> {
 			softly.assertThat(stcCompleteTimer)
-							.as("subscribe to complete timer")
-							.isNull();
+					.as("subscribe to complete timer")
+					.isNull();
 
 			softly.assertThat(stcErrorTimer.max(TimeUnit.MILLISECONDS))
-				.as("subscribe to error timer")
-				.isGreaterThanOrEqualTo(100);
+					.as("subscribe to error timer")
+					.isGreaterThanOrEqualTo(100);
 
 			softly.assertThat(stcCancelTimer)
-				.as("subscribe to cancel timer")
-				.isNull();
+					.as("subscribe to cancel timer")
+					.isNull();
 		});
 	}
 
@@ -403,7 +412,7 @@ public class FluxMetricsFuseableTest {
 
 		test.subscribe();
 		Counter meter = registry.find(METER_SUBSCRIBED)
-		                        .counter();
+				.counter();
 
 		assertThat(meter).isNotNull();
 		assertThat(meter.count()).as("after 1s subscribe").isEqualTo(1);
@@ -418,10 +427,10 @@ public class FluxMetricsFuseableTest {
 	public void requestTrackingDisabledIfNotNamedFuseable() {
 		Flux<Integer> source = Flux.range(1, 10);
 		new FluxMetricsFuseable<>(source, registry)
-		    .blockLast();
+				.blockLast();
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .summary();
+				.summary();
 
 		if (meter != null) { //meter could be null in some tests
 			assertThat(meter.count()).isZero();
@@ -431,18 +440,18 @@ public class FluxMetricsFuseableTest {
 	@Test
 	public void requestTrackingHasMeterForNamedSequenceFuseable() {
 		Flux<Integer> source = Flux.range(1, 10)
-		    .name("foo");
+				.name("foo");
 		new FluxMetricsFuseable<>(source, registry)
-		    .blockLast();
+				.blockLast();
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .summary();
+				.summary();
 
 		assertThat(meter).as("global find").isNotNull();
 
 		meter = registry.find(METER_REQUESTED)
-		                .tag(TAG_SEQUENCE_NAME, "foo")
-		                .summary();
+				.tag(TAG_SEQUENCE_NAME, "foo")
+				.summary();
 
 		assertThat(meter).as("tagged find").isNotNull();
 	}
@@ -456,13 +465,13 @@ public class FluxMetricsFuseableTest {
 			}
 		};
 		Flux<Integer> source = Flux.range(1, 10)
-		    .name("foo");
+				.name("foo");
 		new FluxMetricsFuseable<>(source, registry)
-		    .subscribe(bs);
+				.subscribe(bs);
 
 		DistributionSummary meter = registry.find(METER_REQUESTED)
-		                                    .tag(TAG_SEQUENCE_NAME, "foo")
-		                                    .summary();
+				.tag(TAG_SEQUENCE_NAME, "foo")
+				.summary();
 
 		assertThat(meter).as("meter").isNotNull();
 		assertThat(meter.totalAmount()).isEqualTo(1);

@@ -23,17 +23,17 @@ import reactor.util.function.Tuple2;
 
 public class FluxTimestampTest {
 
-	Flux<Tuple2<Long, String>> scenario_aFluxCanBeTimestamped(){
+	Flux<Tuple2<Long, String>> scenario_aFluxCanBeTimestamped() {
 		return Flux.just("test")
-		           .timestamp();
+				.timestamp();
 	}
 
 	@Test
-	public void aFluxCanBeTimestamped(){
+	public void aFluxCanBeTimestamped() {
 		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeTimestamped, 0)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .thenRequest(1)
-		            .expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(2))
+				.thenRequest(1)
+				.expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
+				.verifyComplete();
 	}
 }

@@ -24,7 +24,7 @@ import reactor.util.context.Context;
 public class MonoDeferTest {
 
 	@Test
-	public void deferMono(){
+	public void deferMono() {
 		AtomicInteger i = new AtomicInteger();
 
 		Mono<Integer> source =

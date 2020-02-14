@@ -76,15 +76,15 @@ final class FluxIndexFuseable<T, I> extends InternalFluxOperator<T, I>
 	}
 
 	static final class IndexFuseableSubscriber<I, T> implements InnerOperator<T, I>,
-	                                                            QueueSubscription<I> {
+			QueueSubscription<I> {
 
-		final CoreSubscriber<? super I>             actual;
+		final CoreSubscriber<? super I> actual;
 		final BiFunction<? super Long, ? super T, ? extends I> indexMapper;
 
-		boolean              done;
-		long                 index;
+		boolean done;
+		long index;
 		QueueSubscription<T> s;
-		int                  sourceMode;
+		int sourceMode;
 
 		IndexFuseableSubscriber(CoreSubscriber<? super I> actual,
 				BiFunction<? super Long, ? super T, ? extends I> indexMapper) {
@@ -216,16 +216,16 @@ final class FluxIndexFuseable<T, I> extends InternalFluxOperator<T, I>
 
 	static final class IndexFuseableConditionalSubscriber<I, T>
 			implements InnerOperator<T, I>,
-			           ConditionalSubscriber<T>,
-			           QueueSubscription<I> {
+			ConditionalSubscriber<T>,
+			QueueSubscription<I> {
 
-		final ConditionalSubscriber<? super I>      actual;
+		final ConditionalSubscriber<? super I> actual;
 		final BiFunction<? super Long, ? super T, ? extends I> indexMapper;
 
-		boolean              done;
-		long                 index;
+		boolean done;
+		long index;
 		QueueSubscription<T> s;
-		int                  sourceMode;
+		int sourceMode;
 
 		IndexFuseableConditionalSubscriber(
 				ConditionalSubscriber<? super I> cs,

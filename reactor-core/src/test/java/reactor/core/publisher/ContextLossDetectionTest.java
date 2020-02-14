@@ -36,7 +36,7 @@ import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.util.context.Context;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 @RunWith(JUnitParamsRunner.class)
 public class ContextLossDetectionTest {
@@ -98,8 +98,8 @@ public class ContextLossDetectionTest {
 		assertThatIllegalStateException()
 				.isThrownBy(() -> {
 					Flux.from(fn.apply(lifter))
-					    .subscriberContext(Context.of("foo", "bar"))
-					    .blockLast();
+							.subscriberContext(Context.of("foo", "bar"))
+							.blockLast();
 				})
 				.withMessageStartingWith("Context loss after applying reactor.core.publisher.ContextLossDetectionTest$$Lambda$");
 	}
@@ -121,8 +121,8 @@ public class ContextLossDetectionTest {
 		assertThatIllegalStateException()
 				.isThrownBy(() -> {
 					Flux.from(fn.apply(lifter))
-					    .subscriberContext(Context.of("foo", "bar"))
-					    .blockLast();
+							.subscriberContext(Context.of("foo", "bar"))
+							.blockLast();
 				})
 				.withMessageStartingWith("Context loss after applying reactor.core.publisher.ContextLossDetectionTest$$Lambda$");
 	}
@@ -139,8 +139,8 @@ public class ContextLossDetectionTest {
 		assertThatIllegalStateException()
 				.isThrownBy(() -> {
 					Flux.from(fn.apply(lifter))
-					    .subscriberContext(Context.of("foo", "bar"))
-					    .blockLast();
+							.subscriberContext(Context.of("foo", "bar"))
+							.blockLast();
 				})
 				.withMessageStartingWith("Context loss after applying reactor.core.publisher.ContextLossDetectionTest$$Lambda$");
 	}
@@ -163,8 +163,8 @@ public class ContextLossDetectionTest {
 						}
 					};
 					Flux.from(fn.apply(lifter))
-					    .subscriberContext(Context.of("foo", "bar"))
-					    .subscribe(subscriber);
+							.subscriberContext(Context.of("foo", "bar"))
+							.subscribe(subscriber);
 
 					try {
 						subscriber.get(1, TimeUnit.SECONDS);

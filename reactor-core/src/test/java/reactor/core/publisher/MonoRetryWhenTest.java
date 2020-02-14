@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.assertj.core.data.Percentage;
 import org.junit.Test;
-
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
@@ -45,16 +44,16 @@ public class MonoRetryWhenTest {
 				s.error(new RuntimeException("test " + i));
 			}
 		}).retryWhen(repeat -> repeat.zipWith(Flux.range(1, 3), (t1, t2) -> t2)
-		                             .flatMap(time -> Mono.delay(Duration.ofSeconds(time))));
+				.flatMap(time -> Mono.delay(Duration.ofSeconds(time))));
 	}
 
 	@Test
 	public void exponentialRetry() {
 		StepVerifier.withVirtualTime(this::exponentialRetryScenario)
-		            .thenAwait(Duration.ofSeconds(6))
-		            .expectNext("hey")
-		            .expectComplete()
-		            .verify();
+				.thenAwait(Duration.ofSeconds(6))
+				.expectNext("hey")
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -65,17 +64,17 @@ public class MonoRetryWhenTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.error(exception)
-				    .doOnError(e -> {
-				    	errorCount.incrementAndGet();
-				    	elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
-				    })
-				    .retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(2000), 0.1)
+						.doOnError(e -> {
+							errorCount.incrementAndGet();
+							elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
+						})
+						.retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(2000), 0.1)
 		)
-		            .thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Retries exhausted: 4/4")
-		                                                    .hasCause(exception))
-		            .verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
+				.thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Retries exhausted: 4/4")
+						.hasCause(exception))
+				.verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
 
 		assertThat(errorCount).hasValue(5);
 		assertThat(elapsedList).hasSize(5);
@@ -99,17 +98,17 @@ public class MonoRetryWhenTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.error(exception)
-				    .doOnError(e -> {
-				    	errorCount.incrementAndGet();
-				    	elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
-				    })
-				    .retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(2000))
+						.doOnError(e -> {
+							errorCount.incrementAndGet();
+							elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
+						})
+						.retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(2000))
 		)
-		            .thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Retries exhausted: 4/4")
-		                                                    .hasCause(exception))
-		            .verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
+				.thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Retries exhausted: 4/4")
+						.hasCause(exception))
+				.verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
 
 		assertThat(errorCount).hasValue(5);
 		assertThat(elapsedList).hasSize(5);
@@ -134,17 +133,17 @@ public class MonoRetryWhenTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.error(exception)
-				    .doOnError(e -> {
-				    	errorCount.incrementAndGet();
-				    	elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
-				    })
-				    .retryBackoff(4, Duration.ofMillis(100))
+						.doOnError(e -> {
+							errorCount.incrementAndGet();
+							elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
+						})
+						.retryBackoff(4, Duration.ofMillis(100))
 		)
-		            .thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Retries exhausted: 4/4")
-		                                                    .hasCause(exception))
-		            .verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
+				.thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Retries exhausted: 4/4")
+						.hasCause(exception))
+				.verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
 
 		assertThat(errorCount).hasValue(5);
 		assertThat(elapsedList).hasSize(5);
@@ -168,17 +167,17 @@ public class MonoRetryWhenTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.error(exception)
-				    .doOnError(e -> {
-				    	errorCount.incrementAndGet();
-				    	elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
-				    })
-				    .retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(220), 0.9)
+						.doOnError(e -> {
+							errorCount.incrementAndGet();
+							elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
+						})
+						.retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(220), 0.9)
 		)
-		            .thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Retries exhausted: 4/4")
-		                                                    .hasCause(exception))
-		            .verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
+				.thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Retries exhausted: 4/4")
+						.hasCause(exception))
+				.verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
 
 		assertThat(errorCount).hasValue(5);
 		assertThat(elapsedList).hasSize(5);
@@ -208,17 +207,17 @@ public class MonoRetryWhenTest {
 
 			StepVerifier.withVirtualTime(() ->
 					Mono.error(exception)
-					    .doOnError(e -> {
-						    errorCount.incrementAndGet();
-						    elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
-					    })
-					    .retryBackoff(1, Duration.ofMillis(100), Duration.ofMillis(2000), 0.9)
+							.doOnError(e -> {
+								errorCount.incrementAndGet();
+								elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
+							})
+							.retryBackoff(1, Duration.ofMillis(100), Duration.ofMillis(2000), 0.9)
 			)
-			            .thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
-			            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-			                                                    .hasMessage("Retries exhausted: 1/1")
-			                                                    .hasCause(exception))
-			            .verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
+					.thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
+					.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+							.hasMessage("Retries exhausted: 1/1")
+							.hasCause(exception))
+					.verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
 
 			assertThat(errorCount).hasValue(2);
 			assertThat(elapsedList).hasSize(2);
@@ -237,17 +236,17 @@ public class MonoRetryWhenTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.error(exception)
-				    .doOnError(e -> {
-					    errorCount.incrementAndGet();
-					    elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
-				    })
-				    .retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(2000), 0d)
+						.doOnError(e -> {
+							errorCount.incrementAndGet();
+							elapsedList.add(Schedulers.parallel().now(TimeUnit.MILLISECONDS));
+						})
+						.retryBackoff(4, Duration.ofMillis(100), Duration.ofMillis(2000), 0d)
 		)
-		            .thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Retries exhausted: 4/4")
-		                                                    .hasCause(exception))
-		            .verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
+				.thenAwait(Duration.ofMinutes(1)) //ensure whatever the jittered delay that we have time to fit 4 retries
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Retries exhausted: 4/4")
+						.hasCause(exception))
+				.verify(Duration.ofSeconds(1)); //vts test shouldn't even take that long
 
 		assertThat(errorCount).hasValue(5);
 		assertThat(elapsedList.get(0)).isEqualTo(0L);
@@ -267,18 +266,18 @@ public class MonoRetryWhenTest {
 
 		StepVerifier.create(
 				Mono.error(exception)
-				    .doOnError(t -> errorCount.incrementAndGet())
-				    .retryBackoff(4, Duration.ofMillis(10), Duration.ofMillis(100), 0, backoffScheduler)
+						.doOnError(t -> errorCount.incrementAndGet())
+						.retryBackoff(4, Duration.ofMillis(10), Duration.ofMillis(100), 0, backoffScheduler)
 		)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(400))
-		            .then(() -> assertThat(errorCount).as("errorCount before advanceTime").hasValue(1))
-		            .then(() -> backoffScheduler.advanceTimeBy(Duration.ofMillis(400)))
-		            .then(() -> assertThat(errorCount).as("errorCount after advanceTime").hasValue(5))
-		            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Retries exhausted: 4/4")
-		                                                    .hasCause(exception))
-		            .verify(Duration.ofMillis(400)); //test should only take roughly the expectNoEvent time
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(400))
+				.then(() -> assertThat(errorCount).as("errorCount before advanceTime").hasValue(1))
+				.then(() -> backoffScheduler.advanceTimeBy(Duration.ofMillis(400)))
+				.then(() -> assertThat(errorCount).as("errorCount after advanceTime").hasValue(5))
+				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Retries exhausted: 4/4")
+						.hasCause(exception))
+				.verify(Duration.ofMillis(400)); //test should only take roughly the expectNoEvent time
 	}
 
 
@@ -292,14 +291,14 @@ public class MonoRetryWhenTest {
 		List<String> threadNames = new ArrayList<>(4);
 		try {
 			StepVerifier.create(Mono.error(exception)
-			                        .doOnError(e -> threadNames.add(Thread.currentThread().getName().replaceFirst("-\\d+", "")))
-			                        .retryBackoff(2, Duration.ofMillis(10), Duration.ofMillis(100), 0.5d, backoffScheduler)
+					.doOnError(e -> threadNames.add(Thread.currentThread().getName().replaceFirst("-\\d+", "")))
+					.retryBackoff(2, Duration.ofMillis(10), Duration.ofMillis(100), 0.5d, backoffScheduler)
 
 			)
-			            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-			                                                    .hasMessage("Retries exhausted: 2/2")
-			                                                    .hasCause(exception))
-			            .verify(Duration.ofMillis(200));
+					.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+							.hasMessage("Retries exhausted: 2/2")
+							.hasCause(exception))
+					.verify(Duration.ofMillis(200));
 
 			assertThat(threadNames)
 					.as("retry runs on backoffScheduler")

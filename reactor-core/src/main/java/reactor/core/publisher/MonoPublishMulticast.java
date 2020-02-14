@@ -76,36 +76,28 @@ final class MonoPublishMulticast<T, R> extends InternalMonoOperator<T, R> implem
 	static final class MonoPublishMulticaster<T> extends Mono<T>
 			implements InnerConsumer<T>, FluxPublishMulticast.PublishMulticasterParent {
 
-		volatile     Subscription s;
 		static final AtomicReferenceFieldUpdater<MonoPublishMulticaster, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(MonoPublishMulticaster.class,
 						Subscription.class,
 						"s");
-
-		volatile     int wip;
 		static final AtomicIntegerFieldUpdater<MonoPublishMulticaster> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(MonoPublishMulticaster.class, "wip");
-
-		volatile PublishMulticastInner<T>[] subscribers;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<MonoPublishMulticaster, PublishMulticastInner[]> SUBSCRIBERS =
 				AtomicReferenceFieldUpdater.newUpdater(MonoPublishMulticaster.class, PublishMulticastInner[].class, "subscribers");
-
 		@SuppressWarnings("rawtypes")
 		static final PublishMulticastInner[] EMPTY = new PublishMulticastInner[0];
-
 		@SuppressWarnings("rawtypes")
 		static final PublishMulticastInner[] TERMINATED = new PublishMulticastInner[0];
-
-		volatile boolean done;
-
-		@Nullable
-		T         value;
-		Throwable error;
-
-		volatile boolean connected;
-
 		final Context context;
+		volatile Subscription s;
+		volatile int wip;
+		volatile PublishMulticastInner<T>[] subscribers;
+		volatile boolean done;
+		@Nullable
+		T value;
+		Throwable error;
+		volatile boolean connected;
 
 		@SuppressWarnings("unchecked")
 		MonoPublishMulticaster(Context ctx) {
@@ -336,12 +328,10 @@ final class MonoPublishMulticast<T, R> extends InternalMonoOperator<T, R> implem
 
 	static final class PublishMulticastInner<T> implements InnerProducer<T> {
 
-		final MonoPublishMulticaster<T> parent;
-
-		final CoreSubscriber<? super T> actual;
-
-		volatile int cancelled;
 		static final AtomicIntegerFieldUpdater<PublishMulticastInner> CANCELLED = AtomicIntegerFieldUpdater.newUpdater(PublishMulticastInner.class, "cancelled");
+		final MonoPublishMulticaster<T> parent;
+		final CoreSubscriber<? super T> actual;
+		volatile int cancelled;
 
 		PublishMulticastInner(MonoPublishMulticaster<T> parent,
 				CoreSubscriber<? super T> actual) {

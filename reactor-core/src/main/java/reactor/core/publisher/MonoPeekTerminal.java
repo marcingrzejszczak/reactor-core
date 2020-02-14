@@ -20,7 +20,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
@@ -38,8 +37,8 @@ import reactor.util.annotation.Nullable;
 final class MonoPeekTerminal<T> extends InternalMonoOperator<T, T> implements Fuseable {
 
 	final BiConsumer<? super T, Throwable> onAfterTerminateCall;
-	final Consumer<? super T>              onSuccessCall;
-	final Consumer<? super Throwable>      onErrorCall;
+	final Consumer<? super T> onSuccessCall;
+	final Consumer<? super Throwable> onErrorCall;
 
 	MonoPeekTerminal(Mono<? extends T> source,
 			@Nullable Consumer<? super T> onSuccessCall,
@@ -78,15 +77,15 @@ final class MonoPeekTerminal<T> extends InternalMonoOperator<T, T> implements Fu
 	 */
 	static final class MonoTerminalPeekSubscriber<T>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T>,
-			           Fuseable.QueueSubscription<T> {
+			Fuseable.QueueSubscription<T> {
 
-		final CoreSubscriber<? super T>        actual;
+		final CoreSubscriber<? super T> actual;
 		final ConditionalSubscriber<? super T> actualConditional;
 
 		final MonoPeekTerminal<T> parent;
 
 		//TODO could go into a common base for all-in-one subscribers? (as well as actual above)
-		Subscription                  s;
+		Subscription s;
 		@Nullable
 		Fuseable.QueueSubscription<T> queueSubscription;
 

@@ -22,7 +22,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.util.annotation.Nullable;
 
@@ -74,10 +73,13 @@ final class FluxScanSeed<T, R> extends InternalFluxOperator<T, R> {
 	static final class ScanSeedCoordinator<T, R>
 			extends Operators.MultiSubscriptionSubscriber<R, R> {
 
-		final    Supplier<R>                 initialSupplier;
-		final    Flux<? extends T>           source;
-		final    BiFunction<R, ? super T, R> accumulator;
-		volatile int                         wip;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<ScanSeedCoordinator> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(ScanSeedCoordinator.class, "wip");
+		final Supplier<R> initialSupplier;
+		final Flux<? extends T> source;
+		final BiFunction<R, ? super T, R> accumulator;
+		volatile int wip;
 		long produced;
 		private ScanSeedSubscriber<T, R> seedSubscriber;
 
@@ -143,10 +145,6 @@ final class FluxScanSeed<T, R> extends InternalFluxOperator<T, R> {
 			produced++;
 			actual.onNext(r);
 		}
-
-		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<ScanSeedCoordinator> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(ScanSeedCoordinator.class, "wip");
 	}
 
 	static final class ScanSeedSubscriber<T, R> implements InnerOperator<T, R> {

@@ -41,7 +41,6 @@ import org.assertj.core.api.Condition;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.Exceptions;
@@ -51,55 +50,20 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.fail;
 
 public class SchedulersTest {
 
-	final static class TestSchedulers implements Schedulers.Factory {
-
-		final Scheduler elastic        = Schedulers.Factory.super.newElastic(60, Thread::new);
-		final Scheduler boundedElastic = Schedulers.Factory.super.newBoundedElastic(2, Integer.MAX_VALUE, Thread::new, 60);
-		final Scheduler single         = Schedulers.Factory.super.newSingle(Thread::new);
-		final Scheduler parallel       = Schedulers.Factory.super.newParallel(1, Thread::new);
-
-		TestSchedulers(boolean disposeOnInit) {
-			if (disposeOnInit) {
-				elastic.dispose();
-				boundedElastic.dispose();
-				single.dispose();
-				parallel.dispose();
-			}
-		}
-
-		@Override
-		public final Scheduler newElastic(int ttlSeconds, ThreadFactory threadFactory) {
-			assertThat(((ReactorThreadFactory)threadFactory).get()).isEqualTo("unused");
-			return elastic;
-		}
-
-		@Override
-		public final Scheduler newBoundedElastic(int threadCap, int taskCap, ThreadFactory threadFactory, int ttlSeconds) {
-			assertThat(((ReactorThreadFactory) threadFactory).get()).isEqualTo("unused");
-			return boundedElastic;
-		}
-
-		@Override
-		public final Scheduler newParallel(int parallelism, ThreadFactory threadFactory) {
-			assertThat(((ReactorThreadFactory)threadFactory).get()).isEqualTo("unused");
-			return parallel;
-		}
-
-		@Override
-		public final Scheduler newSingle(ThreadFactory threadFactory) {
-			assertThat(((ReactorThreadFactory)threadFactory).get()).isEqualTo("unused");
-			return single;
-		}
-	}
-
 	final static Condition<Scheduler> CACHED_SCHEDULER = new Condition<>(
 			s -> s instanceof Schedulers.CachedScheduler, "a cached scheduler");
+	//private final int             BUFFER_SIZE     = 8;
+	private final AtomicReference<Throwable> exceptionThrown = new AtomicReference<>();
+	private final int N = 17;
 
 	@After
 	public void resetSchedulers() {
@@ -205,7 +169,7 @@ public class SchedulersTest {
 		AtomicBoolean disposeTracker = new AtomicBoolean();
 
 		class DisposableDecorator implements BiFunction<Scheduler, ScheduledExecutorService, ScheduledExecutorService>,
-		                                     Disposable {
+				Disposable {
 
 			@Override
 			public ScheduledExecutorService apply(Scheduler scheduler,
@@ -275,8 +239,8 @@ public class SchedulersTest {
 			scheduler.schedule(() -> {
 				try {
 					Mono.just("foo")
-					    .hide()
-					    .block();
+							.hide()
+							.block();
 				}
 				catch (Throwable t) {
 					errorRef.set(t);
@@ -305,8 +269,8 @@ public class SchedulersTest {
 			scheduler.schedule(() -> {
 				try {
 					Mono.just("foo")
-					    .hide()
-					    .block();
+							.hide()
+							.block();
 				}
 				catch (Throwable t) {
 					errorRef.set(t);
@@ -335,8 +299,8 @@ public class SchedulersTest {
 			scheduler.schedule(() -> {
 				try {
 					Mono.just("foo")
-					    .hide()
-					    .block();
+							.hide()
+							.block();
 				}
 				catch (Throwable t) {
 					errorRef.set(t);
@@ -363,8 +327,8 @@ public class SchedulersTest {
 			scheduler.schedule(() -> {
 				try {
 					Mono.just("foo")
-					    .hide()
-					    .block();
+							.hide()
+							.block();
 				}
 				catch (Throwable t) {
 					errorRef.set(t);
@@ -391,8 +355,10 @@ public class SchedulersTest {
 
 	@Test
 	public void isNonBlockingThreadInstanceOf() {
-		Thread nonBlocking = new ReactorThreadFactory.NonBlockingThread(() -> {}, "isNonBlockingThreadInstanceOf_nonBlocking");
-		Thread thread = new Thread(() -> {}, "isNonBlockingThreadInstanceOf_blocking");
+		Thread nonBlocking = new ReactorThreadFactory.NonBlockingThread(() -> {
+		}, "isNonBlockingThreadInstanceOf_nonBlocking");
+		Thread thread = new Thread(() -> {
+		}, "isNonBlockingThreadInstanceOf_blocking");
 
 		assertThat(Schedulers.isNonBlockingThread(nonBlocking)).as("nonBlocking").isTrue();
 		assertThat(Schedulers.isNonBlockingThread(thread)).as("thread").isFalse();
@@ -422,8 +388,8 @@ public class SchedulersTest {
 				StepVerifier.create(Mono.<String>fromCallable(() -> {
 					throw new StackOverflowError("boom");
 				}).subscribeOn(scheduler))
-				            .expectFusion()
-				            .expectErrorMessage("boom");
+						.expectFusion()
+						.expectErrorMessage("boom");
 
 		//the exception is still fatal, so the StepVerifier should time out.
 		assertThatExceptionOfType(AssertionError.class)
@@ -450,9 +416,9 @@ public class SchedulersTest {
 				StepVerifier.create(Mono.<String>fromCallable(() -> {
 					throw new StackOverflowError("boom");
 				}).hide()
-				  .subscribeOn(scheduler))
-				            .expectNoFusionSupport()
-				            .expectErrorMessage("boom"); //ignored
+						.subscribeOn(scheduler))
+						.expectNoFusionSupport()
+						.expectErrorMessage("boom"); //ignored
 
 		//the exception is still fatal, so the StepVerifier should time out.
 		assertThatExceptionOfType(AssertionError.class)
@@ -478,14 +444,14 @@ public class SchedulersTest {
 		final StepVerifier stepVerifier =
 				StepVerifier.create(
 						Flux.just("hi")
-						    .flatMap(item -> Mono.<String>fromCallable(() -> {
-							    throw new StackOverflowError("boom");
-						    })
-								    .hide()
-								    .subscribeOn(scheduler))
+								.flatMap(item -> Mono.<String>fromCallable(() -> {
+									throw new StackOverflowError("boom");
+								})
+										.hide()
+										.subscribeOn(scheduler))
 				)
-				            .expectNoFusionSupport()
-				            .expectErrorMessage("boom"); //ignored
+						.expectNoFusionSupport()
+						.expectErrorMessage("boom"); //ignored
 
 		//the exception is still fatal, so the StepVerifier should time out.
 		assertThatExceptionOfType(AssertionError.class)
@@ -511,13 +477,13 @@ public class SchedulersTest {
 		final StepVerifier stepVerifier =
 				StepVerifier.create(
 						Flux.just("hi")
-						    .flatMap(item -> Mono.<String>fromCallable(() -> {
-							    throw new StackOverflowError("boom");
-						    })
-								    .subscribeOn(scheduler))
+								.flatMap(item -> Mono.<String>fromCallable(() -> {
+									throw new StackOverflowError("boom");
+								})
+										.subscribeOn(scheduler))
 				)
-				            .expectFusion()
-				            .expectErrorMessage("boom"); //ignored
+						.expectFusion()
+						.expectErrorMessage("boom"); //ignored
 
 		//the exception is still fatal, so the StepVerifier should time out.
 		assertThatExceptionOfType(AssertionError.class)
@@ -557,8 +523,10 @@ public class SchedulersTest {
 
 
 		Assert.assertNotSame(cachedTimerOld, standaloneTimer);
-		Assert.assertNotNull(cachedTimerOld.schedule(() -> {}));
-		Assert.assertNotNull(standaloneTimer.schedule(() -> {}));
+		Assert.assertNotNull(cachedTimerOld.schedule(() -> {
+		}));
+		Assert.assertNotNull(standaloneTimer.schedule(() -> {
+		}));
 
 		Schedulers.setFactory(ts2);
 		Scheduler cachedTimerNew = Schedulers.newSingle("unused");
@@ -567,11 +535,14 @@ public class SchedulersTest {
 		Assert.assertNotSame(cachedTimerNew, cachedTimerOld);
 		//assert that the old factory"s cached scheduler was shut down
 		Assertions.assertThatExceptionOfType(RejectedExecutionException.class)
-		          .isThrownBy(() -> cachedTimerOld.schedule(() -> {}));
+				.isThrownBy(() -> cachedTimerOld.schedule(() -> {
+				}));
 		//independently created schedulers are still the programmer"s responsibility
-		Assert.assertNotNull(standaloneTimer.schedule(() -> {}));
+		Assert.assertNotNull(standaloneTimer.schedule(() -> {
+		}));
 		//new factory = new alive cached scheduler
-		Assert.assertNotNull(cachedTimerNew.schedule(() -> {}));
+		Assert.assertNotNull(cachedTimerNew.schedule(() -> {
+		}));
 	}
 
 	@Test
@@ -596,7 +567,8 @@ public class SchedulersTest {
 
 		try {
 			Schedulers.handleError(Exceptions.errorCallbackNotImplemented(new IllegalArgumentException()));
-		} finally {
+		}
+		finally {
 			Schedulers.resetOnHandleError();
 		}
 		Assert.assertTrue("errorCallbackNotImplemented not handled", handled.get());
@@ -609,7 +581,8 @@ public class SchedulersTest {
 
 		try {
 			Schedulers.handleError(new IllegalArgumentException());
-		} finally {
+		}
+		finally {
 			Schedulers.resetOnHandleError();
 		}
 		Assert.assertTrue("IllegalArgumentException not handled", handled.get());
@@ -634,9 +607,9 @@ public class SchedulersTest {
 				.isNull();
 
 		assertThat(onHandleErrorInvoked).as("onHandleError invoked")
-		                                .hasValue(fatal);
+				.hasValue(fatal);
 		assertThat(globalUncaughtInvoked).as("global uncaught handler invoked")
-		                                 .hasValue(fatal);
+				.hasValue(fatal);
 	}
 
 	@Test
@@ -662,8 +635,8 @@ public class SchedulersTest {
 			CountDownLatch l = new CountDownLatch(1);
 
 			p.publishOn(scheduler)
-			 .log()
-			 .subscribe(r::set, null, l::countDown);
+					.log()
+					.subscribe(r::set, null, l::countDown);
 
 			scheduler.dispose();
 
@@ -683,10 +656,6 @@ public class SchedulersTest {
 		}
 	}
 
-	//private final int             BUFFER_SIZE     = 8;
-	private final AtomicReference<Throwable> exceptionThrown = new AtomicReference<>();
-	private final int                        N               = 17;
-
 	@Test
 	public void testDispatch() throws Exception {
 		Scheduler service = Schedulers.newSingle(r -> {
@@ -705,13 +674,13 @@ public class SchedulersTest {
 
 		long start = System.currentTimeMillis();
 		AtomicInteger latch = new AtomicInteger(1);
-		Consumer<String> c =  ev -> {
+		Consumer<String> c = ev -> {
 			latch.decrementAndGet();
 			try {
-				System.out.println("ev: "+ev);
+				System.out.println("ev: " + ev);
 				Thread.sleep(1000);
 			}
-			catch(InterruptedException ie){
+			catch (InterruptedException ie) {
 				throw Exceptions.propagate(ie);
 			}
 		};
@@ -733,13 +702,13 @@ public class SchedulersTest {
 
 		long start = System.currentTimeMillis();
 		AtomicInteger latch = new AtomicInteger(1);
-		Consumer<String> c =  ev -> {
+		Consumer<String> c = ev -> {
 			latch.decrementAndGet();
 			try {
-				System.out.println("ev: "+ev);
+				System.out.println("ev: " + ev);
 				Thread.sleep(1000);
 			}
-			catch(InterruptedException ie){
+			catch (InterruptedException ie) {
 				throw Exceptions.propagate(ie);
 			}
 		};
@@ -761,18 +730,22 @@ public class SchedulersTest {
 
 		try {
 			Thread t1 = Thread.currentThread();
-			Thread[] t2 = { null };
+			Thread[] t2 = {null};
 
 			CountDownLatch cdl = new CountDownLatch(1);
 
-			dispatcher.schedule(() -> { t2[0] = Thread.currentThread(); cdl.countDown(); });
+			dispatcher.schedule(() -> {
+				t2[0] = Thread.currentThread();
+				cdl.countDown();
+			});
 
 			if (!cdl.await(5, TimeUnit.SECONDS)) {
 				Assert.fail("single timed out");
 			}
 
 			Assert.assertNotSame(t1, t2[0]);
-		} finally {
+		}
+		finally {
 			dispatcher.dispose();
 		}
 	}
@@ -832,36 +805,35 @@ public class SchedulersTest {
 		//other methods delegate
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> cached.schedule(null))
-	            .withMessage("scheduleTask");
+				.withMessage("scheduleTask");
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> cached.schedule(null, 1000, TimeUnit.MILLISECONDS))
-	            .withMessage("scheduleTaskDelay");
+				.withMessage("scheduleTaskDelay");
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> cached.schedulePeriodically(null, 1000, 1000, TimeUnit.MILLISECONDS))
-	            .withMessage("schedulePeriodically");
+				.withMessage("schedulePeriodically");
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> cached.now(TimeUnit.MILLISECONDS))
-	            .withMessage("now");
+				.withMessage("now");
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(cached::start)
-	            .withMessage("start");
+				.withMessage("start");
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(cached::createWorker)
-	            .withMessage("createWorker");
+				.withMessage("createWorker");
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(cached::isDisposed)
-	            .withMessage("isDisposed");
+				.withMessage("isDisposed");
 	}
 
-
 	@Test(timeout = 5000)
-	public void parallelSchedulerThreadCheck() throws Exception{
+	public void parallelSchedulerThreadCheck() throws Exception {
 		Scheduler s = Schedulers.newParallel("work", 2);
 		try {
 			Scheduler.Worker w = s.createWorker();
@@ -885,7 +857,7 @@ public class SchedulersTest {
 	}
 
 	@Test(timeout = 5000)
-	public void singleSchedulerThreadCheck() throws Exception{
+	public void singleSchedulerThreadCheck() throws Exception {
 		Scheduler s = Schedulers.newSingle("work");
 		try {
 			Scheduler.Worker w = s.createWorker();
@@ -908,9 +880,8 @@ public class SchedulersTest {
 		}
 	}
 
-
 	@Test(timeout = 5000)
-	public void elasticSchedulerThreadCheck() throws Exception{
+	public void elasticSchedulerThreadCheck() throws Exception {
 		Scheduler s = Schedulers.newElastic("work");
 		try {
 			Scheduler.Worker w = s.createWorker();
@@ -935,7 +906,7 @@ public class SchedulersTest {
 
 	@Test(timeout = 5000)
 	public void boundedElasticSchedulerThreadCheck() throws Exception {
-		Scheduler s = Schedulers.newBoundedElastic(4, Integer.MAX_VALUE,"boundedElasticSchedulerThreadCheck");
+		Scheduler s = Schedulers.newBoundedElastic(4, Integer.MAX_VALUE, "boundedElasticSchedulerThreadCheck");
 		try {
 			Scheduler.Worker w = s.createWorker();
 
@@ -958,7 +929,7 @@ public class SchedulersTest {
 	}
 
 	@Test(timeout = 5000)
-	public void executorThreadCheck() throws Exception{
+	public void executorThreadCheck() throws Exception {
 		ExecutorService es = Executors.newSingleThreadExecutor();
 		Scheduler s = Schedulers.fromExecutor(es::execute);
 
@@ -985,7 +956,7 @@ public class SchedulersTest {
 	}
 
 	@Test(timeout = 5000)
-	public void executorThreadCheck2() throws Exception{
+	public void executorThreadCheck2() throws Exception {
 		ExecutorService es = Executors.newSingleThreadExecutor();
 		Scheduler s = Schedulers.fromExecutor(es::execute, true);
 
@@ -1012,12 +983,12 @@ public class SchedulersTest {
 	}
 
 	@Test(timeout = 5000)
-	public void sharedSingleCheck() throws Exception{
+	public void sharedSingleCheck() throws Exception {
 		Scheduler p = Schedulers.newParallel("shared");
 		Scheduler s = Schedulers.single(p);
 
 		try {
-			for(int i = 0; i < 3; i++) {
+			for (int i = 0; i < 3; i++) {
 				Scheduler.Worker w = s.createWorker();
 
 				Thread currentThread = Thread.currentThread();
@@ -1040,10 +1011,10 @@ public class SchedulersTest {
 		}
 	}
 
-	void recursiveCall(Scheduler.Worker w, CountDownLatch latch, int data){
+	void recursiveCall(Scheduler.Worker w, CountDownLatch latch, int data) {
 		if (data < 2) {
 			latch.countDown();
-			w.schedule(() -> recursiveCall(w,  latch,data + 1));
+			w.schedule(() -> recursiveCall(w, latch, data + 1));
 		}
 	}
 
@@ -1078,7 +1049,7 @@ public class SchedulersTest {
 			AtomicReference<Runnable> pong = new AtomicReference<>();
 
 			Runnable ping = () -> {
-				if(latch.getCount() > 0){
+				if (latch.getCount() > 0) {
 					t1.set(Thread.currentThread());
 					w.schedule(pong.get());
 					latch.countDown();
@@ -1086,7 +1057,7 @@ public class SchedulersTest {
 			};
 
 			pong.set(() -> {
-				if(latch.getCount() > 0){
+				if (latch.getCount() > 0) {
 					t2.set(Thread.currentThread());
 					w.schedule(ping);
 					latch.countDown();
@@ -1111,28 +1082,28 @@ public class SchedulersTest {
 	}
 
 	@Test
-	public void restartSingle(){
+	public void restartSingle() {
 		restart(Schedulers.newSingle("test"));
 	}
 
-	void restart(Scheduler s){
+	void restart(Scheduler s) {
 		Thread t = Mono.fromCallable(Thread::currentThread)
-		               .subscribeOn(s)
-		               .block();
+				.subscribeOn(s)
+				.block();
 
 		s.dispose();
 		s.start();
 
 		Thread t2 = Mono.fromCallable(Thread::currentThread)
-		                .subscribeOn(s)
-		                .block();
+				.subscribeOn(s)
+				.block();
 
 		assertThat(t).isNotEqualTo(Thread.currentThread());
 		assertThat(t).isNotEqualTo(t2);
 	}
 
 	@Test
-	public void testDefaultMethods(){
+	public void testDefaultMethods() {
 		EmptyScheduler s = new EmptyScheduler();
 
 		s.dispose();
@@ -1152,13 +1123,13 @@ public class SchedulersTest {
 		long before = System.currentTimeMillis();
 
 		assertThat(ts.now(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(before)
-		                                         .isLessThanOrEqualTo(System.currentTimeMillis());
+				.isLessThanOrEqualTo(System.currentTimeMillis());
 
 //		assertThat(tw.now(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(before)
 //		                                        .isLessThanOrEqualTo(System.currentTimeMillis());
 
 		//noop
-		new Schedulers(){
+		new Schedulers() {
 
 		};
 
@@ -1215,15 +1186,22 @@ public class SchedulersTest {
 			assertThat(Schedulers.scanExecutor(plainService, Scannable.Attr.BUFFERED))
 					.as("plainService").isEqualTo(null);
 
-			scheduledThreadPool.schedule(() -> {}, 500, TimeUnit.MILLISECONDS);
-			scheduledThreadPool.schedule(() -> {}, 500, TimeUnit.MILLISECONDS);
+			scheduledThreadPool.schedule(() -> {
+			}, 500, TimeUnit.MILLISECONDS);
+			scheduledThreadPool.schedule(() -> {
+			}, 500, TimeUnit.MILLISECONDS);
 			Thread.sleep(50); //give some leeway for the pool to have consistent accounting
 
 			assertThat(Schedulers.scanExecutor(scheduledThreadPool, Scannable.Attr.BUFFERED))
 					.as("scheduledThreadPool").isEqualTo(2);
 
 			threadPool.submit(() -> {
-				try { Thread.sleep(200); } catch (InterruptedException e) { e.printStackTrace(); }
+				try {
+					Thread.sleep(200);
+				}
+				catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			});
 
 			assertThat(Schedulers.scanExecutor(threadPool, Scannable.Attr.BUFFERED))
@@ -1241,6 +1219,209 @@ public class SchedulersTest {
 			unsupportedScheduledExecutorService.shutdownNow();
 			threadPool.shutdownNow();
 			scheduledThreadPool.shutdownNow();
+		}
+	}
+
+	@Test
+	public void testDirectSchedulePeriodicallyCancelsSchedulerTask() throws Exception {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			CountDownLatch latch = new CountDownLatch(2);
+			Disposable disposable = Schedulers.directSchedulePeriodically(executorService, () -> {
+				latch.countDown();
+			}, 0, 10, TimeUnit.MILLISECONDS);
+			latch.await();
+
+			disposable.dispose();
+
+			assertThat(executorService.isAllTasksCancelled()).isTrue();
+		}
+	}
+
+	@Test
+	public void testDirectScheduleZeroPeriodicallyCancelsSchedulerTask() throws Exception {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			CountDownLatch latch = new CountDownLatch(2);
+			Disposable disposable = Schedulers.directSchedulePeriodically(executorService,
+					latch::countDown, 0, 0, TimeUnit.MILLISECONDS);
+			latch.await();
+
+			disposable.dispose();
+
+//			avoid race of checking the status of futures vs cancelling said futures
+			await().atMost(500, TimeUnit.MILLISECONDS)
+					.pollDelay(10, TimeUnit.MILLISECONDS)
+					.pollInterval(50, TimeUnit.MILLISECONDS)
+					.until(executorService::isAllTasksCancelledOrDone);
+		}
+	}
+
+	@Test
+	public void scheduleInstantTaskTest() throws Exception {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			CountDownLatch latch = new CountDownLatch(1);
+
+			Schedulers.directSchedulePeriodically(executorService, latch::countDown, 0, 0, TimeUnit.MILLISECONDS);
+
+			assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
+		}
+	}
+
+	@Test
+	public void scheduleInstantTaskWithDelayTest() throws Exception {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			CountDownLatch latch = new CountDownLatch(1);
+
+			Schedulers.directSchedulePeriodically(executorService, latch::countDown, 50, 0, TimeUnit.MILLISECONDS);
+
+			assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
+		}
+	}
+
+	@Test
+	public void testWorkerSchedulePeriodicallyCancelsSchedulerTask() throws Exception {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			AtomicInteger zeroDelayZeroPeriod = new AtomicInteger();
+			AtomicInteger zeroPeriod = new AtomicInteger();
+			AtomicInteger zeroDelayPeriodic = new AtomicInteger();
+			AtomicInteger periodic = new AtomicInteger();
+
+			Disposable.Composite tasks = Disposables.composite();
+
+			Schedulers.workerSchedulePeriodically(executorService, tasks,
+					() -> zeroDelayZeroPeriod.incrementAndGet(), 0, 0, TimeUnit.MINUTES);
+
+			Schedulers.workerSchedulePeriodically(executorService, tasks,
+					() -> zeroPeriod.incrementAndGet(), 1, 0, TimeUnit.MINUTES);
+
+			Schedulers.workerSchedulePeriodically(executorService, tasks,
+					() -> zeroDelayPeriodic.incrementAndGet(), 0, 1, TimeUnit.MINUTES);
+
+			Schedulers.workerSchedulePeriodically(executorService, tasks,
+					() -> periodic.incrementAndGet(), 1, 1, TimeUnit.MINUTES);
+
+			Thread.sleep(100);
+			tasks.dispose();
+
+			await().atMost(50, TimeUnit.MILLISECONDS)
+					.pollInterval(10, TimeUnit.MILLISECONDS)
+					.alias("all tasks cancelled or done")
+					.until(executorService::isAllTasksCancelledOrDone);
+
+			//when no initial delay, the periodic task(s) have time to be schedule. A 0 period results in a lot of schedules
+			assertThat(zeroDelayZeroPeriod).as("zeroDelayZeroPeriod").hasPositiveValue();
+			assertThat(zeroDelayPeriodic).as("zeroDelayPeriodic").hasValue(1);
+			//the below have initial delays and as such shouldn't have had time to schedule
+			assertThat(zeroPeriod).as("zeroDelayPeriodic").hasValue(0);
+			assertThat(periodic).as("periodic").hasValue(0);
+		}
+	}
+
+	@Test
+	public void testWorkerScheduleRejectedWithDisposedParent() {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			Disposable.Composite tasks = Disposables.composite();
+			tasks.dispose();
+
+			assertThatExceptionOfType(RejectedExecutionException.class)
+					.as("zero period, zero delay")
+					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {
+					}, 0, 0, TimeUnit.MILLISECONDS));
+
+			assertThatExceptionOfType(RejectedExecutionException.class)
+					.as("zero period, some delay")
+					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {
+					}, 10, 0, TimeUnit.MILLISECONDS));
+
+			assertThatExceptionOfType(RejectedExecutionException.class)
+					.as("periodic, zero delay")
+					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {
+					}, 0, 10, TimeUnit.MILLISECONDS));
+
+			assertThatExceptionOfType(RejectedExecutionException.class)
+					.as("periodic, some delay")
+					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {
+					}, 10, 10, TimeUnit.MILLISECONDS));
+
+			assertThat(executorService.tasks).isEmpty();
+		}
+	}
+
+	@Test
+	public void testWorkerScheduleSupportZeroPeriodWithDelayPeriod() {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			Disposable.Composite tasks = Disposables.composite();
+			Disposable disposable = Schedulers.workerSchedulePeriodically(executorService, tasks,
+					() -> {
+					}, 1000, 0, TimeUnit.MILLISECONDS);
+
+			disposable.dispose();
+
+			assertThat(executorService.isAllTasksCancelled()).isTrue();
+		}
+	}
+
+	@Test
+	public void testWorkerScheduleSupportZeroPeriod() throws InterruptedException {
+		try (TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
+			CountDownLatch latch = new CountDownLatch(2);
+			Disposable.Composite tasks = Disposables.composite();
+			Disposable disposable = Schedulers.workerSchedulePeriodically(executorService, tasks,
+					latch::countDown, 0, 0, TimeUnit.MILLISECONDS);
+			latch.await();
+
+			disposable.dispose();
+
+			Thread.sleep(100);
+
+			int tasksBefore = executorService.tasks.size();
+
+			Thread.sleep(100);
+
+			int tasksAfter = executorService.tasks.size();
+
+			assertThat(tasksAfter).isEqualTo(tasksBefore);
+			assertThat(tasks.size()).isEqualTo(0);
+		}
+	}
+
+	final static class TestSchedulers implements Schedulers.Factory {
+
+		final Scheduler elastic = Schedulers.Factory.super.newElastic(60, Thread::new);
+		final Scheduler boundedElastic = Schedulers.Factory.super.newBoundedElastic(2, Integer.MAX_VALUE, Thread::new, 60);
+		final Scheduler single = Schedulers.Factory.super.newSingle(Thread::new);
+		final Scheduler parallel = Schedulers.Factory.super.newParallel(1, Thread::new);
+
+		TestSchedulers(boolean disposeOnInit) {
+			if (disposeOnInit) {
+				elastic.dispose();
+				boundedElastic.dispose();
+				single.dispose();
+				parallel.dispose();
+			}
+		}
+
+		@Override
+		public final Scheduler newElastic(int ttlSeconds, ThreadFactory threadFactory) {
+			assertThat(((ReactorThreadFactory) threadFactory).get()).isEqualTo("unused");
+			return elastic;
+		}
+
+		@Override
+		public final Scheduler newBoundedElastic(int threadCap, int taskCap, ThreadFactory threadFactory, int ttlSeconds) {
+			assertThat(((ReactorThreadFactory) threadFactory).get()).isEqualTo("unused");
+			return boundedElastic;
+		}
+
+		@Override
+		public final Scheduler newParallel(int parallelism, ThreadFactory threadFactory) {
+			assertThat(((ReactorThreadFactory) threadFactory).get()).isEqualTo("unused");
+			return parallel;
+		}
+
+		@Override
+		public final Scheduler newSingle(ThreadFactory threadFactory) {
+			assertThat(((ReactorThreadFactory) threadFactory).get()).isEqualTo("unused");
+			return single;
 		}
 	}
 
@@ -1279,163 +1460,6 @@ public class SchedulersTest {
 		}
 	}
 
-	@Test
-	public void testDirectSchedulePeriodicallyCancelsSchedulerTask() throws Exception {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			CountDownLatch latch = new CountDownLatch(2);
-			Disposable disposable = Schedulers.directSchedulePeriodically(executorService, () -> {
-				latch.countDown();
-			}, 0, 10, TimeUnit.MILLISECONDS);
-			latch.await();
-
-			disposable.dispose();
-
-			assertThat(executorService.isAllTasksCancelled()).isTrue();
-		}
-	}
-
-	@Test
-	public void testDirectScheduleZeroPeriodicallyCancelsSchedulerTask() throws Exception {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			CountDownLatch latch = new CountDownLatch(2);
-			Disposable disposable = Schedulers.directSchedulePeriodically(executorService,
-					latch::countDown, 0, 0, TimeUnit.MILLISECONDS);
-			latch.await();
-
-			disposable.dispose();
-
-//			avoid race of checking the status of futures vs cancelling said futures
-			await().atMost(500, TimeUnit.MILLISECONDS)
-			          .pollDelay(10, TimeUnit.MILLISECONDS)
-			          .pollInterval(50, TimeUnit.MILLISECONDS)
-			          .until(executorService::isAllTasksCancelledOrDone);
-		}
-	}
-
-	@Test
-	public void scheduleInstantTaskTest() throws Exception {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			CountDownLatch latch = new CountDownLatch(1);
-
-			Schedulers.directSchedulePeriodically(executorService, latch::countDown, 0, 0, TimeUnit.MILLISECONDS);
-
-			assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
-		}
-	}
-
-	@Test
-	public void scheduleInstantTaskWithDelayTest() throws Exception {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			CountDownLatch latch = new CountDownLatch(1);
-
-			Schedulers.directSchedulePeriodically(executorService, latch::countDown, 50, 0, TimeUnit.MILLISECONDS);
-
-			assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
-		}
-	}
-
-	@Test
-	public void testWorkerSchedulePeriodicallyCancelsSchedulerTask() throws Exception {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			AtomicInteger zeroDelayZeroPeriod = new AtomicInteger();
-			AtomicInteger zeroPeriod = new AtomicInteger();
-			AtomicInteger zeroDelayPeriodic = new AtomicInteger();
-			AtomicInteger periodic = new AtomicInteger();
-
-			Disposable.Composite tasks = Disposables.composite();
-
-			Schedulers.workerSchedulePeriodically(executorService, tasks,
-					() -> zeroDelayZeroPeriod.incrementAndGet(), 0, 0, TimeUnit.MINUTES);
-
-			Schedulers.workerSchedulePeriodically(executorService, tasks,
-					() -> zeroPeriod.incrementAndGet(), 1, 0, TimeUnit.MINUTES);
-
-			Schedulers.workerSchedulePeriodically(executorService, tasks,
-					() -> zeroDelayPeriodic.incrementAndGet(), 0, 1, TimeUnit.MINUTES);
-
-			Schedulers.workerSchedulePeriodically(executorService, tasks,
-					() -> periodic.incrementAndGet(), 1, 1, TimeUnit.MINUTES);
-
-			Thread.sleep(100);
-			tasks.dispose();
-
-			await().atMost(50, TimeUnit.MILLISECONDS)
-			       .pollInterval(10, TimeUnit.MILLISECONDS)
-			       .alias("all tasks cancelled or done")
-			       .until(executorService::isAllTasksCancelledOrDone);
-
-			//when no initial delay, the periodic task(s) have time to be schedule. A 0 period results in a lot of schedules
-			assertThat(zeroDelayZeroPeriod).as("zeroDelayZeroPeriod").hasPositiveValue();
-			assertThat(zeroDelayPeriodic).as("zeroDelayPeriodic").hasValue(1);
-			//the below have initial delays and as such shouldn't have had time to schedule
-			assertThat(zeroPeriod).as("zeroDelayPeriodic").hasValue(0);
-			assertThat(periodic).as("periodic").hasValue(0);
-		}
-	}
-
-	@Test
-	public void testWorkerScheduleRejectedWithDisposedParent() {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			Disposable.Composite tasks = Disposables.composite();
-			tasks.dispose();
-
-			assertThatExceptionOfType(RejectedExecutionException.class)
-					.as("zero period, zero delay")
-					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {}, 0, 0, TimeUnit.MILLISECONDS));
-
-			assertThatExceptionOfType(RejectedExecutionException.class)
-					.as("zero period, some delay")
-					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {}, 10, 0, TimeUnit.MILLISECONDS));
-
-			assertThatExceptionOfType(RejectedExecutionException.class)
-					.as("periodic, zero delay")
-					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {}, 0, 10, TimeUnit.MILLISECONDS));
-
-			assertThatExceptionOfType(RejectedExecutionException.class)
-					.as("periodic, some delay")
-					.isThrownBy(() -> Schedulers.workerSchedulePeriodically(executorService, tasks, () -> {}, 10, 10, TimeUnit.MILLISECONDS));
-
-			assertThat(executorService.tasks).isEmpty();
-		}
-	}
-
-	@Test
-	public void testWorkerScheduleSupportZeroPeriodWithDelayPeriod() {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			Disposable.Composite tasks = Disposables.composite();
-			Disposable disposable = Schedulers.workerSchedulePeriodically(executorService, tasks,
-					() -> { }, 1000, 0, TimeUnit.MILLISECONDS);
-
-			disposable.dispose();
-
-			assertThat(executorService.isAllTasksCancelled()).isTrue();
-		}
-	}
-
-	@Test
-	public void testWorkerScheduleSupportZeroPeriod() throws InterruptedException {
-		try(TaskCheckingScheduledExecutor executorService = new TaskCheckingScheduledExecutor()) {
-			CountDownLatch latch = new CountDownLatch(2);
-			Disposable.Composite tasks = Disposables.composite();
-			Disposable disposable = Schedulers.workerSchedulePeriodically(executorService, tasks,
-					latch::countDown, 0, 0, TimeUnit.MILLISECONDS);
-			latch.await();
-
-			disposable.dispose();
-
-			Thread.sleep(100);
-
-			int tasksBefore = executorService.tasks.size();
-
-			Thread.sleep(100);
-
-			int tasksAfter = executorService.tasks.size();
-
-			assertThat(tasksAfter).isEqualTo(tasksBefore);
-			assertThat(tasks.size()).isEqualTo(0);
-		}
-	}
-
 	final static class TaskCheckingScheduledExecutor extends ScheduledThreadPoolExecutor implements AutoCloseable {
 
 		private final List<RunnableScheduledFuture<?>> tasks = new CopyOnWriteArrayList<>();
@@ -1457,7 +1481,7 @@ public class SchedulersTest {
 		}
 
 		boolean isAllTasksCancelled() {
-			for(RunnableScheduledFuture<?> task: tasks) {
+			for (RunnableScheduledFuture<?> task : tasks) {
 				if (!task.isCancelled()) {
 					return false;
 				}
@@ -1466,7 +1490,7 @@ public class SchedulersTest {
 		}
 
 		boolean isAllTasksCancelledOrDone() {
-			for(RunnableScheduledFuture<?> task: tasks) {
+			for (RunnableScheduledFuture<?> task : tasks) {
 				if (!task.isCancelled() && !task.isDone()) {
 					return false;
 				}

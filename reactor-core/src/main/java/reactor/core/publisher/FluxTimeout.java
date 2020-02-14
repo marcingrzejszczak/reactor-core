@@ -74,6 +74,22 @@ final class FluxTimeout<T, U, V> extends InternalFluxOperator<T, T> {
 		this.timeoutDescription = null;
 	}
 
+	@Nullable
+	static String addNameToTimeoutDescription(Publisher<?> source,
+			@Nullable String timeoutDescription) {
+		if (timeoutDescription == null) {
+			return null;
+		}
+
+		Scannable s = Scannable.from(source);
+		if (s.isScanAvailable()) {
+			return timeoutDescription + " in '" + s.name() + "'";
+		}
+		else {
+			return timeoutDescription;
+		}
+	}
+
 	@Override
 	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
 		CoreSubscriber<T> serial = Operators.serialize(actual);
@@ -92,44 +108,46 @@ final class FluxTimeout<T, U, V> extends InternalFluxOperator<T, T> {
 		return main;
 	}
 
-	@Nullable
-	static String addNameToTimeoutDescription(Publisher<?> source,
-			@Nullable  String timeoutDescription) {
-		if (timeoutDescription == null) {
-			return null;
+	enum CancelledIndexedCancellable implements IndexedCancellable {
+		INSTANCE;
+
+		@Override
+		public long index() {
+			return Long.MAX_VALUE;
 		}
 
-		Scannable s = Scannable.from(source);
-		if (s.isScanAvailable()) {
-			return timeoutDescription + " in '" + s.name() + "'";
+		@Override
+		public void cancel() {
+
 		}
-		else {
-			return timeoutDescription;
-		}
+
+	}
+
+	interface IndexedCancellable {
+
+		long index();
+
+		void cancel();
 	}
 
 	static final class TimeoutMainSubscriber<T, V>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Function<? super T, ? extends Publisher<V>> itemTimeout;
-
-		final Publisher<? extends T> other;
-		final String timeoutDescription; //only useful/non-null when no `other`
-
-		Subscription s;
-
-		volatile IndexedCancellable timeout;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<TimeoutMainSubscriber, IndexedCancellable>
 				TIMEOUT =
 				AtomicReferenceFieldUpdater.newUpdater(TimeoutMainSubscriber.class,
 						IndexedCancellable.class,
 						"timeout");
-
-		volatile long index;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<TimeoutMainSubscriber> INDEX =
 				AtomicLongFieldUpdater.newUpdater(TimeoutMainSubscriber.class, "index");
+		final Function<? super T, ? extends Publisher<V>> itemTimeout;
+		final Publisher<? extends T> other;
+		final String timeoutDescription; //only useful/non-null when no `other`
+		Subscription s;
+		volatile IndexedCancellable timeout;
+		volatile long index;
 
 		TimeoutMainSubscriber(CoreSubscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<V>> itemTimeout,
@@ -335,41 +353,16 @@ final class FluxTimeout<T, U, V> extends InternalFluxOperator<T, T> {
 		}
 	}
 
-	interface IndexedCancellable {
-
-		long index();
-
-		void cancel();
-	}
-
-	enum CancelledIndexedCancellable implements IndexedCancellable {
-		INSTANCE;
-
-		@Override
-		public long index() {
-			return Long.MAX_VALUE;
-		}
-
-		@Override
-		public void cancel() {
-
-		}
-
-	}
-
 	static final class TimeoutTimeoutSubscriber
 			implements Subscriber<Object>, IndexedCancellable {
-
-		final TimeoutMainSubscriber<?, ?> main;
-
-		final long index;
-
-		volatile Subscription s;
 
 		static final AtomicReferenceFieldUpdater<TimeoutTimeoutSubscriber, Subscription>
 				S = AtomicReferenceFieldUpdater.newUpdater(TimeoutTimeoutSubscriber.class,
 				Subscription.class,
 				"s");
+		final TimeoutMainSubscriber<?, ?> main;
+		final long index;
+		volatile Subscription s;
 
 		TimeoutTimeoutSubscriber(TimeoutMainSubscriber<?, ?> main, long index) {
 			this.main = main;

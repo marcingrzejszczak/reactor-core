@@ -76,42 +76,33 @@ final class ParallelMergeSort<T> extends Flux<T> implements Scannable {
 
 	static final class MergeSortMain<T> implements InnerProducer<T> {
 
-		final MergeSortInner<T>[] subscribers;
-
-		final List<T>[] lists;
-
-		final int[] indexes;
-
-		final Comparator<? super T> comparator;
-		final CoreSubscriber<? super T> actual;
-
-		volatile int wip;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<MergeSortMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(MergeSortMain.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<MergeSortMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(MergeSortMain.class,
 						"requested");
-
-		volatile boolean cancelled;
-
-		volatile int remaining;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<MergeSortMain> REMAINING =
 				AtomicIntegerFieldUpdater.newUpdater(MergeSortMain.class,
 						"remaining");
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<MergeSortMain, Throwable>
 				ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(MergeSortMain.class,
 						Throwable.class,
 						"error");
+		final MergeSortInner<T>[] subscribers;
+		final List<T>[] lists;
+		final int[] indexes;
+		final Comparator<? super T> comparator;
+		final CoreSubscriber<? super T> actual;
+		volatile int wip;
+		volatile long requested;
+		volatile boolean cancelled;
+		volatile int remaining;
+		volatile Throwable error;
 
 		@SuppressWarnings("unchecked")
 		MergeSortMain(CoreSubscriber<? super T> actual,
@@ -186,11 +177,11 @@ final class ParallelMergeSort<T> extends Flux<T> implements Scannable {
 		}
 
 		void innerError(Throwable ex) {
-			if(ERROR.compareAndSet(this, null, ex)){
+			if (ERROR.compareAndSet(this, null, ex)) {
 				cancelAll();
 				drain();
 			}
-			else if(error != ex) {
+			else if (error != ex) {
 				Operators.onErrorDropped(ex, actual.currentContext());
 			}
 		}
@@ -310,17 +301,15 @@ final class ParallelMergeSort<T> extends Flux<T> implements Scannable {
 
 	static final class MergeSortInner<T> implements InnerConsumer<List<T>> {
 
-		final MergeSortMain<T> parent;
-
-		final int index;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<MergeSortInner, Subscription>
 				S =
 				AtomicReferenceFieldUpdater.newUpdater(MergeSortInner.class,
 						Subscription.class,
 						"s");
+		final MergeSortMain<T> parent;
+		final int index;
+		volatile Subscription s;
 
 		MergeSortInner(MergeSortMain<T> parent, int index) {
 			this.parent = parent;

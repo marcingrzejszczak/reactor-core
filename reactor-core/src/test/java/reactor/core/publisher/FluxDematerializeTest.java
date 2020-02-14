@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
 import reactor.test.StepVerifier;
@@ -30,17 +29,18 @@ import reactor.test.subscriber.AssertSubscriber;
 import reactor.util.function.Tuple2;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 
 public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, String> {
+
+	Signal<Integer> error = Signal.error(new RuntimeException("Forced failure"));
 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected List<Scenario<Signal<String>, String>> scenarios_operatorSuccess() {
 		return Arrays.asList(
 				scenario(Flux::<String>dematerialize)
-					.producer(1, i -> Signal.complete())
-					.receiverEmpty(),
+						.producer(1, i -> Signal.complete())
+						.receiverEmpty(),
 
 				scenario(Flux::<String>dematerialize)
 						.producer(1, i -> Signal.subscribe(Operators.emptySubscription()))
@@ -66,11 +66,9 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 	protected Scenario<Signal<String>, String> defaultScenarioOptions(Scenario<Signal<String>, String> defaultOptions) {
 		return defaultOptions.producer(3, i -> i == 0 ?
 				Signal.next("test") :
-				Signal.next("test"+i)
+				Signal.next("test" + i)
 		).droppedItem(Signal.next("dropped"));
 	}
-
-	Signal<Integer> error = Signal.error(new RuntimeException("Forced failure"));
 
 	@Test
 	public void singleCompletion() {
@@ -81,8 +79,8 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 		dematerialize.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -90,13 +88,13 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux<Integer> dematerialize = Flux.just(error)
-		                                  .dematerialize();
+				.dematerialize();
 
 		dematerialize.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -108,8 +106,8 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 		dematerialize.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 		ts.assertComplete();
@@ -124,8 +122,8 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 		dematerialize.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 		ts.assertError(RuntimeException.class);
@@ -140,14 +138,14 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 		dematerialize.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 		ts.assertComplete();
@@ -162,14 +160,14 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 		dematerialize.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 		ts.assertError(RuntimeException.class);
@@ -178,37 +176,37 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 	@Test
 	public void twoSignalsAndComplete() {
 		Flux<Integer> dematerialize = Flux.just(Signal.next(1), Signal.next(2), Signal.<Integer>complete())
-		                                  .dematerialize();
+				.dematerialize();
 
 		StepVerifier.create(dematerialize, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .expectNext(1)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .expectNext(2)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.expectNext(1)
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.expectNext(2)
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void twoSignalsAndError() {
 		Flux<Integer> dematerialize = Flux.just(Signal.next(1), Signal.next(2), error)
-		                                  .dematerialize();
+				.dematerialize();
 
 		StepVerifier.create(dematerialize, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .expectNext(1)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .expectNext(2)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .verifyError(error.getThrowable().getClass());
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.expectNext(1)
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.expectNext(2)
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.verifyError(error.getThrowable().getClass());
 	}
 
 	@Test
@@ -217,14 +215,14 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 
 		Flux<Integer> dematerialize = Flux.just(Signal.next(1), Signal.next(2),
 				Signal.next(3), Signal.<Integer>complete())
-		                                  .concatWith(Flux.never())
-		                                  .dematerialize();
+				.concatWith(Flux.never())
+				.dematerialize();
 
 		dematerialize.subscribe(ts);
 
 		ts.assertValues(1, 2, 3)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -233,58 +231,59 @@ public class FluxDematerializeTest extends FluxOperatorTest<Signal<String>, Stri
 				Signal.next("Two"),
 				Signal.next("One"),
 				Signal.complete())
-		                        .dematerialize())
-		            .expectNext("Three")
-		            .expectNext("Two")
-		            .expectNext("One")
-		            .verifyComplete();
+				.dematerialize())
+				.expectNext("Three")
+				.expectNext("Two")
+				.expectNext("One")
+				.verifyComplete();
 	}
 
 	@Test
 	public void materializeDematerializeUnbounded() {
 		StepVerifier.create(Flux.just(1, 2, 3).materialize().dematerialize())
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
 	public void materializeDematerializeRequestOneByOne() {
 		StepVerifier.create(Flux.just(1, 2, 3).materialize().dematerialize(), 0)
-		            .thenRequest(1)
-		            .expectNext(1)
-		            .thenRequest(1)
-		            .expectNext(2)
-		            .thenRequest(1)
-		            .expectNext(3)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .thenRequest(1)
-		            .verifyComplete();
+				.thenRequest(1)
+				.expectNext(1)
+				.thenRequest(1)
+				.expectNext(2)
+				.thenRequest(1)
+				.expectNext(3)
+				.expectNoEvent(Duration.ofMillis(50))
+				.thenRequest(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void emissionTimingsAreGrouped() {
 		StepVerifier.withVirtualTime(() ->
 				Flux.interval(Duration.ofSeconds(1))
-				    .map(i -> "tick" + i)
-				    .take(5)
-				    .timestamp()
-				    .materialize()
-				    .<Tuple2<Long, String>>dematerialize()
-				    .timestamp()
+						.map(i -> "tick" + i)
+						.take(5)
+						.timestamp()
+						.materialize()
+						.<Tuple2<Long, String>>dematerialize()
+						.timestamp()
 		)
-		            .thenAwait(Duration.ofSeconds(5))
-		            .thenConsumeWhile(tupleDematerialize -> {
-		            	long dematerializeTimestamp = tupleDematerialize.getT1();
-		            	long originalTimestamp = tupleDematerialize.getT2().getT1();
+				.thenAwait(Duration.ofSeconds(5))
+				.thenConsumeWhile(tupleDematerialize -> {
+					long dematerializeTimestamp = tupleDematerialize.getT1();
+					long originalTimestamp = tupleDematerialize.getT2().getT1();
 
-		            	return dematerializeTimestamp == originalTimestamp;
-		            })
-		            .verifyComplete();
+					return dematerializeTimestamp == originalTimestamp;
+				})
+				.verifyComplete();
 	}
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null,
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(100));
 		FluxDematerialize.DematerializeSubscriber<String> test =
 				new FluxDematerialize.DematerializeSubscriber<>(actual, false);

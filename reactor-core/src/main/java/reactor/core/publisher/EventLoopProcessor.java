@@ -48,13 +48,82 @@ import reactor.util.context.Context;
 abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 		implements Runnable {
 
+	static final int SHUTDOWN = 1;
+	static final int FORCED_SHUTDOWN = 2;
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<EventLoopProcessor> SUBSCRIBER_COUNT =
+			AtomicIntegerFieldUpdater.newUpdater(EventLoopProcessor.class, "subscriberCount");
+	@SuppressWarnings("rawtypes")
+	final static AtomicIntegerFieldUpdater<EventLoopProcessor> TERMINATED =
+			AtomicIntegerFieldUpdater.newUpdater(EventLoopProcessor.class, "terminated");
+	final ExecutorService executor;
+	final ExecutorService requestTaskExecutor;
+	final EventLoopContext contextClassLoader;
+	final String name;
+	final boolean autoCancel;
+	final RingBuffer<Slot<IN>> ringBuffer;
+	final WaitStrategy readWait = WaitStrategy.liteBlocking();
+	Subscription upstreamSubscription;
+	volatile boolean cancelled;
+	volatile int terminated;
+	volatile Throwable error;
+	volatile int subscriberCount;
+
+	EventLoopProcessor(
+			int bufferSize,
+			@Nullable ThreadFactory threadFactory,
+			@Nullable ExecutorService executor,
+			ExecutorService requestExecutor,
+			boolean autoCancel,
+			boolean multiproducers,
+			Supplier<Slot<IN>> factory,
+			WaitStrategy strategy) {
+
+		if (!Queues.isPowerOfTwo(bufferSize)) {
+			throw new IllegalArgumentException("bufferSize must be a power of 2 : " + bufferSize);
+		}
+
+		if (bufferSize < 1) {
+			throw new IllegalArgumentException("bufferSize must be strictly positive, " +
+					"was: " + bufferSize);
+		}
+
+		this.autoCancel = autoCancel;
+
+		contextClassLoader = new EventLoopContext(multiproducers);
+
+		this.name = defaultName(threadFactory, getClass());
+
+		this.requestTaskExecutor = Objects.requireNonNull(requestExecutor, "requestTaskExecutor");
+
+		if (executor == null) {
+			this.executor = Executors.newCachedThreadPool(threadFactory);
+		}
+		else {
+			this.executor = executor;
+		}
+
+		if (multiproducers) {
+			this.ringBuffer = RingBuffer.createMultiProducer(factory,
+					bufferSize,
+					strategy,
+					this);
+		}
+		else {
+			this.ringBuffer = RingBuffer.createSingleProducer(factory,
+					bufferSize,
+					strategy,
+					this);
+		}
+	}
+
 	static <E> Flux<E> coldSource(RingBuffer<Slot<E>> ringBuffer,
 			@Nullable Throwable t,
 			@Nullable Throwable error,
-			RingBuffer.Sequence start){
+			RingBuffer.Sequence start) {
 		Flux<E> bufferIterable = generate(start::getAsLong, (seq, sink) -> {
 			long s = seq + 1;
-			if(s > ringBuffer.getCursor()){
+			if (s > ringBuffer.getCursor()) {
 				sink.complete();
 			}
 			else {
@@ -130,7 +199,7 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 		}
 		catch (InterruptedException ie) {
 			Thread.currentThread()
-			      .interrupt();
+					.interrupt();
 		}
 
 		catch (Exception e) {
@@ -185,85 +254,6 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 		return r;
 	}
 
-	final ExecutorService  executor;
-	final ExecutorService requestTaskExecutor;
-	final EventLoopContext contextClassLoader;
-	final String           name;
-	final boolean          autoCancel;
-
-	final RingBuffer<Slot<IN>> ringBuffer;
-	final WaitStrategy readWait = WaitStrategy.liteBlocking();
-
-	Subscription upstreamSubscription;
-	volatile        boolean         cancelled;
-	volatile        int             terminated;
-	volatile        Throwable       error;
-
-	volatile       int                                                  subscriberCount;
-
-	EventLoopProcessor(
-			int bufferSize,
-			@Nullable ThreadFactory threadFactory,
-			@Nullable ExecutorService executor,
-			ExecutorService requestExecutor,
-			boolean autoCancel,
-			boolean multiproducers,
-			Supplier<Slot<IN>> factory,
-			WaitStrategy strategy) {
-
-		if (!Queues.isPowerOfTwo(bufferSize)) {
-			throw new IllegalArgumentException("bufferSize must be a power of 2 : " + bufferSize);
-		}
-
-		if (bufferSize < 1){
-			throw new IllegalArgumentException("bufferSize must be strictly positive, " +
-					"was: "+bufferSize);
-		}
-
-		this.autoCancel = autoCancel;
-
-		contextClassLoader = new EventLoopContext(multiproducers);
-
-		this.name = defaultName(threadFactory, getClass());
-
-		this.requestTaskExecutor = Objects.requireNonNull(requestExecutor, "requestTaskExecutor");
-
-		if (executor == null) {
-			this.executor = Executors.newCachedThreadPool(threadFactory);
-		}
-		else {
-			this.executor = executor;
-		}
-
-		if (multiproducers) {
-			this.ringBuffer = RingBuffer.createMultiProducer(factory,
-					bufferSize,
-					strategy,
-					this);
-		}
-		else {
-			this.ringBuffer = RingBuffer.createSingleProducer(factory,
-					bufferSize,
-					strategy,
-					this);
-		}
-	}
-
-	/**
-	 * Return the number of parked elements in the emitter backlog.
-	 *
-	 * @return the number of parked elements in the emitter backlog.
-	 */
-	public abstract long getPending();
-
-	@Override
-	@Nullable
-	public Object scanUnsafe(Attr key) {
-		if (key == Attr.PARENT) return upstreamSubscription;
-
-		return super.scanUnsafe(key);
-	}
-
 	/**
 	 * A method to extract a name from the ThreadFactory if it turns out to be a Supplier
 	 * (in which case the supplied value string representation is used). Otherwise return
@@ -289,7 +279,22 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 	 * @return a default {@link ExecutorService} for requestTask.
 	 */
 	protected static ExecutorService defaultRequestTaskExecutor(String name) {
-		return Executors.newCachedThreadPool(r -> new Thread(r,name+"[request-task]"));
+		return Executors.newCachedThreadPool(r -> new Thread(r, name + "[request-task]"));
+	}
+
+	/**
+	 * Return the number of parked elements in the emitter backlog.
+	 *
+	 * @return the number of parked elements in the emitter backlog.
+	 */
+	public abstract long getPending();
+
+	@Override
+	@Nullable
+	public Object scanUnsafe(Attr key) {
+		if (key == Attr.PARENT) return upstreamSubscription;
+
+		return super.scanUnsafe(key);
 	}
 
 	/**
@@ -313,7 +318,7 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 	 * Block until all submitted tasks have completed, then do a normal {@code EventLoopProcessor#dispose()}.
 	 * @param timeout the timeout value
 	 * @param timeUnit the unit for timeout
-     * @return if the underlying executor terminated and false if the timeout elapsed before termination
+	 * @return if the underlying executor terminated and false if the timeout elapsed before termination
 	 * @deprecated use {@link #awaitAndShutdown(Duration)} instead
 	 */
 	@Deprecated
@@ -321,7 +326,8 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 		try {
 			shutdown();
 			return executor.awaitTermination(timeout, timeUnit);
-		} catch (InterruptedException ie) {
+		}
+		catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
@@ -331,7 +337,7 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 	 * Block until all submitted tasks have completed, then do a normal {@code EventLoopProcessor#dispose()}.
 	 * @param timeout the timeout value as a {@link Duration}. Note this is converted to a {@link Long}
 	 * of nanoseconds (which amounts to roughly 292 years maximum timeout).
-     * @return if the underlying executor terminated and false if the timeout elapsed before termination
+	 * @return if the underlying executor terminated and false if the timeout elapsed before termination
 	 */
 	public final boolean awaitAndShutdown(Duration timeout) {
 		long nanos = -1;
@@ -341,7 +347,8 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 		try {
 			shutdown();
 			return executor.awaitTermination(nanos, TimeUnit.NANOSECONDS);
-		} catch (InterruptedException ie) {
+		}
+		catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 			return false;
 		}
@@ -360,7 +367,7 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 	 *
 	 * @return a {@link Flux} sequence possibly unbounded of incoming buffered values or empty if not supported.
 	 */
-	public Flux<IN> drain(){
+	public Flux<IN> drain() {
 		return Flux.empty();
 	}
 
@@ -497,6 +504,31 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 
 	}
 
+	protected void requestTask(final Subscription s) {
+		//implementation might run a specific request task for the given subscription
+	}
+
+	final void decrementSubscribers() {
+		Subscription subscription = upstreamSubscription;
+		int subs = SUBSCRIBER_COUNT.decrementAndGet(this);
+		if (subs == 0) {
+			if (subscription != null && autoCancel) {
+				upstreamSubscription = null;
+				cancel();
+			}
+		}
+	}
+
+	@Override
+	public long downstreamCount() {
+		return subscriberCount;
+	}
+
+	abstract void doError(Throwable throwable);
+
+	final boolean incrementSubscribers() {
+		return SUBSCRIBER_COUNT.getAndIncrement(this) == 0;
+	}
 
 	/**
 	 * An async request client for ring buffer impls
@@ -513,9 +545,9 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 
 		final Consumer<Long> postWaitCallback;
 
-		 RequestTask(Subscription upstream,
-				 EventLoopProcessor<?> p,
-				 @Nullable Consumer<Long> postWaitCallback,
+		RequestTask(Subscription upstream,
+				EventLoopProcessor<?> p,
+				@Nullable Consumer<Long> postWaitCallback,
 				LongSupplier readCount) {
 			this.parent = p;
 			this.readCount = readCount;
@@ -546,11 +578,11 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 			}
 			catch (InterruptedException e) {
 				Thread.currentThread()
-				      .interrupt();
+						.interrupt();
 			}
 			catch (Throwable t) {
-				if(WaitStrategy.isAlert(t)){
-					if(parent.cancelled){
+				if (WaitStrategy.isAlert(t)) {
+					if (parent.cancelled) {
 						upstream.cancel();
 					}
 					return;
@@ -560,51 +592,16 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 		}
 	}
 
-	protected void requestTask(final Subscription s) {
-		//implementation might run a specific request task for the given subscription
-	}
-
-	final void decrementSubscribers() {
-		Subscription subscription = upstreamSubscription;
-		int subs = SUBSCRIBER_COUNT.decrementAndGet(this);
-		if (subs == 0) {
-			if (subscription != null && autoCancel) {
-				upstreamSubscription = null;
-				cancel();
-			}
-		}
-	}
-
-	@Override
-	public long downstreamCount() {
-		return subscriberCount;
-	}
-
-	abstract void doError(Throwable throwable);
-
-	final boolean incrementSubscribers() {
-		return SUBSCRIBER_COUNT.getAndIncrement(this) == 0;
-	}
-
 	final static class EventLoopContext extends ClassLoader {
 
 		final boolean multiproducer;
 
 		EventLoopContext(boolean multiproducer) {
 			super(Thread.currentThread()
-			            .getContextClassLoader());
+					.getContextClassLoader());
 			this.multiproducer = multiproducer;
 		}
 	}
-
-	static final int                                                                  SHUTDOWN         = 1;
-	static final int                                                                  FORCED_SHUTDOWN  = 2;
-	@SuppressWarnings("rawtypes")
-    static final AtomicIntegerFieldUpdater<EventLoopProcessor> SUBSCRIBER_COUNT =
-			AtomicIntegerFieldUpdater.newUpdater(EventLoopProcessor.class, "subscriberCount");
-	@SuppressWarnings("rawtypes")
-	final static AtomicIntegerFieldUpdater<EventLoopProcessor> TERMINATED       =
-			AtomicIntegerFieldUpdater.newUpdater(EventLoopProcessor.class, "terminated");
 
 	/**
 	 * A simple reusable data container.
@@ -625,7 +622,7 @@ abstract class EventLoopProcessor<IN> extends FluxProcessor<IN, IN>
 
 		static final AtomicInteger COUNT = new AtomicInteger();
 
-		final String  name;
+		final String name;
 		final boolean daemon;
 
 		EventLoopFactory(String name, boolean daemon) {

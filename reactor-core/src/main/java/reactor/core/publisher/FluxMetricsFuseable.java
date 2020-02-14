@@ -16,13 +16,11 @@
 
 package reactor.core.publisher;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import org.reactivestreams.Subscription;
@@ -30,11 +28,15 @@ import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.util.annotation.Nullable;
 
-import static reactor.core.publisher.FluxMetrics.*;
+import static reactor.core.publisher.FluxMetrics.recordMalformed;
+import static reactor.core.publisher.FluxMetrics.recordOnComplete;
+import static reactor.core.publisher.FluxMetrics.recordOnError;
+import static reactor.core.publisher.FluxMetrics.recordOnSubscribe;
+import static reactor.core.publisher.FluxMetrics.resolveName;
+import static reactor.core.publisher.FluxMetrics.resolveTags;
 
 /**
  * Activate metrics gathering on a {@link Flux} (Fuseable version), assumes Micrometer is on the classpath.
-
  * @implNote Metrics.isInstrumentationAvailable() test should be performed BEFORE instantiating or referencing this
  * class, otherwise a {@link NoClassDefFoundError} will be thrown if Micrometer is not there.
  *
@@ -43,8 +45,8 @@ import static reactor.core.publisher.FluxMetrics.*;
  */
 final class FluxMetricsFuseable<T> extends InternalFluxOperator<T, T> implements Fuseable {
 
-	final String        name;
-	final Tags          tags;
+	final String name;
+	final Tags tags;
 	final MeterRegistry registryCandidate;
 
 	FluxMetricsFuseable(Flux<? extends T> flux) {

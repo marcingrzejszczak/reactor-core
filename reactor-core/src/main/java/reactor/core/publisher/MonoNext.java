@@ -42,16 +42,13 @@ final class MonoNext<T> extends MonoFromFluxOperator<T, T> {
 
 	static final class NextSubscriber<T> implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		Subscription s;
-
-		boolean done;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<NextSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(NextSubscriber.class, "wip");
+		final CoreSubscriber<? super T> actual;
+		Subscription s;
+		boolean done;
+		volatile int wip;
 
 		NextSubscriber(CoreSubscriber<? super T> actual) {
 			this.actual = actual;

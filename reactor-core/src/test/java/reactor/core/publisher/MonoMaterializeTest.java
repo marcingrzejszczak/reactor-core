@@ -21,54 +21,52 @@ import reactor.test.subscriber.AssertSubscriber;
 
 public class MonoMaterializeTest {
 
-    @Test
-    public void completeOnlyBackpressured() {
-        AssertSubscriber<Signal<Integer>> ts = AssertSubscriber.create(0L);
-        
-        Mono.<Integer>empty().materialize()
-        .subscribe(ts);
-        
-        ts.assertNoValues()
-        .assertNoError()
-        .assertNotComplete();
-        
-        ts.request(1);
-        
-        ts.assertValues(Signal.complete())
-        .assertNoError()
-        .assertComplete();
-    }
+	@Test
+	public void completeOnlyBackpressured() {
+		AssertSubscriber<Signal<Integer>> ts = AssertSubscriber.create(0L);
 
-    @Test
-    public void errorOnlyBackpressured() {
-        AssertSubscriber<Signal<Integer>> ts = AssertSubscriber.create(0L);
+		Mono.<Integer>empty().materialize()
+				.subscribe(ts);
 
-        RuntimeException ex = new RuntimeException();
-        
-        Mono.<Integer>error(ex).materialize()
-        .subscribe(ts);
-        
-        ts.assertNoValues()
-        .assertNoError()
-        .assertNotComplete();
-        
-        ts.request(1);
-        
-        ts.assertValues(Signal.error(ex))
-        .assertNoError()
-        .assertComplete();
-    }
+		ts.assertNoValues()
+				.assertNoError()
+				.assertNotComplete();
+
+		ts.request(1);
+
+		ts.assertValues(Signal.complete())
+				.assertNoError()
+				.assertComplete();
+	}
+
+	@Test
+	public void errorOnlyBackpressured() {
+		AssertSubscriber<Signal<Integer>> ts = AssertSubscriber.create(0L);
+
+		RuntimeException ex = new RuntimeException();
+
+		Mono.<Integer>error(ex).materialize()
+				.subscribe(ts);
+
+		ts.assertNoValues()
+				.assertNoError()
+				.assertNotComplete();
+
+		ts.request(1);
+
+		ts.assertValues(Signal.error(ex))
+				.assertNoError()
+				.assertComplete();
+	}
 
 
-
-    @Test
-    public void materialize() {
-        StepVerifier.create(Mono.just("Three")
-                                .materialize())
-                    .expectNextMatches(s -> s.isOnNext() && s.get()
-                                                             .equals("Three"))
-                    .verifyComplete();
-    }
-
+	@Test
+	public void materialize() {
+		StepVerifier.create(Mono.just("Three")
+				.materialize())
+				.expectNextMatches(s -> s.isOnNext() && s.get()
+						.equals("Three"))
+				.verifyComplete();
+	}
 
 }

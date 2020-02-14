@@ -63,7 +63,7 @@ public class FluxHideTest {
 		};
 
 		FluxHide.SuppressFuseableSubscriber<Integer> sfs = Flux.just(1, 2, 3)
-		                                              .subscribeWith(new FluxHide.SuppressFuseableSubscriber<>(s));
+				.subscribeWith(new FluxHide.SuppressFuseableSubscriber<>(s));
 
 		assertThat(sfs.actual()).isEqualTo(s);
 		assertThat(sfs.size()).isEqualTo(0);
@@ -106,7 +106,7 @@ public class FluxHideTest {
 		};
 
 		FluxHide.SuppressFuseableSubscriber sfs = Flux.<Integer>error(new Exception("test"))
-		                                              .subscribeWith(new FluxHide.SuppressFuseableSubscriber<>(s));
+				.subscribeWith(new FluxHide.SuppressFuseableSubscriber<>(s));
 
 		assertThat(sfs.actual()).isEqualTo(s);
 		assertThat(sfs.size()).isEqualTo(0);
@@ -118,24 +118,26 @@ public class FluxHideTest {
 	}
 
 	@Test
-    public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxHide.HideSubscriber<String> test = new FluxHide.HideSubscriber<>(actual);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxHide.HideSubscriber<String> test = new FluxHide.HideSubscriber<>(actual);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+	}
 
 	@Test
-    public void scanSuppressFuseableSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxHide.SuppressFuseableSubscriber<String> test = new FluxHide.SuppressFuseableSubscriber<>(actual);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSuppressFuseableSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxHide.SuppressFuseableSubscriber<String> test = new FluxHide.SuppressFuseableSubscriber<>(actual);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+	}
 }

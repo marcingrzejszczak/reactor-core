@@ -36,13 +36,11 @@ import static reactor.core.publisher.FluxTimeout.addNameToTimeoutDescription;
  */
 final class MonoTimeout<T, U, V> extends InternalMonoOperator<T, T> {
 
+	@SuppressWarnings("rawtypes")
+	final static Function NEVER = e -> Flux.never();
 	final Publisher<U> firstTimeout;
-
 	final Publisher<? extends T> other;
 	final String timeoutDescription; //only useful when no `other`
-
-	@SuppressWarnings("rawtypes")
-    final static Function NEVER = e -> Flux.never();
 
 	MonoTimeout(Mono<? extends T> source,
 			Publisher<U> firstTimeout,

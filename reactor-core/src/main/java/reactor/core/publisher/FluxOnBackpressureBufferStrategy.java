@@ -32,15 +32,14 @@ import reactor.util.context.Context;
  * Buffers values if the subscriber doesn't request fast enough, bounding the
  * buffer to a chosen size. If the buffer overflows, apply a pre-determined
  * overflow strategy.
-
  * @author Stephane Maldini
  * @author Simon Baslé
  */
 final class FluxOnBackpressureBufferStrategy<O> extends InternalFluxOperator<O, O> {
 
-	final Consumer<? super O>    onBufferOverflow;
-	final int                    bufferSize;
-	final boolean                delayError;
+	final Consumer<? super O> onBufferOverflow;
+	final int bufferSize;
+	final boolean delayError;
 	final BufferOverflowStrategy bufferOverflowStrategy;
 
 	FluxOnBackpressureBufferStrategy(Flux<? extends O> source,
@@ -70,29 +69,24 @@ final class FluxOnBackpressureBufferStrategy<O> extends InternalFluxOperator<O, 
 			extends ArrayDeque<T>
 			implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
-		final int                       bufferSize;
-		final Consumer<? super T>       onOverflow;
-		final boolean                   delayError;
-		final BufferOverflowStrategy    overflowStrategy;
-
-		Subscription s;
-
-		volatile boolean cancelled;
-
-		volatile boolean done;
-		Throwable error;
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<BackpressureBufferDropOldestSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(BackpressureBufferDropOldestSubscriber.class,
 						"wip");
-
-		volatile long requested;
 		static final AtomicLongFieldUpdater<BackpressureBufferDropOldestSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BackpressureBufferDropOldestSubscriber.class,
 						"requested");
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		final int bufferSize;
+		final Consumer<? super T> onOverflow;
+		final boolean delayError;
+		final BufferOverflowStrategy overflowStrategy;
+		Subscription s;
+		volatile boolean cancelled;
+		volatile boolean done;
+		Throwable error;
+		volatile int wip;
+		volatile long requested;
 
 		BackpressureBufferDropOldestSubscriber(
 				CoreSubscriber<? super T> actual,
@@ -142,21 +136,21 @@ final class FluxOnBackpressureBufferStrategy<O> extends InternalFluxOperator<O, 
 			boolean callOnOverflow = false;
 			boolean callOnError = false;
 			T overflowElement = t;
-			synchronized(this) {
+			synchronized (this) {
 				if (size() == bufferSize) {
 					callOnOverflow = true;
 					switch (overflowStrategy) {
-						case DROP_OLDEST:
-							overflowElement = pollFirst();
-							offer(t);
-							break;
-						case DROP_LATEST:
-							//do nothing
-							break;
-						case ERROR:
-						default:
-							callOnError = true;
-							break;
+					case DROP_OLDEST:
+						overflowElement = pollFirst();
+						offer(t);
+						break;
+					case DROP_LATEST:
+						//do nothing
+						break;
+					case ERROR:
+					default:
+						callOnError = true;
+						break;
 					}
 				}
 				else {

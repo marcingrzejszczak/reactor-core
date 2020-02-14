@@ -49,7 +49,34 @@ import reactor.util.context.Context;
  */
 public final class MonoProcessor<O> extends Mono<O>
 		implements Processor<O, O>, CoreSubscriber<O>, Disposable, Subscription,
-		           Scannable {
+		Scannable {
+
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<MonoProcessor, NextInner[]> SUBSCRIBERS =
+			AtomicReferenceFieldUpdater.newUpdater(MonoProcessor.class,
+					NextInner[].class,
+					"subscribers");
+	@SuppressWarnings("rawtypes")
+	static final NextInner[] EMPTY = new NextInner[0];
+	@SuppressWarnings("rawtypes")
+	static final NextInner[] TERMINATED = new NextInner[0];
+	@SuppressWarnings("rawtypes")
+	static final NextInner[] EMPTY_WITH_SOURCE = new NextInner[0];
+	static final AtomicReferenceFieldUpdater<MonoProcessor, Subscription> UPSTREAM =
+			AtomicReferenceFieldUpdater.newUpdater(MonoProcessor.class, Subscription
+					.class, "subscription");
+	volatile NextInner<O>[] subscribers;
+	CorePublisher<? extends O> source;
+
+	Throwable error;
+	O value;
+
+
+	volatile Subscription subscription;
+	MonoProcessor(@Nullable CorePublisher<? extends O> source) {
+		this.source = source;
+		SUBSCRIBERS.lazySet(this, source != null ? EMPTY_WITH_SOURCE : EMPTY);
+	}
 
 	/**
 	 * Create a {@link MonoProcessor} that will eagerly request 1 on {@link #onSubscribe(Subscription)}, cache and emit
@@ -61,40 +88,6 @@ public final class MonoProcessor<O> extends Mono<O>
 	 */
 	public static <T> MonoProcessor<T> create() {
 		return new MonoProcessor<>(null);
-	}
-
-
-	volatile NextInner<O>[] subscribers;
-
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<MonoProcessor, NextInner[]> SUBSCRIBERS =
-			AtomicReferenceFieldUpdater.newUpdater(MonoProcessor.class,
-					NextInner[].class,
-					"subscribers");
-
-	@SuppressWarnings("rawtypes")
-	static final NextInner[] EMPTY = new NextInner[0];
-
-	@SuppressWarnings("rawtypes")
-	static final NextInner[] TERMINATED = new NextInner[0];
-
-	@SuppressWarnings("rawtypes")
-	static final NextInner[] EMPTY_WITH_SOURCE = new NextInner[0];
-
-	CorePublisher<? extends O> source;
-
-	Throwable    error;
-	O            value;
-
-
-	volatile Subscription subscription;
-	static final AtomicReferenceFieldUpdater<MonoProcessor, Subscription> UPSTREAM =
-			AtomicReferenceFieldUpdater.newUpdater(MonoProcessor.class, Subscription
-					.class, "subscription");
-
-	MonoProcessor(@Nullable CorePublisher<? extends O> source) {
-		this.source = source;
-		SUBSCRIBERS.lazySet(this, source != null ? EMPTY_WITH_SOURCE : EMPTY);
 	}
 
 	@Override
@@ -438,7 +431,7 @@ public final class MonoProcessor<O> extends Mono<O>
 	}
 
 	boolean add(NextInner<O> ps) {
-		for (;;) {
+		for (; ; ) {
 			NextInner<O>[] a = subscribers;
 
 			if (a == TERMINATED) {
@@ -463,7 +456,7 @@ public final class MonoProcessor<O> extends Mono<O>
 
 	@SuppressWarnings("unchecked")
 	void remove(NextInner<O> ps) {
-		for (;;) {
+		for (; ; ) {
 			NextInner<O>[] a = subscribers;
 			int n = a.length;
 			if (n == 0) {
@@ -486,7 +479,8 @@ public final class MonoProcessor<O> extends Mono<O>
 
 			if (n == 1) {
 				b = EMPTY;
-			} else {
+			}
+			else {
 				b = new NextInner[n - 1];
 				System.arraycopy(a, 0, b, 0, j);
 				System.arraycopy(a, j + 1, b, j, n - j - 1);
@@ -523,7 +517,8 @@ public final class MonoProcessor<O> extends Mono<O>
 		public void onError(Throwable t) {
 			if (isCancelled()) {
 				Operators.onOperatorError(t, currentContext());
-			} else {
+			}
+			else {
 				actual.onError(t);
 			}
 		}

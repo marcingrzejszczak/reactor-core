@@ -33,10 +33,10 @@ final class MonoTakeLastOne<T> extends MonoFromFluxOperator<T, T>
 
 	final T defaultValue;
 
-    MonoTakeLastOne(Flux<? extends T> source) {
-        super(source);
-	    this.defaultValue = null;
-    }
+	MonoTakeLastOne(Flux<? extends T> source) {
+		super(source);
+		this.defaultValue = null;
+	}
 
 	MonoTakeLastOne(Flux<? extends T> source, T defaultValue) {
 		super(source);
@@ -49,10 +49,10 @@ final class MonoTakeLastOne<T> extends MonoFromFluxOperator<T, T>
 	}
 
 	static final class TakeLastOneSubscriber<T>
-			extends Operators.MonoSubscriber<T, T>  {
+			extends Operators.MonoSubscriber<T, T> {
 
 		final boolean mustEmit;
-		final T       defaultValue;
+		final T defaultValue;
 		Subscription s;
 
 		TakeLastOneSubscriber(CoreSubscriber<? super T> actual,
@@ -95,12 +95,12 @@ final class MonoTakeLastOne<T> extends MonoFromFluxOperator<T, T>
 			T v = value;
 			if (v == null) {
 				if (mustEmit) {
-					if(defaultValue != null){
+					if (defaultValue != null) {
 						complete(defaultValue);
 					}
 					else {
 						actual.onError(Operators.onOperatorError(new NoSuchElementException(
-								"Flux#last() didn't observe any " + "onNext signal"),
+										"Flux#last() didn't observe any " + "onNext signal"),
 								actual.currentContext()));
 					}
 				}

@@ -110,7 +110,8 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 	@Override
 	protected List<Scenario<String, String>> scenarios_errorFromUpstreamFailure() {
 		return Arrays.asList(
-				scenario(f -> f.handle((data, s) -> {})),
+				scenario(f -> f.handle((data, s) -> {
+				})),
 
 				scenario(f -> f.handle((data, s) -> {
 					if (item(2).equals(data)) {
@@ -134,11 +135,11 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Set<Integer> expectedValues = new HashSet<>(Arrays.asList(2, 4, 6, 8, 10));
 
 		Flux.range(1, 5)
-		    .handle((v, s) -> s.next(v * 2))
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertContainValues(expectedValues)
-		    .assertNoError()
-		    .assertComplete();
+				.handle((v, s) -> s.next(v * 2))
+				.subscribeWith(AssertSubscriber.create())
+				.assertContainValues(expectedValues)
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -146,12 +147,12 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Set<Integer> expectedValues = new HashSet<>(Arrays.asList(2, 4, 6, 8, 10));
 
 		Flux.range(1, 5)
-		    .hide()
-		    .handle((v, s) -> s.next(v * 2))
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertContainValues(expectedValues)
-		    .assertNoError()
-		    .assertComplete();
+				.hide()
+				.handle((v, s) -> s.next(v * 2))
+				.subscribeWith(AssertSubscriber.create())
+				.assertContainValues(expectedValues)
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -159,15 +160,15 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Set<Integer> expectedValues = new HashSet<>(Arrays.asList(4, 8));
 
 		Flux.range(1, 5)
-		    .handle((v, s) -> {
-			    if (v % 2 == 0) {
-				    s.next(v * 2);
-			    }
-		    })
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertContainValues(expectedValues)
-		    .assertNoError()
-		    .assertComplete();
+				.handle((v, s) -> {
+					if (v % 2 == 0) {
+						s.next(v * 2);
+					}
+				})
+				.subscribeWith(AssertSubscriber.create())
+				.assertContainValues(expectedValues)
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -179,10 +180,10 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Flux.range(1, 5).<Integer>handle((v, s) -> s.next(v * 2)).subscribe(ts);
 
 		ts.assertContainValues(expectedValues)
-		  .assertNoError()
-		  .assertComplete()
-		  .assertFuseableSource()
-		  .assertFusionMode(SYNC);
+				.assertNoError()
+				.assertComplete()
+				.assertFuseableSource()
+				.assertFusionMode(SYNC);
 	}
 
 	@Test
@@ -192,15 +193,15 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 
 		Flux.range(1,
 				5).<Integer>handle((v, s) -> s.next(v * 2)).publishOn(Schedulers.single())
-		                                                   .subscribe(ts);
+				.subscribe(ts);
 
 		Set<Integer> expectedValues = new HashSet<>(Arrays.asList(2, 4, 6, 8, 10));
 		ts.await()
-		  .assertContainValues(expectedValues)
-		  .assertNoError()
-		  .assertComplete()
-		  .assertFuseableSource()
-		  .assertFusionMode(ASYNC);
+				.assertContainValues(expectedValues)
+				.assertNoError()
+				.assertComplete()
+				.assertFuseableSource()
+				.assertFusionMode(ASYNC);
 	}
 
 	@Test
@@ -216,10 +217,10 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 
 		Set<Integer> expectedValues = new HashSet<>(Arrays.asList(4, 8));
 		ts.assertContainValues(expectedValues)
-		  .assertNoError()
-		  .assertComplete()
-		  .assertFuseableSource()
-		  .assertFusionMode(SYNC);
+				.assertNoError()
+				.assertComplete()
+				.assertFuseableSource()
+				.assertFusionMode(SYNC);
 	}
 
 	@Test
@@ -232,15 +233,15 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 				s.next(v * 2);
 			}
 		}).publishOn(Schedulers.single())
-		  .subscribe(ts);
+				.subscribe(ts);
 
 		Set<Integer> expectedValues = new HashSet<>(Arrays.asList(4, 8));
 		ts.await()
-		  .assertContainValues(expectedValues)
-		  .assertNoError()
-		  .assertComplete()
-		  .assertFuseableSource()
-		  .assertFusionMode(ASYNC);
+				.assertContainValues(expectedValues)
+				.assertNoError()
+				.assertComplete()
+				.assertFuseableSource()
+				.assertFusionMode(ASYNC);
 	}
 
 	@Test
@@ -266,9 +267,9 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 				.subscribe(ts);
 
 		ts.await()
-		  .assertNoValues()
-		  .assertError(IllegalStateException.class)
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertError(IllegalStateException.class)
+				.assertNotComplete();
 
 		Assert.assertSame(throwableInOnOperatorError.get(), exception);
 		Assert.assertSame(dataInOnOperatorError.get(), data);
@@ -297,9 +298,9 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		}).subscribe(ts);
 
 		ts.await()
-		  .assertNoValues()
-		  .assertError(IllegalStateException.class)
-		  .assertNotComplete();
+				.assertNoValues()
+				.assertError(IllegalStateException.class)
+				.assertNotComplete();
 
 		Assert.assertSame(throwableInOnOperatorError.get(), exception);
 		Assert.assertSame(dataInOnOperatorError.get(), data);
@@ -310,51 +311,50 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		TestPublisher<String> ts = TestPublisher.create();
 
 		StepVerifier.create(ts.flux()
-		                      .as(this::filterTest2), 0)
-		            .thenRequest(2)
-		            .then(() -> ts.next("test0", "test1"))
-		            .expectNext("test0", "test1")
-		            .thenRequest(1)
-		            .then(() -> ts.next("test2"))
-		            .expectNext("test2")
-		            .verifyComplete();
+				.as(this::filterTest2), 0)
+				.thenRequest(2)
+				.then(() -> ts.next("test0", "test1"))
+				.expectNext("test0", "test1")
+				.thenRequest(1)
+				.then(() -> ts.next("test2"))
+				.expectNext("test2")
+				.verifyComplete();
 	}
 
 	@Test
 	public void handleBackpressuredSourceConditional() {
 		TestPublisher<String> ts = TestPublisher.create();
 		StepVerifier.create(ts.flux()
-		                      .as(this::filterTest2)
-		                      .filter(d -> true), 0)
-		            .thenRequest(2)
-		            .then(() -> ts.next("test0", "test1"))
-		            .expectNext("test0", "test1")
-		            .thenRequest(1)
-		            .then(() -> ts.next("test2"))
-		            .expectNext("test2")
-		            .verifyComplete();
+				.as(this::filterTest2)
+				.filter(d -> true), 0)
+				.thenRequest(2)
+				.then(() -> ts.next("test0", "test1"))
+				.expectNext("test0", "test1")
+				.thenRequest(1)
+				.then(() -> ts.next("test2"))
+				.expectNext("test2")
+				.verifyComplete();
 	}
 
 	@Test
 	public void handleBackpressuredTargetConditional() {
 		TestPublisher<String> ts = TestPublisher.create();
 		StepVerifier.create(ts.flux()
-		                      .hide()
-		                      .as(this::filterTest2)
-		                      .filter(d -> true), 0)
-		            .thenRequest(2)
-		            .then(() -> ts.next("test0", "test1"))
-		            .expectNext("test0", "test1")
-		            .thenRequest(1)
-		            .then(() -> ts.next("test2"))
-		            .expectNext("test2")
-		            .verifyComplete();
+				.hide()
+				.as(this::filterTest2)
+				.filter(d -> true), 0)
+				.thenRequest(2)
+				.then(() -> ts.next("test0", "test1"))
+				.expectNext("test0", "test1")
+				.thenRequest(1)
+				.then(() -> ts.next("test2"))
+				.expectNext("test2")
+				.verifyComplete();
 	}
 
 	Flux<String> passThrough(Flux<String> f) {
 		return f.handle((a, b) -> b.next(a));
 	}
-
 
 
 	Flux<String> filterTest2(Flux<String> f) {
@@ -369,396 +369,403 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 	@Test
 	public void prematureCompleteFusedSync() {
 		StepVerifier.create(Flux.just("test")
-		                        .as(this::passThrough)
-		                        .filter(t -> true))
-		            .expectFusion(Fuseable.SYNC)
-		            .expectNext("test")
-		            .verifyComplete();
+				.as(this::passThrough)
+				.filter(t -> true))
+				.expectFusion(Fuseable.SYNC)
+				.expectNext("test")
+				.verifyComplete();
 	}
 
 	@Test
 	public void dropHandleFusedSync() {
 		StepVerifier.create(Flux.just("test", "test2")
-		                        .handle((data, s) -> {
-		                        })
-		                        .filter(t -> true))
-		            .expectFusion(Fuseable.SYNC)
-		            .verifyComplete();
+				.handle((data, s) -> {
+				})
+				.filter(t -> true))
+				.expectFusion(Fuseable.SYNC)
+				.verifyComplete();
 	}
 
-    @Test
-    public void scanSubscriber() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxHandle.HandleSubscriber<String, String> test = new FluxHandle.HandleSubscriber<>(actual, (a, b) -> {});
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxHandle.HandleSubscriber<String, String> test = new FluxHandle.HandleSubscriber<>(actual, (a, b) -> {
+		});
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.error = new IllegalStateException("boom");
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        test.onComplete();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.error = new IllegalStateException("boom");
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		test.onComplete();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    @Test
-    public void scanConditionalSubscriber() {
-	    @SuppressWarnings("unchecked")
-	    Fuseable.ConditionalSubscriber<? super Object> subscriber = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
-        FluxHandle.HandleConditionalSubscriber<String, String> test =
-        		new FluxHandle.HandleConditionalSubscriber<>(subscriber, (a, b) -> {});
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanConditionalSubscriber() {
+		@SuppressWarnings("unchecked")
+		Fuseable.ConditionalSubscriber<? super Object> subscriber = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
+		FluxHandle.HandleConditionalSubscriber<String, String> test =
+				new FluxHandle.HandleConditionalSubscriber<>(subscriber, (a, b) -> {
+				});
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.error = new IllegalStateException("boom");
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        test.onComplete();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.error = new IllegalStateException("boom");
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		test.onComplete();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    @Test
-    public void scanFuseableSubscriber() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxHandleFuseable.HandleFuseableSubscriber<String, String> test =
-        		new FluxHandleFuseable.HandleFuseableSubscriber<>(actual, (a, b) -> {});
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanFuseableSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxHandleFuseable.HandleFuseableSubscriber<String, String> test =
+				new FluxHandleFuseable.HandleFuseableSubscriber<>(actual, (a, b) -> {
+				});
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.error = new IllegalStateException("boom");
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        test.onComplete();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.error = new IllegalStateException("boom");
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		test.onComplete();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    @Test
-    public void scanFuseableConditionalSubscriber() {
-	    @SuppressWarnings("unchecked")
-	    Fuseable.ConditionalSubscriber<? super Object> subscriber = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
-	    FluxHandleFuseable.HandleFuseableConditionalSubscriber<String, String> test =
-        		new FluxHandleFuseable.HandleFuseableConditionalSubscriber<>(subscriber, (a, b) -> {});
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	@Test
+	public void scanFuseableConditionalSubscriber() {
+		@SuppressWarnings("unchecked")
+		Fuseable.ConditionalSubscriber<? super Object> subscriber = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
+		FluxHandleFuseable.HandleFuseableConditionalSubscriber<String, String> test =
+				new FluxHandleFuseable.HandleFuseableConditionalSubscriber<>(subscriber, (a, b) -> {
+				});
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.error = new IllegalStateException("boom");
-        assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
-        test.onComplete();
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.error = new IllegalStateException("boom");
+		assertThat(test.scan(Scannable.Attr.ERROR)).isSameAs(test.error);
+		test.onComplete();
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
 
 	@Test
 	public void contextTest() {
 		StepVerifier.create(Flux.just("foo")
-		                        .handle((d, s) -> s.next(s.currentContext()
-		                                               .get(AtomicInteger.class)
-		                                               .incrementAndGet()))
-		                        .repeat(9)
-		                        .subscriberContext(ctx -> ctx.put(AtomicInteger.class,
-				                        new AtomicInteger())))
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.handle((d, s) -> s.next(s.currentContext()
+						.get(AtomicInteger.class)
+						.incrementAndGet()))
+				.repeat(9)
+				.subscriberContext(ctx -> ctx.put(AtomicInteger.class,
+						new AtomicInteger())))
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void contextTestHide() {
 		StepVerifier.create(Flux.just("foo")
-		                        .hide()
-		                        .handle((d, s) -> s.next(s.currentContext()
-		                                               .get(AtomicInteger.class)
-		                                               .incrementAndGet()))
-		                        .repeat(9)
-		                        .subscriberContext(ctx -> ctx.put(AtomicInteger.class,
-				                        new AtomicInteger())))
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.hide()
+				.handle((d, s) -> s.next(s.currentContext()
+						.get(AtomicInteger.class)
+						.incrementAndGet()))
+				.repeat(9)
+				.subscriberContext(ctx -> ctx.put(AtomicInteger.class,
+						new AtomicInteger())))
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void contextTestFilter() {
 		StepVerifier.create(Flux.just("foo")
-		                        .handle((d, s) -> s.next(s.currentContext()
-		                                               .get(AtomicInteger.class)
-		                                               .incrementAndGet()))
-		                        .filter(d -> true)
-		                        .repeat(9)
-		                        .subscriberContext(ctx -> ctx.put(AtomicInteger.class,
-				                        new AtomicInteger())))
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.handle((d, s) -> s.next(s.currentContext()
+						.get(AtomicInteger.class)
+						.incrementAndGet()))
+				.filter(d -> true)
+				.repeat(9)
+				.subscriberContext(ctx -> ctx.put(AtomicInteger.class,
+						new AtomicInteger())))
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
+
 	@Test
 	public void contextTestFilterHide() {
 		StepVerifier.create(Flux.just("foo")
-		                        .handle((d, s) -> s.next(s.currentContext()
-		                                               .get(AtomicInteger.class)
-		                                               .incrementAndGet()))
-		                        .filter(d -> true)
-		                        .repeat(9)
-		                        .subscriberContext(ctx -> ctx.put(AtomicInteger.class,
-				                        new AtomicInteger())))
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.handle((d, s) -> s.next(s.currentContext()
+						.get(AtomicInteger.class)
+						.incrementAndGet()))
+				.filter(d -> true)
+				.repeat(9)
+				.subscriberContext(ctx -> ctx.put(AtomicInteger.class,
+						new AtomicInteger())))
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void nextAfterCompleteNormal() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		            .hasMessage("Cannot emit after a complete or error"));
+				.hide()
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterErrorNormal() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit after a complete or error"));
+				.hide()
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 
 	@Test
 	public void errorAfterCompleteNormal() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.error(new NullPointerException("boom"));
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot error after a complete or error"));
+				.hide()
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.error(new NullPointerException("boom"));
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot error after a complete or error"));
 	}
 
 
 	@Test
 	public void completeAfterErrorNormal() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.complete();
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot complete after a complete or error"));
+				.hide()
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.complete();
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot complete after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterNextNormal() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .handle((v, sink) -> {
-			                        sink.next(v);
-			                        sink.next(v + 1);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit more than one data"));
+				.hide()
+				.handle((v, sink) -> {
+					sink.next(v);
+					sink.next(v + 1);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit more than one data"));
 	}
 
 	@Test
 	public void nextAfterCompleteNormalConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		            .hasMessage("Cannot emit after a complete or error"));
+				.hide()
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterErrorNormalConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit after a complete or error"));
+				.hide()
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 
 	@Test
 	public void errorAfterCompleteNormalConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.error(new NullPointerException("boom"));
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot error after a complete or error"));
+				.hide()
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.error(new NullPointerException("boom"));
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot error after a complete or error"));
 	}
 
 
 	@Test
 	public void completeAfterErrorNormalConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.complete();
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot complete after a complete or error"));
+				.hide()
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.complete();
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot complete after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterNextNormalConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.next(v);
-			                        sink.next(v + 1);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit more than one data"));
+				.hide()
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.next(v);
+					sink.next(v + 1);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit more than one data"));
 	}
 
 	@Test
 	public void nextAfterCompleteFused() {
 		StepVerifier.create(Flux.just(1)
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		            .hasMessage("Cannot emit after a complete or error"));
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterErrorFused() {
 		StepVerifier.create(Flux.just(1)
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit after a complete or error"));
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 
 	@Test
 	public void errorAfterCompleteFused() {
 		StepVerifier.create(Flux.just(1)
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.error(new NullPointerException("boom"));
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot error after a complete or error"));
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.error(new NullPointerException("boom"));
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot error after a complete or error"));
 	}
 
 
 	@Test
 	public void completeAfterErrorFused() {
 		StepVerifier.create(Flux.just(1)
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.complete();
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot complete after a complete or error"));
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.complete();
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot complete after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterNextFused() {
 		StepVerifier.create(Flux.just(1)
-		                        .handle((v, sink) -> {
-			                        sink.next(v);
-			                        sink.next(v + 1);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit more than one data"));
+				.handle((v, sink) -> {
+					sink.next(v);
+					sink.next(v + 1);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit more than one data"));
 	}
 
 	@Test
 	public void nextAfterCompleteFusedConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		            .hasMessage("Cannot emit after a complete or error"));
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterErrorFusedConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.next(2);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit after a complete or error"));
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.next(2);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit after a complete or error"));
 	}
 
 
 	@Test
 	public void errorAfterCompleteFusedConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.complete();
-			                        sink.error(new NullPointerException("boom"));
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot error after a complete or error"));
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.complete();
+					sink.error(new NullPointerException("boom"));
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot error after a complete or error"));
 	}
 
 	@Test
 	public void completeAfterErrorFusedConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.error(new NullPointerException("boom"));
-			                        sink.complete();
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot complete after a complete or error"));
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.error(new NullPointerException("boom"));
+					sink.complete();
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot complete after a complete or error"));
 	}
 
 	@Test
 	public void nextAfterNextFusedConditional() {
 		StepVerifier.create(Flux.just(1)
-		                        .filter(i -> true)
-		                        .handle((v, sink) -> {
-			                        sink.next(v);
-			                        sink.next(v + 1);
-		                        }))
-		            .verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
-		                                                    .hasMessage("Cannot emit more than one data"));
+				.filter(i -> true)
+				.handle((v, sink) -> {
+					sink.next(v);
+					sink.next(v + 1);
+				}))
+				.verifyErrorSatisfies(e -> assertThat(e).isInstanceOf(IllegalStateException.class)
+						.hasMessage("Cannot emit more than one data"));
 	}
 
 	@Test
@@ -767,15 +774,15 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		try {
 			AtomicLong r = new AtomicLong();
 			StepVerifier.create(Flux.range(0, 2)
-			                        .doOnRequest(r::addAndGet)
-			                        .hide()
-			                        .handle((i, sink) -> sink.next(4 / i)), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.doOnRequest(r::addAndGet)
+					.hide()
+					.handle((i, sink) -> sink.next(4 / i)), 1)
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 
 			assertThat(r.get()).as("amount requested").isEqualTo(2L);
 		}
@@ -791,22 +798,22 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		try {
 			AtomicLong r = new AtomicLong();
 			StepVerifier.create(Flux.range(0, 2)
-			                        .doOnRequest(r::addAndGet)
-			                        .hide()
-			                        .handle((i, sink) -> {
-				                        if (i == 0) {
-					                        sink.error(error);
-				                        }
-				                        else {
-					                        sink.next(4 / i);
-				                        }
-			                        }), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorMatching(throwable -> error == throwable);
+					.doOnRequest(r::addAndGet)
+					.hide()
+					.handle((i, sink) -> {
+						if (i == 0) {
+							sink.error(error);
+						}
+						else {
+							sink.next(4 / i);
+						}
+					}), 1)
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorMatching(throwable -> error == throwable);
 
 			assertThat(r.get()).as("amount requested").isEqualTo(2L);
 		}
@@ -820,14 +827,14 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .distinctUntilChanged()
-			                        .handle((i, sink) -> sink.next(4 / i)), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.distinctUntilChanged()
+					.handle((i, sink) -> sink.next(4 / i)), 1)
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -840,21 +847,21 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .distinctUntilChanged()
-			                        .handle((i, sink) -> {
-				                        if (i == 0) {
-					                        sink.error(error);
-				                        }
-				                        else {
-					                        sink.next(4 / i);
-				                        }
-			                        }), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorMatching(throwable -> error == throwable);
+					.distinctUntilChanged()
+					.handle((i, sink) -> {
+						if (i == 0) {
+							sink.error(error);
+						}
+						else {
+							sink.next(4 / i);
+						}
+					}), 1)
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorMatching(throwable -> error == throwable);
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -867,16 +874,16 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		try {
 			AtomicLong r = new AtomicLong();
 			StepVerifier.create(Flux.range(0, 2)
-			                        .doOnRequest(r::addAndGet)
-			                        .hide()
-			                        .handle((i, sink) -> sink.next(4 / i))
-			                        .filter(i -> true), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.doOnRequest(r::addAndGet)
+					.hide()
+					.handle((i, sink) -> sink.next(4 / i))
+					.filter(i -> true), 1)
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 
 			assertThat(r.get()).as("amount requested").isEqualTo(2L);
 		}
@@ -892,23 +899,23 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		try {
 			AtomicLong r = new AtomicLong();
 			StepVerifier.create(Flux.range(0, 2)
-			                        .doOnRequest(r::addAndGet)
-			                        .hide()
-			                        .handle((i, sink) -> {
-				                        if (i == 0) {
-					                        sink.error(error);
-				                        }
-				                        else {
-					                        sink.next(4 / i);
-				                        }
-			                        })
-			                        .filter(i -> true), 1)
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorMatching(throwable -> error == throwable);
+					.doOnRequest(r::addAndGet)
+					.hide()
+					.handle((i, sink) -> {
+						if (i == 0) {
+							sink.error(error);
+						}
+						else {
+							sink.next(4 / i);
+						}
+					})
+					.filter(i -> true), 1)
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorMatching(throwable -> error == throwable);
 
 			assertThat(r.get()).as("amount requested").isEqualTo(2L);
 		}
@@ -922,15 +929,15 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .distinctUntilChanged()
-			                        .handle((i, sink) -> sink.next(4 / i))
-			                        .filter(i -> true))
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.distinctUntilChanged()
+					.handle((i, sink) -> sink.next(4 / i))
+					.filter(i -> true))
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -943,22 +950,22 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .distinctUntilChanged()
-			                        .handle((i, sink) -> {
-				                        if (i == 0) {
-					                        sink.error(error);
-				                        }
-				                        else {
-					                        sink.next(4 / i);
-				                        }
-			                        })
-			                        .filter(i -> true))
-			            .expectNoFusionSupport()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorMatching(throwable -> error == throwable);
+					.distinctUntilChanged()
+					.handle((i, sink) -> {
+						if (i == 0) {
+							sink.error(error);
+						}
+						else {
+							sink.next(4 / i);
+						}
+					})
+					.filter(i -> true))
+					.expectNoFusionSupport()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorMatching(throwable -> error == throwable);
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -970,13 +977,13 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .handle((i, sink) -> sink.next(4 / i)), 1)
-			            .expectFusion()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.handle((i, sink) -> sink.next(4 / i)), 1)
+					.expectFusion()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -989,20 +996,20 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .handle((i, sink) -> {
-				                        if (i == 0) {
-					                        sink.error(error);
-				                        }
-				                        else {
-					                        sink.next(4 / i);
-				                        }
-			                        }), 1)
-			            .expectFusion()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorMatching(throwable -> error == throwable);
+					.handle((i, sink) -> {
+						if (i == 0) {
+							sink.error(error);
+						}
+						else {
+							sink.next(4 / i);
+						}
+					}), 1)
+					.expectFusion()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorMatching(throwable -> error == throwable);
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -1014,14 +1021,14 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .handle((i, sink) -> sink.next(4 / i))
-			                        .filter(i -> true), 1)
-			            .expectFusion()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorWithMessage("/ by zero");
+					.handle((i, sink) -> sink.next(4 / i))
+					.filter(i -> true), 1)
+					.expectFusion()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorWithMessage("/ by zero");
 		}
 		finally {
 			Hooks.resetOnNextError();
@@ -1034,21 +1041,21 @@ public class FluxHandleTest extends FluxOperatorTest<String, String> {
 		Hooks.onNextError(OnNextFailureStrategy.RESUME_DROP);
 		try {
 			StepVerifier.create(Flux.range(0, 2)
-			                        .handle((i, sink) -> {
-				                        if (i == 0) {
-					                        sink.error(error);
-				                        }
-				                        else {
-					                        sink.next(4 / i);
-				                        }
-			                        })
-			                        .filter(i -> true), 1)
-			            .expectFusion()
-			            .expectNext(4)
-			            .expectComplete()
-			            .verifyThenAssertThat()
-			            .hasDroppedExactly(0)
-			            .hasDroppedErrorMatching(throwable -> error == throwable);
+					.handle((i, sink) -> {
+						if (i == 0) {
+							sink.error(error);
+						}
+						else {
+							sink.next(4 / i);
+						}
+					})
+					.filter(i -> true), 1)
+					.expectFusion()
+					.expectNext(4)
+					.expectComplete()
+					.verifyThenAssertThat()
+					.hasDroppedExactly(0)
+					.hasDroppedErrorMatching(throwable -> error == throwable);
 		}
 		finally {
 			Hooks.resetOnNextError();

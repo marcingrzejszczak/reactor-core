@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.util.annotation.Nullable;
@@ -31,9 +30,9 @@ import reactor.util.annotation.Nullable;
  * @param <T> the returned value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class MonoSupplier<T> 
-extends Mono<T>
-		implements Callable<T>, Fuseable, SourceProducer<T>  {
+final class MonoSupplier<T>
+		extends Mono<T>
+		implements Callable<T>, Fuseable, SourceProducer<T> {
 
 	final Supplier<? extends T> supplier;
 
@@ -65,7 +64,7 @@ extends Mono<T>
 			actual.onError(Operators.onOperatorError(e, actual.currentContext()));
 		}
 	}
-	
+
 	@Override
 	@Nullable
 	public T block(Duration m) {
@@ -78,7 +77,7 @@ extends Mono<T>
 		//the duration is ignored above
 		return block(Duration.ZERO);
 	}
-	
+
 	@Override
 	@Nullable
 	public T call() throws Exception {

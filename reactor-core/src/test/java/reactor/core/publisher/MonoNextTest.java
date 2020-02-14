@@ -29,24 +29,24 @@ public class MonoNextTest {
 	@Test
 	public void normal() {
 		Flux.range(1, 1_000_000)
-		    .next()
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertValues(1)
-		    .assertComplete();
+				.next()
+				.subscribeWith(AssertSubscriber.create())
+				.assertValues(1)
+				.assertComplete();
 	}
 
 	@Test
 	public void normalBackpressured() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 		Flux.range(1, 1_000_000)
-		    .next()
-		    .subscribeWith(ts)
-		    .assertNoValues()
-		    .assertNotComplete();
+				.next()
+				.subscribeWith(ts)
+				.assertNoValues()
+				.assertNotComplete();
 
 		ts.request(1);
 		ts.assertValues(1)
-		  .assertComplete();
+				.assertComplete();
 	}
 
 	@Test
@@ -54,8 +54,8 @@ public class MonoNextTest {
 		TestPublisher<String> cancelTester = TestPublisher.create();
 
 		MonoProcessor<String> processor = cancelTester.flux()
-		                                              .next()
-		                                              .toProcessor();
+				.next()
+				.toProcessor();
 		processor.subscribe();
 		processor.cancel();
 
@@ -64,7 +64,8 @@ public class MonoNextTest {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoNext.NextSubscriber<String> test = new MonoNext.NextSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

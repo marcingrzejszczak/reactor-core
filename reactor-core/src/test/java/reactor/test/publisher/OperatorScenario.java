@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-
 import org.reactivestreams.Publisher;
 import reactor.test.StepVerifier;
 import reactor.util.annotation.Nullable;
@@ -34,25 +33,29 @@ import static reactor.core.Fuseable.NONE;
 public class OperatorScenario<I, PI extends Publisher<? extends I>, O, PO extends Publisher<? extends O>> {
 
 	final Function<PI, ? extends PO> body;
-	final Exception                  stack;
+	final Exception stack;
 
-	RuntimeException producerError                        = null;
-	RuntimeException droppedError                         = null;
-	I                droppedItem                          = null;
-	int              fusionMode                           = NONE;
-	int              fusionModeThreadBarrier              = NONE;
-	int              prefetch                             = -1;
-	boolean          shouldHitDropNextHookAfterTerminate  = true;
-	boolean          shouldHitDropErrorHookAfterTerminate = true;
-	boolean          shouldAssertPostTerminateState       = true;
-	int              producing                            = -1;
-	int              demand                               = -1;
+	RuntimeException producerError = null;
+	RuntimeException droppedError = null;
+	I droppedItem = null;
+	int fusionMode = NONE;
+	int fusionModeThreadBarrier = NONE;
+	int prefetch = -1;
+	boolean shouldHitDropNextHookAfterTerminate = true;
+	boolean shouldHitDropErrorHookAfterTerminate = true;
+	boolean shouldAssertPostTerminateState = true;
+	int producing = -1;
+	int demand = -1;
 	IntFunction<? extends I> producingMapper;
 
-	@Nullable Consumer<? super O>[]          receivers      = null;
-	@Nullable O[]                            receiverValues = null;
-	@Nullable String                         description    = null;
-	@Nullable Consumer<StepVerifier.Step<O>> verifier       = null;
+	@Nullable
+	Consumer<? super O>[] receivers = null;
+	@Nullable
+	O[] receiverValues = null;
+	@Nullable
+	String description = null;
+	@Nullable
+	Consumer<StepVerifier.Step<O>> verifier = null;
 
 	OperatorScenario(@Nullable Function<PI, ? extends PO> body, @Nullable Exception stack) {
 		this.body = body;

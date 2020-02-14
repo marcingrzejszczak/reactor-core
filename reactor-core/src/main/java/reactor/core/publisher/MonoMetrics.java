@@ -25,7 +25,8 @@ import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.util.annotation.Nullable;
 
-import static reactor.core.publisher.FluxMetrics.*;
+import static reactor.core.publisher.FluxMetrics.resolveName;
+import static reactor.core.publisher.FluxMetrics.resolveTags;
 
 /**
  * Activate metrics gathering on a {@link Mono}, assumes Micrometer is on the classpath.
@@ -39,8 +40,8 @@ import static reactor.core.publisher.FluxMetrics.*;
  */
 final class MonoMetrics<T> extends InternalMonoOperator<T, T> {
 
-	final String        name;
-	final Tags          tags;
+	final String name;
+	final Tags tags;
 	final MeterRegistry meterRegistry;
 
 	MonoMetrics(Mono<? extends T> mono) {
@@ -74,9 +75,9 @@ final class MonoMetrics<T> extends InternalMonoOperator<T, T> {
 	static class MetricsSubscriber<T> implements InnerOperator<T, T> {
 
 		final CoreSubscriber<? super T> actual;
-		final Clock                     clock;
-		final Tags                      commonTags;
-		final MeterRegistry             registry;
+		final Clock clock;
+		final Tags commonTags;
+		final MeterRegistry registry;
 
 		Timer.Sample subscribeToTerminateSample;
 		boolean done;

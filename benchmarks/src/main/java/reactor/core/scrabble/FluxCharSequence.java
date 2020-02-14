@@ -1,4 +1,5 @@
 package reactor.core.scrabble;
+
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
@@ -25,17 +26,15 @@ final class FluxCharSequence extends Flux<Integer> implements Fuseable {
 
 	static final class CharSequenceSubscription implements Fuseable.QueueSubscription<Integer> {
 
+		static final AtomicLongFieldUpdater<CharSequenceSubscription> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(CharSequenceSubscription.class, "requested");
 		final CoreSubscriber<? super Integer> actual;
-
 		final CharSequence string;
-
 		final int end;
-
 		int index;
-
 		volatile boolean cancelled;
+		volatile long requested;
 
-		volatile     long                                             requested;
 		CharSequenceSubscription(CoreSubscriber<? super Integer> actual, CharSequence string) {
 			this.actual = actual;
 			this.string = string;
@@ -146,8 +145,6 @@ final class FluxCharSequence extends Flux<Integer> implements Fuseable {
 				}
 			}
 		}
-		static final AtomicLongFieldUpdater<CharSequenceSubscription> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(CharSequenceSubscription.class, "requested");
 	}
 
 }

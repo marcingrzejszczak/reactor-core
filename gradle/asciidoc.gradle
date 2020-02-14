@@ -17,28 +17,28 @@ configure(rootProject) {
 	apply plugin: 'org.asciidoctor.convert'
 
 	asciidoctor {
-	  inputs.dir("docs/asciidoc/")
-			.withPropertyName("asciidocFiles")
-			.withPathSensitivity(PathSensitivity.RELATIVE)
+		inputs.dir("docs/asciidoc/")
+			  .withPropertyName("asciidocFiles")
+			  .withPathSensitivity(PathSensitivity.RELATIVE)
 
-	  if (isCiServer || !rootProject.version.toString().endsWith(".BUILD-SNAPSHOT")) {
-		backends = ["html5", "pdf"]
-	  }
-	  else {
-		backends = ["html5"]
-	  }
-
-	  sourceDir "$rootDir/docs/asciidoc/"
-	  sources {
-		include "index.asciidoc"
-	  }
-	  resources {
-		from(sourceDir) {
-		  include 'images/**'
-		  include 'highlight/**/*'
+		if (isCiServer || !rootProject.version.toString().endsWith(".BUILD-SNAPSHOT")) {
+			backends = ["html5", "pdf"]
 		}
-	  }
-	  outputDir file("$buildDir/docs/asciidoc")
+		else {
+			backends = ["html5"]
+		}
+
+		sourceDir "$rootDir/docs/asciidoc/"
+		sources {
+			include "index.asciidoc"
+		}
+		resources {
+			from(sourceDir) {
+				include 'images/**'
+				include 'highlight/**/*'
+			}
+		}
+		outputDir file("$buildDir/docs/asciidoc")
 		logDocuments = true
 		options = [
 				doctype: 'book'
@@ -53,8 +53,8 @@ configure(rootProject) {
 	}
 
 	dependencies {
-	  asciidoctor 'org.jruby:jruby-complete:9.2.5.0'
-	  asciidoctor 'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.16'
+		asciidoctor 'org.jruby:jruby-complete:9.2.5.0'
+		asciidoctor 'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.16'
 	}
 
 	task docsZip(type: Zip, dependsOn: asciidoctor) {
@@ -63,7 +63,7 @@ configure(rootProject) {
 		afterEvaluate() {
 			//we copy the pdf late, when a potential customVersion has been applied to rootProject
 			from("$buildDir/docs/asciidoc/pdf/index.pdf") {
-				into ("docs/")
+				into("docs/")
 				rename("index.pdf", "reactor-core-reference-guide-${rootProject.version}.pdf")
 			}
 		}

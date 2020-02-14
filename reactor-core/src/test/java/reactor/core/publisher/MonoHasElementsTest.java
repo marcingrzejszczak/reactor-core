@@ -43,8 +43,8 @@ public class MonoHasElementsTest {
 		Flux.empty().hasElements().subscribe(ts);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -54,8 +54,8 @@ public class MonoHasElementsTest {
 		Mono.empty().hasElement().subscribe(ts);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -65,14 +65,14 @@ public class MonoHasElementsTest {
 		Mono.empty().hasElement().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -82,8 +82,8 @@ public class MonoHasElementsTest {
 		Flux.range(1, 10).hasElements().subscribe(ts);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -93,14 +93,14 @@ public class MonoHasElementsTest {
 		Flux.range(1, 10).hasElements().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -108,10 +108,10 @@ public class MonoHasElementsTest {
 		AtomicLong cancelCount = new AtomicLong();
 
 		StepVerifier.create(Flux.range(1, 10)
-		                        .doOnCancel(cancelCount::incrementAndGet)
-		                        .hasElements())
-	                .expectNext(true)
-	                .verifyComplete();
+				.doOnCancel(cancelCount::incrementAndGet)
+				.hasElements())
+				.expectNext(true)
+				.verifyComplete();
 
 		assertThat(cancelCount.get()).isEqualTo(1);
 	}
@@ -121,10 +121,10 @@ public class MonoHasElementsTest {
 		AtomicLong cancelCount = new AtomicLong();
 
 		StepVerifier.create(Mono.just(1)
-		                        .doOnCancel(cancelCount::incrementAndGet)
-		                        .hasElement())
-		            .expectNext(true)
-		            .verifyComplete();
+				.doOnCancel(cancelCount::incrementAndGet)
+				.hasElement())
+				.expectNext(true)
+				.verifyComplete();
 
 		assertThat(cancelCount.get()).isEqualTo(0);
 	}
@@ -134,12 +134,15 @@ public class MonoHasElementsTest {
 		AtomicReference<Subscription> sub = new AtomicReference<>();
 
 		Mono.just("foo").hide()
-		    .hasElement()
-		    .subscribeWith(new LambdaSubscriber<>(v -> {}, e -> {}, () -> {},
-				    s -> {
-					    sub.set(s);
-					    s.request(Long.MAX_VALUE);
-				    }));
+				.hasElement()
+				.subscribeWith(new LambdaSubscriber<>(v -> {
+				}, e -> {
+				}, () -> {
+				},
+						s -> {
+							sub.set(s);
+							s.request(Long.MAX_VALUE);
+						}));
 
 		assertThat(sub.get()).isInstanceOf(MonoHasElement.HasElementSubscriber.class);
 		assertThat(Scannable.from(sub.get()).scan(Scannable.Attr.PARENT).getClass()).isEqualTo(FluxHide.HideSubscriber.class);
@@ -150,19 +153,22 @@ public class MonoHasElementsTest {
 		AtomicReference<Subscription> sub = new AtomicReference<>();
 
 		Flux.just("foo", "bar").hide()
-		    .hasElements()
-		    .subscribeWith(new LambdaSubscriber<>(v -> {}, e -> {}, () -> {},
-				    s -> {
-					    sub.set(s);
-					    s.request(Long.MAX_VALUE);
-				    }));
+				.hasElements()
+				.subscribeWith(new LambdaSubscriber<>(v -> {
+				}, e -> {
+				}, () -> {
+				},
+						s -> {
+							sub.set(s);
+							s.request(Long.MAX_VALUE);
+						}));
 
 		assertThat(sub.get()).isInstanceOf(MonoHasElements.HasElementsSubscriber.class);
 		Scannable.from(sub.get())
-		         .parents()
-		         .findFirst()
-		         .ifPresent(s -> assertThat(s).isInstanceOf(FluxHide.HideSubscriber
-				         .class));
+				.parents()
+				.findFirst()
+				.ifPresent(s -> assertThat(s).isInstanceOf(FluxHide.HideSubscriber
+						.class));
 	}
 
 	@Test
@@ -170,11 +176,14 @@ public class MonoHasElementsTest {
 		AtomicBoolean cancelled = new AtomicBoolean();
 
 		Mono.just("foo").hide()
-		    .doOnCancel(() -> cancelled.set(true))
-		    .log()
-		    .hasElement()
-		    .subscribeWith(new LambdaSubscriber<>(v -> {}, e -> {}, () -> {},
-				    Subscription::cancel));
+				.doOnCancel(() -> cancelled.set(true))
+				.log()
+				.hasElement()
+				.subscribeWith(new LambdaSubscriber<>(v -> {
+				}, e -> {
+				}, () -> {
+				},
+						Subscription::cancel));
 
 		assertThat(cancelled.get()).isTrue();
 	}
@@ -184,17 +193,21 @@ public class MonoHasElementsTest {
 		AtomicBoolean cancelled = new AtomicBoolean();
 
 		Flux.just("foo", "bar").hide()
-		    .doOnCancel(() -> cancelled.set(true))
-		    .hasElements()
-		    .subscribeWith(new LambdaSubscriber<>(v -> {}, e -> {}, () -> {},
-				    Subscription::cancel));
+				.doOnCancel(() -> cancelled.set(true))
+				.hasElements()
+				.subscribeWith(new LambdaSubscriber<>(v -> {
+				}, e -> {
+				}, () -> {
+				},
+						Subscription::cancel));
 
 		assertThat(cancelled.get()).isTrue();
 	}
 
 	@Test
 	public void scanHasElements() {
-		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoHasElements.HasElementsSubscriber<String> test = new MonoHasElements.HasElementsSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
@@ -213,7 +226,8 @@ public class MonoHasElementsTest {
 
 	@Test
 	public void scanHasElementsNoTerminatedOnError() {
-		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoHasElements.HasElementsSubscriber<String> test = new MonoHasElements.HasElementsSubscriber<>(actual);
 
 		test.onError(new IllegalStateException("boom"));
@@ -223,7 +237,8 @@ public class MonoHasElementsTest {
 
 	@Test
 	public void scanHasElementsCancelled() {
-		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoHasElements.HasElementsSubscriber<String> test = new MonoHasElements.HasElementsSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
@@ -239,7 +254,8 @@ public class MonoHasElementsTest {
 
 	@Test
 	public void scanHasElement() {
-		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoHasElement.HasElementSubscriber<String> test = new MonoHasElement.HasElementSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
@@ -258,7 +274,8 @@ public class MonoHasElementsTest {
 
 	@Test
 	public void scanHasElementNoTerminatedOnError() {
-		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoHasElement.HasElementSubscriber<String> test = new MonoHasElement.HasElementSubscriber<>(actual);
 
 		test.onError(new IllegalStateException("boom"));
@@ -268,7 +285,8 @@ public class MonoHasElementsTest {
 
 	@Test
 	public void scanHasElementCancelled() {
-		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<? super Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoHasElement.HasElementSubscriber<String> test = new MonoHasElement.HasElementSubscriber<>(actual);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

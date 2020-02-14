@@ -39,9 +39,9 @@ import reactor.util.annotation.Nullable;
 final class FluxRefCountGrace<T> extends Flux<T> implements Scannable, Fuseable {
 
 	final ConnectableFlux<T> source;
-	final int                n;
-	final Duration           gracePeriod;
-	final Scheduler          scheduler;
+	final int n;
+	final Duration gracePeriod;
+	final Scheduler scheduler;
 
 	RefConnection connection;
 
@@ -125,7 +125,8 @@ final class FluxRefCountGrace<T> extends Flux<T> implements Scannable, Fuseable 
 
 		if (replaceTimer) {
 			sd.replace(scheduler.schedule(rc, gracePeriod.toMillis(), TimeUnit.MILLISECONDS));
-		} else if (dispose != null) {
+		}
+		else if (dispose != null) {
 			dispose.dispose();
 		}
 	}
@@ -154,16 +155,14 @@ final class FluxRefCountGrace<T> extends Flux<T> implements Scannable, Fuseable 
 
 	static final class RefConnection implements Runnable, Consumer<Disposable> {
 
-		final FluxRefCountGrace<?> parent;
-
-		Disposable timer;
-		long       subscriberCount;
-		boolean    connected;
-		boolean    terminated;
-
-		volatile Disposable sourceDisconnector;
 		static final AtomicReferenceFieldUpdater<RefConnection, Disposable> SOURCE_DISCONNECTOR =
 				AtomicReferenceFieldUpdater.newUpdater(RefConnection.class, Disposable.class, "sourceDisconnector");
+		final FluxRefCountGrace<?> parent;
+		Disposable timer;
+		long subscriberCount;
+		boolean connected;
+		boolean terminated;
+		volatile Disposable sourceDisconnector;
 
 		RefConnection(FluxRefCountGrace<?> parent) {
 			this.parent = parent;
@@ -182,18 +181,14 @@ final class FluxRefCountGrace<T> extends Flux<T> implements Scannable, Fuseable 
 
 	static final class RefCountInner<T> implements QueueSubscription<T>, InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final FluxRefCountGrace<T> parent;
-
-		final RefConnection connection;
-
-		Subscription s;
-		QueueSubscription<T> qs;
-
-		volatile int parentDone;
 		static final AtomicIntegerFieldUpdater<RefCountInner> PARENT_DONE =
 				AtomicIntegerFieldUpdater.newUpdater(RefCountInner.class, "parentDone");
+		final CoreSubscriber<? super T> actual;
+		final FluxRefCountGrace<T> parent;
+		final RefConnection connection;
+		Subscription s;
+		QueueSubscription<T> qs;
+		volatile int parentDone;
 
 		RefCountInner(CoreSubscriber<? super T> actual, FluxRefCountGrace<T> parent,
 				RefConnection connection) {
@@ -248,8 +243,8 @@ final class FluxRefCountGrace<T> extends Flux<T> implements Scannable, Fuseable 
 		@Override
 		@SuppressWarnings("unchecked")
 		public int requestFusion(int requestedMode) {
-			if(s instanceof QueueSubscription){
-				qs = (QueueSubscription<T>)s;
+			if (s instanceof QueueSubscription) {
+				qs = (QueueSubscription<T>) s;
 				return qs.requestFusion(requestedMode);
 			}
 			return Fuseable.NONE;

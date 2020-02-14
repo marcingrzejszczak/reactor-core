@@ -25,7 +25,7 @@ import reactor.core.Fuseable;
  * Maps the values of the source publisher one-on-one via a mapper function.
  * <p>
  * This variant allows composing fuseable stages.
- * 
+ *
  * @param <T> the source value type
  * @param <R> the result value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>

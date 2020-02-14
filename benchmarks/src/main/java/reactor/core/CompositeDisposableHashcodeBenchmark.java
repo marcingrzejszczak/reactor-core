@@ -58,9 +58,65 @@ import reactor.util.concurrent.Queues;
 @State(Scope.Benchmark)
 @Fork(1)
 public class CompositeDisposableHashcodeBenchmark {
-	
+
 	@Param({"1", "31", "1024", "10000"})
 	public static int elementCount;
+
+	@Benchmark()
+	@BenchmarkMode(Mode.Throughput)
+	public void setWithNativeHashcode(Blackhole bh) {
+		Composite compositeSet = new SetCompositeDisposable();
+		Disposable last = new NativeHashCode();
+		for (int i = 0; i < elementCount; i++) {
+			last = new NativeHashCode();
+			compositeSet.add(last);
+		}
+
+		bh.consume(compositeSet.remove(last));
+		bh.consume(compositeSet.remove(new NativeHashCode()));
+	}
+
+	@Benchmark
+	@BenchmarkMode(Mode.Throughput)
+	public void setWithCachingHashcode(Blackhole bh) {
+		Composite compositeSet = new SetCompositeDisposable();
+		Disposable last = new CachingHashCode();
+		for (int i = 0; i < elementCount; i++) {
+			last = new NativeHashCode();
+			compositeSet.add(last);
+		}
+
+		bh.consume(compositeSet.remove(last));
+		bh.consume(compositeSet.remove(new NativeHashCode()));
+	}
+
+	@Benchmark()
+	@BenchmarkMode(Mode.Throughput)
+	public void listWithNativeHashcode(Blackhole bh) {
+		Composite compositecompositeLight = Disposables.composite();
+		Disposable last = new NativeHashCode();
+		for (int i = 0; i < elementCount; i++) {
+			last = new NativeHashCode();
+			compositecompositeLight.add(last);
+		}
+
+		bh.consume(compositecompositeLight.remove(last));
+		bh.consume(compositecompositeLight.remove(new NativeHashCode()));
+	}
+
+	@Benchmark
+	@BenchmarkMode(Mode.Throughput)
+	public void listWithCachingHashcode(Blackhole bh) {
+		Composite compositeLight = Disposables.composite();
+		Disposable last = new CachingHashCode();
+		for (int i = 0; i < elementCount; i++) {
+			last = new NativeHashCode();
+			compositeLight.add(last);
+		}
+
+		bh.consume(compositeLight.remove(last));
+		bh.consume(compositeLight.remove(new CachingHashCode()));
+	}
 
 	private static class NativeHashCode implements Disposable {
 
@@ -104,62 +160,6 @@ public class CompositeDisposableHashcodeBenchmark {
 		}
 	}
 
-	@Benchmark()
-	@BenchmarkMode(Mode.Throughput)
-	public void setWithNativeHashcode(Blackhole bh) {
-		Composite compositeSet = new SetCompositeDisposable();
-		Disposable last = new NativeHashCode();
-		for (int i = 0; i < elementCount; i++) {
-			last = new NativeHashCode();
-			compositeSet.add(last);
-		}
-		
-		bh.consume(compositeSet.remove(last));
-		bh.consume(compositeSet.remove(new NativeHashCode()));
-	}
-
-	@Benchmark
-	@BenchmarkMode(Mode.Throughput)
-	public void setWithCachingHashcode(Blackhole bh) {
-		Composite compositeSet = new SetCompositeDisposable();
-		Disposable last = new CachingHashCode();
-		for (int i = 0; i < elementCount; i++) {
-			last = new NativeHashCode();
-			compositeSet.add(last);
-		}
-
-		bh.consume(compositeSet.remove(last));
-		bh.consume(compositeSet.remove(new NativeHashCode()));
-	}
-
-	@Benchmark()
-	@BenchmarkMode(Mode.Throughput)
-	public void listWithNativeHashcode(Blackhole bh) {
-		Composite compositecompositeLight = Disposables.composite();
-		Disposable last = new NativeHashCode();
-		for (int i = 0; i < elementCount; i++) {
-			last = new NativeHashCode();
-			compositecompositeLight.add(last);
-		}
-		
-		bh.consume(compositecompositeLight.remove(last));
-		bh.consume(compositecompositeLight.remove(new NativeHashCode()));
-	}
-
-	@Benchmark
-	@BenchmarkMode(Mode.Throughput)
-	public void listWithCachingHashcode(Blackhole bh) {
-		Composite compositeLight = Disposables.composite();
-		Disposable last = new CachingHashCode();
-		for (int i = 0; i < elementCount; i++) {
-			last = new NativeHashCode();
-			compositeLight.add(last);
-		}
-
-		bh.consume(compositeLight.remove(last));
-		bh.consume(compositeLight.remove(new CachingHashCode()));
-	}
-
 	/**
 	 * == THIS CLASS IS AN OLD IMPLEMENTATION KEPT FOR THE SAKE OF THE JMH BENCHMARK ==
 	 *
@@ -171,15 +171,14 @@ public class CompositeDisposableHashcodeBenchmark {
 	 */
 	private static final class SetCompositeDisposable implements Disposable.Composite, Scannable {
 
-		static final int   DEFAULT_CAPACITY    = 16;
+		static final int DEFAULT_CAPACITY = 16;
 		static final float DEFAULT_LOAD_FACTOR = 0.75f;
-
+		static final int INT_PHI = 0x9E3779B9;
 		final float loadFactor;
-		int          mask;
-		int          size;
-		int          maxSize;
+		int mask;
+		int size;
+		int maxSize;
 		Disposable[] disposables;
-
 		volatile boolean disposed;
 
 		/**
@@ -231,6 +230,11 @@ public class CompositeDisposableHashcodeBenchmark {
 			}
 		}
 
+		static int mix(int x) {
+			final int h = x * INT_PHI;
+			return h ^ (h >>> 16);
+		}
+
 		@Override
 		public void dispose() {
 			if (disposed) {
@@ -252,7 +256,8 @@ public class CompositeDisposableHashcodeBenchmark {
 				if (o instanceof Disposable) {
 					try {
 						((Disposable) o).dispose();
-					} catch (Throwable ex) {
+					}
+					catch (Throwable ex) {
 						Exceptions.throwIfFatal(ex);
 						if (errors == null) {
 							errors = new ArrayList<>();
@@ -343,8 +348,8 @@ public class CompositeDisposableHashcodeBenchmark {
 		@Override
 		public Stream<? extends Scannable> inners() {
 			return Stream.of(disposables)
-			             .filter(Objects::nonNull)
-			             .map(Scannable::from);
+					.filter(Objects::nonNull)
+					.map(Scannable::from);
 		}
 
 		@Nullable
@@ -366,7 +371,7 @@ public class CompositeDisposableHashcodeBenchmark {
 				if (curr.equals(value)) {
 					return false;
 				}
-				for (;;) {
+				for (; ; ) {
 					pos = (pos + 1) & m;
 					curr = a[pos];
 					if (curr == null) {
@@ -384,7 +389,6 @@ public class CompositeDisposableHashcodeBenchmark {
 			return true;
 		}
 
-
 		boolean removeEntry(Disposable value) {
 			Disposable[] a = disposables;
 			int m = mask;
@@ -396,7 +400,7 @@ public class CompositeDisposableHashcodeBenchmark {
 			if (curr.equals(value)) {
 				return removeEntry(pos, a, m);
 			}
-			for (;;) {
+			for (; ; ) {
 				pos = (pos + 1) & m;
 				curr = a[pos];
 				if (curr == null) {
@@ -414,10 +418,10 @@ public class CompositeDisposableHashcodeBenchmark {
 			int last;
 			int slot;
 			Disposable curr;
-			for (;;) {
+			for (; ; ) {
 				last = pos;
 				pos = (pos + 1) & m;
-				for (;;) {
+				for (; ; ) {
 					curr = a[pos];
 					if (curr == null) {
 						a[last] = null;
@@ -435,8 +439,6 @@ public class CompositeDisposableHashcodeBenchmark {
 			}
 		}
 
-		static final int INT_PHI = 0x9E3779B9;
-
 		void rehash() {
 			Disposable[] a = disposables;
 			int i = a.length;
@@ -447,10 +449,10 @@ public class CompositeDisposableHashcodeBenchmark {
 
 
 			for (int j = size; j-- != 0; ) {
-				while (a[--i] == null);
+				while (a[--i] == null) ;
 				int pos = mix(a[i].hashCode()) & m;
 				if (b[pos] != null) {
-					for (;;) {
+					for (; ; ) {
 						pos = (pos + 1) & m;
 						if (b[pos] == null) {
 							break;
@@ -461,15 +463,9 @@ public class CompositeDisposableHashcodeBenchmark {
 			}
 
 			this.mask = m;
-			this.maxSize = (int)(newCap * loadFactor);
+			this.maxSize = (int) (newCap * loadFactor);
 			this.disposables = b;
 		}
-
-		static int mix(int x) {
-			final int h = x * INT_PHI;
-			return h ^ (h >>> 16);
-		}
 	}
-
 
 }

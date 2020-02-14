@@ -28,7 +28,6 @@ import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.Exceptions;
 import reactor.core.Scannable;
-import reactor.util.annotation.Nullable;
 
 /**
  * Wraps a java.util.concurrent.Executor and provides the Scheduler API over it.
@@ -42,7 +41,7 @@ import reactor.util.annotation.Nullable;
 final class ExecutorScheduler implements Scheduler, Scannable {
 
 	final Executor executor;
-	final boolean  trampoline;
+	final boolean trampoline;
 
 	volatile boolean terminated;
 
@@ -53,7 +52,7 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 
 	@Override
 	public Disposable schedule(Runnable task) {
-		if(terminated){
+		if (terminated) {
 			throw Exceptions.failWithRejected();
 		}
 		Objects.requireNonNull(task, "task");
@@ -108,6 +107,14 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 	}
 
 	/**
+	 * Common interface between the tracking workers to signal the need for removal.
+	 */
+	interface WorkerDelete {
+
+		void delete(ExecutorTrackedRunnable r);
+	}
+
+	/**
 	 * A non-tracked runnable that wraps a task and offers cancel support in the form
 	 * of not executing the task.
 	 * <p>Since Executor doesn't have cancellation support of its own, the
@@ -127,17 +134,17 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 
 		@Override
 		public void run() {
-				if (!get()) {
-					try {
-						task.run();
-					}
-					catch (Throwable ex) {
-						Schedulers.handleError(ex);
-					}
-					finally {
-						lazySet(true);
-					}
+			if (!get()) {
+				try {
+					task.run();
 				}
+				catch (Throwable ex) {
+					Schedulers.handleError(ex);
+				}
+				finally {
+					lazySet(true);
+				}
+			}
 		}
 
 		@Override
@@ -152,14 +159,6 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 	}
 
 	/**
-	 * Common interface between the tracking workers to signal the need for removal.
-	 */
-	interface WorkerDelete {
-
-		void delete(ExecutorTrackedRunnable r);
-	}
-
-	/**
 	 * A Runnable that wraps a task and has reference back to its parent worker to
 	 * remove itself once completed or cancelled
 	 */
@@ -169,7 +168,7 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 		/** */
 		private static final long serialVersionUID = 3503344795919906192L;
 
-		final Runnable     task;
+		final Runnable task;
 		final WorkerDelete parent;
 
 		final boolean callRemoveOnFinish;
@@ -184,22 +183,22 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 
 		@Override
 		public void run() {
-				if (!get()) {
-					try {
-						task.run();
+			if (!get()) {
+				try {
+					task.run();
+				}
+				catch (Throwable ex) {
+					Schedulers.handleError(ex);
+				}
+				finally {
+					if (callRemoveOnFinish) {
+						dispose();
 					}
-					catch (Throwable ex) {
-						Schedulers.handleError(ex);
-					}
-					finally {
-						if (callRemoveOnFinish) {
-							dispose();
-						}
-						else {
-							lazySet(true);
-						}
+					else {
+						lazySet(true);
 					}
 				}
+			}
 		}
 
 		@Override
@@ -273,7 +272,7 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 			if (key == Attr.NAME) {
 				//hack to recognize the SingleWorker
 				if (executor instanceof SingleWorkerScheduler) return executor + ".worker";
-				return Schedulers.FROM_EXECUTOR + "("  + executor + ").worker";
+				return Schedulers.FROM_EXECUTOR + "(" + executor + ").worker";
 			}
 
 			return Schedulers.scanExecutor(executor, key);
@@ -286,16 +285,13 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 	static final class ExecutorSchedulerTrampolineWorker
 			implements Scheduler.Worker, WorkerDelete, Runnable, Scannable {
 
-		final Executor executor;
-
-		final Queue<ExecutorTrackedRunnable> queue;
-
-		volatile boolean terminated;
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<ExecutorSchedulerTrampolineWorker> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ExecutorSchedulerTrampolineWorker.class,
 						"wip");
+		final Executor executor;
+		final Queue<ExecutorTrackedRunnable> queue;
+		volatile boolean terminated;
+		volatile int wip;
 
 		ExecutorSchedulerTrampolineWorker(Executor executor) {
 			this.executor = executor;
@@ -398,7 +394,7 @@ final class ExecutorScheduler implements Scheduler, Scannable {
 		public Object scanUnsafe(Attr key) {
 			if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
 			if (key == Attr.PARENT) return (executor instanceof Scannable) ? executor : null;
-			if (key == Attr.NAME) return Schedulers.FROM_EXECUTOR + "("  + executor + ",trampolining).worker";
+			if (key == Attr.NAME) return Schedulers.FROM_EXECUTOR + "(" + executor + ",trampolining).worker";
 			if (key == Attr.BUFFERED || key == Attr.LARGE_BUFFERED) return queue.size();
 
 			return Schedulers.scanExecutor(executor, key);

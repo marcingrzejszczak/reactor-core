@@ -34,6 +34,146 @@ import sun.misc.Unsafe;
 
 import static java.util.Arrays.copyOf;
 
+// UnsafeSupport static initialization is derived from Netty's PlatformDependent0
+// static initialization, the original licence of which is included below, verbatim.
+// Modifications to the source material are:
+//   - a shorter amount of checks and fields (focusing on Unsafe and buffer address)
+//   - modifications to the logging messages and their level
+/*
+ * Copyright 2013 The Netty Project
+ *
+ * The Netty Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+enum UnsafeSupport {
+	;
+
+	static final Logger logger = Loggers.getLogger(UnsafeSupport.class);
+	private static final Unsafe UNSAFE;
+
+	static {
+		String javaSpecVersion = System.getProperty("java.specification.version");
+		logger.debug("Starting UnsafeSupport init in Java " + javaSpecVersion);
+
+		ByteBuffer direct = ByteBuffer.allocateDirect(1);
+		Unsafe unsafe;
+
+		// Get an Unsafe instance first, via the (still legit as of Java 9)
+		// deep reflection trick on theUnsafe Field
+		Object maybeUnsafe;
+		try {
+			final Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+			unsafeField.setAccessible(true);
+			// the unsafe instance
+			maybeUnsafe = unsafeField.get(null);
+		}
+		catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
+			maybeUnsafe = e;
+		}
+
+		// the conditional check here can not be replaced with checking that maybeUnsafe
+		// is an instanceof Unsafe and reversing the if and else blocks; this is because an
+		// instanceof check against Unsafe will trigger a class load and we might not have
+		// the runtime permission accessClassInPackage.sun.misc
+		if (maybeUnsafe instanceof Throwable) {
+			unsafe = null;
+			logger.debug("Unsafe unavailable - Could not get it via Field sun.misc.Unsafe.theUnsafe", (Throwable) maybeUnsafe);
+		}
+		else {
+			unsafe = (Unsafe) maybeUnsafe;
+			logger.trace("sun.misc.Unsafe.theUnsafe ok");
+		}
+
+		// ensure the unsafe supports all necessary methods to work around the mistake in the latest OpenJDK
+		// https://github.com/netty/netty/issues/1061
+		// https://www.mail-archive.com/jdk6-dev@openjdk.java.net/msg00698.html
+		if (unsafe != null) {
+			final Unsafe finalUnsafe = unsafe;
+			Object maybeException;
+			try {
+				finalUnsafe.getClass().getDeclaredMethod(
+						"copyMemory", Object.class, long.class, Object.class, long.class, long.class);
+				maybeException = null;
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				maybeException = e;
+			}
+
+			if (maybeException == null) {
+				logger.trace("sun.misc.Unsafe.copyMemory ok");
+			}
+			else {
+				unsafe = null;
+				logger.debug("Unsafe unavailable - failed on sun.misc.Unsafe.copyMemory", (Throwable) maybeException);
+			}
+		}
+
+		// finally check the Buffer#address
+		if (unsafe != null) {
+			final Unsafe finalUnsafe = unsafe;
+			Object maybeAddressField;
+			try {
+				final Field field = Buffer.class.getDeclaredField("address");
+
+				// Use Unsafe to read value of the address field.
+				// This way it will not fail on JDK9+ which forbids changing the
+				// access level via reflection.
+				final long offset = finalUnsafe.objectFieldOffset(field);
+				final long heapAddress = finalUnsafe.getLong(ByteBuffer.allocate(1), offset);
+				final long directAddress = finalUnsafe.getLong(direct, offset);
+
+				if (heapAddress != 0 && "1.8".equals(javaSpecVersion)) {
+					maybeAddressField = new IllegalStateException("A heap buffer must have 0 address in Java 8, got " + heapAddress);
+				}
+				else if (heapAddress == 0 && !"1.8".equals(javaSpecVersion)) {
+					maybeAddressField = new IllegalStateException("A heap buffer must have non-zero address in Java " + javaSpecVersion);
+				}
+				else if (directAddress == 0) {
+					maybeAddressField = new IllegalStateException("A direct buffer must have non-zero address");
+				}
+				else {
+					maybeAddressField = field;
+				}
+
+			}
+			catch (NoSuchFieldException | SecurityException e) {
+				maybeAddressField = e;
+			}
+
+			if (maybeAddressField instanceof Throwable) {
+				logger.debug("Unsafe unavailable - failed on java.nio.Buffer.address", (Throwable) maybeAddressField);
+
+				// If we cannot access the address of a direct buffer, there's no point in using unsafe.
+				// Let's just pretend unsafe is unavailable for overall simplicity.
+				unsafe = null;
+			}
+			else {
+				logger.trace("java.nio.Buffer.address ok");
+				logger.debug("Unsafe is available");
+			}
+		}
+
+		UNSAFE = unsafe;
+	}
+
+	static Unsafe getUnsafe() {
+		return UNSAFE;
+	}
+
+	static boolean hasUnsafe() {
+		return UNSAFE != null;
+	}
+}
+
 /**
  * Ring based store of reusable entries containing the data representing an event being exchanged between event producer
  * and ringbuffer consumers.
@@ -44,6 +184,12 @@ import static java.util.Arrays.copyOf;
  */
 @SuppressWarnings("deprecation")
 abstract class RingBuffer<E> implements LongSupplier {
+
+	/**
+	 * Set to -1 as sequence starting point
+	 */
+	static final long INITIAL_CURSOR_VALUE = -1L;
+	private static final boolean HAS_UNSAFE = hasUnsafe0();
 
 	static <T> void addSequence(final T holder,
 			final AtomicReferenceFieldUpdater<T, Sequence[]> updater,
@@ -104,13 +250,8 @@ abstract class RingBuffer<E> implements LongSupplier {
 	}
 
 	/**
-	 * Set to -1 as sequence starting point
-	 */
-	static final long     INITIAL_CURSOR_VALUE = -1L;
-
-	/**
 	 * Create a new multiple producer RingBuffer with the specified wait strategy.
-     * <p>See {@code MultiProducerRingBuffer}.
+	 * <p>See {@code MultiProducerRingBuffer}.
 	 * @param <E> the element type
 	 * @param factory used to create the events within the ring buffer.
 	 * @param bufferSize number of elements to create within the ring buffer.
@@ -135,7 +276,7 @@ abstract class RingBuffer<E> implements LongSupplier {
 
 	/**
 	 * Create a new single producer RingBuffer with the specified wait strategy.
-     * <p>See {@code MultiProducerRingBuffer}.
+	 * <p>See {@code MultiProducerRingBuffer}.
 	 * @param <E> the element type
 	 * @param factory used to create the events within the ring buffer.
 	 * @param bufferSize number of elements to create within the ring buffer.
@@ -150,13 +291,13 @@ abstract class RingBuffer<E> implements LongSupplier {
 
 	/**
 	 * Create a new single producer RingBuffer with the specified wait strategy.
-     * <p>See {@code MultiProducerRingBuffer}.
-     * @param <E> the element type
+	 * <p>See {@code MultiProducerRingBuffer}.
+	 * @param <E> the element type
 	 * @param factory used to create the events within the ring buffer.
 	 * @param bufferSize number of elements to create within the ring buffer.
 	 * @param waitStrategy used to determine how to wait for new elements to become available.
 	 * @param spinObserver called each time the next claim is spinning and waiting for a slot
-     * @return the new RingBuffer instance
+	 * @return the new RingBuffer instance
 	 */
 	static <E> RingBuffer<E> createSingleProducer(Supplier<E> factory,
 			int bufferSize,
@@ -249,7 +390,15 @@ abstract class RingBuffer<E> implements LongSupplier {
 		else {
 			return new AtomicSequence(init);
 		}
-    }
+	}
+
+	static boolean hasUnsafe() {
+		return HAS_UNSAFE;
+	}
+
+	static boolean hasUnsafe0() {
+		return UnsafeSupport.hasUnsafe();
+	}
 
 	/**
 	 * Add the specified gating sequence to this instance of the Disruptor.  It will safely and atomically be added to
@@ -288,8 +437,8 @@ abstract class RingBuffer<E> implements LongSupplier {
 	 * Get the current cursor value for the ring buffer.  The actual value received will depend on the type of {@code
 	 * RingBufferProducer} that is being used.
 	 * <p>
-     * See {@code MultiProducerRingBuffer}.
-     * See {@code SingleProducerSequencer}
+	 * See {@code MultiProducerRingBuffer}.
+	 * See {@code SingleProducerSequencer}
 	 * @return the current cursor value
 	 */
 	abstract long getCursor();
@@ -352,7 +501,7 @@ abstract class RingBuffer<E> implements LongSupplier {
 	/**
 	 * The same functionality as {@link RingBuffer#next()}, but allows the caller to claim the next n sequences.
 	 * <p>
-     * See {@code RingBufferProducer.next(int)}
+	 * See {@code RingBufferProducer.next(int)}
 	 * @param n number of slots to claim
 	 * @return sequence number of the highest slot claimed
 	 */
@@ -363,6 +512,7 @@ abstract class RingBuffer<E> implements LongSupplier {
 	 * @param sequence the sequence to publish.
 	 */
 	abstract void publish(long sequence);
+
 	/**
 	 * Remove the specified sequence from this ringBuffer.
 	 * @param sequence to be removed.
@@ -378,15 +528,6 @@ abstract class RingBuffer<E> implements LongSupplier {
 	 * direct memory access.
 	 * @return true if unsafe is present
 	 */
-	static boolean hasUnsafe() {
-		return HAS_UNSAFE;
-	}
-
-	static boolean hasUnsafe0() {
-		return UnsafeSupport.hasUnsafe();
-	}
-
-	private static final boolean HAS_UNSAFE = hasUnsafe0();
 
 	/**
 	 * <p>Concurrent sequence class used for tracking the progress of
@@ -396,27 +537,26 @@ abstract class RingBuffer<E> implements LongSupplier {
 	 * <p>Also attempts to be more efficient with regards to false
 	 * sharing by adding padding around the volatile field.
 	 */
-	interface Sequence extends LongSupplier
-	{
-	    long INITIAL_VALUE = INITIAL_CURSOR_VALUE;
+	interface Sequence extends LongSupplier {
+		long INITIAL_VALUE = INITIAL_CURSOR_VALUE;
 
-	    /**
-	     * Perform an ordered write of this sequence.  The intent is
-	     * a Store/Store barrier between this write and any previous
-	     * store.
-	     *
-	     * @param value The new value for the sequence.
-	     */
-	    void set(long value);
+		/**
+		 * Perform an ordered write of this sequence.  The intent is
+		 * a Store/Store barrier between this write and any previous
+		 * store.
+		 *
+		 * @param value The new value for the sequence.
+		 */
+		void set(long value);
 
-	    /**
-	     * Perform a compare and set operation on the sequence.
-	     *
-	     * @param expectedValue The expected current value.
-	     * @param newValue The value to update to.
-	     * @return true if the operation succeeds, false otherwise.
-	     */
-	    boolean compareAndSet(long expectedValue, long newValue);
+		/**
+		 * Perform a compare and set operation on the sequence.
+		 *
+		 * @param expectedValue The expected current value.
+		 * @param newValue The value to update to.
+		 * @return true if the operation succeeds, false otherwise.
+		 */
+		boolean compareAndSet(long expectedValue, long newValue);
 
 	}
 
@@ -425,209 +565,73 @@ abstract class RingBuffer<E> implements LongSupplier {
 	 * using the given WaitStrategy.
 	 */
 	static final class Reader {
-	    private final    WaitStrategy                              waitStrategy;
-	    private volatile boolean                                   alerted = false;
-	    private final    Sequence                                  cursorSequence;
-	    private final    RingBufferProducer sequenceProducer;
+		private final WaitStrategy waitStrategy;
+		private final Sequence cursorSequence;
+		private final RingBufferProducer sequenceProducer;
+		private volatile boolean alerted = false;
 
-	    Reader(final RingBufferProducer sequenceProducer,
-	                           final WaitStrategy waitStrategy,
-	                           final Sequence cursorSequence) {
-	        this.sequenceProducer = sequenceProducer;
-	        this.waitStrategy = waitStrategy;
-	        this.cursorSequence = cursorSequence;
-	    }
-
-	    /**
-	     * Wait for the given sequence to be available for consumption.
-	     *
-	     * @param consumer a spin observer to invoke when nothing is available to read
-	     * @param sequence to wait for
-	     * @return the sequence up to which is available
-	     * @throws InterruptedException if the thread needs awaking on a condition variable.
-	     */
-	    long waitFor(final long sequence, Runnable consumer)
-			    throws InterruptedException {
-		    if (alerted)
-		    {
-			    WaitStrategy.alert();
-		    }
-
-	        long availableSequence = waitStrategy.waitFor(sequence, cursorSequence, consumer);
-
-	        if (availableSequence < sequence) {
-	            return availableSequence;
-	        }
-
-	        return sequenceProducer.getHighestPublishedSequence(sequence, availableSequence);
-	    }
-	    /**
-	         * The current alert status for the barrier.
-	         *
-	         * @return true if in alert otherwise false.
-	         */
-	    boolean isAlerted() {
-	        return alerted;
-	    }
-
-	    /**
-	         * Alert the ringbuffer consumers of a status change and stay in this status until cleared.
-	         */
-	    void alert() {
-	        alerted = true;
-	        waitStrategy.signalAllWhenBlocking();
-	    }
-
-	    /**
-	         * Signal the ringbuffer consumers.
-	         */
-	    void signal() {
-	        waitStrategy.signalAllWhenBlocking();
-	    }
-
-	    /**
-	         * Clear the current alert status.
-	         */
-	    void clearAlert() {
-	        alerted = false;
-	    }
-	}
-}
-
-// UnsafeSupport static initialization is derived from Netty's PlatformDependent0
-// static initialization, the original licence of which is included below, verbatim.
-// Modifications to the source material are:
-//   - a shorter amount of checks and fields (focusing on Unsafe and buffer address)
-//   - modifications to the logging messages and their level
-/*
- * Copyright 2013 The Netty Project
- *
- * The Netty Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
- *
- *   https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
-enum  UnsafeSupport {
-	;
-
-	static final Logger logger = Loggers.getLogger(UnsafeSupport.class);
-
-	static {
-		String javaSpecVersion = System.getProperty("java.specification.version");
-		logger.debug("Starting UnsafeSupport init in Java " + javaSpecVersion);
-
-		ByteBuffer direct = ByteBuffer.allocateDirect(1);
-		Unsafe unsafe;
-
-		// Get an Unsafe instance first, via the (still legit as of Java 9)
-		// deep reflection trick on theUnsafe Field
-		Object maybeUnsafe;
-		try {
-			final Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
-			unsafeField.setAccessible(true);
-			// the unsafe instance
-			maybeUnsafe = unsafeField.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
-			maybeUnsafe = e;
+		Reader(final RingBufferProducer sequenceProducer,
+				final WaitStrategy waitStrategy,
+				final Sequence cursorSequence) {
+			this.sequenceProducer = sequenceProducer;
+			this.waitStrategy = waitStrategy;
+			this.cursorSequence = cursorSequence;
 		}
 
-		// the conditional check here can not be replaced with checking that maybeUnsafe
-		// is an instanceof Unsafe and reversing the if and else blocks; this is because an
-		// instanceof check against Unsafe will trigger a class load and we might not have
-		// the runtime permission accessClassInPackage.sun.misc
-		if (maybeUnsafe instanceof Throwable) {
-			unsafe = null;
-			logger.debug("Unsafe unavailable - Could not get it via Field sun.misc.Unsafe.theUnsafe", (Throwable) maybeUnsafe);
-		} else {
-			unsafe = (Unsafe) maybeUnsafe;
-			logger.trace("sun.misc.Unsafe.theUnsafe ok");
+		/**
+		 * Wait for the given sequence to be available for consumption.
+		 *
+		 * @param consumer a spin observer to invoke when nothing is available to read
+		 * @param sequence to wait for
+		 * @return the sequence up to which is available
+		 * @throws InterruptedException if the thread needs awaking on a condition variable.
+		 */
+		long waitFor(final long sequence, Runnable consumer)
+				throws InterruptedException {
+			if (alerted) {
+				WaitStrategy.alert();
+			}
+
+			long availableSequence = waitStrategy.waitFor(sequence, cursorSequence, consumer);
+
+			if (availableSequence < sequence) {
+				return availableSequence;
+			}
+
+			return sequenceProducer.getHighestPublishedSequence(sequence, availableSequence);
 		}
 
-		// ensure the unsafe supports all necessary methods to work around the mistake in the latest OpenJDK
-		// https://github.com/netty/netty/issues/1061
-		// https://www.mail-archive.com/jdk6-dev@openjdk.java.net/msg00698.html
-		if (unsafe != null) {
-			final Unsafe finalUnsafe = unsafe;
-			Object maybeException;
-			try {
-				finalUnsafe.getClass().getDeclaredMethod(
-						"copyMemory", Object.class, long.class, Object.class, long.class, long.class);
-				maybeException = null;
-			} catch (NoSuchMethodException | SecurityException e) {
-				maybeException =  e;
-			}
-
-			if (maybeException == null) {
-				logger.trace("sun.misc.Unsafe.copyMemory ok");
-			} else {
-				unsafe = null;
-				logger.debug("Unsafe unavailable - failed on sun.misc.Unsafe.copyMemory", (Throwable) maybeException);
-			}
+		/**
+		 * The current alert status for the barrier.
+		 *
+		 * @return true if in alert otherwise false.
+		 */
+		boolean isAlerted() {
+			return alerted;
 		}
 
-		// finally check the Buffer#address
-		if (unsafe != null) {
-			final Unsafe finalUnsafe = unsafe;
-			Object maybeAddressField;
-			try {
-				final Field field = Buffer.class.getDeclaredField("address");
-
-				// Use Unsafe to read value of the address field.
-				// This way it will not fail on JDK9+ which forbids changing the
-				// access level via reflection.
-				final long offset = finalUnsafe.objectFieldOffset(field);
-				final long heapAddress = finalUnsafe.getLong(ByteBuffer.allocate(1), offset);
-				final long directAddress = finalUnsafe.getLong(direct, offset);
-
-				if (heapAddress != 0 && "1.8".equals(javaSpecVersion)) {
-					maybeAddressField = new IllegalStateException("A heap buffer must have 0 address in Java 8, got " + heapAddress);
-				}
-				else if (heapAddress == 0 && !"1.8".equals(javaSpecVersion)) {
-					maybeAddressField = new IllegalStateException("A heap buffer must have non-zero address in Java " + javaSpecVersion);
-				}
-				else if (directAddress == 0) {
-					maybeAddressField = new IllegalStateException("A direct buffer must have non-zero address");
-				}
-				else {
-					maybeAddressField = field;
-				}
-
-			} catch (NoSuchFieldException | SecurityException e) {
-				maybeAddressField = e;
-			}
-
-			if (maybeAddressField instanceof Throwable) {
-				logger.debug("Unsafe unavailable - failed on java.nio.Buffer.address", (Throwable) maybeAddressField);
-
-				// If we cannot access the address of a direct buffer, there's no point in using unsafe.
-				// Let's just pretend unsafe is unavailable for overall simplicity.
-				unsafe = null;
-			}
-			else {
-				logger.trace("java.nio.Buffer.address ok");
-				logger.debug("Unsafe is available");
-			}
+		/**
+		 * Alert the ringbuffer consumers of a status change and stay in this status until cleared.
+		 */
+		void alert() {
+			alerted = true;
+			waitStrategy.signalAllWhenBlocking();
 		}
 
-		UNSAFE = unsafe;
-	}
+		/**
+		 * Signal the ringbuffer consumers.
+		 */
+		void signal() {
+			waitStrategy.signalAllWhenBlocking();
+		}
 
-	static Unsafe getUnsafe(){
-		return UNSAFE;
+		/**
+		 * Clear the current alert status.
+		 */
+		void clearAlert() {
+			alerted = false;
+		}
 	}
-
-	static boolean hasUnsafe() {
-		return UNSAFE != null;
-	}
-
-	private static final Unsafe UNSAFE;
 }
 
 /**
@@ -641,10 +645,10 @@ abstract class RingBufferProducer {
 			SEQUENCE_UPDATER = AtomicReferenceFieldUpdater.newUpdater(RingBufferProducer.class, RingBuffer.Sequence[].class,
 			"gatingSequences");
 
-	final Runnable                                        spinObserver;
-	final int                                             bufferSize;
-	final WaitStrategy                                    waitStrategy;
-	final    RingBuffer.Sequence   cursor          = RingBuffer.newSequence(
+	final Runnable spinObserver;
+	final int bufferSize;
+	final WaitStrategy waitStrategy;
+	final RingBuffer.Sequence cursor = RingBuffer.newSequence(
 			RingBuffer.INITIAL_CURSOR_VALUE);
 	volatile RingBuffer.Sequence[] gatingSequences = new RingBuffer.Sequence[0];
 
@@ -782,27 +786,23 @@ abstract class RingBufferProducer {
 	}
 }
 
-abstract class SingleProducerSequencerPad extends RingBufferProducer
-{
+abstract class SingleProducerSequencerPad extends RingBufferProducer {
 	protected long p1, p2, p3, p4, p5, p6, p7;
+
 	@SuppressWarnings("deprecation")
-	SingleProducerSequencerPad(int bufferSize, WaitStrategy waitStrategy, @Nullable Runnable spinObserver)
-	{
+	SingleProducerSequencerPad(int bufferSize, WaitStrategy waitStrategy, @Nullable Runnable spinObserver) {
 		super(bufferSize, waitStrategy, spinObserver);
 	}
 }
 
-abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad
-{
-	@SuppressWarnings("deprecation")
-	SingleProducerSequencerFields(int bufferSize, WaitStrategy waitStrategy, @Nullable Runnable spinObserver)
-	{
-		super(bufferSize, waitStrategy, spinObserver);
-	}
-
+abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad {
 	/** Set to -1 as sequence starting point */
 	protected long nextValue = RingBuffer.Sequence.INITIAL_VALUE;
 	protected long cachedValue = RingBuffer.Sequence.INITIAL_VALUE;
+	@SuppressWarnings("deprecation")
+	SingleProducerSequencerFields(int bufferSize, WaitStrategy waitStrategy, @Nullable Runnable spinObserver) {
+		super(bufferSize, waitStrategy, spinObserver);
+	}
 }
 
 /**
@@ -847,12 +847,10 @@ final class SingleProducerSequencer extends SingleProducerSequencerFields {
 		long wrapPoint = nextSequence - bufferSize;
 		long cachedGatingSequence = this.cachedValue;
 
-		if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
-		{
+		if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue) {
 			long minSequence;
-			while (wrapPoint > (minSequence = RingBuffer.getMinimumSequence(gatingSequences, nextValue)))
-			{
-				if(spinObserver != null) {
+			while (wrapPoint > (minSequence = RingBuffer.getMinimumSequence(gatingSequences, nextValue))) {
+				if (spinObserver != null) {
 					spinObserver.run();
 				}
 				LockSupport.parkNanos(1L); // TODO: Use waitStrategy to spin?
@@ -893,34 +891,29 @@ final class SingleProducerSequencer extends SingleProducerSequencerFields {
 	}
 }
 
-abstract class NotFunRingBufferFields<E> extends RingBuffer<E>
-{
-	private final long                                      indexMask;
-	private final Object[]                                  entries;
-	final         int                                       bufferSize;
-	final         RingBufferProducer sequenceProducer;
+abstract class NotFunRingBufferFields<E> extends RingBuffer<E> {
+	final int bufferSize;
+	final RingBufferProducer sequenceProducer;
+	private final long indexMask;
+	private final Object[] entries;
 
 	NotFunRingBufferFields(Supplier<E> eventFactory,
-			RingBufferProducer sequenceProducer)
-	{
+			RingBufferProducer sequenceProducer) {
 		this.sequenceProducer = sequenceProducer;
 		this.bufferSize = sequenceProducer.getBufferSize();
 		this.indexMask = bufferSize - 1;
-		this.entries   = new Object[sequenceProducer.getBufferSize()];
+		this.entries = new Object[sequenceProducer.getBufferSize()];
 		fill(eventFactory);
 	}
 
-	private void fill(Supplier<E> eventFactory)
-	{
-		for (int i = 0; i < bufferSize; i++)
-		{
+	private void fill(Supplier<E> eventFactory) {
+		for (int i = 0; i < bufferSize; i++) {
 			entries[i] = eventFactory.get();
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	final E elementAt(long sequence)
-	{
+	final E elementAt(long sequence) {
 		return (E) entries[(int) (sequence & indexMask)];
 	}
 }
@@ -931,8 +924,7 @@ abstract class NotFunRingBufferFields<E> extends RingBuffer<E>
  *
  * @param <E> implementation storing the data for sharing during exchange or parallel coordination of an event.
  */
-final class NotFunRingBuffer<E> extends NotFunRingBufferFields<E>
-{
+final class NotFunRingBuffer<E> extends NotFunRingBufferFields<E> {
 	/**
 	 * Construct a RingBuffer with the full option set.
 	 *
@@ -941,80 +933,68 @@ final class NotFunRingBuffer<E> extends NotFunRingBufferFields<E>
 	 * @throws IllegalArgumentException if bufferSize is less than 1 or not a power of 2
 	 */
 	NotFunRingBuffer(Supplier<E> eventFactory,
-			RingBufferProducer sequenceProducer)
-	{
+			RingBufferProducer sequenceProducer) {
 		super(eventFactory, sequenceProducer);
 	}
 
 	@Override
-	E get(long sequence)
-	{
+	E get(long sequence) {
 		return elementAt(sequence);
 	}
 
 	@Override
-	long next()
-	{
+	long next() {
 		return next(1);
 	}
 
 	@Override
-	long next(int n)
-	{
+	long next(int n) {
 		return sequenceProducer.next(n);
 	}
 
 	@Override
-	void addGatingSequence(Sequence gatingSequence)
-	{
+	void addGatingSequence(Sequence gatingSequence) {
 		sequenceProducer.addGatingSequence(gatingSequence);
 	}
 
 	@Override
-	long getMinimumGatingSequence()
-	{
+	long getMinimumGatingSequence() {
 		return getMinimumGatingSequence(null);
 	}
 
 	@Override
-	long getMinimumGatingSequence(@Nullable Sequence sequence)
-	{
+	long getMinimumGatingSequence(@Nullable Sequence sequence) {
 		return sequenceProducer.getMinimumSequence(sequence);
 	}
 
 	@Override
-	boolean removeGatingSequence(Sequence sequence)
-	{
+	boolean removeGatingSequence(Sequence sequence) {
 		return sequenceProducer.removeGatingSequence(sequence);
 	}
 
 	@Override
-	Reader newReader()
-	{
+	Reader newReader() {
 		return sequenceProducer.newBarrier();
 	}
 
 	@Override
-	long getCursor()
-	{
+	long getCursor() {
 		return sequenceProducer.getCursor();
 	}
 
 	@Override
-	int bufferSize()
-	{
+	int bufferSize() {
 		return bufferSize;
 	}
 
 	@Override
-	void publish(long sequence)
-	{
+	void publish(long sequence) {
 		sequenceProducer.publish(sequence);
 	}
 
 	@Override
 	int getPending() {
-		return (int)sequenceProducer.getPending();
+		return (int) sequenceProducer.getPending();
 	}
 
 	@Override
@@ -1024,8 +1004,7 @@ final class NotFunRingBuffer<E> extends NotFunRingBufferFields<E>
 }
 
 final class AtomicSequence extends RhsPadding
-		implements LongSupplier, RingBuffer.Sequence
-{
+		implements LongSupplier, RingBuffer.Sequence {
 
 	private static final AtomicLongFieldUpdater<Value> UPDATER =
 			AtomicLongFieldUpdater.newUpdater(Value.class, "value");
@@ -1035,49 +1014,45 @@ final class AtomicSequence extends RhsPadding
 	 *
 	 * @param initialValue The initial value for this sequence.
 	 */
-	AtomicSequence(final long initialValue)
-	{
+	AtomicSequence(final long initialValue) {
 		UPDATER.lazySet(this, initialValue);
 	}
 
 	@Override
-	public long getAsLong()
-	{
+	public long getAsLong() {
 		return value;
 	}
 
 	@Override
-	public void set(final long value)
-	{
+	public void set(final long value) {
 		UPDATER.set(this, value);
 	}
 
 	@Override
-	public boolean compareAndSet(final long expectedValue, final long newValue)
-	{
+	public boolean compareAndSet(final long expectedValue, final long newValue) {
 		return UPDATER.compareAndSet(this, expectedValue, newValue);
 	}
 }
 
-abstract class RingBufferPad<E> extends RingBuffer<E>
-{
+abstract class RingBufferPad<E> extends RingBuffer<E> {
 	protected long p1, p2, p3, p4, p5, p6, p7;
 }
 
-abstract class RingBufferFields<E> extends RingBufferPad<E>
-{
-	private static final int  BUFFER_PAD;
+abstract class RingBufferFields<E> extends RingBufferPad<E> {
+	private static final int BUFFER_PAD;
 	private static final long REF_ARRAY_BASE;
-	private static final int  REF_ELEMENT_SHIFT;
+	private static final int REF_ELEMENT_SHIFT;
 	private static final Unsafe UNSAFE = RingBuffer.getUnsafe();
 
 	static {
 		final int scale = UNSAFE.arrayIndexScale(Object[].class);
 		if (4 == scale) {
 			REF_ELEMENT_SHIFT = 2;
-		} else if (8 == scale) {
+		}
+		else if (8 == scale) {
 			REF_ELEMENT_SHIFT = 3;
-		} else {
+		}
+		else {
 			throw new IllegalStateException("Unknown pointer size");
 		}
 		BUFFER_PAD = 128 / scale;
@@ -1085,31 +1060,28 @@ abstract class RingBufferFields<E> extends RingBufferPad<E>
 		REF_ARRAY_BASE = UNSAFE.arrayBaseOffset(Object[].class) + (BUFFER_PAD << REF_ELEMENT_SHIFT);
 	}
 
-	private final   long                                      indexMask;
-	private final   Object[]                                  entries;
-	protected final int                                       bufferSize;
+	protected final int bufferSize;
 	protected final RingBufferProducer sequenceProducer;
+	private final long indexMask;
+	private final Object[] entries;
 
 	RingBufferFields(Supplier<E> eventFactory,
 			RingBufferProducer sequenceProducer) {
 		this.sequenceProducer = sequenceProducer;
 		this.bufferSize = sequenceProducer.getBufferSize();
 		this.indexMask = bufferSize - 1;
-		this.entries   = new Object[sequenceProducer.getBufferSize() + 2 * BUFFER_PAD];
+		this.entries = new Object[sequenceProducer.getBufferSize() + 2 * BUFFER_PAD];
 		fill(eventFactory);
 	}
 
-	private void fill(Supplier<E> eventFactory)
-	{
-		for (int i = 0; i < bufferSize; i++)
-		{
+	private void fill(Supplier<E> eventFactory) {
+		for (int i = 0; i < bufferSize; i++) {
 			entries[BUFFER_PAD + i] = eventFactory.get();
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	final E elementAt(long sequence)
-	{
+	final E elementAt(long sequence) {
 		return (E) UNSAFE.getObject(entries, REF_ARRAY_BASE + ((sequence & indexMask) << REF_ELEMENT_SHIFT));
 	}
 }
@@ -1120,8 +1092,7 @@ abstract class RingBufferFields<E> extends RingBufferPad<E>
  *
  * @param <E> implementation storing the data for sharing during exchange or parallel coordination of an event.
  */
-final class UnsafeRingBuffer<E> extends RingBufferFields<E>
-{
+final class UnsafeRingBuffer<E> extends RingBufferFields<E> {
 	protected long p1, p2, p3, p4, p5, p6, p7;
 
 	/**
@@ -1132,80 +1103,68 @@ final class UnsafeRingBuffer<E> extends RingBufferFields<E>
 	 * @throws IllegalArgumentException if bufferSize is less than 1 or not a power of 2
 	 */
 	UnsafeRingBuffer(Supplier<E> eventFactory,
-			RingBufferProducer sequenceProducer)
-	{
+			RingBufferProducer sequenceProducer) {
 		super(eventFactory, sequenceProducer);
 	}
 
 	@Override
-	E get(long sequence)
-	{
+	E get(long sequence) {
 		return elementAt(sequence);
 	}
 
 	@Override
-	long next()
-	{
+	long next() {
 		return sequenceProducer.next();
 	}
 
 	@Override
-	long next(int n)
-	{
+	long next(int n) {
 		return sequenceProducer.next(n);
 	}
 
 	@Override
-	void addGatingSequence(Sequence gatingSequence)
-	{
+	void addGatingSequence(Sequence gatingSequence) {
 		sequenceProducer.addGatingSequence(gatingSequence);
 	}
 
 	@Override
-	long getMinimumGatingSequence()
-	{
+	long getMinimumGatingSequence() {
 		return getMinimumGatingSequence(null);
 	}
 
 	@Override
-	long getMinimumGatingSequence(@Nullable Sequence sequence)
-	{
+	long getMinimumGatingSequence(@Nullable Sequence sequence) {
 		return sequenceProducer.getMinimumSequence(sequence);
 	}
 
 	@Override
-	boolean removeGatingSequence(Sequence sequence)
-	{
+	boolean removeGatingSequence(Sequence sequence) {
 		return sequenceProducer.removeGatingSequence(sequence);
 	}
 
 	@Override
-	Reader newReader()
-	{
+	Reader newReader() {
 		return sequenceProducer.newBarrier();
 	}
 
 	@Override
-	long getCursor()
-	{
+	long getCursor() {
 		return sequenceProducer.getCursor();
 	}
 
 	@Override
-	int bufferSize()
-	{
+	int bufferSize() {
 		return bufferSize;
 	}
 
 	@Override
-	void publish(long sequence)
-	{
+	void publish(long sequence) {
 		sequenceProducer.publish(sequence);
 	}
 
 	@Override
 	int getPending() {
-		return (int)sequenceProducer.getPending();
+		return (int) sequenceProducer.getPending();
 	}
 
 	@Override
@@ -1213,21 +1172,17 @@ final class UnsafeRingBuffer<E> extends RingBufferFields<E>
 		return sequenceProducer;
 	}
 
-
 }
 
-class LhsPadding
-{
+class LhsPadding {
 	protected long p1, p2, p3, p4, p5, p6, p7;
 }
 
-class Value extends LhsPadding
-{
+class Value extends LhsPadding {
 	protected volatile long value;
 }
 
-class RhsPadding extends Value
-{
+class RhsPadding extends Value {
 	protected long p9, p10, p11, p12, p13, p14, p15;
 }
 
@@ -1240,20 +1195,16 @@ class RhsPadding extends Value
  * sharing by adding padding around the volatile field.
  */
 final class UnsafeSequence extends RhsPadding
-		implements RingBuffer.Sequence, LongSupplier
-{
+		implements RingBuffer.Sequence, LongSupplier {
 	private static final Unsafe UNSAFE;
 	private static final long VALUE_OFFSET;
 
-	static
-	{
+	static {
 		UNSAFE = RingBuffer.getUnsafe();
-		try
-		{
+		try {
 			VALUE_OFFSET = UNSAFE.objectFieldOffset(Value.class.getDeclaredField("value"));
 		}
-		catch (final Exception e)
-		{
+		catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -1263,26 +1214,22 @@ final class UnsafeSequence extends RhsPadding
 	 *
 	 * @param initialValue The initial value for this sequence.
 	 */
-	UnsafeSequence(final long initialValue)
-	{
+	UnsafeSequence(final long initialValue) {
 		UNSAFE.putOrderedLong(this, VALUE_OFFSET, initialValue);
 	}
 
 	@Override
-	public long getAsLong()
-	{
+	public long getAsLong() {
 		return value;
 	}
 
 	@Override
-	public void set(final long value)
-	{
+	public void set(final long value) {
 		UNSAFE.putOrderedLong(this, VALUE_OFFSET, value);
 	}
 
 	@Override
-	public boolean compareAndSet(final long expectedValue, final long newValue)
-	{
+	public boolean compareAndSet(final long expectedValue, final long newValue) {
 		return UNSAFE.compareAndSwapLong(this, VALUE_OFFSET, expectedValue, newValue);
 	}
 
@@ -1297,11 +1244,10 @@ final class UnsafeSequence extends RhsPadding
  * to {@code RingBufferProducer.next()}, to determine the highest available sequence that can be read, then
  * {@code RingBufferProducer.getHighestPublishedSequence(long, long)} should be used.
  */
-final class MultiProducerRingBuffer extends RingBufferProducer
-{
+final class MultiProducerRingBuffer extends RingBufferProducer {
 	private static final Unsafe UNSAFE = RingBuffer.getUnsafe();
-	private static final long   BASE   = UNSAFE.arrayBaseOffset(int[].class);
-	private static final long   SCALE  = UNSAFE.arrayIndexScale(int[].class);
+	private static final long BASE = UNSAFE.arrayBaseOffset(int[].class);
+	private static final long SCALE = UNSAFE.arrayIndexScale(int[].class);
 
 	private final RingBuffer.Sequence gatingSequenceCache = new UnsafeSequence(
 			RingBuffer.INITIAL_CURSOR_VALUE);
@@ -1309,8 +1255,8 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	// availableBuffer tracks the state of each ringbuffer slot
 	// see below for more details on the approach
 	private final int[] availableBuffer;
-	private final int   indexMask;
-	private final int   indexShift;
+	private final int indexMask;
+	private final int indexShift;
 
 	/**
 	 * Construct a Sequencer with the selected wait strategy and buffer size.
@@ -1331,8 +1277,7 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	 * See {@code RingBufferProducer.next()}.
 	 */
 	@Override
-	long next()
-	{
+	long next() {
 		return next(1);
 	}
 
@@ -1340,26 +1285,22 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	 * See {@code RingBufferProducer.next(int)}.
 	 */
 	@Override
-	long next(int n)
-	{
+	long next(int n) {
 		long current;
 		long next;
 
-		do
-		{
+		do {
 			current = cursor.getAsLong();
 			next = current + n;
 
 			long wrapPoint = next - bufferSize;
 			long cachedGatingSequence = gatingSequenceCache.getAsLong();
 
-			if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
-			{
+			if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current) {
 				long gatingSequence = RingBuffer.getMinimumSequence(gatingSequences, current);
 
-				if (wrapPoint > gatingSequence)
-				{
-					if(spinObserver != null) {
+				if (wrapPoint > gatingSequence) {
+					if (spinObserver != null) {
 						spinObserver.run();
 					}
 					LockSupport.parkNanos(1); // TODO, should we spin based on the wait strategy?
@@ -1368,8 +1309,7 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 
 				gatingSequenceCache.set(gatingSequence);
 			}
-			else if (cursor.compareAndSet(current, next))
-			{
+			else if (cursor.compareAndSet(current, next)) {
 				break;
 			}
 		}
@@ -1382,17 +1322,14 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	 * See {@code RingBufferProducer.producerCapacity()}.
 	 */
 	@Override
-	long getPending()
-	{
+	long getPending() {
 		long consumed = RingBuffer.getMinimumSequence(gatingSequences, cursor.getAsLong());
 		long produced = cursor.getAsLong();
 		return produced - consumed;
 	}
 
-	private void initialiseAvailableBuffer()
-	{
-		for (int i = availableBuffer.length - 1; i != 0; i--)
-		{
+	private void initialiseAvailableBuffer() {
+		for (int i = availableBuffer.length - 1; i != 0; i--) {
 			setAvailableBufferValue(i, -1);
 		}
 
@@ -1403,8 +1340,7 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	 * See {@code RingBufferProducer.publish(long)}.
 	 */
 	@Override
-	void publish(final long sequence)
-	{
+	void publish(final long sequence) {
 		setAvailable(sequence);
 		waitStrategy.signalAllWhenBlocking();
 	}
@@ -1428,13 +1364,11 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	 * buffer), when we have new data and successfully claimed a slot we can simply
 	 * write over the top.
 	 */
-	private void setAvailable(final long sequence)
-	{
+	private void setAvailable(final long sequence) {
 		setAvailableBufferValue(calculateIndex(sequence), calculateAvailabilityFlag(sequence));
 	}
 
-	private void setAvailableBufferValue(int index, int flag)
-	{
+	private void setAvailableBufferValue(int index, int flag) {
 		long bufferAddress = (index * SCALE) + BASE;
 		UNSAFE.putOrderedInt(availableBuffer, bufferAddress, flag);
 	}
@@ -1442,8 +1376,7 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	/**
 	 * See {@code RingBufferProducer.isAvailable(long)}
 	 */
-	boolean isAvailable(long sequence)
-	{
+	boolean isAvailable(long sequence) {
 		int index = calculateIndex(sequence);
 		int flag = calculateAvailabilityFlag(sequence);
 		long bufferAddress = (index * SCALE) + BASE;
@@ -1451,12 +1384,9 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 	}
 
 	@Override
-	long getHighestPublishedSequence(long lowerBound, long availableSequence)
-	{
-		for (long sequence = lowerBound; sequence <= availableSequence; sequence++)
-		{
-			if (!isAvailable(sequence))
-			{
+	long getHighestPublishedSequence(long lowerBound, long availableSequence) {
+		for (long sequence = lowerBound; sequence <= availableSequence; sequence++) {
+			if (!isAvailable(sequence)) {
 				return sequence - 1;
 			}
 		}
@@ -1464,13 +1394,11 @@ final class MultiProducerRingBuffer extends RingBufferProducer
 		return availableSequence;
 	}
 
-	private int calculateAvailabilityFlag(final long sequence)
-	{
+	private int calculateAvailabilityFlag(final long sequence) {
 		return (int) (sequence >>> indexShift);
 	}
 
-	private int calculateIndex(final long sequence)
-	{
+	private int calculateIndex(final long sequence) {
 		return ((int) sequence) & indexMask;
 	}
 }

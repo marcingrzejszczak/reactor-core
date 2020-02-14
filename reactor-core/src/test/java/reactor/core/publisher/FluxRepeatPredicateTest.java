@@ -30,7 +30,7 @@ public class FluxRepeatPredicateTest {
 	@Test(expected = NullPointerException.class)
 	public void predicateNull() {
 		Flux.never()
-		    .repeat(null);
+				.repeat(null);
 	}
 
 	@Test
@@ -38,35 +38,35 @@ public class FluxRepeatPredicateTest {
 		Flux<Integer> source = Flux.just(1, 2, 3);
 
 		assertThatIllegalArgumentException()
-		          .isThrownBy(() -> source.repeat(-1, () -> true))
-		          .withMessage("numRepeat >= 0 required");
+				.isThrownBy(() -> source.repeat(-1, () -> true))
+				.withMessage("numRepeat >= 0 required");
 	}
 
 	@Test
 	public void nZero() {
 		StepVerifier.create(Flux.just(1, 2, 3)
 				.repeat(0, () -> true))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
 	public void nOne() {
 		StepVerifier.create(Flux.just(1, 2, 3)
 				.repeat(1, () -> true))
-		            .expectNext(1, 2, 3)
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
 	public void nTwo() {
 		StepVerifier.create(Flux.just(1, 2, 3)
 				.repeat(2, () -> true))
-		            .expectNext(1, 2, 3)
-		            .expectNext(1, 2, 3)
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.expectNext(1, 2, 3)
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -76,12 +76,12 @@ public class FluxRepeatPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .repeat(() -> times[0]-- > 0)
-		    .subscribe(ts);
+				.repeat(() -> times[0]-- > 0)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 1, 2, 3, 4, 5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -91,30 +91,30 @@ public class FluxRepeatPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .repeat(() -> times[0]-- > 0)
-		    .subscribe(ts);
+				.repeat(() -> times[0]-- > 0)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(1, 2, 3, 4, 5, 1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5, 1, 2, 3, 4, 5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -122,12 +122,12 @@ public class FluxRepeatPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .repeat(() -> false)
-		    .subscribe(ts);
+				.repeat(() -> false)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -135,15 +135,15 @@ public class FluxRepeatPredicateTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .repeat(() -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.repeat(() -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test

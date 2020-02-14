@@ -24,9 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.test.subscriber.AssertSubscriber;
 
 public class ScatterGatherTests {
 
@@ -34,17 +32,17 @@ public class ScatterGatherTests {
 	public void test() throws Exception {
 
 		Flux.just("red", "white", "blue")
-		    .log("source")
-		    .flatMap(value -> Mono.fromCallable(() -> {
-								    Thread.sleep(1000);
-								    return value;
-							    }).subscribeOn(Schedulers.elastic()))
-		    .log("merged")
-		    .collect(Result::new, Result::add)
-		    .doOnNext(Result::stop)
-		    .log("accumulated")
-		    .toFuture()
-			.get();
+				.log("source")
+				.flatMap(value -> Mono.fromCallable(() -> {
+					Thread.sleep(1000);
+					return value;
+				}).subscribeOn(Schedulers.elastic()))
+				.log("merged")
+				.collect(Result::new, Result::add)
+				.doOnNext(Result::stop)
+				.log("accumulated")
+				.toFuture()
+				.get();
 	}
 
 	final class Result {

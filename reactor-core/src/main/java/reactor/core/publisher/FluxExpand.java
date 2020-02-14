@@ -48,9 +48,9 @@ import reactor.util.context.Context;
 //adapted from RxJava2Extensions: https://github.com/akarnokd/RxJava2Extensions/blob/master/src/main/java/hu/akarnokd/rxjava2/operators/FlowableExpand.java
 final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 
-	final boolean                                               breadthFirst;
+	final boolean breadthFirst;
 	final Function<? super T, ? extends Publisher<? extends T>> expander;
-	final int                                                   capacityHint;
+	final int capacityHint;
 
 	FluxExpand(Flux<T> source,
 			Function<? super T, ? extends Publisher<? extends T>> expander,
@@ -82,15 +82,12 @@ final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 	static final class ExpandBreathSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Function<? super T, ? extends Publisher<? extends T>> expander;
-		final Queue<Publisher<? extends T>>                         queue;
-
-		volatile boolean active;
-		volatile int     wip;
-
 		static final AtomicIntegerFieldUpdater<ExpandBreathSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ExpandBreathSubscriber.class, "wip");
-
+		final Function<? super T, ? extends Publisher<? extends T>> expander;
+		final Queue<Publisher<? extends T>> queue;
+		volatile boolean active;
+		volatile int wip;
 		long produced;
 
 		ExpandBreathSubscriber(CoreSubscriber<? super T> actual,
@@ -190,35 +187,29 @@ final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 
 	static final class ExpandDepthSubscription<T> implements InnerProducer<T> {
 
-		final CoreSubscriber<? super T>                             actual;
-		final Function<? super T, ? extends Publisher<? extends T>> expander;
-
-		volatile Throwable error;
 		static final AtomicReferenceFieldUpdater<ExpandDepthSubscription, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(ExpandDepthSubscription.class, Throwable.class, "error");
-
-		volatile int       active;
 		static final AtomicIntegerFieldUpdater<ExpandDepthSubscription> ACTIVE =
 				AtomicIntegerFieldUpdater.newUpdater(ExpandDepthSubscription.class, "active");
-
-		volatile long      requested;
 		static final AtomicLongFieldUpdater<ExpandDepthSubscription> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ExpandDepthSubscription.class, "requested");
-
-		volatile Object    current;
 		static final AtomicReferenceFieldUpdater<ExpandDepthSubscription, Object> CURRENT =
 				AtomicReferenceFieldUpdater.newUpdater(ExpandDepthSubscription.class, Object.class, "current");
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<ExpandDepthSubscription> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ExpandDepthSubscription.class, "wip");
-
+		final CoreSubscriber<? super T> actual;
+		final Function<? super T, ? extends Publisher<? extends T>> expander;
+		volatile Throwable error;
+		volatile int active;
+		volatile long requested;
+		volatile Object current;
+		volatile int wip;
 		Deque<ExpandDepthSubscriber<T>> subscriptionStack;
 
 		volatile boolean cancelled;
 
 		CorePublisher<? extends T> source;
-		long                       consumed;
+		long consumed;
 
 		ExpandDepthSubscription(CoreSubscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<? extends T>> expander,
@@ -285,7 +276,7 @@ final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 		}
 
 		boolean setCurrent(ExpandDepthSubscriber<T> inner) {
-			for (;;) {
+			for (; ; ) {
 				Object o = CURRENT.get(this);
 				if (o == this) {
 					inner.dispose();
@@ -306,7 +297,7 @@ final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 			Subscriber<? super T> a = actual;
 			long e = consumed;
 
-			for (;;) {
+			for (; ; ) {
 				Object o = current;
 				if (cancelled || o == this) {
 					source = null;
@@ -314,7 +305,7 @@ final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 				}
 
 				@SuppressWarnings("unchecked")
-				ExpandDepthSubscriber<T> curr = (ExpandDepthSubscriber<T>)o;
+				ExpandDepthSubscriber<T> curr = (ExpandDepthSubscriber<T>) o;
 				Publisher<? extends T> p = source;
 
 				if (curr == null && p != null) {
@@ -436,14 +427,12 @@ final class FluxExpand<T> extends InternalFluxOperator<T, T> {
 
 	static final class ExpandDepthSubscriber<T> implements InnerConsumer<T> {
 
-		ExpandDepthSubscription<T> parent;
-
-		volatile boolean done;
-		volatile T       value;
-
-		volatile Subscription s;
 		static final AtomicReferenceFieldUpdater<ExpandDepthSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(ExpandDepthSubscriber.class, Subscription.class, "s");
+		ExpandDepthSubscription<T> parent;
+		volatile boolean done;
+		volatile T value;
+		volatile Subscription s;
 
 		ExpandDepthSubscriber(ExpandDepthSubscription<T> parent) {
 			this.parent = parent;

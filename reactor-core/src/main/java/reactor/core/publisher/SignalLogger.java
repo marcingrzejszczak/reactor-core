@@ -24,7 +24,6 @@ import java.util.function.LongConsumer;
 import java.util.logging.Level;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CorePublisher;
 import reactor.core.Fuseable;
 import reactor.util.Logger;
@@ -41,31 +40,28 @@ import reactor.util.context.Context;
  */
 final class SignalLogger<IN> implements SignalPeek<IN> {
 
-	final static int CONTEXT_PARENT    = 0b0100000000;
-	final static int SUBSCRIBE         = 0b0010000000;
-	final static int ON_SUBSCRIBE      = 0b0001000000;
-	final static int ON_NEXT           = 0b0000100000;
-	final static int ON_ERROR          = 0b0000010000;
-	final static int ON_COMPLETE       = 0b0000001000;
-	final static int REQUEST           = 0b0000000100;
-	final static int CANCEL            = 0b0000000010;
-	final static int AFTER_TERMINATE   = 0b0000000001;
-	final static int ALL               =
+	final static int CONTEXT_PARENT = 0b0100000000;
+	final static int SUBSCRIBE = 0b0010000000;
+	final static int ON_SUBSCRIBE = 0b0001000000;
+	final static int ON_NEXT = 0b0000100000;
+	final static int ON_ERROR = 0b0000010000;
+	final static int ON_COMPLETE = 0b0000001000;
+	final static int REQUEST = 0b0000000100;
+	final static int CANCEL = 0b0000000010;
+	final static int AFTER_TERMINATE = 0b0000000001;
+	final static int ALL =
 			CONTEXT_PARENT | CANCEL | ON_COMPLETE | ON_ERROR | REQUEST | ON_SUBSCRIBE | ON_NEXT | SUBSCRIBE;
 
 	final static AtomicLong IDS = new AtomicLong(1);
-
-	final CorePublisher<IN> source;
-
-	final Logger  log;
-	final boolean fuseable;
-	final int     options;
-	final Level   level;
-	final String  operatorLine;
-	final long    id;
-
-	static final String LOG_TEMPLATE          = "{}({})";
+	static final String LOG_TEMPLATE = "{}({})";
 	static final String LOG_TEMPLATE_FUSEABLE = "| {}({})";
+	final CorePublisher<IN> source;
+	final Logger log;
+	final boolean fuseable;
+	final int options;
+	final Level level;
+	final String operatorLine;
+	final long id;
 
 	SignalLogger(CorePublisher<IN> source,
 			@Nullable String category,
@@ -100,18 +96,18 @@ final class SignalLogger<IN> implements SignalPeek<IN> {
 		if (generated) {
 			if (source instanceof Mono) {
 				category += "Mono." + source.getClass()
-				                            .getSimpleName()
-				                            .replace("Mono", "");
+						.getSimpleName()
+						.replace("Mono", "");
 			}
 			else if (source instanceof ParallelFlux) {
 				category += "Parallel." + source.getClass()
-				                                .getSimpleName()
-				                                .replace("Parallel", "");
+						.getSimpleName()
+						.replace("Parallel", "");
 			}
 			else {
 				category += "Flux." + source.getClass()
-				                            .getSimpleName()
-				                            .replace("Flux", "");
+						.getSimpleName()
+						.replace("Flux", "");
 			}
 			category += "." + id;
 		}
@@ -155,6 +151,30 @@ final class SignalLogger<IN> implements SignalPeek<IN> {
 			}
 			this.options = opts;
 		}
+	}
+
+	static String subscriptionAsString(@Nullable Subscription s) {
+		if (s == null) {
+			return "null subscription";
+		}
+		StringBuilder asString = new StringBuilder();
+		if (s instanceof Fuseable.SynchronousSubscription) {
+			asString.append("[Synchronous Fuseable] ");
+		}
+		else if (s instanceof Fuseable.QueueSubscription) {
+			asString.append("[Fuseable] ");
+		}
+
+		Class<? extends Subscription> clazz = s.getClass();
+		String name = clazz.getCanonicalName();
+		if (name == null) {
+			name = clazz.getName();
+		}
+		name = name.replaceFirst(clazz.getPackage()
+				.getName() + ".", "");
+		asString.append(name);
+
+		return asString.toString();
 	}
 
 	@Override
@@ -218,31 +238,6 @@ final class SignalLogger<IN> implements SignalPeek<IN> {
 						"eg. 'window(2).log()' instead of 'window(2).flatMap(w -> w.log())'", uoe);
 			}
 		}
-	}
-
-
-	static String subscriptionAsString(@Nullable Subscription s) {
-		if (s == null) {
-			return "null subscription";
-		}
-		StringBuilder asString = new StringBuilder();
-		if (s instanceof Fuseable.SynchronousSubscription) {
-			asString.append("[Synchronous Fuseable] ");
-		}
-		else if (s instanceof Fuseable.QueueSubscription) {
-			asString.append("[Fuseable] ");
-		}
-
-		Class<? extends Subscription> clazz = s.getClass();
-		String name = clazz.getCanonicalName();
-		if (name == null) {
-			name = clazz.getName();
-		}
-		name = name.replaceFirst(clazz.getPackage()
-		                              .getName() + ".", "");
-		asString.append(name);
-
-		return asString.toString();
 	}
 
 	@Override

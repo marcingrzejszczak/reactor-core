@@ -45,51 +45,57 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxExpandTest {
 
+	static final Node ROOT_A = new Node("A",
+			new Node("AA",
+					new Node("aa1")));
+	static final Node ROOT_B = new Node("B",
+			new Node("BB",
+					new Node("bb1")));
 	Function<Integer, Publisher<Integer>> countDown =
 			v -> v == 0 ? Flux.empty() : Flux.just(v - 1);
 
 	@Test
 	public void recursiveCountdownDepth() {
 		StepVerifier.create(Flux.just(10)
-		                        .expandDeep(countDown))
-		            .expectNext(10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-		            .verifyComplete();
+				.expandDeep(countDown))
+				.expectNext(10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+				.verifyComplete();
 	}
 
 	@Test
 	public void recursiveCountdownBreadth() {
 		StepVerifier.create(Flux.just(10)
-		                        .expand(countDown))
-		            .expectNext(10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-		            .verifyComplete();
+				.expand(countDown))
+				.expectNext(10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+				.verifyComplete();
 	}
 
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.<Integer>error(new IllegalStateException("boom"))
 				.expand(countDown))
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void errorDepth() {
 		StepVerifier.create(Flux.<Integer>error(new IllegalStateException("boom"))
 				.expandDeep(countDown))
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void empty() {
 		StepVerifier.create(Flux.<Integer>empty()
 				.expand(countDown))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void emptyDepth() {
 		StepVerifier.create(Flux.<Integer>empty()
 				.expandDeep(countDown))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
@@ -100,12 +106,12 @@ public class FluxExpandTest {
 			List<Integer> list = new ArrayList<>();
 
 			StepVerifier.create(Flux.just(i)
-			                        .expand(countDown))
-			            .expectSubscription()
-			            .recordWith(() -> list)
-			            .expectNextCount(i + 1)
-			            .as(tag)
-			            .verifyComplete();
+					.expand(countDown))
+					.expectSubscription()
+					.recordWith(() -> list)
+					.expectNextCount(i + 1)
+					.as(tag)
+					.verifyComplete();
 
 			for (int j = 0; j <= i; j++) {
 				assertThat(list.get(j).intValue())
@@ -123,12 +129,12 @@ public class FluxExpandTest {
 			List<Integer> list = new ArrayList<>();
 
 			StepVerifier.create(Flux.just(i)
-			                        .expand(countDown))
-			            .expectSubscription()
-			            .recordWith(() -> list)
-			            .expectNextCount(i + 1)
-			            .as(tag)
-			            .verifyComplete();
+					.expand(countDown))
+					.expectSubscription()
+					.recordWith(() -> list)
+					.expectNextCount(i + 1)
+					.as(tag)
+					.verifyComplete();
 
 			for (int j = 0; j <= i; j++) {
 				assertThat(list.get(j).intValue())
@@ -141,109 +147,93 @@ public class FluxExpandTest {
 	@Test
 	public void recursiveCountdownTake() {
 		StepVerifier.create(Flux.just(10)
-		                        .expand(countDown)
-		                        .take(5)
+				.expand(countDown)
+				.take(5)
 		)
-		            .expectNext(10, 9, 8, 7, 6)
-		            .verifyComplete();
+				.expectNext(10, 9, 8, 7, 6)
+				.verifyComplete();
 	}
 
 	@Test
 	public void recursiveCountdownTakeDepth() {
 		StepVerifier.create(Flux.just(10)
-		                        .expandDeep(countDown)
-		                        .take(5)
+				.expandDeep(countDown)
+				.take(5)
 		)
-		            .expectNext(10, 9, 8, 7, 6)
-		            .verifyComplete();
+				.expectNext(10, 9, 8, 7, 6)
+				.verifyComplete();
 	}
 
 	@Test
 	public void recursiveCountdownBackpressure() {
 		StepVerifier.create(Flux.just(10)
-		                        .expand(countDown),
+						.expand(countDown),
 				StepVerifierOptions.create()
-				                   .initialRequest(0)
-				                   .checkUnderRequesting(false))
-		            .thenRequest(1)
-		            .expectNext(10)
-		            .thenRequest(3)
-		            .expectNext(9, 8, 7)
-		            .thenRequest(4)
-		            .expectNext(6, 5, 4, 3)
-		            .thenRequest(3)
-		            .expectNext(2, 1, 0)
-		            .verifyComplete();
+						.initialRequest(0)
+						.checkUnderRequesting(false))
+				.thenRequest(1)
+				.expectNext(10)
+				.thenRequest(3)
+				.expectNext(9, 8, 7)
+				.thenRequest(4)
+				.expectNext(6, 5, 4, 3)
+				.thenRequest(3)
+				.expectNext(2, 1, 0)
+				.verifyComplete();
 	}
 
 	@Test
 	public void recursiveCountdownBackpressureDepth() {
 		StepVerifier.create(Flux.just(10)
-		                        .expandDeep(countDown),
+						.expandDeep(countDown),
 				StepVerifierOptions.create()
-				                   .initialRequest(0)
-				                   .checkUnderRequesting(false))
-		            .thenRequest(1)
-		            .expectNext(10)
-		            .thenRequest(3)
-		            .expectNext(9, 8, 7)
-		            .thenRequest(4)
-		            .expectNext(6, 5, 4, 3)
-		            .thenRequest(3)
-		            .expectNext(2, 1, 0)
-		            .verifyComplete();
+						.initialRequest(0)
+						.checkUnderRequesting(false))
+				.thenRequest(1)
+				.expectNext(10)
+				.thenRequest(3)
+				.expectNext(9, 8, 7)
+				.thenRequest(4)
+				.expectNext(6, 5, 4, 3)
+				.thenRequest(3)
+				.expectNext(2, 1, 0)
+				.verifyComplete();
 	}
 
 	@Test
 	public void expanderThrows() {
 		StepVerifier.create(Flux.just(10)
-		                        .expand(v -> {
-			                        throw new IllegalStateException("boom");
-		                        }))
-		            .expectNext(10)
-		            .verifyErrorMessage("boom");
+				.expand(v -> {
+					throw new IllegalStateException("boom");
+				}))
+				.expectNext(10)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void expanderThrowsDepth() {
 		StepVerifier.create(Flux.just(10)
-		                        .expandDeep(v -> {
-			                        throw new IllegalStateException("boom");
-		                        }))
-		            .expectNext(10)
-		            .verifyErrorMessage("boom");
+				.expandDeep(v -> {
+					throw new IllegalStateException("boom");
+				}))
+				.expectNext(10)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void expanderReturnsNull() {
 		StepVerifier.create(Flux.just(10)
-		                        .expand(v -> null))
-		            .expectNext(10)
-		            .verifyError(NullPointerException.class);
+				.expand(v -> null))
+				.expectNext(10)
+				.verifyError(NullPointerException.class);
 	}
 
 	@Test
 	public void expanderReturnsNullDepth() {
 		StepVerifier.create(Flux.just(10)
-		                        .expandDeep(v -> null))
-		            .expectNext(10)
-		            .verifyError(NullPointerException.class);
-	}
-
-	static final class Node {
-		final String name;
-		final List<Node> children;
-
-		Node(String name, Node... nodes) {
-			this.name = name;
-			this.children = new ArrayList<>();
-			children.addAll(Arrays.asList(nodes));
-		}
-
-		@Override
-		public String toString() {
-			return name;
-		}
+				.expandDeep(v -> null))
+				.expectNext(10)
+				.verifyError(NullPointerException.class);
 	}
 
 	Node createTest() {
@@ -299,17 +289,17 @@ public class FluxExpandTest {
 		Node root = createTest();
 
 		StepVerifier.create(Flux.just(root)
-		                        .expandDeep(v -> Flux.fromIterable(v.children))
-		                        .map(v -> v.name))
-		            .expectNext(
-				            "root",
-				            "1", "11",
-				            "2", "21", "22", "221",
-				            "3", "31", "32", "321", "33", "331", "332", "3321",
-				            "4", "41", "42", "421", "43", "431", "432", "4321",
-				            "44", "441", "442", "4421", "443", "4431", "4432"
-		            )
-		            .verifyComplete();
+				.expandDeep(v -> Flux.fromIterable(v.children))
+				.map(v -> v.name))
+				.expectNext(
+						"root",
+						"1", "11",
+						"2", "21", "22", "221",
+						"3", "31", "32", "321", "33", "331", "332", "3321",
+						"4", "41", "42", "421", "43", "431", "432", "4321",
+						"44", "441", "442", "4421", "443", "4431", "4432"
+				)
+				.verifyComplete();
 	}
 
 	@Test
@@ -317,19 +307,19 @@ public class FluxExpandTest {
 		Node root = createTest();
 
 		StepVerifier.create(Flux.just(root)
-		                        .expandDeep(v -> Flux.fromIterable(v.children)
-		                                             .subscribeOn(Schedulers.elastic()))
-		                        .map(v -> v.name))
-		            .expectNext(
-				            "root",
-				            "1", "11",
-				            "2", "21", "22", "221",
-				            "3", "31", "32", "321", "33", "331", "332", "3321",
-				            "4", "41", "42", "421", "43", "431", "432", "4321",
-				            "44", "441", "442", "4421", "443", "4431", "4432"
-		            )
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.expandDeep(v -> Flux.fromIterable(v.children)
+						.subscribeOn(Schedulers.elastic()))
+				.map(v -> v.name))
+				.expectNext(
+						"root",
+						"1", "11",
+						"2", "21", "22", "221",
+						"3", "31", "32", "321", "33", "331", "332", "3321",
+						"4", "41", "42", "421", "43", "431", "432", "4321",
+						"44", "441", "442", "4421", "443", "4431", "4432"
+				)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
 	@Test(timeout = 5000)
@@ -337,16 +327,16 @@ public class FluxExpandTest {
 		Node root = createTest();
 
 		StepVerifier.create(Flux.just(root)
-		                        .expand(v -> Flux.fromIterable(v.children))
-		                        .map(v -> v.name))
-		            .expectNext(
-				            "root",
-				            "1", "2", "3", "4",
-				            "11", "21", "22", "31", "32", "33", "41", "42", "43", "44",
-				            "221", "321", "331", "332", "421", "431", "432", "441", "442", "443",
-				            "3321", "4321", "4421", "4431", "4432"
-		            )
-		            .verifyComplete();
+				.expand(v -> Flux.fromIterable(v.children))
+				.map(v -> v.name))
+				.expectNext(
+						"root",
+						"1", "2", "3", "4",
+						"11", "21", "22", "31", "32", "33", "41", "42", "43", "44",
+						"221", "321", "331", "332", "421", "431", "432", "441", "442", "443",
+						"3321", "4321", "4421", "4431", "4432"
+				)
+				.verifyComplete();
 	}
 
 	@Test
@@ -354,17 +344,17 @@ public class FluxExpandTest {
 		Node root = createTest();
 
 		StepVerifier.create(Flux.just(root)
-		                        .expand(v -> Flux.fromIterable(v.children).subscribeOn(Schedulers.elastic()))
-		                        .map(v -> v.name))
-		            .expectNext(
-				            "root",
-				            "1", "2", "3", "4",
-				            "11", "21", "22", "31", "32", "33", "41", "42", "43", "44",
-				            "221", "321", "331", "332", "421", "431", "432", "441", "442", "443",
-				            "3321", "4321", "4421", "4431", "4432"
-		            )
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.expand(v -> Flux.fromIterable(v.children).subscribeOn(Schedulers.elastic()))
+				.map(v -> v.name))
+				.expectNext(
+						"root",
+						"1", "2", "3", "4",
+						"11", "21", "22", "31", "32", "33", "41", "42", "43", "44",
+						"221", "321", "331", "332", "421", "431", "432", "441", "442", "443",
+						"3321", "4321", "4421", "4431", "4432"
+				)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
 	@Test
@@ -401,8 +391,8 @@ public class FluxExpandTest {
 		};
 
 		Flux.just(1)
-		    .expandDeep(it -> pp)
-		    .subscribe(s);
+				.expandDeep(it -> pp)
+				.subscribe(s);
 
 		pp.assertNoSubscribers();
 
@@ -415,8 +405,8 @@ public class FluxExpandTest {
 			final AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 			Flux.just(0)
-			    .expandDeep(countDown)
-			    .subscribe(ts);
+					.expandDeep(countDown)
+					.subscribe(ts);
 
 			Runnable r1 = () -> ts.request(1);
 			Runnable r2 = ts::cancel;
@@ -434,8 +424,8 @@ public class FluxExpandTest {
 			final AssertSubscriber<Integer> ts = AssertSubscriber.create(1);
 
 			Flux.just(0)
-			    .expandDeep(it -> pp)
-			    .subscribe(ts);
+					.expandDeep(it -> pp)
+					.subscribe(ts);
 
 			Runnable r1 = () -> pp.next(1);
 			Runnable r2 = ts::cancel;
@@ -452,8 +442,8 @@ public class FluxExpandTest {
 
 			final AssertSubscriber<Integer> ts = AssertSubscriber.create(1);
 			Flux.just(0)
-			    .expandDeep(it -> pp)
-			    .subscribe(ts);
+					.expandDeep(it -> pp)
+					.subscribe(ts);
 
 			Runnable r1 = pp::complete;
 			Runnable r2 = ts::cancel;
@@ -469,7 +459,7 @@ public class FluxExpandTest {
 			final TestPublisher<Integer> pp = TestPublisher.create();
 
 			Flux<Integer> source = Flux.just(0)
-			                           .expandDeep(it -> pp);
+					.expandDeep(it -> pp);
 
 			final CountDownLatch cdl = new CountDownLatch(1);
 
@@ -482,13 +472,15 @@ public class FluxExpandTest {
 					super.onNext(t);
 					Schedulers.single().schedule(() -> {
 						if (sync.decrementAndGet() != 0) {
-							while (sync.get() != 0) { }
+							while (sync.get() != 0) {
+							}
 						}
 						cancel();
 						cdl.countDown();
 					});
 					if (sync.decrementAndGet() != 0) {
-						while (sync.get() != 0) { }
+						while (sync.get() != 0) {
+						}
 					}
 				}
 			};
@@ -498,14 +490,6 @@ public class FluxExpandTest {
 			assertThat(cdl.await(5, TimeUnit.SECONDS)).as("runs under 5s").isTrue();
 		}
 	}
-
-	static final Node ROOT_A = new Node("A",
-			new Node("AA",
-					new Node("aa1")));
-
-	static final Node ROOT_B = new Node("B",
-			new Node("BB",
-					new Node("bb1")));
 
 	@Test
 	public void javadocExampleBreadthFirst() {
@@ -519,10 +503,10 @@ public class FluxExpandTest {
 
 		StepVerifier.create(
 				Flux.just(ROOT_A, ROOT_B)
-				    .expand(v -> Flux.fromIterable(v.children))
-				    .map(n -> n.name))
-		            .expectNextSequence(breadthFirstExpected)
-		            .verifyComplete();
+						.expand(v -> Flux.fromIterable(v.children))
+						.map(n -> n.name))
+				.expectNextSequence(breadthFirstExpected)
+				.verifyComplete();
 	}
 
 	@Test
@@ -537,16 +521,16 @@ public class FluxExpandTest {
 
 		StepVerifier.create(
 				Flux.just(ROOT_A, ROOT_B)
-				    .expandDeep(v -> Flux.fromIterable(v.children))
-				    .map(n -> n.name))
-		            .expectNextSequence(depthFirstExpected)
-		            .verifyComplete();
+						.expandDeep(v -> Flux.fromIterable(v.children))
+						.map(n -> n.name))
+				.expectNextSequence(depthFirstExpected)
+				.verifyComplete();
 	}
 
 	@Test
 	public void scanExpandBreathSubscriber() {
 		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null,
-				Throwable::printStackTrace, null,null);
+				Throwable::printStackTrace, null, null);
 		ExpandBreathSubscriber<Integer> test = new ExpandBreathSubscriber<>(actual,
 				i -> i > 5 ? Mono.empty() : Mono.just(i + 1), 123);
 
@@ -571,7 +555,7 @@ public class FluxExpandTest {
 	@Test
 	public void scanExpandDepthSubscriber() {
 		CoreSubscriber<Integer> parentActual = new LambdaSubscriber<>(null,
-				Throwable::printStackTrace, null,null);
+				Throwable::printStackTrace, null, null);
 		ExpandDepthSubscription<Integer> eds = new ExpandDepthSubscription<>(
 				parentActual, i -> i > 5 ? Mono.empty() : Mono.just(i + 1), 123);
 		ExpandDepthSubscriber<Integer> test = new ExpandDepthSubscriber<>(eds);
@@ -590,7 +574,7 @@ public class FluxExpandTest {
 	@Test
 	public void scanExpandDepthSubscriberError() {
 		CoreSubscriber<Integer> parentActual = new LambdaSubscriber<>(null,
-				Throwable::printStackTrace, null,null);
+				Throwable::printStackTrace, null, null);
 		ExpandDepthSubscription<Integer> eds = new ExpandDepthSubscription<>(
 				parentActual, i -> i > 5 ? Mono.empty() : Mono.just(i + 1), 123);
 		ExpandDepthSubscriber<Integer> test = new ExpandDepthSubscriber<>(eds);
@@ -619,7 +603,7 @@ public class FluxExpandTest {
 	@Test
 	public void scanExpandDepthSubscription() {
 		CoreSubscriber<Integer> parentActual = new LambdaSubscriber<>(null,
-				Throwable::printStackTrace, null,null);
+				Throwable::printStackTrace, null, null);
 		ExpandDepthSubscription<Integer> test = new ExpandDepthSubscription<>(
 				parentActual, i -> i > 5 ? Mono.empty() : Mono.just(i + 1), 123);
 
@@ -636,5 +620,21 @@ public class FluxExpandTest {
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
 		test.cancel();
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
+
+	static final class Node {
+		final String name;
+		final List<Node> children;
+
+		Node(String name, Node... nodes) {
+			this.name = name;
+			this.children = new ArrayList<>();
+			children.addAll(Arrays.asList(nodes));
+		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
 	}
 }

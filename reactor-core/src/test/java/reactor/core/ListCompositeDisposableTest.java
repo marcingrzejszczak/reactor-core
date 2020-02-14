@@ -177,7 +177,7 @@ public class ListCompositeDisposableTest {
 		Disposable.Composite cd = new ListCompositeDisposable(bad, good);
 
 		assertThatExceptionOfType(IllegalStateException.class).isThrownBy(cd::dispose)
-		                                                      .withMessage("boom");
+				.withMessage("boom");
 
 		assertThat(good.isDisposed()).isTrue();
 	}
@@ -194,12 +194,12 @@ public class ListCompositeDisposableTest {
 		Disposable.Composite cd = new ListCompositeDisposable(bad1, bad2, good);
 
 		assertThatExceptionOfType(RuntimeException.class).isThrownBy(cd::dispose)
-		                                                 .withMessage(
-				                                                 "Multiple exceptions")
-		                                                 .withStackTraceContaining(
-				                                                 "Suppressed: java.lang.IllegalStateException: boom1")
-		                                                 .withStackTraceContaining(
-				                                                 "Suppressed: java.lang.IllegalStateException: boom2");
+				.withMessage(
+						"Multiple exceptions")
+				.withStackTraceContaining(
+						"Suppressed: java.lang.IllegalStateException: boom1")
+				.withStackTraceContaining(
+						"Suppressed: java.lang.IllegalStateException: boom2");
 
 		assertThat(good.isDisposed()).isTrue();
 	}

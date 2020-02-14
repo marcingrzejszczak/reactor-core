@@ -42,8 +42,8 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .expectComplete()
-						            .verify())
+								.expectComplete()
+								.verify())
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -52,8 +52,8 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .expectComplete()
-						            .verifyThenAssertThat())
+								.expectComplete()
+								.verifyThenAssertThat())
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -62,7 +62,7 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .verifyComplete())
+								.verifyComplete())
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -71,7 +71,7 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .verifyError())
+								.verifyError())
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -80,7 +80,7 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .verifyErrorMessage("ignored"))
+								.verifyErrorMessage("ignored"))
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -89,7 +89,7 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .verifyErrorMatches(ignore -> true))
+								.verifyErrorMatches(ignore -> true))
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -98,7 +98,7 @@ public class StepVerifierDefaultTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .verifyError(NullPointerException.class))
+								.verifyError(NullPointerException.class))
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 }

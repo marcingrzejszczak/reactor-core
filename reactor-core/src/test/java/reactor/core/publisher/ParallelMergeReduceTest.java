@@ -35,15 +35,15 @@ public class ParallelMergeReduceTest {
 	@Test
 	public void reduceFull() {
 		for (int i = 1;
-		     i <= Runtime.getRuntime()
-		                 .availableProcessors() * 2;
-		     i++) {
+			 i <= Runtime.getRuntime()
+					 .availableProcessors() * 2;
+			 i++) {
 			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 			Flux.range(1, 10)
-			    .parallel(i)
-			    .reduce((a, b) -> a + b)
-			    .subscribe(ts);
+					.parallel(i)
+					.reduce((a, b) -> a + b)
+					.subscribe(ts);
 
 			ts.assertValues(55);
 		}
@@ -55,9 +55,9 @@ public class ParallelMergeReduceTest {
 		for (int n = 1; n <= m; n *= 10) {
 //            System.out.println(n);
 			for (int i = 1;
-			     i <= Runtime.getRuntime()
-			                 .availableProcessors();
-			     i++) {
+				 i <= Runtime.getRuntime()
+						 .availableProcessors();
+				 i++) {
 //                System.out.println("  " + i);
 
 				Scheduler scheduler = Schedulers.newParallel("test", i);
@@ -66,11 +66,11 @@ public class ParallelMergeReduceTest {
 					AssertSubscriber<Long> ts = AssertSubscriber.create();
 
 					Flux.range(1, n)
-					    .map(v -> (long) v)
-					    .parallel(i)
-					    .runOn(scheduler)
-					    .reduce((a, b) -> a + b)
-					    .subscribe(ts);
+							.map(v -> (long) v)
+							.parallel(i)
+							.runOn(scheduler)
+							.reduce((a, b) -> a + b)
+							.subscribe(ts);
 
 					ts.await(Duration.ofSeconds(500));
 
@@ -95,7 +95,8 @@ public class ParallelMergeReduceTest {
 
 	@Test
 	public void scanMainSubscriber() {
-		CoreSubscriber<? super Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		CoreSubscriber<? super Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(2));
 		MergeReduceMain<Integer> test = new MergeReduceMain<>(subscriber, 2, (a, b) -> a + b);
 
@@ -118,7 +119,8 @@ public class ParallelMergeReduceTest {
 
 	@Test
 	public void scanMainSubscriberError() {
-		CoreSubscriber<? super Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		CoreSubscriber<? super Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				sub -> sub.request(2));
 		MergeReduceMain<Integer> test = new MergeReduceMain<>(subscriber, 2, (a, b) -> a + b);
 
@@ -131,7 +133,8 @@ public class ParallelMergeReduceTest {
 
 	@Test
 	public void scanInnerSubscriber() {
-		CoreSubscriber<? super Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null, null);
+		CoreSubscriber<? super Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		MergeReduceMain<Integer> main = new MergeReduceMain<>(subscriber, 2, (a, b) -> a + b);
 		MergeReduceInner<Integer> test = new MergeReduceInner<>(main, (a, b) -> a + b);
 

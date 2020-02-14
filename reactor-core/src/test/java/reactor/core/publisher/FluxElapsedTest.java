@@ -17,7 +17,6 @@ package reactor.core.publisher;
 
 import java.time.Duration;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
@@ -30,37 +29,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxElapsedTest {
 
-	Flux<Tuple2<Long, String>> scenario_aFluxCanBeBenchmarked(){
+	Flux<Tuple2<Long, String>> scenario_aFluxCanBeBenchmarked() {
 		return Flux.just("test")
-		           .elapsed();
+				.elapsed();
 	}
 
 	@Test
-	public void aFluxCanBeBenchmarked(){
-		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeBenchmarked,0)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .thenRequest(1)
-		            .expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
-		            .verifyComplete();
+	public void aFluxCanBeBenchmarked() {
+		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeBenchmarked, 0)
+				.thenAwait(Duration.ofSeconds(2))
+				.thenRequest(1)
+				.expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanOperator() {
+	public void scanOperator() {
 		Flux<Tuple2<Long, Integer>> test = Flux.just(1).elapsed(Schedulers.single());
 
 		assertThat(test).isInstanceOf(Scannable.class);
 		assertThat(((Scannable) test).scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
-    }
+	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Tuple2<Long, String>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxElapsed.ElapsedSubscriber<String> test = new FluxElapsed.ElapsedSubscriber<>(actual, Schedulers.single());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Tuple2<Long, String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxElapsed.ElapsedSubscriber<String> test = new FluxElapsed.ElapsedSubscriber<>(actual, Schedulers.single());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
+	}
 }

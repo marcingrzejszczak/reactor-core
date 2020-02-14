@@ -37,9 +37,9 @@ public class MonoDelayTest {
 	@Test
 	public void delayedSource() {
 		StepVerifier.withVirtualTime(this::scenario_delayedSource)
-		            .thenAwait(Duration.ofSeconds(4))
-		            .expectNext(0L)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(4))
+				.expectNext(0L)
+				.verifyComplete();
 	}
 
 	Mono<Long> scenario_delayedSourceError() {
@@ -49,8 +49,8 @@ public class MonoDelayTest {
 	@Test
 	public void delayedSourceError() {
 		StepVerifier.withVirtualTime(this::scenario_delayedSourceError, 0L)
-		            .thenAwait(Duration.ofSeconds(5))
-		            .verifyErrorMatches(Exceptions::isOverflow);
+				.thenAwait(Duration.ofSeconds(5))
+				.verifyErrorMatches(Exceptions::isOverflow);
 	}
 
 	@Test
@@ -98,7 +98,8 @@ public class MonoDelayTest {
 
 	@Test
 	public void scanDelayRunnableCancelled() {
-		CoreSubscriber<Long> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Long> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoDelay.MonoDelayRunnable test = new MonoDelay.MonoDelayRunnable(actual);
 
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();

@@ -82,25 +82,6 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 				Objects.requireNonNull(innerQueueSupplier, "innerQueueSupplier");
 	}
 
-	@Override
-	public int getPrefetch() {
-		return prefetch;
-	}
-
-	@Override
-	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super R> actual) {
-		if (trySubscribeScalarMap(source, actual, mapper, false, true)) {
-			return null;
-		}
-
-		return new FlatMapMain<>(actual,
-				mapper,
-				delayError,
-				maxConcurrency,
-				mainQueueSupplier,
-				prefetch, innerQueueSupplier);
-	}
-
 	/**
 	 * Checks if the source is a Supplier and if the mapper's publisher output is also
 	 * a supplier, thus avoiding subscribing to any of them.
@@ -128,8 +109,8 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 			catch (Throwable e) {
 				Context ctx = s.currentContext();
 				Throwable e_ = errorContinueExpected ?
-					Operators.onNextError(null, e, ctx) :
-					Operators.onOperatorError(e, ctx);
+						Operators.onNextError(null, e, ctx) :
+						Operators.onOperatorError(e, ctx);
 				if (e_ != null) {
 					Operators.error(s, e_);
 				}
@@ -209,50 +190,58 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 		return false;
 	}
 
+	@Override
+	public int getPrefetch() {
+		return prefetch;
+	}
+
+	@Override
+	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super R> actual) {
+		if (trySubscribeScalarMap(source, actual, mapper, false, true)) {
+			return null;
+		}
+
+		return new FlatMapMain<>(actual,
+				mapper,
+				delayError,
+				maxConcurrency,
+				mainQueueSupplier,
+				prefetch, innerQueueSupplier);
+	}
+
 	static final class FlatMapMain<T, R> extends FlatMapTracker<FlatMapInner<R>>
 			implements InnerOperator<T, R> {
 
-		final boolean                                               delayError;
-		final int                                                   maxConcurrency;
-		final int                                                   prefetch;
-		final int                                                   limit;
-		final Function<? super T, ? extends Publisher<? extends R>> mapper;
-		final Supplier<? extends Queue<R>>                          mainQueueSupplier;
-		final Supplier<? extends Queue<R>>                          innerQueueSupplier;
-		final CoreSubscriber<? super R>                             actual;
-
-		volatile Queue<R> scalarQueue;
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FlatMapMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(FlatMapMain.class,
 						Throwable.class,
 						"error");
-
-		volatile boolean done;
-
-		volatile boolean cancelled;
-
-		Subscription s;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<FlatMapMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(FlatMapMain.class, "requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<FlatMapMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(FlatMapMain.class, "wip");
-
 		@SuppressWarnings("rawtypes")
 		static final FlatMapInner[] EMPTY = new FlatMapInner[0];
-
 		@SuppressWarnings("rawtypes")
 		static final FlatMapInner[] TERMINATED = new FlatMapInner[0];
-
-
+		final boolean delayError;
+		final int maxConcurrency;
+		final int prefetch;
+		final int limit;
+		final Function<? super T, ? extends Publisher<? extends R>> mapper;
+		final Supplier<? extends Queue<R>> mainQueueSupplier;
+		final Supplier<? extends Queue<R>> innerQueueSupplier;
+		final CoreSubscriber<? super R> actual;
+		volatile Queue<R> scalarQueue;
+		volatile Throwable error;
+		volatile boolean done;
+		volatile boolean cancelled;
+		Subscription s;
+		volatile long requested;
+		volatile int wip;
 		int lastIndex;
 
 		int produced;
@@ -376,7 +365,7 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 
 			try {
 				p = Objects.requireNonNull(mapper.apply(t),
-				"The mapper returned a null Publisher");
+						"The mapper returned a null Publisher");
 			}
 			catch (Throwable e) {
 				Context ctx = actual.currentContext();
@@ -404,7 +393,7 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 						tryEmitScalar(null);
 					}
 					else if (!delayError || !Exceptions.addThrowable(ERROR, this, e_)) {
-					//now if error mode strategy doesn't apply, let delayError play
+						//now if error mode strategy doesn't apply, let delayError play
 						onError(Operators.onOperatorError(s, e_, t, ctx));
 					}
 					Operators.onDiscard(t, ctx);
@@ -497,7 +486,7 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 						q = getOrCreateScalarQueue();
 					}
 
-					if (!q.offer(v) && failOverflow(v, s)){
+					if (!q.offer(v) && failOverflow(v, s)) {
 						done = true;
 						drainLoop();
 						return;
@@ -540,7 +529,7 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 						q = getOrCreateInnerQueue(inner);
 					}
 
-					if (!q.offer(v) && failOverflow(v, inner)){
+					if (!q.offer(v) && failOverflow(v, inner)) {
 						inner.done = true;
 						drainLoop();
 						return;
@@ -831,7 +820,7 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 
 		void innerError(FlatMapInner<R> inner, Throwable e) {
 			e = Operators.onNextInnerError(e, currentContext(), s);
-			if(e != null) {
+			if (e != null) {
 				if (Exceptions.addThrowable(ERROR, this, e)) {
 					inner.done = true;
 					if (!delayError) {
@@ -848,7 +837,7 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 			}
 		}
 
-		boolean failOverflow(R v, Subscription toCancel){
+		boolean failOverflow(R v, Subscription toCancel) {
 			Throwable e = Operators.onOperatorError(toCancel,
 					Exceptions.failWithOverflow(Exceptions.BACKPRESSURE_ERROR_QUEUE_FULL),
 					v, actual.currentContext());
@@ -885,9 +874,9 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 //				}
 //			}
 //			else {
-				if (WIP.getAndIncrement(this) != 0) {
-					return;
-				}
+			if (WIP.getAndIncrement(this) != 0) {
+				return;
+			}
 //			}
 			drainLoop();
 		}
@@ -906,19 +895,15 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 	static final class FlatMapInner<R>
 			implements InnerConsumer<R>, Subscription {
 
-		final FlatMapMain<?, R> parent;
-
-		final int prefetch;
-
-		final int limit;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<FlatMapInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(FlatMapInner.class,
 						Subscription.class,
 						"s");
-
+		final FlatMapMain<?, R> parent;
+		final int prefetch;
+		final int limit;
+		volatile Subscription s;
 		long produced;
 
 		volatile Queue<R> queue;
@@ -1026,20 +1011,15 @@ final class FluxFlatMap<T, R> extends InternalFluxOperator<T, R> {
 
 abstract class FlatMapTracker<T> {
 
-	volatile T[] array = empty();
-
-	int[] free = FREE_EMPTY;
-
-	long producerIndex;
-	long consumerIndex;
-
-	volatile int size;
-
 	@SuppressWarnings("rawtypes")
 	static final AtomicIntegerFieldUpdater<FlatMapTracker> SIZE =
 			AtomicIntegerFieldUpdater.newUpdater(FlatMapTracker.class, "size");
-
 	static final int[] FREE_EMPTY = new int[0];
+	volatile T[] array = empty();
+	int[] free = FREE_EMPTY;
+	long producerIndex;
+	long consumerIndex;
+	volatile int size;
 
 	abstract T[] empty();
 

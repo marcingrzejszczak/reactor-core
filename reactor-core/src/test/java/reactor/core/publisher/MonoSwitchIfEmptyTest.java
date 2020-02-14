@@ -28,7 +28,7 @@ public class MonoSwitchIfEmptyTest {
 	@Test(expected = NullPointerException.class)
 	public void otherNull() {
 		Mono.never()
-		    .switchIfEmpty(null);
+				.switchIfEmpty(null);
 	}
 
 	@Test
@@ -36,12 +36,12 @@ public class MonoSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .switchIfEmpty(Mono.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Mono.just(10))
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -49,18 +49,18 @@ public class MonoSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.just(1)
-		    .switchIfEmpty(Mono.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Mono.just(10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -68,12 +68,12 @@ public class MonoSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.<Integer>empty()
-		    .switchIfEmpty(Mono.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Mono.just(10))
+				.subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -81,18 +81,18 @@ public class MonoSwitchIfEmptyTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.<Integer>empty()
-		    .switchIfEmpty(Mono.just(10))
-		    .subscribe(ts);
+				.switchIfEmpty(Mono.just(10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 }

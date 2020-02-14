@@ -30,73 +30,72 @@ import reactor.core.Scannable;
  */
 final class ImmediateScheduler implements Scheduler, Scannable {
 
-    private static final ImmediateScheduler INSTANCE = new ImmediateScheduler();
-    
-    public static Scheduler instance() {
-        return INSTANCE;
-    }
-    
-    private ImmediateScheduler() {
-        
-    }
-    
-    static final Disposable FINISHED = Disposables.disposed();
-    
-    @Override
-    public Disposable schedule(Runnable task) {
-        task.run();
-        return FINISHED;
-    }
+	static final Disposable FINISHED = Disposables.disposed();
+	private static final ImmediateScheduler INSTANCE = new ImmediateScheduler();
 
-    @Override
-    public void dispose() {
-        //NO-OP
-    }
+	private ImmediateScheduler() {
+
+	}
+
+	public static Scheduler instance() {
+		return INSTANCE;
+	}
+
+	@Override
+	public Disposable schedule(Runnable task) {
+		task.run();
+		return FINISHED;
+	}
+
+	@Override
+	public void dispose() {
+		//NO-OP
+	}
 
 
-    @Override
-    public Object scanUnsafe(Attr key) {
-        if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
-        if (key == Attr.NAME) return Schedulers.IMMEDIATE;
+	@Override
+	public Object scanUnsafe(Attr key) {
+		if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
+		if (key == Attr.NAME) return Schedulers.IMMEDIATE;
 
-        return null;
-    }
+		return null;
+	}
 
-    @Override
-    public Worker createWorker() {
-        return new ImmediateSchedulerWorker();
-    }
+	@Override
+	public Worker createWorker() {
+		return new ImmediateSchedulerWorker();
+	}
 
-    static final class ImmediateSchedulerWorker implements Scheduler.Worker, Scannable {
-        
-        volatile boolean shutdown;
+	static final class ImmediateSchedulerWorker implements Scheduler.Worker, Scannable {
 
-        @Override
-        public Disposable schedule(Runnable task) {
-            if (shutdown) {
-                throw Exceptions.failWithRejected();
-            }
-            task.run();
-            return FINISHED;
-        }
+		volatile boolean shutdown;
 
-        @Override
-        public void dispose() {
-            shutdown = true;
-        }
+		@Override
+		public Disposable schedule(Runnable task) {
+			if (shutdown) {
+				throw Exceptions.failWithRejected();
+			}
+			task.run();
+			return FINISHED;
+		}
 
-        @Override
-        public boolean isDisposed() {
-            return shutdown;
-        }
+		@Override
+		public void dispose() {
+			shutdown = true;
+		}
 
-        @Override
-        public Object scanUnsafe(Attr key) {
-            if (key == Attr.TERMINATED || key == Attr.CANCELLED) return shutdown;
-            if (key == Attr.NAME) return Schedulers.IMMEDIATE + ".worker";
+		@Override
+		public boolean isDisposed() {
+			return shutdown;
+		}
 
-            return null;
-        }
-    }
+		@Override
+		public Object scanUnsafe(Attr key) {
+			if (key == Attr.TERMINATED || key == Attr.CANCELLED) return shutdown;
+			if (key == Attr.NAME) return Schedulers.IMMEDIATE + ".worker";
+
+			return null;
+		}
+	}
 
 }

@@ -37,7 +37,7 @@ import reactor.util.context.Context;
  *
  * @param <R> the source value types
  */
-final class MonoZip<T, R> extends Mono<R> implements SourceProducer<R>  {
+final class MonoZip<T, R> extends Mono<R> implements SourceProducer<R> {
 
 	final boolean delayError;
 
@@ -53,7 +53,7 @@ final class MonoZip<T, R> extends Mono<R> implements SourceProducer<R>  {
 			Publisher<? extends U> p2,
 			BiFunction<? super T, ? super U, ? extends R> zipper2) {
 		this(delayError,
-				new FluxZip.PairwiseZipper<>(new BiFunction[]{
+				new FluxZip.PairwiseZipper<>(new BiFunction[] {
 						Objects.requireNonNull(zipper2, "zipper2")}),
 				Objects.requireNonNull(p1, "p1"),
 				Objects.requireNonNull(p2, "p2"));
@@ -137,16 +137,13 @@ final class MonoZip<T, R> extends Mono<R> implements SourceProducer<R>  {
 
 	static final class ZipCoordinator<R> extends Operators.MonoSubscriber<Object, R> {
 
-		final ZipInner<R>[] subscribers;
-
-		final boolean delayError;
-
-		final Function<? super Object[], ? extends R> zipper;
-
-		volatile int done;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ZipCoordinator> DONE =
 				AtomicIntegerFieldUpdater.newUpdater(ZipCoordinator.class, "done");
+		final ZipInner<R>[] subscribers;
+		final boolean delayError;
+		final Function<? super Object[], ? extends R> zipper;
+		volatile int done;
 
 		@SuppressWarnings("unchecked")
 		ZipCoordinator(CoreSubscriber<? super R> subscriber,
@@ -262,7 +259,7 @@ final class MonoZip<T, R> extends Mono<R> implements SourceProducer<R>  {
 			if (!isCancelled()) {
 				super.cancel();
 				for (ZipInner<R> ms : subscribers) {
-					if(ms != source) {
+					if (ms != source) {
 						ms.cancel();
 					}
 				}
@@ -272,16 +269,14 @@ final class MonoZip<T, R> extends Mono<R> implements SourceProducer<R>  {
 
 	static final class ZipInner<R> implements InnerConsumer<Object> {
 
-		final ZipCoordinator<R> parent;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ZipInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(ZipInner.class,
 						Subscription.class,
 						"s");
-
-		Object    value;
+		final ZipCoordinator<R> parent;
+		volatile Subscription s;
+		Object value;
 		Throwable error;
 
 		ZipInner(ZipCoordinator<R> parent) {

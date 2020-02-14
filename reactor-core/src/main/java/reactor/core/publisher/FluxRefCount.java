@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
@@ -39,7 +38,7 @@ import reactor.util.annotation.Nullable;
 final class FluxRefCount<T> extends Flux<T> implements Scannable, Fuseable {
 
 	final ConnectableFlux<? extends T> source;
-	
+
 	final int n;
 
 	@Nullable
@@ -126,17 +125,14 @@ final class FluxRefCount<T> extends Flux<T> implements Scannable, Fuseable {
 
 	static final class RefCountMonitor<T> implements Consumer<Disposable> {
 
-		final FluxRefCount<? extends T> parent;
-
-		long subscribers;
-
-		boolean terminated;
-		boolean connected;
-
-		volatile Disposable disconnect;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<RefCountMonitor, Disposable> DISCONNECT =
 				AtomicReferenceFieldUpdater.newUpdater(RefCountMonitor.class, Disposable.class, "disconnect");
+		final FluxRefCount<? extends T> parent;
+		long subscribers;
+		boolean terminated;
+		boolean connected;
+		volatile Disposable disconnect;
 
 		RefCountMonitor(FluxRefCount<? extends T> parent) {
 			this.parent = parent;
@@ -150,7 +146,7 @@ final class FluxRefCount<T> extends Flux<T> implements Scannable, Fuseable {
 		void innerCancelled() {
 			parent.cancel(this);
 		}
-		
+
 		void upstreamFinished() {
 			parent.terminated(this);
 		}
@@ -159,15 +155,13 @@ final class FluxRefCount<T> extends Flux<T> implements Scannable, Fuseable {
 	static final class RefCountInner<T>
 			implements QueueSubscription<T>, InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-		final RefCountMonitor<T> connection;
-
-		Subscription s;
-		QueueSubscription<T> qs;
-
-		volatile     int parentDone; //used to guard against doubly terminating subscribers (eg. double cancel)
 		static final AtomicIntegerFieldUpdater<RefCountInner> PARENT_DONE =
 				AtomicIntegerFieldUpdater.newUpdater(RefCountInner.class, "parentDone");
+		final CoreSubscriber<? super T> actual;
+		final RefCountMonitor<T> connection;
+		Subscription s;
+		QueueSubscription<T> qs;
+		volatile int parentDone; //used to guard against doubly terminating subscribers (eg. double cancel)
 
 		RefCountInner(CoreSubscriber<? super T> actual, RefCountMonitor<T> connection) {
 			this.actual = actual;
@@ -177,7 +171,7 @@ final class FluxRefCount<T> extends Flux<T> implements Scannable, Fuseable {
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
-			if (key == Attr. PARENT) return s;
+			if (key == Attr.PARENT) return s;
 			if (key == Attr.TERMINATED) return parentDone == 1;
 			if (key == Attr.CANCELLED) return parentDone == 2;
 
@@ -237,8 +231,8 @@ final class FluxRefCount<T> extends Flux<T> implements Scannable, Fuseable {
 		@Override
 		@SuppressWarnings("unchecked")
 		public int requestFusion(int requestedMode) {
-			if(s instanceof QueueSubscription){
-				qs = (QueueSubscription<T>)s;
+			if (s instanceof QueueSubscription) {
+				qs = (QueueSubscription<T>) s;
 				return qs.requestFusion(requestedMode);
 			}
 			return Fuseable.NONE;

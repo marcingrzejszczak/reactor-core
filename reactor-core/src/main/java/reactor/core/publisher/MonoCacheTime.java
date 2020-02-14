@@ -40,18 +40,14 @@ import reactor.util.context.Context;
  */
 class MonoCacheTime<T> extends InternalMonoOperator<T, T> implements Runnable {
 
-	private static final Duration DURATION_INFINITE = Duration.ofMillis(Long.MAX_VALUE);
-
-	private static final Logger LOGGER = Loggers.getLogger(MonoCacheTime.class);
-
-	final Function<? super Signal<T>, Duration> ttlGenerator;
-	final Scheduler                             clock;
-
-	volatile Signal<T> state;
 	static final AtomicReferenceFieldUpdater<MonoCacheTime, Signal> STATE =
 			AtomicReferenceFieldUpdater.newUpdater(MonoCacheTime.class, Signal.class, "state");
-
 	static final Signal<?> EMPTY = new ImmutableSignal<>(Context.empty(), SignalType.ON_NEXT, null, null, null);
+	private static final Duration DURATION_INFINITE = Duration.ofMillis(Long.MAX_VALUE);
+	private static final Logger LOGGER = Loggers.getLogger(MonoCacheTime.class);
+	final Function<? super Signal<T>, Duration> ttlGenerator;
+	final Scheduler clock;
+	volatile Signal<T> state;
 
 	MonoCacheTime(Mono<? extends T> source, Duration ttl, Scheduler clock) {
 		super(source);
@@ -104,7 +100,7 @@ class MonoCacheTime<T> extends InternalMonoOperator<T, T> implements Runnable {
 	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
 		CacheMonoSubscriber<T> inner = new CacheMonoSubscriber<>(actual);
 		actual.onSubscribe(inner);
-		for(;;){
+		for (; ; ) {
 			Signal<T> state = this.state;
 			if (state == EMPTY || state instanceof CoordinatorSubscriber) {
 				boolean subscribe = false;
@@ -153,15 +149,15 @@ class MonoCacheTime<T> extends InternalMonoOperator<T, T> implements Runnable {
 
 	static final class CoordinatorSubscriber<T> implements InnerConsumer<T>, Signal<T> {
 
-		final MonoCacheTime<T> main;
-
-		volatile Subscription subscription;
 		static final AtomicReferenceFieldUpdater<CoordinatorSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(CoordinatorSubscriber.class, Subscription.class, "subscription");
-
-		volatile Operators.MonoSubscriber<T, T>[] subscribers;
 		static final AtomicReferenceFieldUpdater<CoordinatorSubscriber, Operators.MonoSubscriber[]> SUBSCRIBERS =
 				AtomicReferenceFieldUpdater.newUpdater(CoordinatorSubscriber.class, Operators.MonoSubscriber[].class, "subscribers");
+		private static final Operators.MonoSubscriber[] TERMINATED = new Operators.MonoSubscriber[0];
+		private static final Operators.MonoSubscriber[] EMPTY = new Operators.MonoSubscriber[0];
+		final MonoCacheTime<T> main;
+		volatile Subscription subscription;
+		volatile Operators.MonoSubscriber<T, T>[] subscribers;
 
 		@SuppressWarnings("unchecked")
 		CoordinatorSubscriber(MonoCacheTime<T> main) {
@@ -361,9 +357,6 @@ class MonoCacheTime<T> extends InternalMonoOperator<T, T> implements Runnable {
 		public Object scanUnsafe(Attr key) {
 			return null;
 		}
-
-		private static final Operators.MonoSubscriber[] TERMINATED        = new Operators.MonoSubscriber[0];
-		private static final Operators.MonoSubscriber[] EMPTY             = new Operators.MonoSubscriber[0];
 	}
 
 	static final class CacheMonoSubscriber<T> extends Operators.MonoSubscriber<T, T> {

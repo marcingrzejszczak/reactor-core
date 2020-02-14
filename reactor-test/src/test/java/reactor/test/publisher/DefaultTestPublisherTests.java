@@ -15,7 +15,6 @@
  */
 package reactor.test.publisher;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Test;
@@ -46,10 +45,10 @@ public class DefaultTestPublisherTests {
 		TestPublisher<String> publisher = TestPublisher.createNoncompliant(Violation.ALLOW_NULL);
 
 		StepVerifier.create(publisher)
-		            .then(() -> publisher.emit("foo", null))
-		            .expectNext("foo", null)
-		            .expectComplete()
-		            .verify();
+				.then(() -> publisher.emit("foo", null))
+				.expectNext("foo", null)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -57,12 +56,12 @@ public class DefaultTestPublisherTests {
 		TestPublisher<String> publisher = TestPublisher.create();
 
 		StepVerifier.create(publisher, 1)
-		            .then(() -> publisher.next("foo")).as("should pass")
-		            .then(() -> publisher.emit("bar")).as("should fail")
-		            .expectNext("foo")
-		            .expectErrorMatches(e -> e instanceof IllegalStateException &&
-		                "Can't deliver value due to lack of requests".equals(e.getMessage()))
-		            .verify();
+				.then(() -> publisher.next("foo")).as("should pass")
+				.then(() -> publisher.emit("bar")).as("should fail")
+				.expectNext("foo")
+				.expectErrorMatches(e -> e instanceof IllegalStateException &&
+						"Can't deliver value due to lack of requests".equals(e.getMessage()))
+				.verify();
 
 		publisher.assertNoRequestOverflow();
 	}
@@ -73,10 +72,10 @@ public class DefaultTestPublisherTests {
 
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() -> StepVerifier.create(publisher, 1)
-				                              .then(() -> publisher.emit("foo", "bar"))
-				                              .expectNext("foo")
-				                              .expectComplete() //n/a
-				                              .verify())
+						.then(() -> publisher.emit("foo", "bar"))
+						.expectNext("foo")
+						.expectComplete() //n/a
+						.verify())
 				.withMessageContaining("expected production of at most 1;");
 
 		publisher.assertRequestOverflow();
@@ -89,10 +88,12 @@ public class DefaultTestPublisherTests {
 
 		Subscriber<String> subscriber = new CoreSubscriber<String>() {
 			@Override
-			public void onSubscribe(Subscription s) { }
+			public void onSubscribe(Subscription s) {
+			}
 
 			@Override
-			public void onNext(String s) { }
+			public void onNext(String s) {
+			}
 
 			@Override
 			public void onError(Throwable t) {
@@ -107,8 +108,8 @@ public class DefaultTestPublisherTests {
 
 		publisher.subscribe(subscriber);
 		publisher.complete()
-	             .emit("A", "B", "C")
-	             .error(new IllegalStateException("boom"));
+				.emit("A", "B", "C")
+				.error(new IllegalStateException("boom"));
 
 		assertThat(count.get()).isEqualTo(1);
 	}
@@ -122,7 +123,8 @@ public class DefaultTestPublisherTests {
 			}
 
 			@Override
-			public void onNext(String s) { }
+			public void onNext(String s) {
+			}
 
 			@Override
 			public void onError(Throwable t) {
@@ -145,7 +147,7 @@ public class DefaultTestPublisherTests {
 		publisher.subscribe(subscriber);
 
 		publisher.error(new IllegalStateException("boom"))
-		         .complete();
+				.complete();
 
 		publisher.emit("A", "B", "C");
 
@@ -162,7 +164,7 @@ public class DefaultTestPublisherTests {
 		publisher.mono().subscribe(subscriber);
 
 		publisher.error(new IllegalStateException("boom"))
-		         .complete();
+				.complete();
 
 		publisher.emit("A", "B", "C");
 
@@ -180,7 +182,7 @@ public class DefaultTestPublisherTests {
 		publisher.flux().subscribe(subscriber);
 
 		publisher.error(new IllegalStateException("boom"))
-		         .complete();
+				.complete();
 
 		publisher.emit("A", "B", "C");
 
@@ -218,7 +220,7 @@ public class DefaultTestPublisherTests {
 		AtomicLong terminalCount = new AtomicLong();
 
 		publisher.mono()
-		         .subscribe(countingSubscriber(terminalCount));
+				.subscribe(countingSubscriber(terminalCount));
 
 		assertThat(terminalCount).as("before onNext").hasValue(0L);
 
@@ -236,10 +238,10 @@ public class DefaultTestPublisherTests {
 				.withMessage("Expected subscribers");
 
 		StepVerifier.create(publisher)
-		            .then(() -> publisher.assertSubscribers()
-		                                 .complete())
-	                .expectComplete()
-	                .verify();
+				.then(() -> publisher.assertSubscribers()
+						.complete())
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -248,7 +250,7 @@ public class DefaultTestPublisherTests {
 
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() -> publisher.assertSubscribers(1))
-		        .withMessage("Expected 1 subscribers, got 0");
+				.withMessage("Expected 1 subscribers, got 0");
 
 		publisher.assertNoSubscribers();
 		Flux.from(publisher).subscribe();
@@ -257,7 +259,7 @@ public class DefaultTestPublisherTests {
 		publisher.assertSubscribers(2);
 
 		publisher.complete()
-	             .assertNoSubscribers();
+				.assertNoSubscribers();
 	}
 
 	@Test
@@ -285,15 +287,15 @@ public class DefaultTestPublisherTests {
 	public void expectCancelled() {
 		TestPublisher<Object> publisher = TestPublisher.create();
 		StepVerifier.create(publisher)
-	                .then(publisher::assertNotCancelled)
-	                .thenCancel()
-	                .verify();
+				.then(publisher::assertNotCancelled)
+				.thenCancel()
+				.verify();
 		publisher.assertCancelled();
 
 		StepVerifier.create(publisher)
-	                .then(() -> publisher.assertCancelled(1))
-	                .thenCancel()
-	                .verify();
+				.then(() -> publisher.assertCancelled(1))
+				.thenCancel()
+				.verify();
 		publisher.assertCancelled(2);
 	}
 
@@ -302,10 +304,10 @@ public class DefaultTestPublisherTests {
 		TestPublisher<String> publisher = TestPublisher.create();
 
 		StepVerifier.create(Flux.from(publisher).limitRate(5))
-	                .then(publisher::assertNotCancelled)
-	                .then(() -> publisher.assertMinRequested(5))
-	                .thenCancel()
-	                .verify();
+				.then(publisher::assertNotCancelled)
+				.then(() -> publisher.assertMinRequested(5))
+				.thenCancel()
+				.verify();
 		publisher.assertCancelled();
 		publisher.assertNoSubscribers();
 		publisher.assertMinRequested(0);
@@ -317,11 +319,11 @@ public class DefaultTestPublisherTests {
 
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() -> StepVerifier.create(Flux.from(publisher).limitRate(5))
-		            .then(() -> publisher.assertMinRequested(6)
-		                                 .emit("foo"))
-		            .expectNext("foo").expectComplete() // N/A
-		            .verify())
-		        .withMessageContaining("Expected smallest requested amount to be >= 6; got 5");
+						.then(() -> publisher.assertMinRequested(6)
+								.emit("foo"))
+						.expectNext("foo").expectComplete() // N/A
+						.verify())
+				.withMessageContaining("Expected smallest requested amount to be >= 6; got 5");
 
 		publisher.assertCancelled();
 		publisher.assertNoSubscribers();
@@ -367,10 +369,10 @@ public class DefaultTestPublisherTests {
 	public void emitCompletes() {
 		TestPublisher<String> publisher = TestPublisher.create();
 		StepVerifier.create(publisher)
-	                .then(() -> publisher.emit("foo", "bar"))
-	                .expectNextCount(2)
-	                .expectComplete()
-	                .verify();
+				.then(() -> publisher.emit("foo", "bar"))
+				.expectNextCount(2)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -395,23 +397,22 @@ public class DefaultTestPublisherTests {
 	public void testError() {
 		TestPublisher<String> publisher = TestPublisher.create();
 		StepVerifier.create(publisher)
-	                .then(() -> publisher.next("foo", "bar").error(new IllegalArgumentException("boom")))
-	                .expectNextCount(2)
-	                .expectErrorMessage("boom")
-	                .verify();
+				.then(() -> publisher.next("foo", "bar").error(new IllegalArgumentException("boom")))
+				.expectNextCount(2)
+				.expectErrorMessage("boom")
+				.verify();
 	}
-
 
 
 	@Test
 	public void conditionalSupport() {
 		TestPublisher<String> up = TestPublisher.create();
 		StepVerifier.create(up.flux().filter("test"::equals), 2)
-		            .then(() -> up.next("test"))
-		            .then(() -> up.next("test2"))
-		            .then(() -> up.emit("test"))
-		            .expectNext("test", "test")
-		            .verifyComplete();
+				.then(() -> up.next("test"))
+				.then(() -> up.next("test2"))
+				.then(() -> up.emit("test"))
+				.expectNext("test", "test")
+				.verifyComplete();
 	}
 
 }

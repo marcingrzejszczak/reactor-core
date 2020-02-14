@@ -115,18 +115,15 @@ final class FluxTakeUntilOther<T, U> extends InternalFluxOperator<T, T> {
 
 	static final class TakeUntilMainSubscriber<T> implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		volatile Subscription       main;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<TakeUntilMainSubscriber, Subscription> MAIN =
-		  AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "main");
-
-		volatile Subscription other;
+				AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "main");
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<TakeUntilMainSubscriber, Subscription> OTHER =
-		  AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "other");
+				AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "other");
+		final CoreSubscriber<? super T> actual;
+		volatile Subscription main;
+		volatile Subscription other;
 
 		TakeUntilMainSubscriber(CoreSubscriber<? super T> actual) {
 			this.actual = Operators.serialize(actual);
@@ -198,7 +195,8 @@ final class FluxTakeUntilOther<T, U> extends InternalFluxOperator<T, T> {
 				if (main != Operators.cancelledSubscription()) {
 					Operators.reportSubscriptionSet();
 				}
-			} else {
+			}
+			else {
 				actual.onSubscribe(this);
 			}
 		}

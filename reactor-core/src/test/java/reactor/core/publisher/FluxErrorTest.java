@@ -28,38 +28,38 @@ public class FluxErrorTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.error(new Exception("test")))
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void normalOnRequest() {
 		StepVerifier.create(Flux.error(new Exception("test"), true))
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
-    @Test
-    public void scanSubscription() {
-	    @SuppressWarnings("unchecked") CoreSubscriber<String> subscriber = Mockito.mock(InnerOperator.class);
-        FluxErrorOnRequest.ErrorSubscription test =
-                new FluxErrorOnRequest.ErrorSubscription(subscriber, new IllegalStateException("boom"));
+	@Test
+	public void scanSubscription() {
+		@SuppressWarnings("unchecked") CoreSubscriber<String> subscriber = Mockito.mock(InnerOperator.class);
+		FluxErrorOnRequest.ErrorSubscription test =
+				new FluxErrorOnRequest.ErrorSubscription(subscriber, new IllegalStateException("boom"));
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
-        assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-        test.request(1);
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(subscriber);
+		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+		test.request(1);
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
-    @Test
-    public void scanSubscriptionCancelled() {
-	    @SuppressWarnings("unchecked")
-	    CoreSubscriber<String> subscriber = Mockito.mock(CoreSubscriber.class);
-	    FluxErrorOnRequest.ErrorSubscription test =
-                new FluxErrorOnRequest.ErrorSubscription(subscriber, new IllegalStateException("boom"));
+	@Test
+	public void scanSubscriptionCancelled() {
+		@SuppressWarnings("unchecked")
+		CoreSubscriber<String> subscriber = Mockito.mock(CoreSubscriber.class);
+		FluxErrorOnRequest.ErrorSubscription test =
+				new FluxErrorOnRequest.ErrorSubscription(subscriber, new IllegalStateException("boom"));
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

@@ -52,7 +52,7 @@ final class Context3 implements CoreContext {
 		Objects.requireNonNull(key, "key");
 		Objects.requireNonNull(value, "value");
 
-		if(this.key1.equals(key)){
+		if (this.key1.equals(key)) {
 			return new Context3(key, value, key2, value2, key3, value3);
 		}
 
@@ -71,7 +71,7 @@ final class Context3 implements CoreContext {
 	public Context delete(Object key) {
 		Objects.requireNonNull(key, "key");
 
-		if(this.key1.equals(key)){
+		if (this.key1.equals(key)) {
 			return new Context2(key2, value2, key3, value3);
 		}
 
@@ -95,15 +95,15 @@ final class Context3 implements CoreContext {
 	@SuppressWarnings("unchecked")
 	public <T> T get(Object key) {
 		if (this.key1.equals(key)) {
-			return (T)this.value1;
+			return (T) this.value1;
 		}
 		if (this.key2.equals(key)) {
-			return (T)this.value2;
+			return (T) this.value2;
 		}
 		if (this.key3.equals(key)) {
-			return (T)this.value3;
+			return (T) this.value3;
 		}
-		throw new NoSuchElementException("Context does not contain key: "+key);
+		throw new NoSuchElementException("Context does not contain key: " + key);
 	}
 
 	@Override
@@ -136,6 +136,6 @@ final class Context3 implements CoreContext {
 
 	@Override
 	public String toString() {
-		return "Context3{" + key1 + '='+ value1 + ", " + key2 + '=' + value2 + ", " + key3 + '=' + value3 + '}';
+		return "Context3{" + key1 + '=' + value1 + ", " + key2 + '=' + value2 + ", " + key3 + '=' + value3 + '}';
 	}
 }

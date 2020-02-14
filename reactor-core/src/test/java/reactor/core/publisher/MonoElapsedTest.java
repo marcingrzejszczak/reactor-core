@@ -28,18 +28,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MonoElapsedTest {
 
 
-	Mono<Tuple2<Long, String>> scenario_aFluxCanBeBenchmarked(){
+	Mono<Tuple2<Long, String>> scenario_aFluxCanBeBenchmarked() {
 		return Mono.just("test")
-		           .elapsed();
+				.elapsed();
 	}
 
 	@Test
-	public void aFluxCanBeBenchmarked(){
-		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeBenchmarked,0)
-		            .thenAwait(Duration.ofSeconds(2))
-		            .thenRequest(1)
-		            .expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
-		            .verifyComplete();
+	public void aFluxCanBeBenchmarked() {
+		StepVerifier.withVirtualTime(this::scenario_aFluxCanBeBenchmarked, 0)
+				.thenAwait(Duration.ofSeconds(2))
+				.thenRequest(1)
+				.expectNextMatches(t -> t.getT1() == 2000 && t.getT2().equals("test"))
+				.verifyComplete();
 	}
 
 	@Test

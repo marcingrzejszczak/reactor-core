@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.assertj.core.util.Arrays;
 import org.junit.Test;
-
 import reactor.core.Exceptions;
 import reactor.test.StepVerifier;
 import reactor.util.annotation.Nullable;
@@ -223,7 +221,9 @@ public class OnNextFailureStrategyTest {
 			IllegalStateException failurePredicate = new IllegalStateException("boomInPredicate");
 
 			OnNextFailureStrategy strategy = OnNextFailureStrategy.resumeDropIf(
-					e -> { throw failurePredicate; });
+					e -> {
+						throw failurePredicate;
+					});
 
 			String data = "foo";
 			Throwable exception = new NullPointerException("foo");
@@ -250,7 +250,9 @@ public class OnNextFailureStrategyTest {
 		AtomicReference<Throwable> error = new AtomicReference<>();
 		UnsupportedOperationException failure = new UnsupportedOperationException("value hook");
 		Hooks.onErrorDropped(error::set);
-		Hooks.onNextDropped(v -> { throw failure; });
+		Hooks.onNextDropped(v -> {
+			throw failure;
+		});
 
 		try {
 			OnNextFailureStrategy strategy = OnNextFailureStrategy.resumeDrop();
@@ -276,7 +278,9 @@ public class OnNextFailureStrategyTest {
 		AtomicReference<Object> value = new AtomicReference<>();
 		UnsupportedOperationException failure = new UnsupportedOperationException("error hook");
 		Hooks.onNextDropped(value::set);
-		Hooks.onErrorDropped(v -> { throw failure; });
+		Hooks.onErrorDropped(v -> {
+			throw failure;
+		});
 
 		try {
 			OnNextFailureStrategy strategy = OnNextFailureStrategy.resumeDrop();
@@ -300,7 +304,9 @@ public class OnNextFailureStrategyTest {
 	@Test
 	public void resumeDropDoesntSelfSuppressIfHookRethrows() {
 		AtomicReference<Object> value = new AtomicReference<>();
-		Hooks.onErrorDropped(e -> { throw Exceptions.propagate(e); });
+		Hooks.onErrorDropped(e -> {
+			throw Exceptions.propagate(e);
+		});
 		Hooks.onNextDropped(value::set);
 
 		try {
@@ -387,7 +393,7 @@ public class OnNextFailureStrategyTest {
 		Throwable t = strategy.process(exception, data, Context.empty());
 
 		assertThat(t).isSameAs(failureError)
-		             .hasSuppressedException(exception);
+				.hasSuppressedException(exception);
 
 		assertThat(value.get()).isEqualTo("foo");
 	}
@@ -508,7 +514,7 @@ public class OnNextFailureStrategyTest {
 		Throwable t = strategy.process(exception, data, Context.empty());
 
 		assertThat(t).isSameAs(failureError)
-		             .hasSuppressedException(exception);
+				.hasSuppressedException(exception);
 
 		assertThat(value.get()).isEqualTo("foo");
 	}
@@ -520,7 +526,9 @@ public class OnNextFailureStrategyTest {
 		IllegalStateException failurePredicate = new IllegalStateException("boomInPredicate");
 
 		OnNextFailureStrategy strategy = OnNextFailureStrategy.resumeIf(
-				e -> { throw failurePredicate; },
+				e -> {
+					throw failurePredicate;
+				},
 				(t, v) -> {
 					error.set(t);
 					value.set(v);
@@ -550,7 +558,9 @@ public class OnNextFailureStrategyTest {
 
 		try {
 			OnNextFailureStrategy strategy = OnNextFailureStrategy.resumeIf(t -> t instanceof IllegalArgumentException,
-					(t, v) -> { throw Exceptions.propagate(t);});
+					(t, v) -> {
+						throw Exceptions.propagate(t);
+					});
 
 			String data = "foo";
 			Throwable exception = new IllegalArgumentException("foo");
@@ -587,8 +597,8 @@ public class OnNextFailureStrategyTest {
 		Throwable t = strategy.process(exception, null, Context.empty());
 
 		assertThat(t).isInstanceOf(IllegalStateException.class)
-		             .hasMessage("STOP strategy cannot process errors")
-		             .hasSuppressedException(exception);
+				.hasMessage("STOP strategy cannot process errors")
+				.hasSuppressedException(exception);
 	}
 
 	@Test
@@ -608,19 +618,19 @@ public class OnNextFailureStrategyTest {
 		List<String> valueDropped = new ArrayList<>();
 		List<Throwable> errorDropped = new ArrayList<>();
 		Flux<String> test = Flux.just("foo", "", "bar", "baz")
-		                        .filter(s -> 3 / s.length() == 1)
-		                        .onErrorContinue((t, v) -> {
-									errorDropped.add(t);
-									valueDropped.add((String) v);
-								});
+				.filter(s -> 3 / s.length() == 1)
+				.onErrorContinue((t, v) -> {
+					errorDropped.add(t);
+					valueDropped.add((String) v);
+				});
 
 
 		StepVerifier.create(test)
-		            .expectNext("foo", "bar", "baz")
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectNext("foo", "bar", "baz")
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 
 		assertThat(valueDropped).containsExactly("");
 		assertThat(errorDropped)
@@ -633,20 +643,20 @@ public class OnNextFailureStrategyTest {
 		List<String> valueDropped = new ArrayList<>();
 		List<Throwable> errorDropped = new ArrayList<>();
 		Flux<String> test = Flux.just("foo", "", "bar", "baz")
-		                        .filter(s -> 3 / s.length() == 1)
-		                        .onErrorContinue(
-				                        t -> t instanceof ArithmeticException,
-										(t, v) -> {
-											errorDropped.add(t);
-											valueDropped.add((String) v);
-										});
+				.filter(s -> 3 / s.length() == 1)
+				.onErrorContinue(
+						t -> t instanceof ArithmeticException,
+						(t, v) -> {
+							errorDropped.add(t);
+							valueDropped.add((String) v);
+						});
 
 		StepVerifier.create(test)
-		            .expectNext("foo", "bar", "baz")
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectNext("foo", "bar", "baz")
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 
 		assertThat(valueDropped).containsExactly("");
 		assertThat(errorDropped)
@@ -659,20 +669,20 @@ public class OnNextFailureStrategyTest {
 		List<String> valueDropped = new ArrayList<>();
 		List<Throwable> errorDropped = new ArrayList<>();
 		Flux<String> test = Flux.just("foo", "", "bar", "baz")
-		                        .filter(s -> 3 / s.length() == 1)
-		                        .onErrorContinue(
-				                        t -> t instanceof IllegalStateException,
-										(t, v) -> {
-											errorDropped.add(t);
-											valueDropped.add((String) v);
-										});
+				.filter(s -> 3 / s.length() == 1)
+				.onErrorContinue(
+						t -> t instanceof IllegalStateException,
+						(t, v) -> {
+							errorDropped.add(t);
+							valueDropped.add((String) v);
+						});
 
 		StepVerifier.create(test)
-		            .expectNext("foo")
-		            .expectErrorMessage("/ by zero")
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.expectNext("foo")
+				.expectErrorMessage("/ by zero")
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 
 		assertThat(valueDropped).isEmpty();
 		assertThat(errorDropped).isEmpty();
@@ -685,10 +695,10 @@ public class OnNextFailureStrategyTest {
 		Flux<String> test = Flux.just("foo", "", "bar", "baz")
 				.filter(s -> 3 / s.length() == 1)
 				.onErrorContinue(ArithmeticException.class,
-									   (t, v) -> {
-										   errorDropped.add(t);
-										   valueDropped.add((String) v);
-									   });
+						(t, v) -> {
+							errorDropped.add(t);
+							valueDropped.add((String) v);
+						});
 
 		StepVerifier.create(test)
 				.expectNext("foo", "bar", "baz")
@@ -710,10 +720,10 @@ public class OnNextFailureStrategyTest {
 		Flux<String> test = Flux.just("foo", "", "bar", "baz")
 				.filter(s -> 3 / s.length() == 1)
 				.onErrorContinue(IllegalStateException.class,
-									   (t, v) -> {
-										   errorDropped.add(t);
-										   valueDropped.add((String) v);
-									   });
+						(t, v) -> {
+							errorDropped.add(t);
+							valueDropped.add((String) v);
+						});
 
 		StepVerifier.create(test)
 				.expectNext("foo")
@@ -729,19 +739,19 @@ public class OnNextFailureStrategyTest {
 	@Test
 	public void fluxApiWithinFlatMap() {
 		Flux<Integer> test = Flux.just(1, 2, 3)
-		                         .flatMap(i -> Flux.range(0, i + 1)
-		                                           .map(v -> 30 / v))
-		                         .onErrorContinue(OnNextFailureStrategyTest::drop);
+				.flatMap(i -> Flux.range(0, i + 1)
+						.map(v -> 30 / v))
+				.onErrorContinue(OnNextFailureStrategyTest::drop);
 
 		StepVerifier.create(test)
-		            .expectNext(30, 30, 15, 30, 15, 10)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedExactly(0, 0, 0)
-		            .hasDroppedErrorsSatisfying(
-		            		errors -> assertThat(errors)
-						            .hasSize(3)
-						            .allMatch(e -> e instanceof ArithmeticException));
+				.expectNext(30, 30, 15, 30, 15, 10)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedExactly(0, 0, 0)
+				.hasDroppedErrorsSatisfying(
+						errors -> assertThat(errors)
+								.hasSize(3)
+								.allMatch(e -> e instanceof ArithmeticException));
 	}
 
 	@Test
@@ -840,24 +850,23 @@ public class OnNextFailureStrategyTest {
 		List<Throwable> errorDropped = new ArrayList<>();
 
 		Flux<Integer> test = Flux.just("0", "1", "2", "asdfghc3")
-		                         .map(Integer::parseInt)
-		                         .filter(l -> l < 3)
-		                         .onErrorContinue((t, v) -> {
-			                         errorDropped.add(t);
-			                         valueDropped.add((String) v); // <--- STRING HERE
-		                         });
+				.map(Integer::parseInt)
+				.filter(l -> l < 3)
+				.onErrorContinue((t, v) -> {
+					errorDropped.add(t);
+					valueDropped.add((String) v); // <--- STRING HERE
+				});
 
 		StepVerifier.create(test)
-		            .expectNext(0, 1, 2)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.expectNext(0, 1, 2)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 
 		assertThat(valueDropped).containsOnly("asdfghc3");
 		assertThat(errorDropped.get(0)).isExactlyInstanceOf(NumberFormatException.class);
 	}
-
 
 }

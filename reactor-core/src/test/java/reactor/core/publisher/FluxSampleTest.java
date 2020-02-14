@@ -38,7 +38,7 @@ public class FluxSampleTest {
 
 	@Test(expected = NullPointerException.class)
 	public void otherNull() {
-		Flux.never().sample((Publisher<Object>)null);
+		Flux.never().sample((Publisher<Object>) null);
 	}
 
 	void sample(boolean complete, boolean which) {
@@ -51,38 +51,38 @@ public class FluxSampleTest {
 		main.sample(other).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		main.onNext(1);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		other.onNext("first");
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		other.onNext("second");
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		main.onNext(2);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		other.onNext("third");
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		DirectProcessor<?> p = which ? main : other;
 
@@ -90,16 +90,16 @@ public class FluxSampleTest {
 			p.onComplete();
 
 			ts.assertValues(1, 2)
-			  .assertComplete()
-			  .assertNoError();
+					.assertComplete()
+					.assertNoError();
 		}
 		else {
 			p.onError(new RuntimeException("forced failure"));
 
 			ts.assertValues(1, 2)
-			  .assertNotComplete()
-			  .assertError(RuntimeException.class)
-			  .assertErrorMessage("forced failure");
+					.assertNotComplete()
+					.assertError(RuntimeException.class)
+					.assertErrorMessage("forced failure");
 		}
 
 		Assert.assertFalse("Main has subscribers?", main.hasDownstreams());
@@ -145,8 +145,8 @@ public class FluxSampleTest {
 		Assert.assertFalse("Other no subscriber?", other.hasDownstreams());
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 	public void completeImmediately(boolean which) {
@@ -169,8 +169,8 @@ public class FluxSampleTest {
 		Assert.assertFalse("Other subscriber?", other.hasDownstreams());
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -192,9 +192,9 @@ public class FluxSampleTest {
 		).hide();
 
 		Duration duration = StepVerifier.create(source.sample(Duration.ofMillis(250)))
-		                                .expectNext(5)
-		                                .expectNext(100)
-		                                .verifyComplete();
+				.expectNext(5)
+				.expectNext(100)
+				.verifyComplete();
 
 		//sanity check on the sequence duration
 		assertThat(duration.toMillis()).isLessThan(500);
@@ -205,8 +205,8 @@ public class FluxSampleTest {
 		Flux<Integer> source = Flux.just(1, 2).hide();
 
 		Duration duration = StepVerifier.create(source.sample(Duration.ofMillis(250)))
-		                                .expectNext(2)
-		                                .verifyComplete();
+				.expectNext(2)
+				.verifyComplete();
 
 		//sanity check on the sequence duration
 		assertThat(duration.toMillis()).isLessThan(250);
@@ -217,43 +217,45 @@ public class FluxSampleTest {
 		Flux<Integer> source = Flux.just(1, 2).concatWith(Mono.error(new IllegalStateException("boom")));
 
 		Duration duration = StepVerifier.create(source.sample(Duration.ofMillis(250)))
-		                                .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 
 		//sanity check on the sequence duration
 		assertThat(duration.toMillis()).isLessThan(250);
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSample.SampleMainSubscriber<Integer> test = new FluxSample.SampleMainSubscriber<>(actual);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSample.SampleMainSubscriber<Integer> test = new FluxSample.SampleMainSubscriber<>(actual);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        test.requested = 35;
-        assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
-        test.value = 5;
-        assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		test.requested = 35;
+		assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
+		test.value = 5;
+		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanOtherSubscriber() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSample.SampleMainSubscriber<Integer> main = new FluxSample.SampleMainSubscriber<>(actual);
-        FluxSample.SampleOther<Integer, Integer> test = new FluxSample.SampleOther<>(main);
+	public void scanOtherSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSample.SampleMainSubscriber<Integer> main = new FluxSample.SampleMainSubscriber<>(actual);
+		FluxSample.SampleOther<Integer, Integer> test = new FluxSample.SampleOther<>(main);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main.other);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
-        assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main.other);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
 
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        main.cancelOther();
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		main.cancelOther();
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

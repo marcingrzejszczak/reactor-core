@@ -15,11 +15,11 @@
  */
 package reactor.core.scheduler;
 
-import reactor.blockhound.BlockHound;
-import reactor.blockhound.integration.BlockHoundIntegration;
-
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
+
+import reactor.blockhound.BlockHound;
+import reactor.blockhound.integration.BlockHoundIntegration;
 
 /**
  * {@link BlockHoundIntegration} with Reactor's scheduling mechanism.
@@ -31,16 +31,16 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public final class ReactorBlockHoundIntegration implements BlockHoundIntegration {
 
-    @Override
-    public void applyTo(BlockHound.Builder builder) {
-        builder.nonBlockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
+	@Override
+	public void applyTo(BlockHound.Builder builder) {
+		builder.nonBlockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
 
-        builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName() + "$DelayedWorkQueue", "offer");
-        builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName() + "$DelayedWorkQueue", "take");
+		builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName() + "$DelayedWorkQueue", "offer");
+		builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName() + "$DelayedWorkQueue", "take");
 
-        // Calls ScheduledFutureTask#cancel that may short park in DelayedWorkQueue#remove for getting a lock
-        builder.allowBlockingCallsInside(SchedulerTask.class.getName(), "dispose");
+		// Calls ScheduledFutureTask#cancel that may short park in DelayedWorkQueue#remove for getting a lock
+		builder.allowBlockingCallsInside(SchedulerTask.class.getName(), "dispose");
 
-        builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "processWorkerExit");
-    }
+		builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "processWorkerExit");
+	}
 }

@@ -16,24 +16,21 @@
 
 package reactor.core.scheduler;
 
-import reactor.core.Disposable;
-import reactor.util.annotation.Nullable;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import reactor.core.Disposable;
+import reactor.util.annotation.Nullable;
+
 final class PeriodicSchedulerTask implements Runnable, Disposable, Callable<Void> {
 
-	final Runnable task;
-
 	static final Future<Void> CANCELLED = new FutureTask<>(() -> null);
-
-	volatile Future<?> future;
 	static final AtomicReferenceFieldUpdater<PeriodicSchedulerTask, Future> FUTURE =
 			AtomicReferenceFieldUpdater.newUpdater(PeriodicSchedulerTask.class, Future.class, "future");
-
+	final Runnable task;
+	volatile Future<?> future;
 	Thread thread;
 
 	PeriodicSchedulerTask(Runnable task) {
@@ -64,7 +61,7 @@ final class PeriodicSchedulerTask implements Runnable, Disposable, Callable<Void
 	}
 
 	void setFuture(Future<?> f) {
-		for (;;) {
+		for (; ; ) {
 			Future o = future;
 			if (o == CANCELLED) {
 				f.cancel(thread != Thread.currentThread());
@@ -83,7 +80,7 @@ final class PeriodicSchedulerTask implements Runnable, Disposable, Callable<Void
 
 	@Override
 	public void dispose() {
-		for (;;) {
+		for (; ; ) {
 			Future f = future;
 			if (f == CANCELLED) {
 				break;

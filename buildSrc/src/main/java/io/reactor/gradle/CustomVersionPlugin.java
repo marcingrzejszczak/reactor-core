@@ -34,12 +34,10 @@ import org.gradle.api.internal.plugins.osgi.OsgiHelper;
  */
 public class CustomVersionPlugin implements Plugin<Project> {
 
-	private OsgiHelper osgiHelper = new OsgiHelper();
-
 	private static final String CUSTOM_VERSION_PROPERTY = "versionBranch";
-	private static final String SNAPSHOT_SUFFIX         = ".BUILD-SNAPSHOT";
-
+	private static final String SNAPSHOT_SUFFIX = ".BUILD-SNAPSHOT";
 	private static final Pattern ONLY_ALPHANUMERIC_PATTERN = Pattern.compile("[A-Za-z0-9]+");
+	private OsgiHelper osgiHelper = new OsgiHelper();
 
 	@Override
 	public void apply(Project project) {

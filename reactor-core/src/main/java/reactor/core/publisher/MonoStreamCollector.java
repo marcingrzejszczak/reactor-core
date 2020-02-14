@@ -57,7 +57,7 @@ final class MonoStreamCollector<T, A, R> extends MonoFromFluxOperator<T, R>
 
 		try {
 			container = collector.supplier()
-			                     .get();
+					.get();
 
 			accumulator = collector.accumulator();
 

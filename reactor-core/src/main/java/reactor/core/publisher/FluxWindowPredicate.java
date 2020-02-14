@@ -56,7 +56,7 @@ import reactor.util.context.Context;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
 final class FluxWindowPredicate<T> extends InternalFluxOperator<T, Flux<T>>
-		implements Fuseable{
+		implements Fuseable {
 
 	final Supplier<? extends Queue<T>> groupQueueSupplier;
 
@@ -104,52 +104,40 @@ final class FluxWindowPredicate<T> extends InternalFluxOperator<T, Flux<T>>
 
 	static final class WindowPredicateMain<T>
 			implements Fuseable.QueueSubscription<Flux<T>>,
-			           InnerOperator<T, Flux<T>> {
+			InnerOperator<T, Flux<T>> {
 
-		final CoreSubscriber<? super Flux<T>> actual;
-		final Context                         ctx;
-
-		final Supplier<? extends Queue<T>> groupQueueSupplier;
-
-		final Mode mode;
-
-		final Predicate<? super T> predicate;
-
-		final int prefetch;
-
-		final Queue<Flux<T>> queue;
-
-		WindowFlux<T> window;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowPredicateMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(WindowPredicateMain.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<WindowPredicateMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(WindowPredicateMain.class, "requested");
-
-		volatile boolean   done;
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WindowPredicateMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(WindowPredicateMain.class,
 						Throwable.class,
 						"error");
-
-		volatile int cancelled;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowPredicateMain> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(WindowPredicateMain.class,
 						"cancelled");
-
-		volatile int windowCount;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowPredicateMain> WINDOW_COUNT =
 				AtomicIntegerFieldUpdater.newUpdater(WindowPredicateMain.class, "windowCount");
-
+		final CoreSubscriber<? super Flux<T>> actual;
+		final Context ctx;
+		final Supplier<? extends Queue<T>> groupQueueSupplier;
+		final Mode mode;
+		final Predicate<? super T> predicate;
+		final int prefetch;
+		final Queue<Flux<T>> queue;
+		WindowFlux<T> window;
+		volatile int wip;
+		volatile long requested;
+		volatile boolean done;
+		volatile Throwable error;
+		volatile int cancelled;
+		volatile int windowCount;
 		Subscription s;
 
 		volatile boolean outputFused;
@@ -189,7 +177,8 @@ final class FluxWindowPredicate<T> extends InternalFluxOperator<T, Flux<T>>
 			window = g;
 		}
 
-		@Nullable WindowFlux<T> newWindowDeferred() {
+		@Nullable
+		WindowFlux<T> newWindowDeferred() {
 			// if the main is cancelled, don't create new groups
 			if (cancelled == 0) {
 				WINDOW_COUNT.getAndIncrement(this);
@@ -278,7 +267,7 @@ final class FluxWindowPredicate<T> extends InternalFluxOperator<T, Flux<T>>
 
 		@Override
 		public void onComplete() {
-			if(done) {
+			if (done) {
 				return;
 			}
 			cleanup();
@@ -316,7 +305,7 @@ final class FluxWindowPredicate<T> extends InternalFluxOperator<T, Flux<T>>
 
 		@Override
 		public Stream<? extends Scannable> inners() {
-			return  window == null ? Stream.empty() : Stream.of(window);
+			return window == null ? Stream.empty() : Stream.of(window);
 		}
 
 		@Override
@@ -559,44 +548,35 @@ final class FluxWindowPredicate<T> extends InternalFluxOperator<T, Flux<T>>
 	static final class WindowFlux<T> extends Flux<T>
 			implements Fuseable, Fuseable.QueueSubscription<T>, InnerOperator<T, T> {
 
-		final Queue<T> queue;
-
-		volatile WindowPredicateMain<T> parent;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WindowFlux, WindowPredicateMain>
 				PARENT = AtomicReferenceFieldUpdater.newUpdater(WindowFlux.class,
 				WindowPredicateMain.class,
 				"parent");
-
-		volatile boolean done;
-		Throwable error;
-
-		volatile CoreSubscriber<? super T> actual;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WindowFlux, CoreSubscriber> ACTUAL =
 				AtomicReferenceFieldUpdater.newUpdater(WindowFlux.class,
 						CoreSubscriber.class,
 						"actual");
-
-		volatile Context ctx = Context.empty();
-
-		volatile boolean cancelled;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowFlux> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(WindowFlux.class, "once");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowFlux> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(WindowFlux.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<WindowFlux> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(WindowFlux.class, "requested");
-
+		final Queue<T> queue;
+		volatile WindowPredicateMain<T> parent;
+		volatile boolean done;
+		Throwable error;
+		volatile CoreSubscriber<? super T> actual;
+		volatile Context ctx = Context.empty();
+		volatile boolean cancelled;
+		volatile int once;
+		volatile int wip;
+		volatile long requested;
 		volatile boolean enableOperatorFusion;
 
 		int produced;

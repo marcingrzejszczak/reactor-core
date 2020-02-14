@@ -117,16 +117,10 @@ final class FluxSkipUntilOther<T, U> extends InternalFluxOperator<T, T> {
 			m.other = Operators.cancelledSubscription();
 		}
 
-
 	}
 
 	static final class SkipUntilMainSubscriber<T>
 			implements InnerOperator<T, T> {
-
-		final CoreSubscriber<? super T> actual;
-		final Context ctx;
-
-		volatile Subscription       main;
 
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SkipUntilMainSubscriber, Subscription>
@@ -134,15 +128,16 @@ final class FluxSkipUntilOther<T, U> extends InternalFluxOperator<T, T> {
 				AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class,
 						Subscription.class,
 						"main");
-
-		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SkipUntilMainSubscriber, Subscription>
 				OTHER =
 				AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class,
 						Subscription.class,
 						"other");
-
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		volatile Subscription main;
+		volatile Subscription other;
 		volatile boolean gate;
 
 		SkipUntilMainSubscriber(CoreSubscriber<? super T> actual) {
@@ -216,10 +211,10 @@ final class FluxSkipUntilOther<T, U> extends InternalFluxOperator<T, T> {
 		@Override
 		public void onError(Throwable t) {
 			if (MAIN.compareAndSet(this, null, Operators.cancelledSubscription())) {
-					Operators.error(actual, t);
-					return;
+				Operators.error(actual, t);
+				return;
 			}
-			else if (main == Operators.cancelledSubscription()){
+			else if (main == Operators.cancelledSubscription()) {
 				Operators.onErrorDropped(t, actual.currentContext());
 				return;
 			}

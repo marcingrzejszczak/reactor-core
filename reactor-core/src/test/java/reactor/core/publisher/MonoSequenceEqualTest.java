@@ -16,7 +16,6 @@
 package reactor.core.publisher;
 
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,65 +38,65 @@ public class MonoSequenceEqualTest {
 	@Test
 	public void sequenceEquals() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two", "three"),
-						Flux.just("one", "two", "three")))
-		            .expectNext(Boolean.TRUE)
-		            .verifyComplete();
+				Flux.just("one", "two", "three"),
+				Flux.just("one", "two", "three")))
+				.expectNext(Boolean.TRUE)
+				.verifyComplete();
 	}
 
 	@Test
 	public void sequenceLongerLeft() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two", "three", "four"),
-						Flux.just("one", "two", "three")))
-		            .expectNext(Boolean.FALSE)
-		            .verifyComplete();
+				Flux.just("one", "two", "three", "four"),
+				Flux.just("one", "two", "three")))
+				.expectNext(Boolean.FALSE)
+				.verifyComplete();
 	}
 
 	@Test
 	public void sequenceLongerRight() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two", "three"),
-						Flux.just("one", "two", "three", "four")))
-		            .expectNext(Boolean.FALSE)
-		            .verifyComplete();
+				Flux.just("one", "two", "three"),
+				Flux.just("one", "two", "three", "four")))
+				.expectNext(Boolean.FALSE)
+				.verifyComplete();
 	}
 
 	@Test
 	public void sequenceErrorsLeft() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two").concatWith(Mono.error(new IllegalStateException())),
-						Flux.just("one", "two", "three")))
-		            .verifyError(IllegalStateException.class);
+				Flux.just("one", "two").concatWith(Mono.error(new IllegalStateException())),
+				Flux.just("one", "two", "three")))
+				.verifyError(IllegalStateException.class);
 	}
 
 	@Test
 	public void sequenceErrorsRight() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two", "three"),
-						Flux.just("one", "two").concatWith(Mono.error(new IllegalStateException()))))
-		            .verifyError(IllegalStateException.class);
+				Flux.just("one", "two", "three"),
+				Flux.just("one", "two").concatWith(Mono.error(new IllegalStateException()))))
+				.verifyError(IllegalStateException.class);
 	}
 
 	@Test
 	public void sequenceErrorsBothPropagatesLeftError() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two", "three", "four").concatWith(Mono.error(new IllegalArgumentException("left"))).hide(),
-						Flux.just("one", "two").concatWith(Mono.error(new IllegalArgumentException("right"))).hide()))
-		            .verifyErrorMessage("left");
+				Flux.just("one", "two", "three", "four").concatWith(Mono.error(new IllegalArgumentException("left"))).hide(),
+				Flux.just("one", "two").concatWith(Mono.error(new IllegalArgumentException("right"))).hide()))
+				.verifyErrorMessage("left");
 	}
 
 	@Test
 	public void sequenceErrorsBothPropagatesLeftErrorWithSmallRequest() {
 		StepVerifier.create(Mono.sequenceEqual(
-						Flux.just("one", "two", "three", "four")
-						    .concatWith(Mono.error(new IllegalArgumentException("left")))
-						    .hide(),
-						Flux.just("one", "two")
-						    .concatWith(Mono.error(new IllegalArgumentException("right")))
-						    .hide(),
-						Objects::equals, 1))
-		            .verifyErrorMessage("right");
+				Flux.just("one", "two", "three", "four")
+						.concatWith(Mono.error(new IllegalArgumentException("left")))
+						.hide(),
+				Flux.just("one", "two")
+						.concatWith(Mono.error(new IllegalArgumentException("right")))
+						.hide(),
+				Objects::equals, 1))
+				.verifyErrorMessage("right");
 	}
 
 	@Test
@@ -105,8 +104,8 @@ public class MonoSequenceEqualTest {
 		StepVerifier.create(Mono.sequenceEqual(
 				Flux.empty(),
 				Flux.just("one", "two", "three")))
-		            .expectNext(Boolean.FALSE)
-		            .verifyComplete();
+				.expectNext(Boolean.FALSE)
+				.verifyComplete();
 	}
 
 	@Test
@@ -114,8 +113,8 @@ public class MonoSequenceEqualTest {
 		StepVerifier.create(Mono.sequenceEqual(
 				Flux.just("one", "two", "three"),
 				Flux.empty()))
-		            .expectNext(Boolean.FALSE)
-		            .verifyComplete();
+				.expectNext(Boolean.FALSE)
+				.verifyComplete();
 	}
 
 	@Test
@@ -123,15 +122,17 @@ public class MonoSequenceEqualTest {
 		StepVerifier.create(Mono.sequenceEqual(
 				Flux.empty(),
 				Flux.empty()))
-		            .expectNext(Boolean.TRUE)
-		            .verifyComplete();
+				.expectNext(Boolean.TRUE)
+				.verifyComplete();
 	}
 
 	@Test
 	public void equalPredicateFailure() {
 		StepVerifier.create(Mono.sequenceEqual(Mono.just("one"), Mono.just("one"),
-						(s1, s2) -> { throw new IllegalStateException("boom"); }))
-		            .verifyErrorMessage("boom");
+				(s1, s2) -> {
+					throw new IllegalStateException("boom");
+				}))
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
@@ -139,20 +140,22 @@ public class MonoSequenceEqualTest {
 		Flux<Integer> source = Flux.range(1, Queues.SMALL_BUFFER_SIZE * 4).subscribeOn(Schedulers.elastic());
 
 		StepVerifier.create(Mono.sequenceEqual(source, source))
-		            .expectNext(Boolean.TRUE)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.expectNext(Boolean.TRUE)
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
-		@Test
+	@Test
 	public void syncFusedCrash() {
-		Flux<Integer> source = Flux.range(1, 10).map(i -> { throw new IllegalArgumentException("boom"); });
+		Flux<Integer> source = Flux.range(1, 10).map(i -> {
+			throw new IllegalArgumentException("boom");
+		});
 
 		StepVerifier.create(Mono.sequenceEqual(source, Flux.range(1, 10).hide()))
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 
 		StepVerifier.create(Mono.sequenceEqual(Flux.range(1, 10).hide(), source))
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 	}
 
 
@@ -165,8 +168,8 @@ public class MonoSequenceEqualTest {
 		Flux<Integer> source2 = Flux.just(1, 2, 3, 7, 8).doOnCancel(() -> sub2.set(true));
 
 		StepVerifier.create(Mono.sequenceEqual(source1, source2))
-		            .expectNext(Boolean.FALSE)
-		            .verifyComplete();
+				.expectNext(Boolean.FALSE)
+				.verifyComplete();
 
 		Assert.assertTrue("left not cancelled", sub1.get());
 		Assert.assertTrue("right not cancelled", sub2.get());
@@ -180,17 +183,17 @@ public class MonoSequenceEqualTest {
 		AtomicBoolean cancel2 = new AtomicBoolean();
 
 		Flux<Integer> source1 = Flux.range(1, 5)
-		                            .doOnSubscribe(sub1::set)
-		                            .doOnCancel(() -> cancel1.set(true))
-		                            .hide();
+				.doOnSubscribe(sub1::set)
+				.doOnCancel(() -> cancel1.set(true))
+				.hide();
 		Flux<Integer> source2 = Flux.just(1, 2, 3, 7, 8)
-		                            .doOnSubscribe(sub2::set)
-		                            .doOnCancel(() -> cancel2.set(true))
-		                            .hide();
+				.doOnSubscribe(sub2::set)
+				.doOnCancel(() -> cancel2.set(true))
+				.hide();
 
 		Mono.sequenceEqual(source1, source2)
-		    .subscribeWith(new LambdaSubscriber<>(System.out::println, Throwable::printStackTrace, null,
-				    Subscription::cancel));
+				.subscribeWith(new LambdaSubscriber<>(System.out::println, Throwable::printStackTrace, null,
+						Subscription::cancel));
 
 		Assert.assertNotNull("left not subscribed", sub1.get());
 		Assert.assertTrue("left not cancelled", cancel1.get());
@@ -206,17 +209,20 @@ public class MonoSequenceEqualTest {
 		AtomicLong cancel2 = new AtomicLong();
 
 		Flux<Integer> source1 = Flux.range(1, 5)
-		                            .doOnSubscribe(sub1::set)
-		                            .doOnCancel(cancel1::incrementAndGet)
-		                            .hide();
+				.doOnSubscribe(sub1::set)
+				.doOnCancel(cancel1::incrementAndGet)
+				.hide();
 		Flux<Integer> source2 = Flux.just(1, 2, 3, 7, 8)
-		                            .doOnSubscribe(sub2::set)
-		                            .doOnCancel(cancel2::incrementAndGet)
-		                            .hide();
+				.doOnSubscribe(sub2::set)
+				.doOnCancel(cancel2::incrementAndGet)
+				.hide();
 
 		Mono.sequenceEqual(source1, source2)
-		    .subscribeWith(new LambdaSubscriber<>(System.out::println, Throwable::printStackTrace, null,
-				    s -> { s.cancel(); s.cancel(); }));
+				.subscribeWith(new LambdaSubscriber<>(System.out::println, Throwable::printStackTrace, null,
+						s -> {
+							s.cancel();
+							s.cancel();
+						}));
 
 		Assert.assertNotNull("left not subscribed", sub1.get());
 		assertThat(cancel1.get()).isEqualTo(1);
@@ -232,16 +238,16 @@ public class MonoSequenceEqualTest {
 		AtomicBoolean cancel2 = new AtomicBoolean();
 
 		Flux<Integer> source1 = Flux.range(1, 5)
-		                            .doOnSubscribe(sub1::set)
-		                            .doOnCancel(() -> cancel1.set(true))
-		                            .hide();
+				.doOnSubscribe(sub1::set)
+				.doOnCancel(() -> cancel1.set(true))
+				.hide();
 		Flux<Integer> source2 = Flux.<Integer>never()
-		                            .doOnSubscribe(sub2::set)
-		                            .doOnCancel(() -> cancel2.set(true));
+				.doOnSubscribe(sub2::set)
+				.doOnCancel(() -> cancel2.set(true));
 
 		Mono.sequenceEqual(source1, source2)
-		    .subscribeWith(new LambdaSubscriber<>(System.out::println, Throwable::printStackTrace, null,
-				    Subscription::cancel));
+				.subscribeWith(new LambdaSubscriber<>(System.out::println, Throwable::printStackTrace, null,
+						Subscription::cancel));
 
 		Assert.assertNotNull("left not subscribed", sub1.get());
 		Assert.assertTrue("left not cancelled", cancel1.get());
@@ -255,12 +261,12 @@ public class MonoSequenceEqualTest {
 		LongAdder innerSub2 = new LongAdder();
 
 		Flux<Integer> source1 = Flux.range(1, 5)
-		                            .doOnSubscribe((t) -> innerSub1.increment());
+				.doOnSubscribe((t) -> innerSub1.increment());
 		Flux<Integer> source2 = Flux.just(1, 2, 3, 7, 8)
-		                            .doOnSubscribe((t) -> innerSub2.increment());
+				.doOnSubscribe((t) -> innerSub2.increment());
 
 		Mono.sequenceEqual(source1, source2)
-		    .subscribe();
+				.subscribe();
 
 		Assert.assertEquals("left has been subscribed multiple times", 1, innerSub1.intValue());
 		Assert.assertEquals("right has been subscribed multiple times", 1, innerSub2.intValue());
@@ -274,12 +280,13 @@ public class MonoSequenceEqualTest {
 
 	@Test
 	public void scanCoordinator() {
-		CoreSubscriber<Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoSequenceEqual.EqualCoordinator<String> test = new MonoSequenceEqual.EqualCoordinator<>(actual,
-						123,
-						Mono.just("foo"),
-						Mono.just("bar"),
-						(s1, s2) -> s1.equals(s2));
+				123,
+				Mono.just("foo"),
+				Mono.just("bar"),
+				(s1, s2) -> s1.equals(s2));
 
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
@@ -291,12 +298,13 @@ public class MonoSequenceEqualTest {
 	@Test
 	public void scanSubscriber() {
 		CoreSubscriber<Boolean>
-				actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+				actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoSequenceEqual.EqualCoordinator<String> coordinator = new MonoSequenceEqual.EqualCoordinator<>(actual,
-						123,
-						Mono.just("foo"),
-						Mono.just("bar"),
-						(s1, s2) -> s1.equals(s2));
+				123,
+				Mono.just("foo"),
+				Mono.just("bar"),
+				(s1, s2) -> s1.equals(s2));
 
 		MonoSequenceEqual.EqualSubscriber<String> test = new MonoSequenceEqual.EqualSubscriber<>(
 				coordinator, 456);

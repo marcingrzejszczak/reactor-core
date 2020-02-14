@@ -20,7 +20,6 @@ package reactor.core.publisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.core.publisher.FluxOnAssembly.AssemblySnapshot;
-import reactor.util.annotation.Nullable;
 
 /**
  * Captures the current stacktrace when this publisher is created and makes it
@@ -36,7 +35,7 @@ import reactor.util.annotation.Nullable;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">https://github.com/reactor/reactive-streams-commons</a>
  */
 final class MonoOnAssembly<T> extends InternalMonoOperator<T, T> implements Fuseable,
-                                                                    AssemblyOp {
+		AssemblyOp {
 
 	final AssemblySnapshot stacktrace;
 

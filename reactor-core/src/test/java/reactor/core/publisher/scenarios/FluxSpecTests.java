@@ -54,8 +54,8 @@ public class FluxSpecTests {
 //		"A deferred Flux with an initial value makes that value available once if broadcasted"
 //		given: "a composable with an initial value"
 		Flux<String> stream = Flux.just("test")
-		                          .publish()
-		                          .autoConnect();
+				.publish()
+				.autoConnect();
 
 //		when: "the value is retrieved"
 		AtomicReference<String> value = new AtomicReference<>();
@@ -75,10 +75,10 @@ public class FluxSpecTests {
 		AtomicReference<Throwable> e = new AtomicReference<>();
 		CountDownLatch latch = new CountDownLatch(1);
 		Flux<Integer> stream = Flux.fromIterable(Arrays.asList(1, 2, 3))
-		                           .publish()
-		                           .autoConnect()
-		                           .doOnError(e::set)
-		                           .doOnComplete(latch::countDown);
+				.publish()
+				.autoConnect()
+				.doOnError(e::set)
+				.doOnComplete(latch::countDown);
 
 //		when: "cumulated request of Long MAX"
 		long test = Long.MAX_VALUE / 2L;
@@ -101,8 +101,8 @@ public class FluxSpecTests {
 //	    "A deferred Flux with initial values can be consumed multiple times"
 // 		given: "a composable with an initial value"
 		Flux<String> stream = Flux.just("test", "test2", "test3")
-		                          .map(v -> v)
-		                          .log();
+				.map(v -> v)
+				.log();
 
 //		when: "the value is retrieved"
 		List<String> value1 = stream.collectList().block();
@@ -143,13 +143,13 @@ public class FluxSpecTests {
 		AtomicReference<Object> value = new AtomicReference<>();
 
 		stream.doAfterTerminate(() -> value.set(Boolean.TRUE))
-	          .subscribe(value::set);
+				.subscribe(value::set);
 
 //		then: "it is available"
 		assertThat(value.get())
 				.isNotNull()
-	            .isNotEqualTo("test")
-	            .isEqualTo(Boolean.TRUE);
+				.isNotEqualTo("test")
+				.isEqualTo(Boolean.TRUE);
 	}
 
 	@Test
@@ -160,7 +160,7 @@ public class FluxSpecTests {
 
 //		when:"the flux is retrieved"
 		Mono<List<String>> value = stream.map(it -> it + "-ok")
-		                                 .collectList();
+				.collectList();
 
 //		then: "it is available"
 		assertThat(value.block()).containsExactly("test-ok", "test2-ok", "test3-ok");
@@ -171,15 +171,15 @@ public class FluxSpecTests {
 //		"A deferred Flux can be translated into a completable queue"
 //		given:	"a composable with an initial value"
 		Flux<String> stream = Flux.just("test", "test2", "test3")
-		                    .log()
-		                    .publishOn(Schedulers.parallel());
+				.log()
+				.publishOn(Schedulers.parallel());
 
 //		when: "the flux is retrieved"
 		stream = stream.map(it -> it + "-ok")
-		               .log();
+				.log();
 
 		Iterator<String> queue = stream.toIterable()
-		                               .iterator();
+				.iterator();
 
 		List<String> result = new ArrayList<>();
 
@@ -201,7 +201,7 @@ public class FluxSpecTests {
 		}
 		Flux<Integer> pub = Flux.fromIterable(thousand);
 		Iterator<Integer> queue = pub.toIterable()
-		                             .iterator();
+				.iterator();
 
 //		when: "read the queue"
 		Integer v = queue.next();
@@ -220,32 +220,32 @@ public class FluxSpecTests {
 
 	Flux<Integer> scenario_rangeTimedSample() {
 		return Flux.range(1, Integer.MAX_VALUE)
-		           .delayElements(Duration.ofMillis(100))
-		           .sample(Duration.ofSeconds(4))
-		           .take(1);
+				.delayElements(Duration.ofMillis(100))
+				.sample(Duration.ofSeconds(4))
+				.take(1);
 	}
 
 	@Test
 	public void fluxCanSampleValuesOverTime() {
 		StepVerifier.withVirtualTime(this::scenario_rangeTimedSample)
-		            .thenAwait(Duration.ofSeconds(4))
-		            .expectNext(39)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(4))
+				.expectNext(39)
+				.verifyComplete();
 	}
 
 	Flux<Integer> scenario_rangeTimedTake() {
 		return Flux.range(1, Integer.MAX_VALUE)
-		           .delayElements(Duration.ofMillis(100))
-		           .take(Duration.ofSeconds(4))
-		           .takeLast(1);
+				.delayElements(Duration.ofMillis(100))
+				.take(Duration.ofSeconds(4))
+				.takeLast(1);
 	}
 
 	@Test
 	public void fluxCanSampleValuesOverTimeTake() {
 		StepVerifier.withVirtualTime(this::scenario_rangeTimedTake)
-		            .thenAwait(Duration.ofSeconds(4))
-		            .expectNext(39)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(4))
+				.expectNext(39)
+				.verifyComplete();
 	}
 
 	@Test
@@ -256,8 +256,8 @@ public class FluxSpecTests {
 
 //		when:"the values are filtered and result is collected"
 		MonoProcessor<List<Integer>> tap = s.distinctUntilChanged()
-		                                    .collectList()
-		                                    .toProcessor();
+				.collectList()
+				.toProcessor();
 		tap.subscribe();
 
 //		then:"collected must remove duplicates"
@@ -272,8 +272,8 @@ public class FluxSpecTests {
 
 //		when:"the values are filtered and result is collected"
 		MonoProcessor<List<Integer>> tap = s.distinctUntilChanged(it -> it % 2 == 0)
-		                                    .collectList()
-		                                    .toProcessor();
+				.collectList()
+				.toProcessor();
 
 //		then:"collected must remove duplicates"
 		assertThat(tap.block()).containsExactly(2, 3, 2, 5);
@@ -287,8 +287,8 @@ public class FluxSpecTests {
 
 //		when:"the values are filtered and result is collected"
 		MonoProcessor<List<Integer>> tap = s.distinct()
-		                                    .collectList()
-		                                    .toProcessor();
+				.collectList()
+				.toProcessor();
 		tap.subscribe();
 
 //		then:"collected should be without duplicates"
@@ -303,8 +303,8 @@ public class FluxSpecTests {
 
 //		when: "the values are filtered and result is collected"
 		MonoProcessor<List<Integer>> tap = s.distinct(it -> it % 3)
-		                                    .collectList()
-		                                    .toProcessor();
+				.collectList()
+				.toProcessor();
 		tap.subscribe();
 
 //		then: "collected should be without duplicates"
@@ -319,8 +319,8 @@ public class FluxSpecTests {
 
 //		when: "checking for existence of values > 2 and the result of the check is collected"
 		boolean tap = s.any(it -> it > 2)
-		               .log()
-		               .block();
+				.log()
+				.block();
 
 //		then: "collected should be true"
 		assertThat(tap).isTrue();
@@ -388,7 +388,7 @@ public class FluxSpecTests {
 
 //		when: "a Subscribe Consumer is registered"
 		stream = stream.defaultIfEmpty("test")
-		               .doOnComplete(() -> values.add("complete"));
+				.doOnComplete(() -> values.add("complete"));
 
 //		and: "the flux is consumed"
 		stream.subscribe(values::add);
@@ -488,7 +488,7 @@ public class FluxSpecTests {
 
 //			when: "the source accepts a value"
 		MonoProcessor<Integer> value = mapped.next()
-		                                     .toProcessor();
+				.toProcessor();
 		value.subscribe();
 		source.sink().next(1);
 
@@ -505,13 +505,13 @@ public class FluxSpecTests {
 
 		EmitterProcessor<Integer> source2 = EmitterProcessor.create();
 		source2.map(it -> it)
-		       .map(it -> it);
+				.map(it -> it);
 
 		EmitterProcessor<Integer> source3 = EmitterProcessor.create();
 
 		AtomicReference<List<Integer>> tap = new AtomicReference<>();
 		Flux.merge(source1, source2, source3).log().buffer(3)
-		    .log().subscribe(tap::set);
+				.log().subscribe(tap::set);
 
 //		when: "the sources accept a value"
 		source1.onNext(1);
@@ -521,7 +521,6 @@ public class FluxSpecTests {
 //		then: "the values are all collected from source1 flux"
 		assertThat(tap.get()).containsExactly(1, 2, 3);
 	}
-
 
 
 	@Test
@@ -592,7 +591,7 @@ public class FluxSpecTests {
 //		then: "the values are all collected from source1 and source2 flux"
 		assertThat(res).containsExactly("1a2a3a", "1a2b3a", "1a2b3b", "1a2b3c", "1a2b3d", "done");
 	}
-	
+
 	@Test
 	public void simpleConcat() {
 //		"A simple concat"
@@ -610,7 +609,7 @@ public class FluxSpecTests {
 				}, Throwable::printStackTrace,
 				() -> {
 					res1.add("done");
-				System.out.println("completed!");
+					System.out.println("completed!");
 				});
 
 //		then: "the values are all collected from source1 and source2 flux"
@@ -676,7 +675,7 @@ public class FluxSpecTests {
 //		given: "source composables to count and tap"
 		EmitterProcessor<Integer> source = EmitterProcessor.create();
 		MonoProcessor<Long> tap = source.count()
-		                                .subscribeWith(MonoProcessor.create());
+				.subscribeWith(MonoProcessor.create());
 
 //		when: "the sources accept a value"
 		source.onNext(1);
@@ -698,7 +697,7 @@ public class FluxSpecTests {
 
 //		when: "element at index 2 is requested"
 		Integer tap = s.elementAt(2)
-		               .block();
+				.block();
 
 //		then: "3 is emitted"
 		assertThat(tap).isEqualTo(3);
@@ -706,7 +705,7 @@ public class FluxSpecTests {
 //		when: "element with negative index is requested"
 //		then: "error is thrown"
 		assertThatExceptionOfType(IndexOutOfBoundsException.class)
-			.isThrownBy(() -> s.elementAt(-1));
+				.isThrownBy(() -> s.elementAt(-1));
 
 //		when: "element with index > number of values is requested"
 //		then: "error is thrown"
@@ -723,7 +722,7 @@ public class FluxSpecTests {
 
 //		when: "element at index 2 is requested"
 		Integer tap = s.elementAt(2, -1)
-		               .block();
+				.block();
 
 //		then: "3 is emitted"
 		assertThat(tap).isEqualTo(3);
@@ -780,17 +779,17 @@ public class FluxSpecTests {
 //		given: "a source composable with a mapping function that throws an error"
 		EmitterProcessor<Integer> source = EmitterProcessor.create();
 		Flux<String> mapped = source.map(it -> {
-					if (it == 1) {
-						throw new RuntimeException();
-					}
-					else {
-						return "na";
-					}
+			if (it == 1) {
+				throw new RuntimeException();
+			}
+			else {
+				return "na";
+			}
 		});
 
 		LongAdder errors = new LongAdder();
 		mapped.doOnError(e -> errors.increment())
-		      .subscribe();
+				.subscribe();
 
 //		when: "the source accepts a value"
 		source.onNext(1);
@@ -808,11 +807,11 @@ public class FluxSpecTests {
 
 		try {
 			Mono<List<Integer>> res = source.subscribeOn(scheduler)
-			                                .delaySubscription(Duration.ofMillis(1L))
-			                                .log("streamed")
-			                                .map(it -> it * 2)
-			                                .buffer()
-			                                .publishNext();
+					.delaySubscription(Duration.ofMillis(1L))
+					.log("streamed")
+					.map(it -> it * 2)
+					.buffer()
+					.publishNext();
 
 			res.subscribe();
 
@@ -934,7 +933,7 @@ public class FluxSpecTests {
 //		given: "a composable that will accept 2 values and a reduce function"
 		EmitterProcessor<Integer> source = EmitterProcessor.create();
 		MonoProcessor<Integer> value = source.reduce(new Reduction())
-		                                     .subscribeWith(MonoProcessor.create());
+				.subscribeWith(MonoProcessor.create());
 
 //		when: "the first value is accepted"
 		source.onNext(1);
@@ -949,7 +948,6 @@ public class FluxSpecTests {
 //		then: "the reduced value is known"
 		assertThat(value.peek()).isEqualTo(2);
 	}
-
 
 
 	@Test
@@ -1007,9 +1005,9 @@ public class FluxSpecTests {
 		FluxProcessor<Integer, Integer> source =
 				EmitterProcessor.create();
 		Flux<Integer> reduced = source.window(2)
-		                              .log()
-		                              .flatMap(it -> it.log("lol")
-		                                               .reduce(new Reduction()));
+				.log()
+				.flatMap(it -> it.log("lol")
+						.reduce(new Reduction()));
 		MonoProcessor<Integer> value = reduced.subscribeWith(MonoProcessor.create());
 
 //		when: "the first value is accepted"
@@ -1026,67 +1024,66 @@ public class FluxSpecTests {
 	}
 
 
-
 	@Test
-	public void countRange(){
+	public void countRange() {
 		StepVerifier.create(Flux.range(1, 10).count())
-	                .expectNext(10L)
-	                .verifyComplete();
+				.expectNext(10L)
+				.verifyComplete();
 	}
 
 	Flux<List<Integer>> scenario_delayItems() {
 		return Flux.range(1, 4)
-		           .buffer(2)
-		           .delayElements(Duration.ofMillis(1000));
+				.buffer(2)
+				.delayElements(Duration.ofMillis(1000));
 	}
 
 	@Test
 	public void delayItems() {
 		StepVerifier.withVirtualTime(this::scenario_delayItems)
-		            .thenAwait(Duration.ofMillis(2000))
-		            .assertNext(s -> assertThat(s).containsExactly(1, 2))
-		            .thenAwait(Duration.ofMillis(2000))
-		            .assertNext(s -> assertThat(s).containsExactly(3, 4))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(2000))
+				.assertNext(s -> assertThat(s).containsExactly(1, 2))
+				.thenAwait(Duration.ofMillis(2000))
+				.assertNext(s -> assertThat(s).containsExactly(3, 4))
+				.verifyComplete();
 	}
 
 
 	Mono<Long> scenario_fluxItemCanBeShiftedByTime() {
 		return Flux.range(0, 10000)
-		           .delayElements(Duration.ofMillis(150))
-		           .elapsed()
-		           .take(10)
-		           .reduce(0L,
-				           (acc, next) -> acc > 0l ? ((next.getT1() + acc) / 2) :
-						           next.getT1());
+				.delayElements(Duration.ofMillis(150))
+				.elapsed()
+				.take(10)
+				.reduce(0L,
+						(acc, next) -> acc > 0l ? ((next.getT1() + acc) / 2) :
+								next.getT1());
 
 	}
 
 	@Test
 	public void fluxItemCanBeShiftedByTime() {
 		StepVerifier.withVirtualTime(this::scenario_fluxItemCanBeShiftedByTime)
-		            .thenAwait(Duration.ofMillis(15_000))
-		            .expectNext(150L)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(15_000))
+				.expectNext(150L)
+				.verifyComplete();
 	}
 
 	Mono<Long> scenario_fluxItemCanBeShiftedByTime2() {
 		return Flux.range(0, 10000)
-		           .delayElements(Duration.ofMillis(150))
-		           .elapsed()
-		           .take(10)
-		           .reduce(0L,
-				           (acc, next) -> acc > 0l ? ((next.getT1() + acc) / 2) :
-						           next.getT1());
+				.delayElements(Duration.ofMillis(150))
+				.elapsed()
+				.take(10)
+				.reduce(0L,
+						(acc, next) -> acc > 0l ? ((next.getT1() + acc) / 2) :
+								next.getT1());
 
 	}
 
 	@Test
 	public void fluxItemCanBeShiftedByTime2() {
 		StepVerifier.withVirtualTime(this::scenario_fluxItemCanBeShiftedByTime2)
-		            .thenAwait(Duration.ofMillis(15_000))
-		            .expectNext(150L)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(15_000))
+				.expectNext(150L)
+				.verifyComplete();
 	}
 
 	@Test(timeout = 10000L)

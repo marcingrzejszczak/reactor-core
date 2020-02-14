@@ -55,29 +55,23 @@ final class MonoPublishOn<T> extends InternalMonoOperator<T, T> {
 	static final class PublishOnSubscriber<T>
 			implements InnerOperator<T, T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Scheduler scheduler;
-
-		Subscription s;
-
-		volatile Disposable future;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<PublishOnSubscriber, Disposable>
 				FUTURE =
 				AtomicReferenceFieldUpdater.newUpdater(PublishOnSubscriber.class,
 						Disposable.class,
 						"future");
-
-
-		volatile T         value;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<PublishOnSubscriber, Object>
 				VALUE =
 				AtomicReferenceFieldUpdater.newUpdater(PublishOnSubscriber.class,
 						Object.class,
 						"value");
-
+		final CoreSubscriber<? super T> actual;
+		final Scheduler scheduler;
+		Subscription s;
+		volatile Disposable future;
+		volatile T value;
 		volatile Throwable error;
 
 		PublishOnSubscriber(CoreSubscriber<? super T> actual,
@@ -135,17 +129,17 @@ final class MonoPublishOn<T> extends InternalMonoOperator<T, T> {
 				@Nullable Throwable suppressed,
 				@Nullable Object dataSignal) {
 
-				if(future != null){
-					return;
-				}
+			if (future != null) {
+				return;
+			}
 
-				try {
-					future = this.scheduler.schedule(this);
-				}
-				catch (RejectedExecutionException ree) {
-					actual.onError(Operators.onRejectedExecution(ree, subscription,
-							suppressed,	dataSignal, actual.currentContext()));
-				}
+			try {
+				future = this.scheduler.schedule(this);
+			}
+			catch (RejectedExecutionException ree) {
+				actual.onError(Operators.onRejectedExecution(ree, subscription,
+						suppressed, dataSignal, actual.currentContext()));
+			}
 		}
 
 		@Override
@@ -172,7 +166,7 @@ final class MonoPublishOn<T> extends InternalMonoOperator<T, T> {
 			if (OperatorDisposables.isDisposed(future)) {
 				return;
 			}
-			T v = (T)VALUE.getAndSet(this, null);
+			T v = (T) VALUE.getAndSet(this, null);
 
 			if (v != null) {
 				actual.onNext(v);

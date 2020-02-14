@@ -54,14 +54,12 @@ final class FluxLimitRequest<T> extends InternalFluxOperator<T, T> {
 
 	static class FluxLimitRequestSubscriber<T> implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		Subscription parent;
-		long toProduce;
-
-		volatile long requestRemaining;
 		static final AtomicLongFieldUpdater<FluxLimitRequestSubscriber> REQUEST_REMAINING =
 				AtomicLongFieldUpdater.newUpdater(FluxLimitRequestSubscriber.class, "requestRemaining");
+		final CoreSubscriber<? super T> actual;
+		Subscription parent;
+		long toProduce;
+		volatile long requestRemaining;
 
 
 		FluxLimitRequestSubscriber(CoreSubscriber<? super T> actual, long cap) {
@@ -113,12 +111,13 @@ final class FluxLimitRequest<T> extends InternalFluxOperator<T, T> {
 
 		@Override
 		public void request(long l) {
-			for (;;) {
+			for (; ; ) {
 				long r = requestRemaining;
 				long newRequest;
 				if (r <= l) {
 					newRequest = r;
-				} else {
+				}
+				else {
 					newRequest = l;
 				}
 				long u = r - newRequest;

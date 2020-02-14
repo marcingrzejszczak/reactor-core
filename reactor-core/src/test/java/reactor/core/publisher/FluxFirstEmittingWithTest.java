@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import reactor.test.subscriber.AssertSubscriber;
 
 public class FluxFirstEmittingWithTest {
@@ -27,41 +26,41 @@ public class FluxFirstEmittingWithTest {
 	@Test
 	public void noStackOverflow() {
 		int n = 5000;
-		
+
 		Flux<Integer> source = Flux.just(1);
-		
+
 		Flux<Integer> result = source;
-		
+
 		for (int i = 0; i < n; i++) {
 			result = result.or(source);
 		}
-		
+
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
-		
+
 		result.subscribe(ts);
-		
+
 		ts.assertValues(1)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
 	public void dontBreakAmb() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
-		
-		Flux.first(Flux.just(1), Flux.just(2)).or(Flux.just(3))
-		    .subscribe(ts);
 
-		
+		Flux.first(Flux.just(1), Flux.just(2)).or(Flux.just(3))
+				.subscribe(ts);
+
+
 		ts.assertValues(1)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
 	public void pairWise() {
 		Flux<Integer> f = Flux.first(Mono.just(1), Mono.just(2))
-		                      .or(Mono.just(3));
+				.or(Mono.just(3));
 
 		Assert.assertTrue(f instanceof FluxFirstEmitting);
 		FluxFirstEmitting<Integer> s = (FluxFirstEmitting<Integer>) f;
@@ -69,14 +68,14 @@ public class FluxFirstEmittingWithTest {
 		Assert.assertTrue(s.array.length == 3);
 
 		f.subscribeWith(AssertSubscriber.create())
-		 .assertValues(1)
-		 .assertComplete();
+				.assertValues(1)
+				.assertComplete();
 	}
 
 	@Test
 	public void pairWiseIterable() {
 		Flux<Integer> f = Flux.first(Arrays.asList(Mono.just(1), Mono.just(2)))
-		                      .or(Mono.just(3));
+				.or(Mono.just(3));
 
 		Assert.assertTrue(f instanceof FluxFirstEmitting);
 		FluxFirstEmitting<Integer> s = (FluxFirstEmitting<Integer>) f;
@@ -84,7 +83,7 @@ public class FluxFirstEmittingWithTest {
 		Assert.assertTrue(s.array.length == 2);
 
 		f.subscribeWith(AssertSubscriber.create())
-		 .assertValues(1)
-		 .assertComplete();
+				.assertValues(1)
+				.assertComplete();
 	}
 }

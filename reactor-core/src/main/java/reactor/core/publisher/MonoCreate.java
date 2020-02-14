@@ -69,33 +69,28 @@ final class MonoCreate<T> extends Mono<T> implements SourceProducer<T> {
 	static final class DefaultMonoSink<T> extends AtomicBoolean
 			implements MonoSink<T>, InnerProducer<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		volatile Disposable disposable;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<DefaultMonoSink, Disposable> DISPOSABLE =
 				AtomicReferenceFieldUpdater.newUpdater(DefaultMonoSink.class,
 						Disposable.class,
 						"disposable");
-
-		volatile int state;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<DefaultMonoSink> STATE =
 				AtomicIntegerFieldUpdater.newUpdater(DefaultMonoSink.class, "state");
-
-		volatile LongConsumer requestConsumer;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<DefaultMonoSink, LongConsumer>
 				REQUEST_CONSUMER =
 				AtomicReferenceFieldUpdater.newUpdater(DefaultMonoSink.class,
 						LongConsumer.class,
 						"requestConsumer");
-
-		T value;
-
-		static final int NO_REQUEST_HAS_VALUE  = 1;
-		static final int HAS_REQUEST_NO_VALUE  = 2;
+		static final int NO_REQUEST_HAS_VALUE = 1;
+		static final int HAS_REQUEST_NO_VALUE = 2;
 		static final int HAS_REQUEST_HAS_VALUE = 3;
+		final CoreSubscriber<? super T> actual;
+		volatile Disposable disposable;
+		volatile int state;
+		volatile LongConsumer requestConsumer;
+		T value;
 
 		DefaultMonoSink(CoreSubscriber<? super T> actual) {
 			this.actual = actual;

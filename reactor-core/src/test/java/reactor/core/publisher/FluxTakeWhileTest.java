@@ -34,7 +34,7 @@ public class FluxTakeWhileTest {
 	@Test(expected = NullPointerException.class)
 	public void predicateNull() {
 		Flux.never()
-		    .takeWhile(null);
+				.takeWhile(null);
 	}
 
 	@Test
@@ -42,12 +42,12 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> true)
-		    .subscribe(ts);
+				.takeWhile(v -> true)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -55,24 +55,24 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> true)
-		    .subscribe(ts);
+				.takeWhile(v -> true)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -80,12 +80,12 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> v < 4)
-		    .subscribe(ts);
+				.takeWhile(v -> v < 4)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -93,24 +93,24 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> v < 4)
-		    .subscribe(ts);
+				.takeWhile(v -> v < 4)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -118,12 +118,12 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> false)
-		    .subscribe(ts);
+				.takeWhile(v -> false)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -131,18 +131,18 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> false)
-		    .subscribe(ts);
+				.takeWhile(v -> false)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertNoValues()
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -150,40 +150,41 @@ public class FluxTakeWhileTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .takeWhile(v -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.takeWhile(v -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 	}
 
 	@Test
-	public void aFluxCanBeLimitedWhile(){
+	public void aFluxCanBeLimitedWhile() {
 		StepVerifier.create(Flux.just("test", "test2", "test3")
-		                        .takeWhile("test"::equals)
+				.takeWhile("test"::equals)
 		)
-		            .expectNext("test")
-		            .verifyComplete();
+				.expectNext("test")
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxTakeWhile.TakeWhileSubscriber<Integer> test =
-        		new FluxTakeWhile.TakeWhileSubscriber<>(actual, i -> true);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxTakeWhile.TakeWhileSubscriber<Integer> test =
+				new FluxTakeWhile.TakeWhileSubscriber<>(actual, i -> true);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 }

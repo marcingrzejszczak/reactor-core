@@ -15,19 +15,21 @@
  */
 package reactor.core.scheduler;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.*;
-
+import org.junit.Assert;
+import org.junit.Test;
 import reactor.core.Scannable;
-import reactor.core.publisher.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler.Worker;
 import reactor.test.StepVerifier;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Stephane Maldini
@@ -58,9 +60,9 @@ public class SingleSchedulerTest extends AbstractSchedulerTest {
 						.doOnSubscribe(sub -> start.set(System.nanoTime()))
 						.doOnTerminate(() -> end.set(System.nanoTime()))
 				)
-				            .expectSubscription()
-				            .expectNext(0L)
-				            .verifyComplete();
+						.expectSubscription()
+						.expectNext(0L)
+						.verifyComplete();
 
 				long endValue = end.longValue();
 				long startValue = start.longValue();
@@ -83,14 +85,14 @@ public class SingleSchedulerTest extends AbstractSchedulerTest {
 
 		try {
 			StepVerifier.create(Flux.interval(Duration.ofMillis(100), Duration.ofMillis(200), s))
-			            .expectSubscription()
-			            .expectNoEvent(Duration.ofMillis(100))
-			            .expectNext(0L)
-			            .expectNoEvent(Duration.ofMillis(200))
-			            .expectNext(1L)
-			            .expectNoEvent(Duration.ofMillis(200))
-			            .expectNext(2L)
-			            .thenCancel();
+					.expectSubscription()
+					.expectNoEvent(Duration.ofMillis(100))
+					.expectNext(0L)
+					.expectNoEvent(Duration.ofMillis(200))
+					.expectNext(1L)
+					.expectNoEvent(Duration.ofMillis(200))
+					.expectNext(2L)
+					.thenCancel();
 		}
 		finally {
 			s.dispose();
@@ -99,33 +101,35 @@ public class SingleSchedulerTest extends AbstractSchedulerTest {
 
 	@Test
 	public void lotsOfTasks() throws Exception {
-	    System.gc();
-	    Thread.sleep(200);
-	    long before = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
-	    Scheduler s = Schedulers.newSingle("scheduler");
-	    try {
-	        Worker w = s.createWorker();
-	        try {
-	            CountDownLatch cdl = new CountDownLatch(1_000_000);
-	            Runnable r = cdl::countDown;
-    	        for (int i = 0; i < 1_000_000; i++) {
-    	            w.schedule(r);
-    	        }
-    	        
-    	        Assert.assertTrue(cdl.await(5, TimeUnit.SECONDS));
+		System.gc();
+		Thread.sleep(200);
+		long before = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
+		Scheduler s = Schedulers.newSingle("scheduler");
+		try {
+			Worker w = s.createWorker();
+			try {
+				CountDownLatch cdl = new CountDownLatch(1_000_000);
+				Runnable r = cdl::countDown;
+				for (int i = 0; i < 1_000_000; i++) {
+					w.schedule(r);
+				}
 
-    	        System.gc();
-    	        Thread.sleep(200);
+				Assert.assertTrue(cdl.await(5, TimeUnit.SECONDS));
 
-                long after = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
+				System.gc();
+				Thread.sleep(200);
 
-    	        Assert.assertTrue(String.format("%,d -> %,d", before, after), before + 20_000_000 > after);
-	        } finally {
-	            w.dispose();
-	        }
-	    } finally {
-	        s.dispose();
-	    }
+				long after = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
+
+				Assert.assertTrue(String.format("%,d -> %,d", before, after), before + 20_000_000 > after);
+			}
+			finally {
+				w.dispose();
+			}
+		}
+		finally {
+			s.dispose();
+		}
 	}
 
 

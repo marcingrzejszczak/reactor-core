@@ -37,7 +37,6 @@ import java.util.function.BiFunction;
 import org.reactivestreams.Publisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
-import reactor.core.Scannable;
 
 /**
  * @author Stephane Maldini

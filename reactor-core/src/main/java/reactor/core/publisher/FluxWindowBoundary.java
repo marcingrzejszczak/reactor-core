@@ -80,51 +80,38 @@ final class FluxWindowBoundary<T, U> extends InternalFluxOperator<T, Flux<T>> {
 	static final class WindowBoundaryMain<T, U>
 			implements InnerOperator<T, Flux<T>>, Disposable {
 
-		final Supplier<? extends Queue<T>> processorQueueSupplier;
-
-		final WindowBoundaryOther<U> boundary;
-
-		final Queue<Object>                   queue;
-		final CoreSubscriber<? super Flux<T>> actual;
-
-		UnicastProcessor<T> window;
-
-		volatile Subscription s;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WindowBoundaryMain, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(WindowBoundaryMain.class, Subscription.class, "s");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<WindowBoundaryMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(WindowBoundaryMain.class, "requested");
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WindowBoundaryMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(WindowBoundaryMain.class, Throwable.class, "error");
-
-		volatile int cancelled;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowBoundaryMain> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "cancelled");
-
-		volatile int windowCount;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowBoundaryMain> WINDOW_COUNT =
 				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "windowCount");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WindowBoundaryMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "wip");
-
-		boolean done;
-
 		static final Object BOUNDARY_MARKER = new Object();
-
 		static final Object DONE = new Object();
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
+		final WindowBoundaryOther<U> boundary;
+		final Queue<Object> queue;
+		final CoreSubscriber<? super Flux<T>> actual;
+		UnicastProcessor<T> window;
+		volatile Subscription s;
+		volatile long requested;
+		volatile Throwable error;
+		volatile int cancelled;
+		volatile int windowCount;
+		volatile int wip;
+		boolean done;
 
 		WindowBoundaryMain(CoreSubscriber<? super Flux<T>> actual,
 				Supplier<? extends Queue<T>> processorQueueSupplier,
@@ -253,7 +240,8 @@ final class FluxWindowBoundary<T, U> extends InternalFluxOperator<T, Flux<T>> {
 			cancelMain();
 			if (Exceptions.addThrowable(ERROR, this, e)) {
 				drain();
-			} else {
+			}
+			else {
 				Operators.onErrorDropped(e, actual.currentContext());
 			}
 		}
@@ -277,9 +265,9 @@ final class FluxWindowBoundary<T, U> extends InternalFluxOperator<T, Flux<T>> {
 
 			int missed = 1;
 
-			for (;;) {
+			for (; ; ) {
 
-				for (;;) {
+				for (; ; ) {
 					if (error != null) {
 						q.clear();
 						Throwable e = Exceptions.terminate(ERROR, this);
@@ -308,7 +296,7 @@ final class FluxWindowBoundary<T, U> extends InternalFluxOperator<T, Flux<T>> {
 					if (o != BOUNDARY_MARKER) {
 
 						@SuppressWarnings("unchecked")
-						T v = (T)o;
+						T v = (T) o;
 						w.onNext(v);
 					}
 					if (o == BOUNDARY_MARKER) {
@@ -328,7 +316,8 @@ final class FluxWindowBoundary<T, U> extends InternalFluxOperator<T, Flux<T>> {
 								if (requested != Long.MAX_VALUE) {
 									REQUESTED.decrementAndGet(this);
 								}
-							} else {
+							}
+							else {
 								q.clear();
 								cancelMain();
 								boundary.cancel();
@@ -355,7 +344,8 @@ final class FluxWindowBoundary<T, U> extends InternalFluxOperator<T, Flux<T>> {
 					REQUESTED.decrementAndGet(this);
 				}
 				return true;
-			} else {
+			}
+			else {
 				cancel();
 
 				actual.onError(Exceptions.failWithOverflow("Could not emit buffer due to lack of requests"));

@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
@@ -37,8 +36,8 @@ import reactor.util.context.Context;
 final class FluxOnBackpressureBuffer<O> extends InternalFluxOperator<O, O> implements Fuseable {
 
 	final Consumer<? super O> onOverflow;
-	final int                 bufferSize;
-	final boolean             unbounded;
+	final int bufferSize;
+	final boolean unbounded;
 
 	FluxOnBackpressureBuffer(Flux<? extends O> source,
 			int bufferSize,
@@ -69,30 +68,24 @@ final class FluxOnBackpressureBuffer<O> extends InternalFluxOperator<O, O> imple
 	static final class BackpressureBufferSubscriber<T>
 			implements QueueSubscription<T>, InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
-		final Queue<T>                  queue;
-		final int                       capacityOrSkip;
-		final Consumer<? super T>       onOverflow;
-
-		Subscription s;
-
-		volatile boolean cancelled;
-
-		volatile boolean enabledFusion;
-
-		volatile boolean done;
-		Throwable error;
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<BackpressureBufferSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(BackpressureBufferSubscriber.class,
 						"wip");
-
-		volatile long requested;
 		static final AtomicLongFieldUpdater<BackpressureBufferSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BackpressureBufferSubscriber.class,
 						"requested");
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		final Queue<T> queue;
+		final int capacityOrSkip;
+		final Consumer<? super T> onOverflow;
+		Subscription s;
+		volatile boolean cancelled;
+		volatile boolean enabledFusion;
+		volatile boolean done;
+		Throwable error;
+		volatile int wip;
+		volatile long requested;
 
 		BackpressureBufferSubscriber(CoreSubscriber<? super T> actual,
 				int bufferSize,

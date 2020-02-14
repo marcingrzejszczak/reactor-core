@@ -58,7 +58,7 @@ public class MonoProcessorTest {
 		System.gc();
 
 		int cycles;
-		for (cycles = 10; cycles > 0 ; cycles--) {
+		for (cycles = 10; cycles > 0; cycles--) {
 			if (refDate.get() == null && refFuture.get() == null) break;
 			Thread.sleep(100);
 		}
@@ -66,7 +66,7 @@ public class MonoProcessorTest {
 		assertThat(refFuture.get()).isNull();
 		assertThat(refDate.get()).isNull();
 		assertThat(cycles).isNotZero()
-		                  .isPositive();
+				.isPositive();
 	}
 
 	@Test
@@ -88,14 +88,14 @@ public class MonoProcessorTest {
 		System.gc();
 
 		int cycles;
-		for (cycles = 10; cycles > 0 ; cycles--) {
+		for (cycles = 10; cycles > 0; cycles--) {
 			if (refFuture.get() == null) break;
 			Thread.sleep(100);
 		}
 
 		assertThat(refFuture.get()).isNull();
 		assertThat(cycles).isNotZero()
-		                  .isPositive();
+				.isPositive();
 	}
 
 	@Test
@@ -115,14 +115,14 @@ public class MonoProcessorTest {
 		System.gc();
 
 		int cycles;
-		for (cycles = 10; cycles > 0 ; cycles--) {
+		for (cycles = 10; cycles > 0; cycles--) {
 			if (refFuture.get() == null) break;
 			Thread.sleep(100);
 		}
 
 		assertThat(refFuture.get()).isNull();
 		assertThat(cycles).isNotZero()
-		                  .isPositive();
+				.isPositive();
 	}
 
 	@Test(expected = IllegalStateException.class)
@@ -162,7 +162,8 @@ public class MonoProcessorTest {
 		MonoProcessor<String> mp = MonoProcessor.create();
 		AtomicReference<Throwable> ref = new AtomicReference<>();
 
-		mp.subscribe(v -> {}, ref::set);
+		mp.subscribe(v -> {
+		}, ref::set);
 		mp.onError(new Exception("test"));
 
 		assertThat(ref.get()).hasMessage("test");
@@ -226,7 +227,7 @@ public class MonoProcessorTest {
 	public void MonoProcessorRejectedSubscribeCallbackNull() {
 		MonoProcessor<String> mp = MonoProcessor.create();
 
-		mp.subscribe((Subscriber<String>)null);
+		mp.subscribe((Subscriber<String>) null);
 	}
 
 	@Test
@@ -273,14 +274,14 @@ public class MonoProcessorTest {
 		MonoProcessor<String> mp = MonoProcessor.create();
 
 		StepVerifier.create(mp)
-		            .then(() -> {
-			            mp.onNext("test1");
-			            mp.onNext("test2");
-		            })
-		            .expectNext("test1")
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedExactly("test2");
+				.then(() -> {
+					mp.onNext("test1");
+					mp.onNext("test2");
+				})
+				.expectNext("test1")
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedExactly("test2");
 	}
 
 	@Test
@@ -301,7 +302,7 @@ public class MonoProcessorTest {
 		mp.onNext(1);
 
 		MonoProcessor<Integer> mp2 = mp.map(s -> s * 2)
-		                               .toProcessor();
+				.toProcessor();
 		mp2.subscribe();
 
 		assertThat(mp2.isTerminated()).isTrue();
@@ -316,7 +317,7 @@ public class MonoProcessorTest {
 		mp.onNext(1);
 
 		MonoProcessor<Integer> mp2 = mp.flatMap(s -> Mono.just(s * 2))
-		                               .toProcessor();
+				.toProcessor();
 		mp2.subscribe();
 
 		assertThat(mp2.isTerminated()).isTrue();
@@ -335,13 +336,13 @@ public class MonoProcessorTest {
 		StepVerifier.create(mp.<Integer>map(s -> {
 			throw new RuntimeException("test");
 		}).subscribeWith(mp2), 0)
-		            .thenRequest(1)
-		            .then(() -> {
-			            assertThat(mp2.isTerminated()).isTrue();
-			            assertThat(mp2.isSuccess()).isFalse();
-			            assertThat(mp2.getError()).hasMessage("test");
-		            })
-		            .verifyErrorMessage("test");
+				.thenRequest(1)
+				.then(() -> {
+					assertThat(mp2.isTerminated()).isTrue();
+					assertThat(mp2.isSuccess()).isFalse();
+					assertThat(mp2.getError()).hasMessage("test");
+				})
+				.verifyErrorMessage("test");
 	}
 
 	@Test(expected = Exception.class)
@@ -367,22 +368,22 @@ public class MonoProcessorTest {
 		MonoProcessor<Tuple2<Integer, Integer>> mp3 = MonoProcessor.create();
 
 		StepVerifier.create(Mono.zip(mp, mp2)
-		                        .subscribeWith(mp3))
-		            .then(() -> assertThat(mp3.isPending()).isTrue())
-		            .then(() -> mp.onNext(1))
-		            .then(() -> assertThat(mp3.isPending()).isTrue())
-		            .then(() -> mp2.onNext(2))
-		            .then(() -> {
-			            assertThat(mp3.isTerminated()).isTrue();
-			            assertThat(mp3.isSuccess()).isTrue();
-			            assertThat(mp3.isPending()).isFalse();
-			            assertThat(mp3.peek()
-			                          .getT1()).isEqualTo(1);
-			            assertThat(mp3.peek()
-			                          .getT2()).isEqualTo(2);
-		            })
-		            .expectNextMatches(t -> t.getT1() == 1 && t.getT2() == 2)
-		            .verifyComplete();
+				.subscribeWith(mp3))
+				.then(() -> assertThat(mp3.isPending()).isTrue())
+				.then(() -> mp.onNext(1))
+				.then(() -> assertThat(mp3.isPending()).isTrue())
+				.then(() -> mp2.onNext(2))
+				.then(() -> {
+					assertThat(mp3.isTerminated()).isTrue();
+					assertThat(mp3.isSuccess()).isTrue();
+					assertThat(mp3.isPending()).isFalse();
+					assertThat(mp3.peek()
+							.getT1()).isEqualTo(1);
+					assertThat(mp3.peek()
+							.getT2()).isEqualTo(2);
+				})
+				.expectNextMatches(t -> t.getT1() == 1 && t.getT2() == 2)
+				.verifyComplete();
 	}
 
 	@Test
@@ -390,18 +391,18 @@ public class MonoProcessorTest {
 		MonoProcessor<Integer> mp = MonoProcessor.create();
 		MonoProcessor<Integer> mp3 = MonoProcessor.create();
 
-		StepVerifier.create(Mono.zip(d -> (Integer)d[0], mp)
-		                        .subscribeWith(mp3))
-		            .then(() -> assertThat(mp3.isPending()).isTrue())
-		            .then(() -> mp.onNext(1))
-		            .then(() -> {
-			            assertThat(mp3.isTerminated()).isTrue();
-			            assertThat(mp3.isSuccess()).isTrue();
-			            assertThat(mp3.isPending()).isFalse();
-			            assertThat(mp3.peek()).isEqualTo(1);
-		            })
-		            .expectNext(1)
-		            .verifyComplete();
+		StepVerifier.create(Mono.zip(d -> (Integer) d[0], mp)
+				.subscribeWith(mp3))
+				.then(() -> assertThat(mp3.isPending()).isTrue())
+				.then(() -> mp.onNext(1))
+				.then(() -> {
+					assertThat(mp3.isTerminated()).isTrue();
+					assertThat(mp3.isSuccess()).isTrue();
+					assertThat(mp3.isPending()).isFalse();
+					assertThat(mp3.peek()).isEqualTo(1);
+				})
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -411,16 +412,16 @@ public class MonoProcessorTest {
 		MonoProcessor<Tuple2<Integer, Integer>> mp3 = MonoProcessor.create();
 
 		StepVerifier.create(Mono.zip(mp, mp2)
-		                        .subscribeWith(mp3))
-		            .then(() -> assertThat(mp3.isPending()).isTrue())
-		            .then(() -> mp.onError(new Exception("test")))
-		            .then(() -> {
-			            assertThat(mp3.isTerminated()).isTrue();
-			            assertThat(mp3.isSuccess()).isFalse();
-			            assertThat(mp3.isPending()).isFalse();
-			            assertThat(mp3.getError()).hasMessage("test");
-		            })
-		            .verifyErrorMessage("test");
+				.subscribeWith(mp3))
+				.then(() -> assertThat(mp3.isPending()).isTrue())
+				.then(() -> mp.onError(new Exception("test")))
+				.then(() -> {
+					assertThat(mp3.isTerminated()).isTrue();
+					assertThat(mp3.isSuccess()).isFalse();
+					assertThat(mp3.isPending()).isFalse();
+					assertThat(mp3.getError()).hasMessage("test");
+				})
+				.verifyErrorMessage("test");
 	}
 
 
@@ -429,13 +430,13 @@ public class MonoProcessorTest {
 		MonoProcessor<Integer> mp = MonoProcessor.create();
 		MonoProcessor<Integer> mp2 = MonoProcessor.create();
 		StepVerifier.create(mp.filter(s -> s % 2 == 0).subscribeWith(mp2))
-		            .then(() -> mp.onNext(2))
-		            .then(() -> assertThat(mp2.isError()).isFalse())
-		            .then(() -> assertThat(mp2.isSuccess()).isTrue())
-		            .then(() -> assertThat(mp2.peek()).isEqualTo(2))
-		            .then(() -> assertThat(mp2.isTerminated()).isTrue())
-		            .expectNext(2)
-		            .verifyComplete();
+				.then(() -> mp.onNext(2))
+				.then(() -> assertThat(mp2.isError()).isFalse())
+				.then(() -> assertThat(mp2.isSuccess()).isTrue())
+				.then(() -> assertThat(mp2.peek()).isEqualTo(2))
+				.then(() -> assertThat(mp2.isTerminated()).isTrue())
+				.expectNext(2)
+				.verifyComplete();
 	}
 
 
@@ -444,27 +445,29 @@ public class MonoProcessorTest {
 		MonoProcessor<Integer> mp = MonoProcessor.create();
 		MonoProcessor<Integer> mp2 = MonoProcessor.create();
 		StepVerifier.create(mp.filter(s -> s % 2 == 0).subscribeWith(mp2))
-		            .then(() -> mp.onNext(1))
-		            .then(() -> assertThat(mp2.isError()).isFalse())
-		            .then(() -> assertThat(mp2.isSuccess()).isTrue())
-		            .then(() -> assertThat(mp2.peek()).isNull())
-		            .then(() -> assertThat(mp2.isTerminated()).isTrue())
-		            .verifyComplete();
+				.then(() -> mp.onNext(1))
+				.then(() -> assertThat(mp2.isError()).isFalse())
+				.then(() -> assertThat(mp2.isSuccess()).isTrue())
+				.then(() -> assertThat(mp2.peek()).isNull())
+				.then(() -> assertThat(mp2.isTerminated()).isTrue())
+				.verifyComplete();
 	}
 
 	@Test
 	public void filterMonoProcessorError() {
 		MonoProcessor<Integer> mp = MonoProcessor.create();
 		MonoProcessor<Integer> mp2 = MonoProcessor.create();
-		StepVerifier.create(mp.filter(s -> {throw new RuntimeException("test"); })
-					.subscribeWith
+		StepVerifier.create(mp.filter(s -> {
+			throw new RuntimeException("test");
+		})
+				.subscribeWith
 						(mp2))
-		            .then(() -> mp.onNext(2))
-		            .then(() -> assertThat(mp2.isError()).isTrue())
-		            .then(() -> assertThat(mp2.isSuccess()).isFalse())
-		            .then(() -> assertThat(mp2.getError()).hasMessage("test"))
-		            .then(() -> assertThat(mp2.isTerminated()).isTrue())
-		            .verifyErrorMessage("test");
+				.then(() -> mp.onNext(2))
+				.then(() -> assertThat(mp2.isError()).isTrue())
+				.then(() -> assertThat(mp2.isSuccess()).isFalse())
+				.then(() -> assertThat(mp2.getError()).hasMessage("test"))
+				.then(() -> assertThat(mp2.isTerminated()).isTrue())
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -473,26 +476,28 @@ public class MonoProcessorTest {
 		MonoProcessor<Integer> mp2 = MonoProcessor.create();
 		AtomicReference<Throwable> ref = new AtomicReference<>();
 
-		StepVerifier.create(mp.doOnSuccess(s -> {throw new RuntimeException("test"); })
-		                      .doOnError(ref::set)
-					.subscribeWith
+		StepVerifier.create(mp.doOnSuccess(s -> {
+			throw new RuntimeException("test");
+		})
+				.doOnError(ref::set)
+				.subscribeWith
 						(mp2))
-		            .then(() -> mp.onNext(2))
-		            .then(() -> assertThat(mp2.isError()).isTrue())
-		            .then(() -> assertThat(ref.get()).hasMessage("test"))
-		            .then(() -> assertThat(mp2.isSuccess()).isFalse())
-		            .then(() -> assertThat(mp2.getError()).hasMessage("test"))
-		            .then(() -> assertThat(mp2.isTerminated()).isTrue())
-		            .verifyErrorMessage("test");
+				.then(() -> mp.onNext(2))
+				.then(() -> assertThat(mp2.isError()).isTrue())
+				.then(() -> assertThat(ref.get()).hasMessage("test"))
+				.then(() -> assertThat(mp2.isSuccess()).isFalse())
+				.then(() -> assertThat(mp2.getError()).hasMessage("test"))
+				.then(() -> assertThat(mp2.isTerminated()).isTrue())
+				.verifyErrorMessage("test");
 	}
 
 	@Test
 	public void fluxCancelledByMonoProcessor() {
 		AtomicLong cancelCounter = new AtomicLong();
 		Flux.range(1, 10)
-		    .doOnCancel(cancelCounter::incrementAndGet)
-		    .publishNext()
-		    .subscribe();
+				.doOnCancel(cancelCounter::incrementAndGet)
+				.publishNext()
+				.subscribe();
 
 		assertThat(cancelCounter.get()).isEqualTo(1);
 	}
@@ -501,8 +506,8 @@ public class MonoProcessorTest {
 	public void monoNotCancelledByMonoProcessor() {
 		AtomicLong cancelCounter = new AtomicLong();
 		MonoProcessor<String> monoProcessor = Mono.just("foo")
-		                                          .doOnCancel(cancelCounter::incrementAndGet)
-		                                          .toProcessor();
+				.doOnCancel(cancelCounter::incrementAndGet)
+				.toProcessor();
 		monoProcessor.subscribe();
 
 		assertThat(cancelCounter.get()).isEqualTo(0);
@@ -563,7 +568,7 @@ public class MonoProcessorTest {
 	@Test
 	public void monoToProcessorReusesInstance() {
 		MonoProcessor<String> monoProcessor = Mono.just("foo")
-		                                          .toProcessor();
+				.toProcessor();
 
 		assertThat(monoProcessor)
 				.isSameAs(monoProcessor.toProcessor())
@@ -581,21 +586,21 @@ public class MonoProcessorTest {
 	@Test
 	public void monoToProcessorChain() {
 		StepVerifier.withVirtualTime(() -> Mono.just("foo")
-		                                       .toProcessor()
-		                                       .delayElement(Duration.ofMillis(500)))
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(500))
-		            .expectNext("foo")
-		            .verifyComplete();
+				.toProcessor()
+				.delayElement(Duration.ofMillis(500)))
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(500))
+				.expectNext("foo")
+				.verifyComplete();
 	}
 
 	@Test
 	public void monoToProcessorChainColdToHot() {
 		AtomicInteger subscriptionCount = new AtomicInteger();
 		Mono<String> coldToHot = Mono.just("foo")
-		                             .doOnSubscribe(sub -> subscriptionCount.incrementAndGet())
-		                             .toProcessor() //this actually subscribes
-		                             .filter(s -> s.length() < 4);
+				.doOnSubscribe(sub -> subscriptionCount.incrementAndGet())
+				.toProcessor() //this actually subscribes
+				.filter(s -> s.length() < 4);
 
 		assertThat(subscriptionCount.get()).isEqualTo(1);
 
@@ -611,9 +616,9 @@ public class MonoProcessorTest {
 		long start = System.nanoTime();
 
 		String result = Mono.just("foo")
-		                    .delayElement(Duration.ofMillis(500))
-		                    .toProcessor()
-		                    .block();
+				.delayElement(Duration.ofMillis(500))
+				.toProcessor()
+				.block();
 
 		assertThat(result).isEqualTo("foo");
 		assertThat(Duration.ofNanos(System.nanoTime() - start))
@@ -626,9 +631,9 @@ public class MonoProcessorTest {
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> Mono.just("foo")
-				                      .delayElement(Duration.ofMillis(500))
-				                      .toProcessor()
-				                      .block(Duration.ofSeconds(-1)))
+						.delayElement(Duration.ofMillis(500))
+						.toProcessor()
+						.block(Duration.ofSeconds(-1)))
 				.withMessage("Timeout on Mono blocking read");
 
 		assertThat(Duration.ofNanos(System.nanoTime() - start))
@@ -641,10 +646,10 @@ public class MonoProcessorTest {
 
 		assertThatExceptionOfType(IllegalStateException.class)
 				.isThrownBy(() -> Mono.just("foo")
-				                      .delayElement(Duration.ofMillis(500))
-				                      .toProcessor()
-				                      .block(Duration.ZERO))
-		        .withMessage("Timeout on Mono blocking read");
+						.delayElement(Duration.ofMillis(500))
+						.toProcessor()
+						.block(Duration.ZERO))
+				.withMessage("Timeout on Mono blocking read");
 
 		assertThat(Duration.ofNanos(System.nanoTime() - start))
 				.isLessThan(Duration.ofMillis(500));

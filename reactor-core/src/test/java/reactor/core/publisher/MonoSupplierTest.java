@@ -43,36 +43,36 @@ public class MonoSupplierTest {
 	@Test
 	public void normalSupplyingNull() {
 		StepVerifier.create(Mono.fromSupplier(() -> null))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalSupplyingNullBackpressuredShortcuts() {
 		StepVerifier.create(Mono.fromSupplier(() -> null), 0)
-		            .expectSubscription()
-		            .verifyComplete();
+				.expectSubscription()
+				.verifyComplete();
 	}
 
 	@Test
 	public void asyncSupplyingNull() {
 		StepVerifier.create(Mono.fromSupplier(() -> null)
-		                        .subscribeOn(Schedulers.single()), 1)
-		            .verifyComplete();
+				.subscribeOn(Schedulers.single()), 1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void asyncSupplyingNullBackpressuredShortcuts() {
 		StepVerifier.create(Mono.fromSupplier(() -> null)
-		                        .subscribeOn(Schedulers.single()), 0)
-		            .expectSubscription()
-		            .verifyComplete();
+				.subscribeOn(Schedulers.single()), 0)
+				.expectSubscription()
+				.verifyComplete();
 	}
 
 	@Test
-	public void supplierCancel(){
+	public void supplierCancel() {
 		StepVerifier.create(Mono.fromSupplier(() -> "test"))
-	                .thenCancel()
-	                .verify();
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
@@ -80,13 +80,13 @@ public class MonoSupplierTest {
 		StepVerifier.create(Mono.fromSupplier(() -> {
 			throw new RuntimeException("forced failure");
 		}))
-		            .verifyErrorMessage("forced failure");
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void onMonoSuccessSupplierOnBlock() {
 		assertThat(Mono.fromSupplier(() -> "test")
-		               .block()).isEqualToIgnoringCase("test");
+				.block()).isEqualToIgnoringCase("test");
 	}
 
 	@Test(expected = RuntimeException.class)
@@ -94,6 +94,6 @@ public class MonoSupplierTest {
 		Mono.fromSupplier(() -> {
 			throw new RuntimeException("test");
 		})
-		    .block();
+				.block();
 	}
 }

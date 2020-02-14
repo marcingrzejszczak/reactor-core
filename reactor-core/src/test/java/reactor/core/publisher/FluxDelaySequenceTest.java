@@ -40,24 +40,24 @@ public class FluxDelaySequenceTest {
 	@Test
 	public void delayFirstInterval() {
 		Supplier<Flux<Tuple2<Long, Long>>> test = () -> Flux.interval(Duration.ofMillis(50))
-	                                                    .delaySequence(Duration.ofMillis(500))
-	                                                    .elapsed()
-	                                                        .take(33);
+				.delaySequence(Duration.ofMillis(500))
+				.elapsed()
+				.take(33);
 
 		StepVerifier.withVirtualTime(test)
-		            .thenAwait(Duration.ofMillis(500 + 50))
-		            .recordWith(ArrayList::new)
-		            .assertNext(t2 -> assertThat(t2.getT1()).isEqualTo(550))
-		            .thenAwait(Duration.ofMillis(33 * 50))
-		            .thenConsumeWhile(t2 -> t2.getT1() == 50)
-		            .consumeRecordedWith(record -> {
-			            assertThat(record.stream().mapToLong(Tuple2::getT2))
-			                      .startsWith(0L, 1L, 2L)
-			                      .endsWith(30L, 31L, 32L)
-			                      .isSorted()
-			                      .hasSize(33);
-		            })
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(500 + 50))
+				.recordWith(ArrayList::new)
+				.assertNext(t2 -> assertThat(t2.getT1()).isEqualTo(550))
+				.thenAwait(Duration.ofMillis(33 * 50))
+				.thenConsumeWhile(t2 -> t2.getT1() == 50)
+				.consumeRecordedWith(record -> {
+					assertThat(record.stream().mapToLong(Tuple2::getT2))
+							.startsWith(0L, 1L, 2L)
+							.endsWith(30L, 31L, 32L)
+							.isSorted()
+							.hasSize(33);
+				})
+				.verifyComplete();
 	}
 
 	@Test
@@ -78,44 +78,44 @@ public class FluxDelaySequenceTest {
 		};
 
 		StepVerifier.withVirtualTime(test)
-		            //first is delayed (from subscription) by additional 500ms
-		            .thenAwait(Duration.ofMillis(500 + 400))
-		            .assertNext(t2 -> {
-			            assertThat(t2.getT1()).isEqualTo(400L + 500L);
-			            assertThat(t2.getT2()).isEqualTo(0L);
-		            })
-		            //rest follow same delays as in source
-		            .thenAwait(Duration.ofMillis(800))
-		            .assertNext(t2 -> {
-			            assertThat(t2.getT1()).isEqualTo(800L);
-			            assertThat(t2.getT2()).isEqualTo(1L);
-		            })
-		            .thenAwait(Duration.ofMillis(200))
-		            .assertNext(t2 -> {
-			            assertThat(t2.getT1()).isEqualTo(200L);
-			            assertThat(t2.getT2()).isEqualTo(2L);
-		            })
-		            .thenAwait(Duration.ofMillis(300))
-		            .assertNext(t2 -> {
-			            assertThat(t2.getT1()).isEqualTo(300L);
-			            assertThat(t2.getT2()).isEqualTo(3L);
-		            })
-		            .verifyComplete();
+				//first is delayed (from subscription) by additional 500ms
+				.thenAwait(Duration.ofMillis(500 + 400))
+				.assertNext(t2 -> {
+					assertThat(t2.getT1()).isEqualTo(400L + 500L);
+					assertThat(t2.getT2()).isEqualTo(0L);
+				})
+				//rest follow same delays as in source
+				.thenAwait(Duration.ofMillis(800))
+				.assertNext(t2 -> {
+					assertThat(t2.getT1()).isEqualTo(800L);
+					assertThat(t2.getT2()).isEqualTo(1L);
+				})
+				.thenAwait(Duration.ofMillis(200))
+				.assertNext(t2 -> {
+					assertThat(t2.getT1()).isEqualTo(200L);
+					assertThat(t2.getT2()).isEqualTo(2L);
+				})
+				.thenAwait(Duration.ofMillis(300))
+				.assertNext(t2 -> {
+					assertThat(t2.getT1()).isEqualTo(300L);
+					assertThat(t2.getT2()).isEqualTo(3L);
+				})
+				.verifyComplete();
 	}
 
 	@Ignore("delayElements test for local comparison run")
 	@Test
 	public void delayElements() {
 		Flux<Tuple2<Long, Long>> test = Flux.interval(Duration.ofMillis(50))
-		                                    .onBackpressureDrop()
-		                                    .delayElements(Duration.ofMillis(500))
-		                                    .take(33)
-		                                    .elapsed()
-		                                    .log();
+				.onBackpressureDrop()
+				.delayElements(Duration.ofMillis(500))
+				.take(33)
+				.elapsed()
+				.log();
 
 		StepVerifier.create(test)
-		            .thenConsumeWhile(t2 -> t2.getT1() >= 500)
-		            .verifyComplete();
+				.thenConsumeWhile(t2 -> t2.getT1() >= 500)
+				.verifyComplete();
 	}
 
 	@Test
@@ -123,24 +123,24 @@ public class FluxDelaySequenceTest {
 
 		Supplier<Flux<Long>> test = () -> {
 			Flux<Long> source = Flux.concat(Mono.delay(Duration.ofMillis(50))
-			                                    .then(Mono.just(0L)),
+							.then(Mono.just(0L)),
 					Mono.delay(Duration.ofMillis(50))
-					    .then(Mono.just(1L)),
+							.then(Mono.just(1L)),
 					Mono.delay(Duration.ofMillis(50))
-					    .then(Mono.just(2L)),
+							.then(Mono.just(2L)),
 					Mono.error(new IllegalStateException("boom")));
 			return source.delaySequence(Duration.ofMillis(1000));
 		};
 
 		StepVerifier.withVirtualTime(test)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(1050))
-		            .expectNext(0L)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .expectNext(1L)
-		            .expectNoEvent(Duration.ofMillis(50))
-		            .expectNext(2L)
-		            .verifyErrorMessage("boom");
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(1050))
+				.expectNext(0L)
+				.expectNoEvent(Duration.ofMillis(50))
+				.expectNext(1L)
+				.expectNoEvent(Duration.ofMillis(50))
+				.expectNext(2L)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
@@ -151,9 +151,9 @@ public class FluxDelaySequenceTest {
 				.delaySequence(Duration.ofMillis(1000));
 
 		Duration took = StepVerifier.create(test)
-		                            .expectSubscription()
-		                            .expectErrorMessage("boom")
-		                            .verify();
+				.expectSubscription()
+				.expectErrorMessage("boom")
+				.verify();
 
 		assertThat(took.toMillis())
 				.as("errors immediately")
@@ -168,8 +168,8 @@ public class FluxDelaySequenceTest {
 				.delaySequence(Duration.ofMillis(1000));
 
 		Duration took = StepVerifier.create(test)
-		            .expectComplete()
-		            .verify();
+				.expectComplete()
+				.verify();
 
 		assertThat(took.toMillis())
 				.as("completes immediately")
@@ -206,12 +206,12 @@ public class FluxDelaySequenceTest {
 		StepVerifier.create(testPublisher
 				.flux()
 				.delaySequence(Duration.ofMillis(500)))
-		            .then(testPublisher::complete)
-		            .then(() -> testPublisher.next("foo"))
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped("foo")
-		            .hasNotDroppedErrors();
+				.then(testPublisher::complete)
+				.then(() -> testPublisher.next("foo"))
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped("foo")
+				.hasNotDroppedErrors();
 	}
 
 	@Test
@@ -222,12 +222,12 @@ public class FluxDelaySequenceTest {
 		StepVerifier.create(testPublisher
 				.flux()
 				.delaySequence(Duration.ofMillis(500)))
-		            .then(() -> testPublisher.error(new IllegalStateException("boom")))
-		            .then(() -> testPublisher.next("foo"))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDropped("foo")
-		            .hasNotDroppedErrors();
+				.then(() -> testPublisher.error(new IllegalStateException("boom")))
+				.then(() -> testPublisher.next("foo"))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDropped("foo")
+				.hasNotDroppedErrors();
 	}
 
 	@Test
@@ -238,12 +238,12 @@ public class FluxDelaySequenceTest {
 		StepVerifier.create(testPublisher
 				.flux()
 				.delaySequence(Duration.ofMillis(500)))
-		            .then(testPublisher::complete)
-		            .then(testPublisher::complete)
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasNotDroppedErrors();
+				.then(testPublisher::complete)
+				.then(testPublisher::complete)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 	}
 
 	@Test
@@ -254,12 +254,12 @@ public class FluxDelaySequenceTest {
 		StepVerifier.create(testPublisher
 				.flux()
 				.delaySequence(Duration.ofMillis(500)))
-		            .then(testPublisher::complete)
-		            .then(() -> testPublisher.error(new IllegalStateException("boom")))
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedElements()
-		            .hasDroppedErrorWithMessage("boom");
+				.then(testPublisher::complete)
+				.then(() -> testPublisher.error(new IllegalStateException("boom")))
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedElements()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test

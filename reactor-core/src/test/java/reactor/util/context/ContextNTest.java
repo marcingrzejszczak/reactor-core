@@ -16,7 +16,6 @@
 
 package reactor.util.context;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -26,8 +25,13 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.*;
-import static reactor.util.context.ContextTest.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static reactor.util.context.ContextTest.ForeignContext;
+import static reactor.util.context.ContextTest.key;
+import static reactor.util.context.ContextTest.keyValue;
+import static reactor.util.context.ContextTest.size;
 
 public class ContextNTest {
 
@@ -36,7 +40,7 @@ public class ContextNTest {
 	@Before
 	public void initContext() {
 		c = new ContextN(1, "A", 2, "B", 3, "C",
-			4, "D", 5, "E", 6, "F");
+				4, "D", 5, "E", 6, "F");
 	}
 
 	@Test
@@ -61,7 +65,7 @@ public class ContextNTest {
 
 		assertThat(contextN)
 				.containsKeys(1, 2, 3, 4, 5, 6)
-				.containsValues(1, 2, 3, 4 ,5 ,6);
+				.containsValues(1, 2, 3, 4, 5, 6);
 	}
 
 	@Test
@@ -321,7 +325,7 @@ public class ContextNTest {
 		Context put = c.putAll(m);
 
 		assertThat(put).isInstanceOf(ContextN.class)
-		               .hasToString("ContextN{1=replaced, 2=B, 3=C, 4=D, 5=E, 6=F, A=1}");
+				.hasToString("ContextN{1=replaced, 2=B, 3=C, 4=D, 5=E, 6=F, A=1}");
 	}
 
 	@Test
@@ -375,7 +379,13 @@ public class ContextNTest {
 
 	@Test
 	public void streamIsNotMutable() {
-		c.stream().forEach(e -> { try { e.setValue("REPLACED"); } catch (UnsupportedOperationException ignored) { } });
+		c.stream().forEach(e -> {
+			try {
+				e.setValue("REPLACED");
+			}
+			catch (UnsupportedOperationException ignored) {
+			}
+		});
 
 		assertThat(c).doesNotContainValue("REPLACED");
 	}
@@ -396,7 +406,7 @@ public class ContextNTest {
 		Context result = ((CoreContext) c).putAllInto(initial);
 
 		assertThat(result).isNotSameAs(initial)
-		                  .isNotSameAs(c);
+				.isNotSameAs(c);
 
 		assertThat(result.stream()).containsExactlyElementsOf(c.stream().collect(Collectors.toList()));
 	}
@@ -408,7 +418,7 @@ public class ContextNTest {
 		Context result = self.putAllInto(initial);
 
 		assertThat(result).isNotSameAs(initial)
-		                  .isNotSameAs(c);
+				.isNotSameAs(c);
 
 		assertThat(result.stream().map(String::valueOf))
 				.containsExactly("1=1", "2=2", "3=3", "4=4", "5=5", "6=6", "A=1", "B=2", "C=3", "D=4", "E=5", "F=6");

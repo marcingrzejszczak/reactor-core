@@ -34,14 +34,12 @@ import reactor.util.annotation.Nullable;
 final class FluxAutoConnect<T> extends Flux<T>
 		implements Scannable {
 
-	final ConnectableFlux<? extends T> source;
-
-	final Consumer<? super Disposable> cancelSupport;
-
-	volatile int remaining;
 	@SuppressWarnings("rawtypes")
 	static final AtomicIntegerFieldUpdater<FluxAutoConnect> REMAINING =
 			AtomicIntegerFieldUpdater.newUpdater(FluxAutoConnect.class, "remaining");
+	final ConnectableFlux<? extends T> source;
+	final Consumer<? super Disposable> cancelSupport;
+	volatile int remaining;
 
 
 	FluxAutoConnect(ConnectableFlux<? extends T> source,
@@ -53,7 +51,7 @@ final class FluxAutoConnect<T> extends Flux<T>
 		this.cancelSupport = Objects.requireNonNull(cancelSupport, "cancelSupport");
 		REMAINING.lazySet(this, n);
 	}
-	
+
 	@Override
 	public void subscribe(CoreSubscriber<? super T> actual) {
 		source.subscribe(actual);

@@ -155,26 +155,26 @@ public interface Context {
 		if (size <= 5) {
 			Map.Entry[] entries = map.entrySet().toArray(new Map.Entry[size]);
 			switch (size) {
-				case 1:
-					return new Context1(entries[0].getKey(), entries[0].getValue());
-				case 2:
-					return new Context2(entries[0].getKey(), entries[0].getValue(),
-					entries[1].getKey(), entries[1].getValue());
-				case 3:
-					return new Context3(entries[0].getKey(), entries[0].getValue(),
-					entries[1].getKey(), entries[1].getValue(),
-					entries[2].getKey(), entries[2].getValue());
-				case 4:
-					return new Context4(entries[0].getKey(), entries[0].getValue(),
-					entries[1].getKey(), entries[1].getValue(),
-					entries[2].getKey(), entries[2].getValue(),
-					entries[3].getKey(), entries[3].getValue());
-				case 5:
-					return new Context5(entries[0].getKey(), entries[0].getValue(),
-					entries[1].getKey(), entries[1].getValue(),
-					entries[2].getKey(), entries[2].getValue(),
-					entries[3].getKey(), entries[3].getValue(),
-					entries[4].getKey(), entries[4].getValue());
+			case 1:
+				return new Context1(entries[0].getKey(), entries[0].getValue());
+			case 2:
+				return new Context2(entries[0].getKey(), entries[0].getValue(),
+						entries[1].getKey(), entries[1].getValue());
+			case 3:
+				return new Context3(entries[0].getKey(), entries[0].getValue(),
+						entries[1].getKey(), entries[1].getValue(),
+						entries[2].getKey(), entries[2].getValue());
+			case 4:
+				return new Context4(entries[0].getKey(), entries[0].getValue(),
+						entries[1].getKey(), entries[1].getValue(),
+						entries[2].getKey(), entries[2].getValue(),
+						entries[3].getKey(), entries[3].getValue());
+			case 5:
+				return new Context5(entries[0].getKey(), entries[0].getValue(),
+						entries[1].getKey(), entries[1].getValue(),
+						entries[2].getKey(), entries[2].getValue(),
+						entries[3].getKey(), entries[3].getValue(),
+						entries[4].getKey(), entries[4].getValue());
 			}
 		}
 		// Since ContextN(Map) is a low level API that DOES NOT perform null checks,
@@ -216,12 +216,12 @@ public interface Context {
 	 * @see #getOrDefault(Object, Object)
 	 * @see #getOrEmpty(Object)
 	 */
-	default <T> T get(Class<T> key){
-		T v = get((Object)key);
-		if(key.isInstance(v)){
+	default <T> T get(Class<T> key) {
+		T v = get((Object) key);
+		if (key.isInstance(v)) {
 			return v;
 		}
-		throw new NoSuchElementException("Context does not contain a value of type "+key
+		throw new NoSuchElementException("Context does not contain a value of type " + key
 				.getName());
 	}
 
@@ -235,8 +235,8 @@ public interface Context {
 	 * @return the value resolved for this key, or the given default if not present
 	 */
 	@Nullable
-	default <T> T getOrDefault(Object key, @Nullable T defaultValue){
-		if(!hasKey(key)){
+	default <T> T getOrDefault(Object key, @Nullable T defaultValue) {
+		if (!hasKey(key)) {
 			return defaultValue;
 		}
 		return get(key);
@@ -249,8 +249,8 @@ public interface Context {
 	 *
 	 * @return an {@link Optional} of the value for that key.
 	 */
-	default <T> Optional<T> getOrEmpty(Object key){
-		if(hasKey(key)) {
+	default <T> Optional<T> getOrEmpty(Object key) {
+		if (hasKey(key)) {
 			return Optional.of(get(key));
 		}
 		return Optional.empty();
@@ -329,7 +329,7 @@ public interface Context {
 	 *
 	 * @return a {@link Stream} of key/value pairs held by this context
 	 */
-	Stream<Map.Entry<Object,Object>> stream();
+	Stream<Map.Entry<Object, Object>> stream();
 
 	/**
 	 * Create a new {@link Context} by merging the content of this context and a given

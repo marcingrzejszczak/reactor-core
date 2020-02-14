@@ -97,7 +97,7 @@ public class Context0Test {
 		Context put = c.putAll(m);
 
 		assertThat(put).isInstanceOf(Context3.class)
-		               .hasToString("Context3{A=1, B=2, C=3}");
+				.hasToString("Context3{A=1, B=2, C=3}");
 	}
 
 	@Test

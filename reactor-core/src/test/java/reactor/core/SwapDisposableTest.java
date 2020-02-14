@@ -27,7 +27,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
  * @author David Karnok
@@ -63,7 +67,8 @@ public class SwapDisposableTest {
 		final Disposable underlying = mock(Disposable.class);
 		sequentialDisposable.update(underlying);
 
-		sequentialDisposable.replace(() -> {});
+		sequentialDisposable.replace(() -> {
+		});
 		sequentialDisposable.dispose();
 
 		verify(underlying, never()).dispose();
@@ -142,9 +147,11 @@ public class SwapDisposableTest {
 				try {
 					start.await();
 					sequentialDisposable.dispose();
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 					fail(e.getMessage());
-				} finally {
+				}
+				finally {
 					end.countDown();
 				}
 			});
@@ -182,9 +189,11 @@ public class SwapDisposableTest {
 				try {
 					start.await();
 					sequentialDisposable.update(subscription);
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 					fail(e.getMessage());
-				} finally {
+				}
+				finally {
 					end.countDown();
 				}
 			});

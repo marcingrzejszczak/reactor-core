@@ -16,12 +16,8 @@
 
 package reactor.core.publisher;
 
-import java.lang.ref.PhantomReference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -61,9 +57,9 @@ public class FluxWindowWhenTest {
 	@SafeVarargs
 	static <T> void expect(AssertSubscriber<Flux<T>> ts, int index, T... values) {
 		toList(ts.values()
-		         .get(index)).assertValues(values)
-		                     .assertComplete()
-		                     .assertNoError();
+				.get(index)).assertValues(values)
+				.assertComplete()
+				.assertNoError();
 	}
 
 
@@ -90,29 +86,29 @@ public class FluxWindowWhenTest {
 		final UnicastProcessor<Wrapper> processor = UnicastProcessor.create();
 
 		Flux<Integer> emitter = Flux.range(1, 400)
-		                            .delayElements(Duration.ofMillis(10))
-		                            .doOnNext(i -> processor.onNext(finalizedTracker.tracked(new Wrapper(i))))
-		                            .doOnComplete(processor::onComplete);
+				.delayElements(Duration.ofMillis(10))
+				.doOnNext(i -> processor.onNext(finalizedTracker.tracked(new Wrapper(i))))
+				.doOnComplete(processor::onComplete);
 
 		AtomicReference<FluxWindowWhen.WindowWhenMainSubscriber> startEndMain = new AtomicReference<>();
 		AtomicReference<List> windows = new AtomicReference<>();
 
 		Mono<List<Tuple3<Long, Integer, Long>>> buffers =
 				processor.window(Duration.ofMillis(1000), Duration.ofMillis(500))
-				         .doOnSubscribe(s -> {
-					         FluxWindowWhen.WindowWhenMainSubscriber sem =
-							         (FluxWindowWhen.WindowWhenMainSubscriber) s;
-					         startEndMain.set(sem);
-					         windows.set(sem.windows);
-				         })
-				         .flatMap(f -> f.take(2))
-				         .index()
-				         .doOnNext(it -> System.gc())
-				         //index, number of windows "in flight", finalized
-				         .map(t2 -> Tuples.of(t2.getT1(), windows.get().size(), finalizedTracker.finalizedCount()))
-				         .doOnNext(v -> LOGGER.info(v.toString()))
-				         .doOnComplete(latch::countDown)
-				         .collectList();
+						.doOnSubscribe(s -> {
+							FluxWindowWhen.WindowWhenMainSubscriber sem =
+									(FluxWindowWhen.WindowWhenMainSubscriber) s;
+							startEndMain.set(sem);
+							windows.set(sem.windows);
+						})
+						.flatMap(f -> f.take(2))
+						.index()
+						.doOnNext(it -> System.gc())
+						//index, number of windows "in flight", finalized
+						.map(t2 -> Tuples.of(t2.getT1(), windows.get().size(), finalizedTracker.finalizedCount()))
+						.doOnNext(v -> LOGGER.info(v.toString()))
+						.doOnComplete(latch::countDown)
+						.collectList();
 
 		emitter.subscribe();
 
@@ -150,7 +146,7 @@ public class FluxWindowWhenTest {
 		DirectProcessor<Integer> sp4 = DirectProcessor.create();
 
 		sp1.windowWhen(sp2, v -> v == 1 ? sp3 : sp4)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
@@ -171,8 +167,8 @@ public class FluxWindowWhenTest {
 		sp1.onComplete();
 
 		ts.assertValueCount(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		expect(ts, 0, 2, 3);
 		expect(ts, 1, 3, 4);
@@ -193,7 +189,7 @@ public class FluxWindowWhenTest {
 		DirectProcessor<Integer> closeSelectorForOthers = DirectProcessor.create();
 
 		source.windowWhen(openSelector, v -> v == 1 ? closeSelectorFor1 : closeSelectorForOthers)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		source.onNext(1);
 
@@ -215,8 +211,8 @@ public class FluxWindowWhenTest {
 		source.onComplete(); //TODO evaluate, should the open completing cause the source to lose subscriber?
 
 		ts.assertValueCount(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		expect(ts, 0, 2, 3);
 		expect(ts, 1, 3, 4);
@@ -237,7 +233,7 @@ public class FluxWindowWhenTest {
 		DirectProcessor<Integer> closeSelectorOthers = DirectProcessor.create();
 
 		source.windowWhen(openSelector, v -> v == 1 ? closeSelectorFor1 : closeSelectorOthers)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		openSelector.onNext(1);
 
@@ -251,8 +247,8 @@ public class FluxWindowWhenTest {
 		source.onComplete();
 
 		ts.assertValueCount(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		expect(ts, 0, 1, 2, 3);
 
@@ -272,11 +268,11 @@ public class FluxWindowWhenTest {
 		//"overlapping buffers"
 		EmitterProcessor<Integer> boundaryFlux = EmitterProcessor.create();
 
-		MonoProcessor<List<List<Integer>>> res = numbers.windowWhen(bucketOpening, u -> boundaryFlux )
-		                                       .flatMap(Flux::buffer)
-		                                       .buffer()
-		                                       .publishNext()
-		                                       .toProcessor();
+		MonoProcessor<List<List<Integer>>> res = numbers.windowWhen(bucketOpening, u -> boundaryFlux)
+				.flatMap(Flux::buffer)
+				.buffer()
+				.publishNext()
+				.toProcessor();
 		res.subscribe();
 
 		numbers.onNext(1);
@@ -297,58 +293,57 @@ public class FluxWindowWhenTest {
 	}
 
 
-
 	Flux<List<Integer>> scenario_windowWillSubdivideAnInputFluxOverlapTime() {
 		return Flux.just(1, 2, 3, 4, 5, 6, 7, 8)
-		           .delayElements(Duration.ofMillis(99))
-		           .window(Duration.ofMillis(300), Duration.ofMillis(200))
-		           .concatMap(Flux::buffer);
+				.delayElements(Duration.ofMillis(99))
+				.window(Duration.ofMillis(300), Duration.ofMillis(200))
+				.concatMap(Flux::buffer);
 	}
 
 	@Test
 	public void windowWillSubdivideAnInputFluxOverlapTime() {
 		StepVerifier.withVirtualTime(this::scenario_windowWillSubdivideAnInputFluxOverlapTime)
-		            .thenAwait(Duration.ofSeconds(10))
-		            .assertNext(t -> assertThat(t).containsExactly(1, 2, 3))
-		            .assertNext(t -> assertThat(t).containsExactly(3, 4, 5))
-		            .assertNext(t -> assertThat(t).containsExactly(5, 6, 7))
-		            .assertNext(t -> assertThat(t).containsExactly(7, 8))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(10))
+				.assertNext(t -> assertThat(t).containsExactly(1, 2, 3))
+				.assertNext(t -> assertThat(t).containsExactly(3, 4, 5))
+				.assertNext(t -> assertThat(t).containsExactly(5, 6, 7))
+				.assertNext(t -> assertThat(t).containsExactly(7, 8))
+				.verifyComplete();
 	}
 
 
 	Flux<List<Integer>> scenario_windowWillSubdivideAnInputFluxSameTime() {
 		return Flux.just(1, 2, 3, 4, 5, 6, 7, 8)
-		           .delayElements(Duration.ofMillis(99))
-		           .window(Duration.ofMillis(300), Duration.ofMillis(300))
-		           .concatMap(Flux::buffer);
+				.delayElements(Duration.ofMillis(99))
+				.window(Duration.ofMillis(300), Duration.ofMillis(300))
+				.concatMap(Flux::buffer);
 	}
 
 	@Test
 	public void windowWillSubdivideAnInputFluxSameTime() {
 		StepVerifier.withVirtualTime(this::scenario_windowWillSubdivideAnInputFluxSameTime)
-		            .thenAwait(Duration.ofSeconds(10))
-		            .assertNext(t -> assertThat(t).containsExactly(1, 2, 3))
-		            .assertNext(t -> assertThat(t).containsExactly(4, 5, 6))
-		            .assertNext(t -> assertThat(t).containsExactly(7, 8))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(10))
+				.assertNext(t -> assertThat(t).containsExactly(1, 2, 3))
+				.assertNext(t -> assertThat(t).containsExactly(4, 5, 6))
+				.assertNext(t -> assertThat(t).containsExactly(7, 8))
+				.verifyComplete();
 	}
 
 	Flux<List<Integer>> scenario_windowWillSubdivideAnInputFluxGapTime() {
 		return Flux.just(1, 2, 3, 4, 5, 6, 7, 8)
-		           .delayElements(Duration.ofMillis(99))
-		           .window(Duration.ofMillis(200), Duration.ofMillis(300))
-		           .concatMap(Flux::buffer);
+				.delayElements(Duration.ofMillis(99))
+				.window(Duration.ofMillis(200), Duration.ofMillis(300))
+				.concatMap(Flux::buffer);
 	}
 
 	@Test
 	public void windowWillSubdivideAnInputFluxGapTime() {
 		StepVerifier.withVirtualTime(this::scenario_windowWillSubdivideAnInputFluxGapTime)
-		            .thenAwait(Duration.ofSeconds(10))
-		            .assertNext(t -> assertThat(t).containsExactly(1, 2))
-		            .assertNext(t -> assertThat(t).containsExactly(4, 5))
-		            .assertNext(t -> assertThat(t).containsExactly(7, 8))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(10))
+				.assertNext(t -> assertThat(t).containsExactly(1, 2))
+				.assertNext(t -> assertThat(t).containsExactly(4, 5))
+				.assertNext(t -> assertThat(t).containsExactly(7, 8))
+				.verifyComplete();
 	}
 
 	@Test
@@ -358,12 +353,12 @@ public class FluxWindowWhenTest {
 		final TestPublisher<Integer> end = TestPublisher.create();
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.error(new IllegalStateException("boom")))
-		            .expectErrorMessage("boom")
-		            .verify();
+				.then(() -> start.error(new IllegalStateException("boom")))
+				.expectErrorMessage("boom")
+				.verify();
 
 		source.assertNoSubscribers();
 		start.assertNoSubscribers();
@@ -377,14 +372,14 @@ public class FluxWindowWhenTest {
 		final TestPublisher<Integer> end = TestPublisher.create();
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.error(new IllegalStateException("boom"))
-		                             .error(new IllegalStateException("boom2")))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom2");
+				.then(() -> start.error(new IllegalStateException("boom"))
+						.error(new IllegalStateException("boom2")))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom2");
 
 		source.assertNoSubscribers();
 		//start doesn't cleanup and as such still has a subscriber
@@ -398,14 +393,14 @@ public class FluxWindowWhenTest {
 		final TestPublisher<Integer> end = TestPublisher.create();
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.error(new IllegalStateException("boom"))
-		                             .complete())
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors();
+				.then(() -> start.error(new IllegalStateException("boom"))
+						.complete())
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors();
 
 		source.assertNoSubscribers();
 		//start doesn't cleanup and as such still has a subscriber
@@ -419,15 +414,15 @@ public class FluxWindowWhenTest {
 		final TestPublisher<Integer> end = TestPublisher.create();
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.error(new IllegalStateException("boom"))
-		                             .next(1))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.then(() -> start.error(new IllegalStateException("boom"))
+						.next(1))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 		source.assertNoSubscribers();
 		//start doesn't cleanup and as such still has a subscriber
@@ -441,13 +436,13 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> end = TestPublisher.create();
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.next(1))
-		            .then(() -> end.error(new IllegalStateException("boom")))
-		            .expectErrorMessage("boom")
-		            .verify();
+				.then(() -> start.next(1))
+				.then(() -> end.error(new IllegalStateException("boom")))
+				.expectErrorMessage("boom")
+				.verify();
 
 		source.assertNoSubscribers();
 		start.assertNoSubscribers();
@@ -461,15 +456,15 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> end = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.next(1))
-		            .then(() -> end.error(new IllegalStateException("boom"))
-		                           .error(new IllegalStateException("boom2")))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom2");
+				.then(() -> start.next(1))
+				.then(() -> end.error(new IllegalStateException("boom"))
+						.error(new IllegalStateException("boom2")))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom2");
 
 		source.assertNoSubscribers();
 		start.assertNoSubscribers();
@@ -483,15 +478,15 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> end = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.next(1))
-		            .then(() -> end.error(new IllegalStateException("boom"))
-		                           .complete())
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors();
+				.then(() -> start.next(1))
+				.then(() -> end.error(new IllegalStateException("boom"))
+						.complete())
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors();
 
 		source.assertNoSubscribers();
 		start.assertNoSubscribers();
@@ -505,16 +500,16 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> end = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(source.flux()
-		                          .windowWhen(start, v -> end)
-		                          .flatMap(Flux.identityFunction())
+				.windowWhen(start, v -> end)
+				.flatMap(Flux.identityFunction())
 		)
-		            .then(() -> start.next(1))
-		            .then(() -> end.error(new IllegalStateException("boom"))
-		                           .next(1))
-		            .expectErrorMessage("boom")
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.then(() -> start.next(1))
+				.then(() -> end.error(new IllegalStateException("boom"))
+						.next(1))
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 
 		source.assertNoSubscribers();
 		start.assertNoSubscribers();
@@ -524,9 +519,9 @@ public class FluxWindowWhenTest {
 	@Test
 	public void mainError() {
 		StepVerifier.create(Flux.error(new IllegalStateException("boom"))
-		                        .windowWhen(Flux.never(), v -> Mono.just(1))
-		                        .flatMap(Flux::count))
-		            .verifyErrorMessage("boom");
+				.windowWhen(Flux.never(), v -> Mono.just(1))
+				.flatMap(Flux::count))
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
@@ -534,12 +529,12 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> source = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(source.flux()
-		                        .windowWhen(Flux.never(), v -> Mono.just(1))
-		                        .flatMap(Flux.identityFunction()))
-		            .then(() -> source.complete().next(1))
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDropped(1);
+				.windowWhen(Flux.never(), v -> Mono.just(1))
+				.flatMap(Flux.identityFunction()))
+				.then(() -> source.complete().next(1))
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDropped(1);
 	}
 
 	@Test
@@ -547,12 +542,12 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> source = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(source.flux()
-		                        .windowWhen(Flux.never(), v -> Mono.just(1))
-		                        .flatMap(Flux.identityFunction()))
-		            .then(() -> source.complete().error(new IllegalStateException("boom")))
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom");
+				.windowWhen(Flux.never(), v -> Mono.just(1))
+				.flatMap(Flux.identityFunction()))
+				.then(() -> source.complete().error(new IllegalStateException("boom")))
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test
@@ -560,25 +555,26 @@ public class FluxWindowWhenTest {
 		TestPublisher<Integer> source = TestPublisher.createNoncompliant(TestPublisher.Violation.CLEANUP_ON_TERMINATE);
 
 		StepVerifier.create(source.flux()
-		                        .windowWhen(Flux.never(), v -> Mono.just(1))
-		                        .flatMap(Flux.identityFunction()))
-		            .then(() -> source.complete().complete())
-		            .expectComplete()
-		            .verifyThenAssertThat()
-		            .hasNotDroppedErrors()
-		            .hasNotDroppedElements();
+				.windowWhen(Flux.never(), v -> Mono.just(1))
+				.flatMap(Flux.identityFunction()))
+				.then(() -> source.complete().complete())
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDroppedErrors()
+				.hasNotDroppedElements();
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null,
-		        sub -> sub.request(1));
-        FluxWindowWhen.WindowWhenMainSubscriber<Integer, Integer, Integer> test =
-        		new FluxWindowWhen.WindowWhenMainSubscriber<>(actual,
-				        Flux.never(), Flux::just,
-				        Queues.unbounded());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMainSubscriber() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null,
+				sub -> sub.request(1));
+		FluxWindowWhen.WindowWhenMainSubscriber<Integer, Integer, Integer> test =
+				new FluxWindowWhen.WindowWhenMainSubscriber<>(actual,
+						Flux.never(), Flux::just,
+						Queues.unbounded());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
 		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
@@ -591,21 +587,22 @@ public class FluxWindowWhenTest {
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
 
 		Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM))
-		          .isEqualTo(0);
+				.isEqualTo(0);
 		test.request(123L);
 		Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM))
-		          .isEqualTo(123L);
-    }
+				.isEqualTo(123L);
+	}
 
 	@Test
-    public void scanMainSubscriberError() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindowWhen.WindowWhenMainSubscriber<Integer, Integer, Integer> test =
-        		new FluxWindowWhen.WindowWhenMainSubscriber<>(actual,
-				        Flux.never(), Flux::just,
-				        Queues.unbounded());
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMainSubscriberError() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindowWhen.WindowWhenMainSubscriber<Integer, Integer, Integer> test =
+				new FluxWindowWhen.WindowWhenMainSubscriber<>(actual,
+						Flux.never(), Flux::just,
+						Queues.unbounded());
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
 		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
 		Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).isNull();
@@ -613,7 +610,7 @@ public class FluxWindowWhenTest {
 		test.onError(new IllegalStateException("boom"));
 		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 		Assertions.assertThat(test.scan(Scannable.Attr.ERROR))
-		          .isNotNull()
-		          .hasMessage("boom");
-    }
+				.isNotNull()
+				.hasMessage("boom");
+	}
 }

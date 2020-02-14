@@ -34,8 +34,8 @@ public class ReactorBlockHoundIntegrationTest {
 	static {
 		// Use the builder to load only our integration to avoid false positives
 		BlockHound.builder()
-		          .with(new ReactorBlockHoundIntegration())
-		          .install();
+				.with(new ReactorBlockHoundIntegration())
+				.install();
 	}
 
 	@Rule
@@ -45,15 +45,15 @@ public class ReactorBlockHoundIntegrationTest {
 	public void shouldDetectBlockingCalls() {
 		expectBlockingCall("java.lang.Thread.sleep", future -> {
 			Schedulers.parallel()
-			          .schedule(() -> {
-				          try {
-					          Thread.sleep(10);
-					          future.complete(null);
-				          }
-				          catch (Throwable e) {
-					          future.completeExceptionally(e);
-				          }
-			          });
+					.schedule(() -> {
+						try {
+							Thread.sleep(10);
+							future.complete(null);
+						}
+						catch (Throwable e) {
+							future.completeExceptionally(e);
+						}
+					});
 		});
 	}
 
@@ -61,8 +61,8 @@ public class ReactorBlockHoundIntegrationTest {
 	public void shouldDetectBlockingCallsOnSubscribe() {
 		expectBlockingCall("java.lang.Thread.yield", future -> {
 			Mono.fromRunnable(Thread::yield)
-			    .subscribeOn(Schedulers.parallel())
-			    .subscribe(future::complete, future::completeExceptionally);
+					.subscribeOn(Schedulers.parallel())
+					.subscribe(future::complete, future::completeExceptionally);
 		});
 	}
 
@@ -70,8 +70,8 @@ public class ReactorBlockHoundIntegrationTest {
 	public void shouldDetectBlockingCallsInOperators() {
 		expectBlockingCall("java.lang.Thread.yield", future -> {
 			Mono.delay(Duration.ofMillis(10))
-			    .doOnNext(__ -> Thread.yield())
-			    .subscribe(future::complete, future::completeExceptionally);
+					.doOnNext(__ -> Thread.yield())
+					.subscribe(future::complete, future::completeExceptionally);
 		});
 	}
 

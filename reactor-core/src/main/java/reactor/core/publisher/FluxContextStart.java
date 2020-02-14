@@ -51,14 +51,14 @@ final class FluxContextStart<T> extends InternalFluxOperator<T, T> implements Fu
 
 	static final class ContextStartSubscriber<T>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T>,
-			           QueueSubscription<T> {
+			QueueSubscription<T> {
 
-		final CoreSubscriber<? super T>        actual;
+		final CoreSubscriber<? super T> actual;
 		final ConditionalSubscriber<? super T> actualConditional;
-		final Context                          context;
+		final Context context;
 
 		QueueSubscription<T> qs;
-		Subscription         s;
+		Subscription s;
 
 		@SuppressWarnings("unchecked")
 		ContextStartSubscriber(CoreSubscriber<? super T> actual, Context context) {

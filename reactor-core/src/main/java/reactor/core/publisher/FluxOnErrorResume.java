@@ -86,7 +86,7 @@ final class FluxOnErrorResume<T> extends InternalFluxOperator<T, T> {
 
 				try {
 					p = Objects.requireNonNull(nextFactory.apply(t),
-					"The nextFactory returned a null Publisher");
+							"The nextFactory returned a null Publisher");
 				}
 				catch (Throwable e) {
 					Throwable _e = Operators.onOperatorError(e, actual.currentContext());

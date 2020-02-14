@@ -42,20 +42,18 @@ import reactor.util.context.Context;
  * @author Simon Baslé
  */
 final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
-                                                         OptimizableOperator<T, T> {
+		OptimizableOperator<T, T> {
 
 	final Mono<T> source;
-
-	Function<? super T, ? extends Publisher<?>>[] otherGenerators;
-
 	@Nullable
 	final OptimizableOperator<?, T> optimizableOperator;
+	Function<? super T, ? extends Publisher<?>>[] otherGenerators;
 
 	@SuppressWarnings("unchecked")
 	MonoDelayUntil(Mono<T> monoSource,
 			Function<? super T, ? extends Publisher<?>> triggerGenerator) {
 		this.source = Objects.requireNonNull(monoSource, "monoSource");
-		this.otherGenerators = new Function[] { Objects.requireNonNull(triggerGenerator, "triggerGenerator")};
+		this.otherGenerators = new Function[] {Objects.requireNonNull(triggerGenerator, "triggerGenerator")};
 		this.optimizableOperator = source instanceof OptimizableOperator ? (OptimizableOperator) source : null;
 	}
 
@@ -115,19 +113,15 @@ final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
 			extends Operators.MonoSubscriber<T, T> {
 
 		static final DelayUntilTrigger[] NO_TRIGGER = new DelayUntilTrigger[0];
-
-		final int                                                n;
-		final Function<? super T, ? extends Publisher<?>>[] otherGenerators;
-
-		volatile int done;
 		static final AtomicIntegerFieldUpdater<DelayUntilCoordinator> DONE =
 				AtomicIntegerFieldUpdater.newUpdater(DelayUntilCoordinator.class, "done");
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<DelayUntilCoordinator, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(DelayUntilCoordinator.class, Subscription.class, "s");
-
+		final int n;
+		final Function<? super T, ? extends Publisher<?>>[] otherGenerators;
+		volatile int done;
+		volatile Subscription s;
 		DelayUntilTrigger[] triggerSubscribers;
 
 		DelayUntilCoordinator(CoreSubscriber<? super T> subscriber,
@@ -143,7 +137,8 @@ final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
 		public void onSubscribe(Subscription s) {
 			if (Operators.setOnce(S, this, s)) {
 				s.request(Long.MAX_VALUE);
-			} else {
+			}
+			else {
 				s.cancel();
 			}
 		}
@@ -224,10 +219,11 @@ final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
 					if (compositeError != null) {
 						//this is ok as the composite created by multiple is never a singleton
 						compositeError.addSuppressed(e);
-					} else
-					if (error != null) {
+					}
+					else if (error != null) {
 						compositeError = Exceptions.multiple(error, e);
-					} else {
+					}
+					else {
 						error = e;
 					}
 					//else the trigger publisher was empty, but we'll ignore that
@@ -239,7 +235,8 @@ final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
 			}
 			else if (error != null) {
 				actual.onError(error);
-			} else {
+			}
+			else {
 				//emit the value downstream
 				complete(this.value);
 			}
@@ -262,13 +259,11 @@ final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
 
 	static final class DelayUntilTrigger<T> implements InnerConsumer<T> {
 
-		final DelayUntilCoordinator<?> parent;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<DelayUntilTrigger, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(DelayUntilTrigger.class, Subscription.class, "s");
-
+		final DelayUntilCoordinator<?> parent;
+		volatile Subscription s;
 		boolean done;
 		volatile Throwable error;
 
@@ -297,7 +292,8 @@ final class MonoDelayUntil<T> extends Mono<T> implements Scannable,
 		public void onSubscribe(Subscription s) {
 			if (Operators.setOnce(S, this, s)) {
 				s.request(Long.MAX_VALUE);
-			} else {
+			}
+			else {
 				s.cancel();
 			}
 		}

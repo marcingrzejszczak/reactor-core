@@ -58,7 +58,7 @@ final class Context5 implements CoreContext {
 		Objects.requireNonNull(key, "key");
 		Objects.requireNonNull(value, "value");
 
-		if(this.key1.equals(key)){
+		if (this.key1.equals(key)) {
 			return new Context5(key, value, key2, value2, key3, value3, key4, value4, key5, value5);
 		}
 
@@ -85,7 +85,7 @@ final class Context5 implements CoreContext {
 	public Context delete(Object key) {
 		Objects.requireNonNull(key, "key");
 
-		if(this.key1.equals(key)){
+		if (this.key1.equals(key)) {
 			return new Context4(key2, value2, key3, value3, key4, value4, key5, value5);
 		}
 
@@ -118,21 +118,21 @@ final class Context5 implements CoreContext {
 	@SuppressWarnings("unchecked")
 	public <T> T get(Object key) {
 		if (this.key1.equals(key)) {
-			return (T)this.value1;
+			return (T) this.value1;
 		}
 		if (this.key2.equals(key)) {
-			return (T)this.value2;
+			return (T) this.value2;
 		}
 		if (this.key3.equals(key)) {
-			return (T)this.value3;
+			return (T) this.value3;
 		}
 		if (this.key4.equals(key)) {
-			return (T)this.value4;
+			return (T) this.value4;
 		}
 		if (this.key5.equals(key)) {
-			return (T)this.value5;
+			return (T) this.value5;
 		}
-		throw new NoSuchElementException("Context does not contain key: "+key);
+		throw new NoSuchElementException("Context does not contain key: " + key);
 	}
 
 	@Override
@@ -154,7 +154,7 @@ final class Context5 implements CoreContext {
 	public Context putAllInto(Context base) {
 		return base
 				.put(this.key1, this.value1)
-		        .put(this.key2, this.value2)
+				.put(this.key2, this.value2)
 				.put(this.key3, this.value3)
 				.put(this.key4, this.value4)
 				.put(this.key5, this.value5);
@@ -171,7 +171,7 @@ final class Context5 implements CoreContext {
 
 	@Override
 	public String toString() {
-		return "Context5{" + key1 + '='+ value1 + ", " + key2 + '=' + value2 + ", " +
+		return "Context5{" + key1 + '=' + value1 + ", " + key2 + '=' + value2 + ", " +
 				key3 + '=' + value3 + ", " + key4 + '=' + value4 + ", " + key5 + '=' + value5 + '}';
 	}
 }

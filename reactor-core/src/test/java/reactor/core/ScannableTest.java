@@ -133,11 +133,11 @@ public class ScannableTest {
 	public void namedFluxTest() {
 		Flux<Integer> named1 =
 				Flux.range(1, 10)
-				    .name("100s");
+						.name("100s");
 
 		Flux<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -148,12 +148,12 @@ public class ScannableTest {
 	public void namedHideFluxTest() {
 		Flux<Integer> named1 =
 				Flux.range(1, 10)
-				    .hide()
-				    .name("100s");
+						.hide()
+						.name("100s");
 
 		Flux<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -163,12 +163,12 @@ public class ScannableTest {
 	public void namedOverridenFluxTest() {
 		Flux<Integer> named1 =
 				Flux.range(1, 10)
-				    .name("1s")
-				    .name("100s");
+						.name("1s")
+						.name("100s");
 
 		Flux<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -178,13 +178,13 @@ public class ScannableTest {
 	public void namedOverridenHideFluxTest() {
 		Flux<Integer> named1 =
 				Flux.range(1, 10)
-				    .hide()
-				    .name("1s")
-				    .name("100s");
+						.hide()
+						.name("1s")
+						.name("100s");
 
 		Flux<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -193,7 +193,7 @@ public class ScannableTest {
 	@Test
 	public void scannableNameDefaultsToToString() {
 		final Flux<Integer> flux = Flux.range(1, 10)
-		                               .map(i -> i + 10);
+				.map(i -> i + 10);
 
 		assertThat(Scannable.from(flux).name())
 				.isEqualTo(Scannable.from(flux).stepName())
@@ -204,12 +204,12 @@ public class ScannableTest {
 	public void taggedFluxTest() {
 		Flux<Integer> tagged1 =
 				Flux.range(1, 10)
-				    .tag("1", "One");
+						.tag("1", "One");
 
 
 		Flux<Integer> tagged2 = tagged1.filter(i -> i % 3 == 0)
-		                               .tag("2", "Two")
-		                               .hide();
+				.tag("2", "Two")
+				.hide();
 
 		final Stream<Tuple2<String, String>> scannedTags1 = Scannable.from(tagged1).tags();
 		assertThat(scannedTags1.iterator())
@@ -217,20 +217,20 @@ public class ScannableTest {
 
 		final Stream<Tuple2<String, String>> scannedTags2 = Scannable.from(tagged2).tags();
 		assertThat(scannedTags2.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedHideFluxTest() {
 		Flux<Integer> tagged1 =
 				Flux.range(1, 10)
-				    .hide()
-				    .tag("1", "One");
+						.hide()
+						.tag("1", "One");
 
 
 		Flux<Integer> tagged2 = tagged1.filter(i -> i % 3 == 0)
-		                               .tag("2", "Two")
-		                               .hide();
+				.tag("2", "Two")
+				.hide();
 
 		final Stream<Tuple2<String, String>> scannedTags1 = Scannable.from(tagged1).tags();
 		assertThat(scannedTags1.iterator())
@@ -238,43 +238,43 @@ public class ScannableTest {
 
 		final Stream<Tuple2<String, String>> scannedTags2 = Scannable.from(tagged2).tags();
 		assertThat(scannedTags2.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedAppendedFluxTest() {
 		Flux<Integer> tagged1 =
 				Flux.range(1, 10)
-				    .tag("1", "One")
-				    .tag("2", "Two");
+						.tag("1", "One")
+						.tag("2", "Two");
 
 		final Stream<Tuple2<String, String>> scannedTags = Scannable.from(tagged1).tags();
 		assertThat(scannedTags.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedAppendedHideFluxTest() {
 		Flux<Integer> tagged1 =
 				Flux.range(1, 10)
-				    .hide()
-				    .tag("1", "One")
-				    .tag("2", "Two");
+						.hide()
+						.tag("1", "One")
+						.tag("2", "Two");
 
 		final Stream<Tuple2<String, String>> scannedTags = Scannable.from(tagged1).tags();
 		assertThat(scannedTags.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void namedMonoTest() {
 		Mono<Integer> named1 =
 				Mono.just(1)
-				    .name("100s");
+						.name("100s");
 
 		Mono<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -285,12 +285,12 @@ public class ScannableTest {
 	public void namedHideMonoTest() {
 		Mono<Integer> named1 =
 				Mono.just(1)
-				    .hide()
-				    .name("100s");
+						.hide()
+						.name("100s");
 
 		Mono<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -300,12 +300,12 @@ public class ScannableTest {
 	public void namedOverridenMonoTest() {
 		Mono<Integer> named1 =
 				Mono.just(1)
-				    .name("1s")
-				    .name("100s");
+						.name("1s")
+						.name("100s");
 
 		Mono<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -315,13 +315,13 @@ public class ScannableTest {
 	public void namedOverridenHideMonoTest() {
 		Mono<Integer> named1 =
 				Mono.just(1)
-				    .hide()
-				    .name("1s")
-				    .name("100s");
+						.hide()
+						.name("1s")
+						.name("100s");
 
 		Mono<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -330,7 +330,7 @@ public class ScannableTest {
 	@Test
 	public void scannableNameMonoDefaultsToToString() {
 		final Mono<Integer> flux = Mono.just(1)
-		                               .map(i -> i + 10);
+				.map(i -> i + 10);
 
 		assertThat(Scannable.from(flux).name())
 				.isEqualTo(Scannable.from(flux).stepName())
@@ -341,12 +341,12 @@ public class ScannableTest {
 	public void taggedMonoTest() {
 		Mono<Integer> tagged1 =
 				Mono.just(1)
-				    .tag("1", "One");
+						.tag("1", "One");
 
 
 		Mono<Integer> tagged2 = tagged1.filter(i -> i % 3 == 0)
-		                               .tag("2", "Two")
-		                               .hide();
+				.tag("2", "Two")
+				.hide();
 
 		final Stream<Tuple2<String, String>> scannedTags1 = Scannable.from(tagged1).tags();
 		assertThat(scannedTags1.iterator())
@@ -354,20 +354,20 @@ public class ScannableTest {
 
 		final Stream<Tuple2<String, String>> scannedTags2 = Scannable.from(tagged2).tags();
 		assertThat(scannedTags2.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedHideMonoTest() {
 		Mono<Integer> tagged1 =
 				Mono.just(1)
-				    .hide()
-				    .tag("1", "One");
+						.hide()
+						.tag("1", "One");
 
 
 		Mono<Integer> tagged2 = tagged1.filter(i -> i % 3 == 0)
-		                               .tag("2", "Two")
-		                               .hide();
+				.tag("2", "Two")
+				.hide();
 
 		final Stream<Tuple2<String, String>> scannedTags1 = Scannable.from(tagged1).tags();
 		assertThat(scannedTags1.iterator())
@@ -375,43 +375,43 @@ public class ScannableTest {
 
 		final Stream<Tuple2<String, String>> scannedTags2 = Scannable.from(tagged2).tags();
 		assertThat(scannedTags2.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedAppendedMonoTest() {
 		Mono<Integer> tagged1 =
 				Mono.just(1)
-				    .tag("1", "One")
-				    .tag("2", "Two");
+						.tag("1", "One")
+						.tag("2", "Two");
 
 		final Stream<Tuple2<String, String>> scannedTags = Scannable.from(tagged1).tags();
 		assertThat(scannedTags.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedAppendedHideMonoTest() {
 		Mono<Integer> tagged1 = Mono
-					.just(1)
-				    .hide()
-				    .tag("1", "One")
-				    .tag("2", "Two");
+				.just(1)
+				.hide()
+				.tag("1", "One")
+				.tag("2", "Two");
 
 		final Stream<Tuple2<String, String>> scannedTags = Scannable.from(tagged1).tags();
 		assertThat(scannedTags.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void namedParallelFluxTest() {
 		ParallelFlux<Integer> named1 =
 				ParallelFlux.from(Mono.just(1))
-				    .name("100s");
+						.name("100s");
 
 		ParallelFlux<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -421,12 +421,12 @@ public class ScannableTest {
 	public void namedOverridenParallelFluxTest() {
 		ParallelFlux<Integer> named1 =
 				ParallelFlux.from(Mono.just(1))
-				    .name("1s")
-				    .name("100s");
+						.name("1s")
+						.name("100s");
 
 		ParallelFlux<Integer> named2 = named1.filter(i -> i % 3 == 0)
-		                             .name("multiple of 3 100s")
-		                             .hide();
+				.name("multiple of 3 100s")
+				.hide();
 
 		assertThat(Scannable.from(named1).name()).isEqualTo("100s");
 		assertThat(Scannable.from(named2).name()).isEqualTo("multiple of 3 100s");
@@ -435,7 +435,7 @@ public class ScannableTest {
 	@Test
 	public void scannableNameParallelFluxDefaultsToToString() {
 		final ParallelFlux<Integer> flux = ParallelFlux.from(Mono.just(1))
-		                               .map(i -> i + 10);
+				.map(i -> i + 10);
 
 		assertThat(Scannable.from(flux).name())
 				.isEqualTo(Scannable.from(flux).stepName())
@@ -446,31 +446,31 @@ public class ScannableTest {
 	public void taggedParallelFluxTest() {
 		ParallelFlux<Integer> tagged1 =
 				ParallelFlux.from(Mono.just(1))
-				    .tag("1", "One");
+						.tag("1", "One");
 
 
 		ParallelFlux<Integer> tagged2 = tagged1.filter(i -> i % 3 == 0)
-		                               .tag("2", "Two")
-		                               .hide();
+				.tag("2", "Two")
+				.hide();
 
 		Stream<Tuple2<String, String>> scannedTags1 = Scannable.from(tagged1).tags();
 		assertThat(scannedTags1.iterator()).containsExactlyInAnyOrder(Tuples.of("1", "One"));
 
 		Stream<Tuple2<String, String>> scannedTags2 = Scannable.from(tagged2).tags();
 		assertThat(scannedTags2.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
 	public void taggedAppendedParallelFluxTest() {
 		ParallelFlux<Integer> tagged1 =
 				ParallelFlux.from(Mono.just(1))
-				    .tag("1", "One")
-				    .tag("2", "Two");
+						.tag("1", "One")
+						.tag("2", "Two");
 
 		final Stream<Tuple2<String, String>> scannedTags = Scannable.from(tagged1).tags();
 		assertThat(scannedTags.iterator())
-				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of( "2", "Two"));
+				.containsExactlyInAnyOrder(Tuples.of("1", "One"), Tuples.of("2", "Two"));
 	}
 
 	@Test
@@ -533,16 +533,16 @@ public class ScannableTest {
 		List<String> upstream = new ArrayList<>();
 
 		try {
-			Mono<?> m=
+			Mono<?> m =
 					Flux.from(s -> {
 						Scannable thisSubscriber = Scannable.from(s);
 						assertThat(thisSubscriber.isScanAvailable()).as("thisSubscriber.isScanAvailable").isTrue();
 						thisSubscriber.steps().forEach(downstream::add);
 					})
-					    .map(a -> a)
-					    .delayElements(Duration.ofMillis(10))
-					    .filter(a -> true)
-					    .reduce((a, b) -> b);
+							.map(a -> a)
+							.delayElements(Duration.ofMillis(10))
+							.filter(a -> true)
+							.reduce((a, b) -> b);
 
 			m.subscribe();
 
@@ -575,12 +575,12 @@ public class ScannableTest {
 	public void operatorChainWithLastSubscriber() {
 		AtomicReference<Subscription> subRef = new AtomicReference<>(null);
 
-		Mono<String> m=
+		Mono<String> m =
 				Flux.just("foo")
-				    .map(a -> a)
-				    .filter(a -> true)
-				    .reduce((a, b) -> b)
-				    .doOnSubscribe(subRef::set);
+						.map(a -> a)
+						.filter(a -> true)
+						.reduce((a, b) -> b)
+						.doOnSubscribe(subRef::set);
 
 		m.subscribe();
 
@@ -596,10 +596,11 @@ public class ScannableTest {
 	public void operatorChainWithLastOperator() {
 		Mono<String> m =
 				Flux.concat(Mono.just("foo"), Mono.just("bar"))
-				    .map(a -> a)
-				    .filter(a -> true)
-				    .reduce((a, b) -> b)
-				    .doOnSubscribe(sub -> {});
+						.map(a -> a)
+						.filter(a -> true)
+						.reduce((a, b) -> b)
+						.doOnSubscribe(sub -> {
+						});
 
 		Scannable operator = Scannable.from(m);
 		assertThat(operator.isScanAvailable()).as("operator.isScanAvailable").isTrue();
@@ -610,9 +611,9 @@ public class ScannableTest {
 
 	@Test
 	public void operatorChainWithCheckpoint() {
-		Flux<String> flux  = Flux.just("foo")
-		                         .checkpoint("checkpointHere", true)
-		                         .map(a -> a);
+		Flux<String> flux = Flux.just("foo")
+				.checkpoint("checkpointHere", true)
+				.map(a -> a);
 
 		assertThat(Scannable.from(flux).steps())
 				.containsExactly(
@@ -624,9 +625,9 @@ public class ScannableTest {
 
 	@Test
 	public void operatorChainWithLightCheckpoint() {
-		Flux<String> flux  = Flux.just("foo")
-		                         .checkpoint("checkpointHere")
-		                         .map(a -> a);
+		Flux<String> flux = Flux.just("foo")
+				.checkpoint("checkpointHere")
+				.map(a -> a);
 
 		assertThat(Scannable.from(flux).steps())
 				.containsExactly(
@@ -640,25 +641,25 @@ public class ScannableTest {
 	public void operatorChainWithoutDebugMode() {
 		List<String> downstream = new ArrayList<>();
 
-		Mono<?> m=
+		Mono<?> m =
 				Flux.from(s -> {
 					Scannable thisSubscriber = Scannable.from(s);
 					assertThat(thisSubscriber.isScanAvailable()).as("thisSubscriber.isScanAvailable").isTrue();
 					thisSubscriber.steps().forEach(downstream::add);
 				})
-				    .map(a -> a)
-				    .filter(a -> true)
-				    .reduce((a, b) -> b);
+						.map(a -> a)
+						.filter(a -> true)
+						.reduce((a, b) -> b);
 
 		m.subscribe();
 
 		assertThat(downstream)
 				.as("from downstream")
 				.containsExactly(
-				"map",
-				"filter",
-				"reduce",
-				"lambda");
+						"map",
+						"filter",
+						"reduce",
+						"lambda");
 
 
 		Scannable thisOperator = Scannable.from(m);
@@ -669,10 +670,10 @@ public class ScannableTest {
 		assertThat(thisOperator.steps())
 				.as("from upstream")
 				.containsExactly(
-				"source(FluxSource)",
-				"map",
-				"filter",
-				"reduce");
+						"source(FluxSource)",
+						"map",
+						"filter",
+						"reduce");
 	}
 
 }

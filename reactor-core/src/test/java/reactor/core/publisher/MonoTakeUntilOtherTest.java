@@ -52,9 +52,9 @@ public class MonoTakeUntilOtherTest {
 		StepVerifier.withVirtualTime(() ->
 				new MonoTakeUntilOther<>(Mono.never().doFinally(signal::set), Mono.delay(Duration.ofMillis(100)))
 		)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.verifyComplete();
 
 		assertThat(signal.get()).isEqualTo(SignalType.CANCEL);
 	}
@@ -66,10 +66,10 @@ public class MonoTakeUntilOtherTest {
 
 		StepVerifier.create(new MonoTakeUntilOther<>(Mono.never().doFinally(s1::set),
 				Mono.never().doFinally(s2::set)))
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenCancel()
-		            .verify(Duration.ofMillis(500));
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenCancel()
+				.verify(Duration.ofMillis(500));
 
 		assertThat(s1.get()).isEqualTo(SignalType.CANCEL);
 		assertThat(s2.get()).isEqualTo(SignalType.CANCEL);
@@ -79,10 +79,10 @@ public class MonoTakeUntilOtherTest {
 	public void apiTakeShortcircuits() {
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(200))
-				    .take(Duration.ofMillis(100))
+						.take(Duration.ofMillis(100))
 		)
-		            .thenAwait(Duration.ofMillis(300))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(300))
+				.verifyComplete();
 	}
 
 	@Test
@@ -90,43 +90,43 @@ public class MonoTakeUntilOtherTest {
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 		StepVerifier.create(
 				Mono.delay(Duration.ofMillis(200))
-				    .take(Duration.ofSeconds(10), vts)
+						.take(Duration.ofSeconds(10), vts)
 		)
-		            .then(() -> vts.advanceTimeBy(Duration.ofSeconds(10)))
-		            .verifyComplete();
+				.then(() -> vts.advanceTimeBy(Duration.ofSeconds(10)))
+				.verifyComplete();
 	}
 
 	@Test
 	public void apiTakeValuedBeforeDuration() {
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(100))
-				    .take(Duration.ofMillis(200))
+						.take(Duration.ofMillis(200))
 		)
-		            .thenAwait(Duration.ofMillis(200))
-		            .expectNext(0L)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(200))
+				.expectNext(0L)
+				.verifyComplete();
 	}
 
 	@Test
 	public void apiTakeErrorBeforeDuration() {
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(100))
-				    .then(Mono.error(new IllegalStateException("boom")))
-				    .take(Duration.ofMillis(200))
+						.then(Mono.error(new IllegalStateException("boom")))
+						.take(Duration.ofMillis(200))
 		)
-		            .thenAwait(Duration.ofMillis(200))
-		            .verifyErrorMessage("boom");
+				.thenAwait(Duration.ofMillis(200))
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void apiTakeCompleteBeforeDuration() {
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(100))
-				    .ignoreElement()
-				    .take(Duration.ofMillis(200))
+						.ignoreElement()
+						.take(Duration.ofMillis(200))
 		)
-		            .thenAwait(Duration.ofMillis(200))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(200))
+				.verifyComplete();
 	}
 
 	@Test
@@ -135,11 +135,11 @@ public class MonoTakeUntilOtherTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(200))
-				    .takeUntilOther(other)
+						.takeUntilOther(other)
 		)
-		            .thenAwait(Duration.ofMillis(100))
-		            .then(() -> other.next("go"))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(100))
+				.then(() -> other.next("go"))
+				.verifyComplete();
 
 		other.assertCancelled();
 	}
@@ -150,12 +150,12 @@ public class MonoTakeUntilOtherTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(100))
-				    .takeUntilOther(other)
+						.takeUntilOther(other)
 		)
-		            .thenAwait(Duration.ofMillis(200))
-		            .then(() -> other.next("go"))
-		            .expectNext(0L)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(200))
+				.then(() -> other.next("go"))
+				.expectNext(0L)
+				.verifyComplete();
 
 		other.assertCancelled();
 	}
@@ -166,12 +166,12 @@ public class MonoTakeUntilOtherTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(100))
-				    .then(Mono.error(new IllegalStateException("boom")))
-				    .takeUntilOther(other)
+						.then(Mono.error(new IllegalStateException("boom")))
+						.takeUntilOther(other)
 		)
-		            .thenAwait(Duration.ofMillis(200))
-		            .then(() -> other.next("go"))
-		            .verifyErrorMessage("boom");
+				.thenAwait(Duration.ofMillis(200))
+				.then(() -> other.next("go"))
+				.verifyErrorMessage("boom");
 
 		other.assertCancelled();
 	}
@@ -182,12 +182,12 @@ public class MonoTakeUntilOtherTest {
 
 		StepVerifier.withVirtualTime(() ->
 				Mono.delay(Duration.ofMillis(100))
-				    .ignoreElement()
-				    .takeUntilOther(other)
+						.ignoreElement()
+						.takeUntilOther(other)
 		)
-		            .thenAwait(Duration.ofMillis(200))
-		            .then(() -> other.next("go"))
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(200))
+				.then(() -> other.next("go"))
+				.verifyComplete();
 
 		other.assertCancelled();
 	}

@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,26 +33,116 @@ import reactor.util.annotation.Nullable;
  */
 public abstract class ParallelOperatorTest<I, O>
 		extends BaseOperatorTest<I, ParallelFlux<I>, O, ParallelFlux<O>> {
-	
+
 	public final Scenario<I, O> scenario(Function<ParallelFlux<I>, ? extends ParallelFlux<O>> scenario) {
 		if (defaultEmpty) {
 			return Scenario.create(scenario)
-			                                .applyAllOptions(defaultScenario.duplicate()
-			                                                                .receiverEmpty());
+					.applyAllOptions(defaultScenario.duplicate()
+							.receiverEmpty());
 		}
 		return Scenario.create(scenario)
-		                                .applyAllOptions(defaultScenario);
+				.applyAllOptions(defaultScenario);
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorError() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected final OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> defaultScenarioOptions(
+			OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> defaultOptions) {
+		Scenario<I, O>
+				s = new Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
+				.producer(3,
+						i -> (I) (i == 0 ?
+								"test" :
+								"test" + i))
+				.receive(3,
+						i -> (O) (i == 0 ?
+								"test" :
+								"test" + i))
+				.droppedError(new RuntimeException("dropped"))
+				.droppedItem((I) "dropped");
+		this.defaultScenario = s;
+		return defaultScenarioOptions(s);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected Scenario<I, O> defaultScenarioOptions(Scenario<I, O> defaultOptions) {
+		return defaultOptions;
+	}
+
+	@Override
+	protected ParallelFlux<I> sourceScalar(OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return Flux.<I>empty()
+					.parallel(4);
+		}
+		return Flux.<I>just(scenario.producingMapper.apply(0))
+				.parallel(4);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected ParallelFlux<I> sourceCallable(OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return (ParallelFlux<I>) Mono.fromRunnable(() -> {
+			})
+					.flux()
+					.parallel(4);
+		}
+		return (ParallelFlux<I>) Mono.fromCallable(() -> scenario.producingMapper.apply(0))
+				.flux()
+				.parallel(4);
+	}
+
+	@Override
+	protected ParallelFlux<I> withFluxSource(Flux<I> input) {
+		return input.parallel(4);
+	}
+
+	@Override
+	protected ParallelFlux<I> hide(ParallelFlux<I> input) {
+		return input.hide();
+	}
+
+	@Override
+	protected ParallelFlux<O> conditional(ParallelFlux<O> output) {
+		return output.filter(t -> true);
+	}
+
+	@Override
+	protected ParallelFlux<O> doOnSubscribe(ParallelFlux<O> output,
+			Consumer<? super Subscription> doOnSubscribe) {
+		return output.doOnSubscribe(doOnSubscribe);
 	}
 
 	static public final class Scenario<I, O>
 			extends OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> {
 
-		static <I, O> Scenario<I, O> create(Function<ParallelFlux<I>, ? extends ParallelFlux<O>> scenario) {
-			return new Scenario<>(scenario, new Exception("scenario:"));
-		}
-
 		Scenario(@Nullable Function<ParallelFlux<I>, ? extends ParallelFlux<O>> scenario, @Nullable Exception stack) {
 			super(scenario, stack);
+		}
+
+		static <I, O> Scenario<I, O> create(Function<ParallelFlux<I>, ? extends ParallelFlux<O>> scenario) {
+			return new Scenario<>(scenario, new Exception("scenario:"));
 		}
 
 		@Override
@@ -183,94 +272,5 @@ public abstract class ParallelOperatorTest<I, O>
 			super.applyAllOptions(source);
 			return this;
 		}
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorError() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected final OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> defaultScenarioOptions(
-			OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> defaultOptions) {
-		Scenario<I, O>
-				s = new Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
-				                                  .producer(3,
-						                                  i -> (I) (i == 0 ?
-								                                  "test" :
-								                                  "test" + i))
-				                                  .receive(3,
-						                                  i -> (O) (i == 0 ?
-								                                  "test" :
-								                                  "test" + i))
-				                                  .droppedError(new RuntimeException("dropped"))
-				                                  .droppedItem((I)"dropped");
-		this.defaultScenario = s;
-		return defaultScenarioOptions(s);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected Scenario<I, O> defaultScenarioOptions(Scenario<I, O> defaultOptions) {
-		return defaultOptions;
-	}
-
-	@Override
-	protected ParallelFlux<I> sourceScalar(OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return Flux.<I>empty()
-					.parallel(4);
-		}
-		return Flux.<I>just(scenario.producingMapper.apply(0))
-				.parallel(4);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected ParallelFlux<I> sourceCallable(OperatorScenario<I, ParallelFlux<I>, O, ParallelFlux<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return (ParallelFlux<I>)Mono.fromRunnable(() -> {})
-		        .flux()
-		        .parallel(4);
-		}
-		return (ParallelFlux<I>) Mono.fromCallable(() -> scenario.producingMapper.apply(0))
-		                             .flux()
-		                             .parallel(4);
-	}
-
-	@Override
-	protected ParallelFlux<I> withFluxSource(Flux<I> input) {
-		return input.parallel(4);
-	}
-
-	@Override
-	protected ParallelFlux<I> hide(ParallelFlux<I> input) {
-		return input.hide();
-	}
-
-	@Override
-	protected ParallelFlux<O> conditional(ParallelFlux<O> output) {
-		return output.filter(t -> true);
-	}
-
-	@Override
-	protected ParallelFlux<O> doOnSubscribe(ParallelFlux<O> output,
-			Consumer<? super Subscription> doOnSubscribe) {
-		return output.doOnSubscribe(doOnSubscribe);
 	}
 }

@@ -39,40 +39,29 @@ import reactor.util.context.Context;
  * @author Simon Baslé
  */
 interface OnNextFailureStrategy extends BiFunction<Throwable, Object, Throwable>,
-                                        BiPredicate<Throwable, Object> {
+		BiPredicate<Throwable, Object> {
 
 	/**
 	 * The key that can be used to store an {@link OnNextFailureStrategy} in a {@link Context}.
 	 */
 	String KEY_ON_NEXT_ERROR_STRATEGY = "reactor.onNextError.localStrategy";
+	//==== IMPLEMENTATIONS ====
+	OnNextFailureStrategy STOP = new OnNextFailureStrategy() {
 
-	@Override
-	@Nullable
-	default Throwable apply(Throwable throwable, @Nullable Object o) {
-		return process(throwable, o, Context.empty());
-	}
+		@Override
+		public boolean test(Throwable error, @Nullable Object value) {
+			return false;
+		}
 
-	@Override
-	boolean test(Throwable throwable, @Nullable Object o);
-
-	/**
-	 * Process an error and the optional value that caused it (when applicable) in
-	 * preparation for sequence resume, so that the error is not completely swallowed.
-	 * <p>
-	 * If the strategy cannot resume this kind of error (ie. {@link #test(Throwable, Object)}
-	 * returns false), return the original error. Any exception in the processing will be
-	 * caught and returned. If the strategy was able to process the error correctly,
-	 * returns null.
-	 *
-	 * @param error the error being recovered from.
-	 * @param value the value causing the error, null if not applicable.
-	 * @param context the {@link Context} associated with the recovering sequence.
-	 * @return null if the error was processed for resume, a {@link Throwable} to propagate
-	 * otherwise.
-	 * @see #test(Throwable, Object)
-	 */
-	@Nullable
-	Throwable process(Throwable error, @Nullable Object value, Context context);
+		@Override
+		public Throwable process(Throwable error, @Nullable Object value, Context context) {
+			Exceptions.throwIfFatal(error);
+			Throwable iee = new IllegalStateException("STOP strategy cannot process errors");
+			iee.addSuppressed(error);
+			return iee;
+		}
+	};
+	OnNextFailureStrategy RESUME_DROP = new ResumeDropStrategy(null);
 
 	/**
 	 * A strategy that never let any error resume.
@@ -142,32 +131,41 @@ interface OnNextFailureStrategy extends BiFunction<Throwable, Object, Throwable>
 		return new ResumeStrategy(causePredicate, errorConsumer);
 	}
 
-	//==== IMPLEMENTATIONS ====
-	OnNextFailureStrategy STOP = new OnNextFailureStrategy() {
+	@Override
+	@Nullable
+	default Throwable apply(Throwable throwable, @Nullable Object o) {
+		return process(throwable, o, Context.empty());
+	}
 
-		@Override
-		public boolean test(Throwable error, @Nullable Object value) {
-			return false;
-		}
+	@Override
+	boolean test(Throwable throwable, @Nullable Object o);
 
-		@Override
-		public Throwable process(Throwable error, @Nullable Object value, Context context) {
-			Exceptions.throwIfFatal(error);
-			Throwable iee = new IllegalStateException("STOP strategy cannot process errors");
-			iee.addSuppressed(error);
-			return iee;
-		}
-	};
-
-	OnNextFailureStrategy RESUME_DROP = new ResumeDropStrategy(null);
+	/**
+	 * Process an error and the optional value that caused it (when applicable) in
+	 * preparation for sequence resume, so that the error is not completely swallowed.
+	 * <p>
+	 * If the strategy cannot resume this kind of error (ie. {@link #test(Throwable, Object)}
+	 * returns false), return the original error. Any exception in the processing will be
+	 * caught and returned. If the strategy was able to process the error correctly,
+	 * returns null.
+	 *
+	 * @param error the error being recovered from.
+	 * @param value the value causing the error, null if not applicable.
+	 * @param context the {@link Context} associated with the recovering sequence.
+	 * @return null if the error was processed for resume, a {@link Throwable} to propagate
+	 * otherwise.
+	 * @see #test(Throwable, Object)
+	 */
+	@Nullable
+	Throwable process(Throwable error, @Nullable Object value, Context context);
 
 	final class ResumeStrategy implements OnNextFailureStrategy {
 
-		final Predicate<Throwable>  errorPredicate;
-		final BiConsumer<Throwable, Object>   errorConsumer;
+		final Predicate<Throwable> errorPredicate;
+		final BiConsumer<Throwable, Object> errorConsumer;
 
 		ResumeStrategy(@Nullable Predicate<Throwable> errorPredicate,
-					   BiConsumer<Throwable, Object> errorConsumer) {
+				BiConsumer<Throwable, Object> errorConsumer) {
 			this.errorPredicate = errorPredicate;
 			this.errorConsumer = errorConsumer;
 		}

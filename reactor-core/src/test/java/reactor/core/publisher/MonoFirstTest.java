@@ -32,28 +32,28 @@ public class MonoFirstTest {
 	public void allEmpty() {
 		Assert.assertNull(Mono.first(Mono.empty(),
 				Mono.delay(Duration.ofMillis(250))
-				    .ignoreElement())
-		                      .block());
+						.ignoreElement())
+				.block());
 	}
 
 	@Test(timeout = 5000)
 	public void someEmpty() {
 		Assert.assertNull(Mono.first(Mono.empty(), Mono.delay(Duration.ofMillis(250)))
-		                      .block());
+				.block());
 	}
 
 	@Test//(timeout = 5000)
 	public void all2NonEmpty() {
 		Assert.assertEquals(Integer.MIN_VALUE,
 				Mono.first(Mono.delay(Duration.ofMillis(150))
-				               .map(i -> Integer.MIN_VALUE), Mono.delay(Duration.ofMillis(250)))
-				    .block());
+						.map(i -> Integer.MIN_VALUE), Mono.delay(Duration.ofMillis(250)))
+						.block());
 	}
 
 	@Test
 	public void pairWise() {
 		Mono<Integer> f = Mono.first(Mono.just(1), Mono.just(2))
-		                      .or(Mono.just(3));
+				.or(Mono.just(3));
 
 		Assert.assertTrue(f instanceof MonoFirst);
 		MonoFirst<Integer> s = (MonoFirst<Integer>) f;
@@ -61,37 +61,37 @@ public class MonoFirstTest {
 		Assert.assertTrue(s.array.length == 3);
 
 		f.subscribeWith(AssertSubscriber.create())
-		 .assertValues(1)
-		 .assertComplete();
+				.assertValues(1)
+				.assertComplete();
 	}
 
 	@Test(timeout = 5000)
 	public void allEmptyIterable() {
 		Assert.assertNull(Mono.first(Arrays.asList(Mono.empty(),
 				Mono.delay(Duration.ofMillis(250))
-				    .ignoreElement()))
-		                      .block());
+						.ignoreElement()))
+				.block());
 	}
 
 	@Test(timeout = 5000)
 	public void someEmptyIterable() {
 		Assert.assertNull(Mono.first(Arrays.asList(Mono.empty(),
 				Mono.delay(Duration.ofMillis(250))))
-		                      .block());
+				.block());
 	}
 
 	@Test//(timeout = 5000)
 	public void all2NonEmptyIterable() {
 		Assert.assertEquals(Integer.MIN_VALUE,
 				Mono.first(Mono.delay(Duration.ofMillis(150))
-				               .map(i -> Integer.MIN_VALUE), Mono.delay(Duration.ofMillis(250)))
-				    .block());
+						.map(i -> Integer.MIN_VALUE), Mono.delay(Duration.ofMillis(250)))
+						.block());
 	}
 
 	@Test
 	public void pairWiseIterable() {
 		Mono<Integer> f = Mono.first(Arrays.asList(Mono.just(1), Mono.just(2)))
-		                      .or(Mono.just(3));
+				.or(Mono.just(3));
 
 		Assert.assertTrue(f instanceof MonoFirst);
 		MonoFirst<Integer> s = (MonoFirst<Integer>) f;
@@ -99,8 +99,8 @@ public class MonoFirstTest {
 		Assert.assertTrue(s.array.length == 2);
 
 		f.subscribeWith(AssertSubscriber.create())
-		 .assertValues(1)
-		 .assertComplete();
+				.assertValues(1)
+				.assertComplete();
 	}
 
 
@@ -108,26 +108,26 @@ public class MonoFirstTest {
 	public void firstMonoJust() {
 		MonoProcessor<Integer> mp = MonoProcessor.create();
 		StepVerifier.create(Mono.first(Mono.just(1), Mono.just(2))
-		                        .subscribeWith(mp))
-		            .then(() -> assertThat(mp.isError()).isFalse())
-		            .then(() -> assertThat(mp.isSuccess()).isTrue())
-		            .then(() -> assertThat(mp.isTerminated()).isTrue())
-		            .expectNext(1)
-		            .verifyComplete();
+				.subscribeWith(mp))
+				.then(() -> assertThat(mp.isError()).isFalse())
+				.then(() -> assertThat(mp.isSuccess()).isTrue())
+				.then(() -> assertThat(mp.isTerminated()).isTrue())
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	Mono<Integer> scenario_fastestSource() {
 		return Mono.first(Mono.delay(Duration.ofSeconds(4))
-		                      .map(s -> 1),
+						.map(s -> 1),
 				Mono.delay(Duration.ofSeconds(3))
-				    .map(s -> 2));
+						.map(s -> 2));
 	}
 
 	@Test
 	public void fastestSource() {
 		StepVerifier.withVirtualTime(this::scenario_fastestSource)
-		            .thenAwait(Duration.ofSeconds(4))
-		            .expectNext(2)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(4))
+				.expectNext(2)
+				.verifyComplete();
 	}
 }

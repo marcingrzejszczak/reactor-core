@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import javax.annotation.Nonnull;
 
 import org.reactivestreams.Publisher;
@@ -88,7 +89,7 @@ public class AssertSubscriber<T>
 	public static final Duration DEFAULT_VALUES_TIMEOUT = Duration.ofSeconds(3);
 
 	@SuppressWarnings("rawtypes")
-    private static final AtomicLongFieldUpdater<AssertSubscriber> REQUESTED =
+	private static final AtomicLongFieldUpdater<AssertSubscriber> REQUESTED =
 			AtomicLongFieldUpdater.newUpdater(AssertSubscriber.class, "requested");
 
 	@SuppressWarnings("rawtypes")
@@ -97,7 +98,7 @@ public class AssertSubscriber<T>
 					"values");
 
 	@SuppressWarnings("rawtypes")
-    private static final AtomicReferenceFieldUpdater<AssertSubscriber, Subscription> S =
+	private static final AtomicReferenceFieldUpdater<AssertSubscriber, Subscription> S =
 			AtomicReferenceFieldUpdater.newUpdater(AssertSubscriber.class, Subscription.class, "s");
 
 	private final Context context;
@@ -141,6 +142,30 @@ public class AssertSubscriber<T>
 
 //	 ==============================================================================================================
 //	 Static methods
+//	 ==============================================================================================================
+
+	public AssertSubscriber() {
+		this(Context.empty(), Long.MAX_VALUE);
+	}
+
+	public AssertSubscriber(long n) {
+		this(Context.empty(), n);
+	}
+
+	public AssertSubscriber(Context context) {
+		this(context, Long.MAX_VALUE);
+	}
+
+	public AssertSubscriber(Context context, long n) {
+		if (n < 0) {
+			throw new IllegalArgumentException("initialRequest >= required but it was " + n);
+		}
+		this.context = context;
+		REQUESTED.lazySet(this, n);
+	}
+
+//	 ==============================================================================================================
+//	 constructors
 //	 ==============================================================================================================
 
 	/**
@@ -218,41 +243,16 @@ public class AssertSubscriber<T>
 	 * <p>Be sure at least a publisher has subscribed to it via {@link Publisher#subscribe(Subscriber)}
 	 * before use assert methods.
 	 * @param n Number of elements to request (can be 0 if you want no initial demand).
-     * @param <T> the observed value type
-     * @return a fresh AssertSubscriber instance
+	 * @param <T> the observed value type
+	 * @return a fresh AssertSubscriber instance
 	 */
 	public static <T> AssertSubscriber<T> create(long n) {
 		return new AssertSubscriber<>(n);
 	}
 
 //	 ==============================================================================================================
-//	 constructors
-//	 ==============================================================================================================
-
-	public AssertSubscriber() {
-		 this(Context.empty(), Long.MAX_VALUE);
-	}
-
-	public AssertSubscriber(long n) {
-		 this(Context.empty(), n);
-	}
-
-	public AssertSubscriber(Context context) {
-		this(context, Long.MAX_VALUE);
-	}
-
-	public AssertSubscriber(Context context, long n) {
-		if (n < 0) {
-			throw new IllegalArgumentException("initialRequest >= required but it was " + n);
-		}
-		this.context = context;
-		REQUESTED.lazySet(this, n);
-	}
-
-//	 ==============================================================================================================
 //	 Configuration
 //	 ==============================================================================================================
-
 
 	/**
 	 * Enable or disabled the values storage. It is enabled by default, and can be disable
@@ -334,7 +334,7 @@ public class AssertSubscriber<T>
 							" = " + valueAndClass(t2), null);
 				}
 			}
-			else{
+			else {
 				break;
 			}
 		}
@@ -364,7 +364,7 @@ public class AssertSubscriber<T>
 	 */
 	public final AssertSubscriber<T> assertError(Class<? extends Throwable> clazz) {
 		assertNotComplete();
-		 int s = errors.size();
+		int s = errors.size();
 		if (s == 0) {
 			throw new AssertionError("No error", null);
 		}
@@ -390,7 +390,7 @@ public class AssertSubscriber<T>
 		if (s == 1) {
 			if (!Objects.equals(message,
 					errors.get(0)
-					      .getMessage())) {
+							.getMessage())) {
 				assertionError("Error class incompatible: expected = \"" + message +
 						"\", actual = \"" + errors.get(0).getMessage() + "\"", null);
 			}
@@ -469,7 +469,7 @@ public class AssertSubscriber<T>
 
 	/**
 	 * Assert no error signal has been received.
-     * @return this
+	 * @return this
 	 */
 	public final AssertSubscriber<T> assertNoError() {
 		int s = errors.size();
@@ -602,7 +602,7 @@ public class AssertSubscriber<T>
 	 * use this method.
 	 * @param expectedSequence the values to assert
 	 * @see #configureValuesStorage(boolean)
-     * @return this
+	 * @return this
 	 */
 	public final AssertSubscriber<T> assertValueSequence(Iterable<? extends T> expectedSequence) {
 		if (!valuesStorage) {
@@ -619,15 +619,18 @@ public class AssertSubscriber<T>
 				T t2 = expected.next();
 				if (!Objects.equals(t1, t2)) {
 					throw new AssertionError("The element with index " + i + " does not match: expected = " + valueAndClass(t2) + ", actual = "
-					  + valueAndClass(
-					  t1), null);
+							+ valueAndClass(
+							t1), null);
 				}
 				i++;
-			} else if (n1 && !n2) {
+			}
+			else if (n1 && !n2) {
 				throw new AssertionError("Actual contains more elements" + values, null);
-			} else if (!n1 && n2) {
+			}
+			else if (!n1 && n2) {
 				throw new AssertionError("Actual contains fewer elements: " + values, null);
-			} else {
+			}
+			else {
 				break;
 			}
 		}
@@ -684,7 +687,7 @@ public class AssertSubscriber<T>
 
 	/**
 	 * Blocking method that waits until a complete successfully or error signal is received.
-     * @return this
+	 * @return this
 	 */
 	public final AssertSubscriber<T> await() {
 		if (cdl.getCount() == 0) {
@@ -692,7 +695,8 @@ public class AssertSubscriber<T>
 		}
 		try {
 			cdl.await();
-		} catch (InterruptedException ex) {
+		}
+		catch (InterruptedException ex) {
 			throw new AssertionError("Wait interrupted", ex);
 		}
 		return this;
@@ -702,7 +706,7 @@ public class AssertSubscriber<T>
 	 * Blocking method that waits until a complete successfully or error signal is received
 	 * or until a timeout occurs.
 	 * @param timeout The timeout value
-     * @return this
+	 * @return this
 	 */
 	public final AssertSubscriber<T> await(Duration timeout) {
 		if (cdl.getCount() == 0) {
@@ -728,14 +732,14 @@ public class AssertSubscriber<T>
 	 */
 	public final AssertSubscriber<T> awaitAndAssertNextValueCount(final long n) {
 		await(valuesTimeout, () -> {
-			if(valuesStorage){
+			if (valuesStorage) {
 				return String.format("%d out of %d next values received within %d, " +
-						"values : %s",
+								"values : %s",
 						valueCount - nextValueAssertedCount,
 						n,
 						valuesTimeout.toMillis(),
 						values.toString()
-						);
+				);
 			}
 			return String.format("%d out of %d next values received within %d",
 					valueCount - nextValueAssertedCount,
@@ -779,14 +783,14 @@ public class AssertSubscriber<T>
 	 * (n is the number of expectations provided) to assert them.
 	 * @param expectations One or more methods that can verify the values and throw a
 	 * exception (like an {@link AssertionError}) if the value is not valid.
-     * @return this
+	 * @return this
 	 */
 	@SafeVarargs
 	public final AssertSubscriber<T> awaitAndAssertNextValuesWith(Consumer<T>... expectations) {
 		valuesStorage = true;
 		final int expectedValueCount = expectations.length;
 		await(valuesTimeout, () -> {
-			if(valuesStorage){
+			if (valuesStorage) {
 				return String.format("%d out of %d next values received within %d, " +
 								"values : %s",
 						valueCount - nextValueAssertedCount,
@@ -802,9 +806,9 @@ public class AssertSubscriber<T>
 		}, () -> valueCount >= (nextValueAssertedCount + expectedValueCount));
 		List<T> nextValuesSnapshot;
 		List<T> empty = new ArrayList<>();
-		for(;;){
+		for (; ; ) {
 			nextValuesSnapshot = values;
-			if(NEXT_VALUES.compareAndSet(this, values, empty)){
+			if (NEXT_VALUES.compareAndSet(this, values, empty)) {
 				break;
 			}
 		}
@@ -908,15 +912,16 @@ public class AssertSubscriber<T>
 					errors.add(new IllegalStateException("Subscription already set: " +
 							subscriptionCount));
 				}
-			} else {
+			}
+			else {
 				if (s instanceof Fuseable.QueueSubscription) {
-					this.qs = (Fuseable.QueueSubscription<T>)s;
+					this.qs = (Fuseable.QueueSubscription<T>) s;
 
 					int m = qs.requestFusion(requestMode);
 					establishedFusionMode = m;
 
 					if (m == Fuseable.SYNC) {
-						for (;;) {
+						for (; ; ) {
 							T v = qs.poll();
 							if (v == null) {
 								onComplete();
@@ -934,7 +939,8 @@ public class AssertSubscriber<T>
 					requestDeferred();
 				}
 			}
-		} else {
+		}
+		else {
 			if (!set(s)) {
 				if (!isCancelled()) {
 					errors.add(new IllegalStateException("Subscription already set: " +
@@ -983,7 +989,8 @@ public class AssertSubscriber<T>
 		Subscription a = s;
 		if (a != null) {
 			a.request(n);
-		} else {
+		}
+		else {
 			Operators.addCap(REQUESTED, this, n);
 
 			a = s;
@@ -1057,7 +1064,7 @@ public class AssertSubscriber<T>
 	 */
 	protected final boolean setWithoutRequesting(Subscription s) {
 		Objects.requireNonNull(s, "s");
-		for (;;) {
+		for (; ; ) {
 			Subscription a = this.s;
 			if (a == Operators.cancelledSubscription()) {
 				s.cancel();
@@ -1095,8 +1102,8 @@ public class AssertSubscriber<T>
 		List<Throwable> err = errors;
 		if (!err.isEmpty()) {
 			b.append(" (+ ")
-			 .append(err.size())
-			 .append(" errors)");
+					.append(err.size())
+					.append(" errors)");
 		}
 		AssertionError e = new AssertionError(b.toString(), cause);
 
@@ -1109,16 +1116,16 @@ public class AssertSubscriber<T>
 
 	protected final String fusionModeName(int mode) {
 		switch (mode) {
-			case -1:
-				return "Disabled";
-			case Fuseable.NONE:
-				return "None";
-			case Fuseable.SYNC:
-				return "Sync";
-			case Fuseable.ASYNC:
-				return "Async";
-			default:
-				return "Unknown(" + mode + ")";
+		case -1:
+			return "Disabled";
+		case Fuseable.NONE:
+			return "None";
+		case Fuseable.SYNC:
+			return "Sync";
+		case Fuseable.ASYNC:
+			return "Async";
+		default:
+			return "Unknown(" + mode + ")";
 		}
 	}
 
@@ -1129,7 +1136,7 @@ public class AssertSubscriber<T>
 		return o + " (" + o.getClass().getSimpleName() + ")";
 	}
 
-	public List<T> values(){
+	public List<T> values() {
 		return values;
 	}
 

@@ -70,18 +70,14 @@ final class FluxArray<T> extends Flux<T> implements Fuseable, SourceProducer<T> 
 	static final class ArraySubscription<T>
 			implements InnerProducer<T>, SynchronousSubscription<T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final T[] array;
-
-		int index;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ArraySubscription> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ArraySubscription.class, "requested");
+		final CoreSubscriber<? super T> actual;
+		final T[] array;
+		int index;
+		volatile boolean cancelled;
+		volatile long requested;
 
 		ArraySubscription(CoreSubscriber<? super T> actual, T[] array) {
 			this.actual = actual;
@@ -230,19 +226,15 @@ final class FluxArray<T> extends Flux<T> implements Fuseable, SourceProducer<T> 
 	static final class ArrayConditionalSubscription<T>
 			implements InnerProducer<T>, SynchronousSubscription<T> {
 
-		final ConditionalSubscriber<? super T> actual;
-
-		final T[] array;
-
-		int index;
-
-		volatile boolean cancelled;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ArrayConditionalSubscription> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ArrayConditionalSubscription.class,
 						"requested");
+		final ConditionalSubscriber<? super T> actual;
+		final T[] array;
+		int index;
+		volatile boolean cancelled;
+		volatile long requested;
 
 		ArrayConditionalSubscription(ConditionalSubscriber<? super T> actual, T[] array) {
 			this.actual = actual;

@@ -31,9 +31,9 @@ import reactor.core.CoreSubscriber;
  */
 final class MonoExpand<T> extends FluxFromMonoOperator<T, T> {
 
-	final boolean                                               breadthFirst;
+	final boolean breadthFirst;
 	final Function<? super T, ? extends Publisher<? extends T>> expander;
-	final int                                                   capacityHint;
+	final int capacityHint;
 
 	MonoExpand(Mono<T> source,
 			Function<? super T, ? extends Publisher<? extends T>> expander,

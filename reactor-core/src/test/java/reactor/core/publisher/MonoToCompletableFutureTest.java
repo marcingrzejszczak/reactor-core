@@ -26,7 +26,7 @@ public class MonoToCompletableFutureTest {
 	@Test
 	public void normal() throws Exception {
 		CompletableFuture<Integer> f = Mono.just(1)
-		                                   .toFuture();
+				.toFuture();
 
 		assertThat(f.get()).isEqualTo(1);
 	}

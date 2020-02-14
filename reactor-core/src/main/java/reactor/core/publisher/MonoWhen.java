@@ -33,7 +33,7 @@ import reactor.util.context.Context;
  * Waits for all Mono sources to produce a value or terminate, and if all of them produced
  * a value, emit a Tuples of those values; otherwise terminate.
  */
-final class MonoWhen extends Mono<Void> implements SourceProducer<Void>  {
+final class MonoWhen extends Mono<Void> implements SourceProducer<Void> {
 
 	final boolean delayError;
 
@@ -107,14 +107,12 @@ final class MonoWhen extends Mono<Void> implements SourceProducer<Void>  {
 
 	static final class WhenCoordinator extends Operators.MonoSubscriber<Object, Void> {
 
-		final WhenInner[] subscribers;
-
-		final boolean delayError;
-
-		volatile int done;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<WhenCoordinator> DONE =
 				AtomicIntegerFieldUpdater.newUpdater(WhenCoordinator.class, "done");
+		final WhenInner[] subscribers;
+		final boolean delayError;
+		volatile int done;
 
 		@SuppressWarnings("unchecked")
 		WhenCoordinator(CoreSubscriber<? super Void> subscriber,
@@ -222,14 +220,13 @@ final class MonoWhen extends Mono<Void> implements SourceProducer<Void>  {
 
 	static final class WhenInner implements InnerConsumer<Object> {
 
-		final WhenCoordinator parent;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WhenInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(WhenInner.class,
 						Subscription.class,
 						"s");
+		final WhenCoordinator parent;
+		volatile Subscription s;
 		Throwable error;
 
 		WhenInner(WhenCoordinator parent) {

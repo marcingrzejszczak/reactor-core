@@ -37,6 +37,35 @@ import reactor.util.annotation.Nullable;
 public final class Queues {
 
 	public static final int CAPACITY_UNSURE = Integer.MIN_VALUE;
+	/**
+	 * An allocation friendly default of available slots in a given container, e.g. slow publishers and or fast/few
+	 * subscribers
+	 */
+	public static final int XS_BUFFER_SIZE = Math.max(8,
+			Integer.parseInt(System.getProperty("reactor.bufferSize.x", "32")));
+	/**
+	 * A small default of available slots in a given container, compromise between intensive pipelines, small
+	 * subscribers numbers and memory use.
+	 */
+	public static final int SMALL_BUFFER_SIZE = Math.max(16,
+			Integer.parseInt(System.getProperty("reactor.bufferSize.small", "256")));
+	@SuppressWarnings("rawtypes")
+	static final Supplier ZERO_SUPPLIER = ZeroQueue::new;
+	@SuppressWarnings("rawtypes")
+	static final Supplier ONE_SUPPLIER = OneQueue::new;
+	@SuppressWarnings("rawtypes")
+	static final Supplier XS_SUPPLIER = () -> new SpscArrayQueue<>(XS_BUFFER_SIZE);
+	@SuppressWarnings("rawtypes")
+	static final Supplier SMALL_SUPPLIER = () -> new SpscArrayQueue<>(SMALL_BUFFER_SIZE);
+	@SuppressWarnings("rawtypes")
+	static final Supplier SMALL_UNBOUNDED =
+			() -> new SpscLinkedArrayQueue<>(SMALL_BUFFER_SIZE);
+	@SuppressWarnings("rawtypes")
+	static final Supplier XS_UNBOUNDED = () -> new SpscLinkedArrayQueue<>(XS_BUFFER_SIZE);
+
+	private Queues() {
+		//prevent construction
+	}
 
 	/**
 	 * Return the capacity of a given {@link Queue} in a best effort fashion. Queues that
@@ -61,7 +90,7 @@ public final class Queues {
 		else if (q instanceof SpscArrayQueue) {
 			return ((SpscArrayQueue) q).length();
 		}
-		else if(q instanceof MpscLinkedQueue) {
+		else if (q instanceof MpscLinkedQueue) {
 			return Integer.MAX_VALUE;
 		}
 		else if (q instanceof BlockingQueue) {
@@ -74,19 +103,6 @@ public final class Queues {
 			return CAPACITY_UNSURE;
 		}
 	}
-
-	/**
-	 * An allocation friendly default of available slots in a given container, e.g. slow publishers and or fast/few
-	 * subscribers
-	 */
-	public static final int XS_BUFFER_SIZE    = Math.max(8,
-			Integer.parseInt(System.getProperty("reactor.bufferSize.x", "32")));
-	/**
-	 * A small default of available slots in a given container, compromise between intensive pipelines, small
-	 * subscribers numbers and memory use.
-	 */
-	public static final int SMALL_BUFFER_SIZE = Math.max(16,
-			Integer.parseInt(System.getProperty("reactor.bufferSize.small", "256")));
 
 	/**
 	 * Calculate the next power of 2, greater than or equal to x.<p> From Hacker's Delight, Chapter 3, Harry S. Warren
@@ -128,7 +144,7 @@ public final class Queues {
 		if (adjustedBatchSize > 10_000_000) {
 			return SMALL_UNBOUNDED;
 		}
-		else{
+		else {
 			return () -> new SpscArrayQueue<>(adjustedBatchSize);
 		}
 	}
@@ -200,7 +216,7 @@ public final class Queues {
 		else if (linkSize == Integer.MAX_VALUE || linkSize == SMALL_BUFFER_SIZE) {
 			return unbounded();
 		}
-		return  () -> new SpscLinkedArrayQueue<>(linkSize);
+		return () -> new SpscLinkedArrayQueue<>(linkSize);
 	}
 
 	/**
@@ -224,17 +240,15 @@ public final class Queues {
 		return MpscLinkedQueue::new;
 	}
 
-	private Queues() {
-		//prevent construction
-	}
-
 	static final class OneQueue<T> extends AtomicReference<T> implements Queue<T> {
-        @Override
+		private static final long serialVersionUID = -6079491923525372331L;
+
+		@Override
 		public boolean add(T t) {
 
-		    while (!offer(t));
+			while (!offer(t)) ;
 
-		    return true;
+			return true;
 		}
 
 		@Override
@@ -275,7 +289,7 @@ public final class Queues {
 		@Override
 		public boolean offer(T t) {
 			if (get() != null) {
-			    return false;
+				return false;
 			}
 			lazySet(t);
 			return true;
@@ -292,7 +306,7 @@ public final class Queues {
 		public T poll() {
 			T v = get();
 			if (v != null) {
-			    lazySet(null);
+				lazySet(null);
 			}
 			return v;
 		}
@@ -328,7 +342,7 @@ public final class Queues {
 			if (t == null) {
 				return new Object[0];
 			}
-			return new Object[]{t};
+			return new Object[] {t};
 		}
 
 		@Override
@@ -347,11 +361,11 @@ public final class Queues {
 			}
 			return a;
 		}
-
-		private static final long serialVersionUID = -6079491923525372331L;
 	}
 
 	static final class ZeroQueue<T> implements Queue<T>, Serializable {
+
+		private static final long serialVersionUID = -8876883675795156827L;
 
 		@Override
 		public boolean add(T t) {
@@ -448,8 +462,6 @@ public final class Queues {
 			}
 			return a;
 		}
-
-		private static final long serialVersionUID = -8876883675795156827L;
 	}
 
 	static final class QueueIterator<T> implements Iterator<T> {
@@ -475,18 +487,4 @@ public final class Queues {
 			queue.remove();
 		}
 	}
-
-    @SuppressWarnings("rawtypes")
-    static final Supplier ZERO_SUPPLIER  = ZeroQueue::new;
-    @SuppressWarnings("rawtypes")
-    static final Supplier ONE_SUPPLIER   = OneQueue::new;
-	@SuppressWarnings("rawtypes")
-    static final Supplier XS_SUPPLIER    = () -> new SpscArrayQueue<>(XS_BUFFER_SIZE);
-	@SuppressWarnings("rawtypes")
-    static final Supplier SMALL_SUPPLIER = () -> new SpscArrayQueue<>(SMALL_BUFFER_SIZE);
-	@SuppressWarnings("rawtypes")
-	static final Supplier SMALL_UNBOUNDED =
-			() -> new SpscLinkedArrayQueue<>(SMALL_BUFFER_SIZE);
-	@SuppressWarnings("rawtypes")
-	static final Supplier XS_UNBOUNDED = () -> new SpscLinkedArrayQueue<>(XS_BUFFER_SIZE);
 }

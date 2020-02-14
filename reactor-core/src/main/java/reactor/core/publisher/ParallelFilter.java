@@ -27,12 +27,12 @@ import reactor.util.annotation.Nullable;
  *
  * @param <T> the input value type
  */
-final class ParallelFilter<T> extends ParallelFlux<T> implements Scannable{
+final class ParallelFilter<T> extends ParallelFlux<T> implements Scannable {
 
 	final ParallelFlux<T> source;
-	
+
 	final Predicate<? super T> predicate;
-	
+
 	ParallelFilter(ParallelFlux<T> source, Predicate<? super T> predicate) {
 		this.source = source;
 		this.predicate = predicate;
@@ -53,7 +53,7 @@ final class ParallelFilter<T> extends ParallelFlux<T> implements Scannable{
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
 
 		CoreSubscriber<? super T>[] parents = new CoreSubscriber[n];
@@ -63,7 +63,7 @@ final class ParallelFilter<T> extends ParallelFlux<T> implements Scannable{
 		for (int i = 0; i < n; i++) {
 			if (conditional) {
 				parents[i] = new FluxFilter.FilterConditionalSubscriber<>(
-						(Fuseable.ConditionalSubscriber<T>)subscribers[i], predicate);
+						(Fuseable.ConditionalSubscriber<T>) subscribers[i], predicate);
 			}
 			else {
 				parents[i] = new FluxFilter.FilterSubscriber<>(subscribers[i], predicate);

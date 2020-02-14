@@ -54,15 +54,12 @@ final class FluxRepeatPredicate<T> extends InternalFluxOperator<T, T> {
 	static final class RepeatPredicateSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final CorePublisher<? extends T> source;
-
-		final BooleanSupplier predicate;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RepeatPredicateSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(RepeatPredicateSubscriber.class, "wip");
-
+				AtomicIntegerFieldUpdater.newUpdater(RepeatPredicateSubscriber.class, "wip");
+		final CorePublisher<? extends T> source;
+		final BooleanSupplier predicate;
+		volatile int wip;
 		long produced;
 
 		RepeatPredicateSubscriber(CorePublisher<? extends T> source,
@@ -82,17 +79,19 @@ final class FluxRepeatPredicate<T> extends InternalFluxOperator<T, T> {
 		@Override
 		public void onComplete() {
 			boolean b;
-			
+
 			try {
 				b = predicate.getAsBoolean();
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				actual.onError(Operators.onOperatorError(e, actual.currentContext()));
 				return;
 			}
-			
+
 			if (b) {
 				resubscribe();
-			} else {
+			}
+			else {
 				actual.onComplete();
 			}
 		}
@@ -112,7 +111,8 @@ final class FluxRepeatPredicate<T> extends InternalFluxOperator<T, T> {
 
 					source.subscribe(this);
 
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 		}
 	}

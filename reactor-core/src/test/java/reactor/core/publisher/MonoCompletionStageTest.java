@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,15 +38,15 @@ public class MonoCompletionStageTest {
 				.doOnSubscribe(subRef::set);
 
 		StepVerifier.create(mono)
-		            .expectSubscription()
-		            .then(() -> {
-		            	subRef.get().cancel();
-		            	future.completeExceptionally(new IllegalStateException("boom"));
-		            	future.complete(1);
-		            })
-		            .thenCancel()//already cancelled but need to get to verification
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom");
+				.expectSubscription()
+				.then(() -> {
+					subRef.get().cancel();
+					future.completeExceptionally(new IllegalStateException("boom"));
+					future.complete(1);
+				})
+				.thenCancel()//already cancelled but need to get to verification
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test
@@ -61,10 +60,10 @@ public class MonoCompletionStageTest {
 					});
 
 			StepVerifier.create(mono)
-			            .expectSubscription()
-			            .thenCancel()
-			            .verifyThenAssertThat()
-			            .hasNotDroppedErrors();
+					.expectSubscription()
+					.thenCancel()
+					.verifyThenAssertThat()
+					.hasNotDroppedErrors();
 
 			assertThat(future).isCancelled();
 		}
@@ -81,11 +80,11 @@ public class MonoCompletionStageTest {
 					});
 
 			StepVerifier.create(mono)
-			            .expectSubscription()
-			            .thenAwait(Duration.ofMillis(10))
-			            .thenCancel()
-			            .verifyThenAssertThat()
-			            .hasNotDroppedErrors();
+					.expectSubscription()
+					.thenAwait(Duration.ofMillis(10))
+					.thenCancel()
+					.verifyThenAssertThat()
+					.hasNotDroppedErrors();
 
 			assertThat(future).isCancelled();
 		}
@@ -102,22 +101,22 @@ public class MonoCompletionStageTest {
 					});
 
 			StepVerifier.create(mono.timeout(Duration.ofMillis(10)))
-			            .expectSubscription()
-			            .expectErrorSatisfies(e ->
-					            assertThat(e).hasMessageStartingWith("Did not observe any item or terminal signal within 10ms"))
-			            .verifyThenAssertThat()
-			            .hasNotDroppedErrors();
+					.expectSubscription()
+					.expectErrorSatisfies(e ->
+							assertThat(e).hasMessageStartingWith("Did not observe any item or terminal signal within 10ms"))
+					.verifyThenAssertThat()
+					.hasNotDroppedErrors();
 
 			assertThat(future).isCancelled();
 		}
 	}
 
 	@Test
-	public void fromCompletableFuture(){
+	public void fromCompletableFuture() {
 		CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "helloFuture");
 
 		assertThat(Mono.fromFuture(f)
-		               .block()).isEqualToIgnoringCase("helloFuture");
+				.block()).isEqualToIgnoringCase("helloFuture");
 	}
 
 	@Test
@@ -139,11 +138,11 @@ public class MonoCompletionStageTest {
 					throw new StackOverflowError("boom, good bye Future");
 				})
 		)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(1))
-		            .thenCancel()
-		            .verifyThenAssertThat()
-		            .hasDroppedErrorWithMessage("boom, good bye Future");
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(1))
+				.thenCancel()
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("boom, good bye Future");
 	}
 
 	@Test
@@ -152,9 +151,9 @@ public class MonoCompletionStageTest {
 		CompletableFuture<Integer> future = new CompletableFuture<>();
 
 		Mono.fromCompletionStage(future)
-		    .as(StepVerifier::create)
-		    .then(() -> future.completeExceptionally(expected))
-		    .verifyErrorSatisfies(e -> assertThat(e).isSameAs(expected));
+				.as(StepVerifier::create)
+				.then(() -> future.completeExceptionally(expected))
+				.verifyErrorSatisfies(e -> assertThat(e).isSameAs(expected));
 	}
 
 	@Test
@@ -164,8 +163,8 @@ public class MonoCompletionStageTest {
 		Mono.fromCompletionStage(future.whenComplete((s, throwable) -> {
 			throw new IllegalStateException("boom");
 		}))
-		    .as(StepVerifier::create)
-		    .then(() -> future.complete("Success"))
-		    .verifyError(IllegalStateException.class);
+				.as(StepVerifier::create)
+				.then(() -> future.complete("Success"))
+				.verifyError(IllegalStateException.class);
 	}
 }

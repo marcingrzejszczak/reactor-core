@@ -49,14 +49,12 @@ final class FluxCancelOn<T> extends InternalFluxOperator<T, T> {
 	static final class CancelSubscriber<T>
 			implements InnerOperator<T, T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-		final Scheduler             scheduler;
-
-		Subscription s;
-
-		volatile int cancelled = 0;
 		static final AtomicIntegerFieldUpdater<CancelSubscriber> CANCELLED =
 				AtomicIntegerFieldUpdater.newUpdater(CancelSubscriber.class, "cancelled");
+		final CoreSubscriber<? super T> actual;
+		final Scheduler scheduler;
+		Subscription s;
+		volatile int cancelled = 0;
 
 		CancelSubscriber(CoreSubscriber<? super T> actual, Scheduler scheduler) {
 			this.actual = actual;

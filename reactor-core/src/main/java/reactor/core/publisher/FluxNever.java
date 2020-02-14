@@ -34,16 +34,6 @@ final class FluxNever extends Flux<Object> implements SourceProducer<Object> {
 		// deliberately no op
 	}
 
-	@Override
-	public void subscribe(CoreSubscriber<? super Object> actual) {
-		actual.onSubscribe(Operators.emptySubscription());
-	}
-
-	@Override
-	public Object scanUnsafe(Attr key) {
-		return null; //no particular key to be represented, still useful in hooks
-	}
-
 	/**
 	 * Returns a properly parametrized instance of this never Publisher.
 	 *
@@ -53,6 +43,16 @@ final class FluxNever extends Flux<Object> implements SourceProducer<Object> {
 	@SuppressWarnings("unchecked")
 	static <T> Flux<T> instance() {
 		return (Flux<T>) INSTANCE;
+	}
+
+	@Override
+	public void subscribe(CoreSubscriber<? super Object> actual) {
+		actual.onSubscribe(Operators.emptySubscription());
+	}
+
+	@Override
+	public Object scanUnsafe(Attr key) {
+		return null; //no particular key to be represented, still useful in hooks
 	}
 
 }

@@ -49,7 +49,7 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 	final Function<? super Flux<Throwable>, ? extends Publisher<?>> whenSourceFactory;
 
 	FluxRetryWhen(Flux<? extends T> source,
-							  Function<? super Flux<Throwable>, ? extends Publisher<?>> whenSourceFactory) {
+			Function<? super Flux<Throwable>, ? extends Publisher<?>> whenSourceFactory) {
 		super(source);
 		this.whenSourceFactory = Objects.requireNonNull(whenSourceFactory, "whenSourceFactory");
 	}
@@ -74,7 +74,7 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 
 		try {
 			p = Objects.requireNonNull(whenSourceFactory.apply(other),
-			"The whenSourceFactory returned a null Publisher");
+					"The whenSourceFactory returned a null Publisher");
 		}
 		catch (Throwable e) {
 			s.onError(Operators.onOperatorError(e, s.currentContext()));
@@ -88,6 +88,67 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 		}
 	}
 
+	static Function<Flux<Throwable>, Publisher<Long>> randomExponentialBackoffFunction(
+			long numRetries, Duration firstBackoff, Duration maxBackoff,
+			double jitterFactor, Scheduler backoffScheduler) {
+		if (jitterFactor < 0 || jitterFactor > 1) throw new IllegalArgumentException("jitterFactor must be between 0 and 1 (default 0.5)");
+		Objects.requireNonNull(firstBackoff, "firstBackoff is required");
+		Objects.requireNonNull(maxBackoff, "maxBackoff is required");
+		Objects.requireNonNull(backoffScheduler, "backoffScheduler is required");
+
+		return t -> t.index()
+				.flatMap(t2 -> {
+					long iteration = t2.getT1();
+
+					if (iteration >= numRetries) {
+						return Mono.<Long>error(new IllegalStateException("Retries exhausted: " + iteration + "/" + numRetries, t2.getT2()));
+					}
+
+					Duration nextBackoff;
+					try {
+						nextBackoff = firstBackoff.multipliedBy((long) Math.pow(2, iteration));
+						if (nextBackoff.compareTo(maxBackoff) > 0) {
+							nextBackoff = maxBackoff;
+						}
+					}
+					catch (ArithmeticException overflow) {
+						nextBackoff = maxBackoff;
+					}
+
+					//short-circuit delay == 0 case
+					if (nextBackoff.isZero()) {
+						return Mono.just(iteration);
+					}
+
+					ThreadLocalRandom random = ThreadLocalRandom.current();
+
+					long jitterOffset;
+					try {
+						jitterOffset = nextBackoff.multipliedBy((long) (100 * jitterFactor))
+								.dividedBy(100)
+								.toMillis();
+					}
+					catch (ArithmeticException ae) {
+						jitterOffset = Math.round(Long.MAX_VALUE * jitterFactor);
+					}
+					long lowBound = Math.max(firstBackoff.minus(nextBackoff)
+							.toMillis(), -jitterOffset);
+					long highBound = Math.min(maxBackoff.minus(nextBackoff)
+							.toMillis(), jitterOffset);
+
+					long jitter;
+					if (highBound == lowBound) {
+						if (highBound == 0) jitter = 0;
+						else jitter = random.nextLong(highBound);
+					}
+					else {
+						jitter = random.nextLong(lowBound, highBound);
+					}
+					Duration effectiveBackoff = nextBackoff.plusMillis(jitter);
+					return Mono.delay(effectiveBackoff, backoffScheduler);
+				});
+	}
+
 	@Override
 	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
 		subscribe(actual, whenSourceFactory, source);
@@ -95,22 +156,17 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 	}
 
 	static final class RetryWhenMainSubscriber<T> extends
-	                                              Operators.MultiSubscriptionSubscriber<T, T> {
+			Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Operators.DeferredSubscription otherArbiter;
-
-		final Subscriber<Throwable> signaller;
-
-		final CorePublisher<? extends T> source;
-
-		Context context;
-
-		volatile int wip;
 		static final AtomicIntegerFieldUpdater<RetryWhenMainSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(RetryWhenMainSubscriber.class, "wip");
-
+				AtomicIntegerFieldUpdater.newUpdater(RetryWhenMainSubscriber.class, "wip");
+		final Operators.DeferredSubscription otherArbiter;
+		final Subscriber<Throwable> signaller;
+		final CorePublisher<? extends T> source;
+		Context context;
+		volatile int wip;
 		long produced;
-		
+
 		RetryWhenMainSubscriber(CoreSubscriber<? super T> actual, Subscriber<Throwable> signaller,
 				CorePublisher<? extends T> source) {
 			super(actual);
@@ -185,7 +241,8 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 
 					source.subscribe(this);
 
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 		}
 
@@ -203,10 +260,9 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 	}
 
 	static final class RetryWhenOtherSubscriber extends Flux<Throwable>
-	implements InnerConsumer<Object>, OptimizableOperator<Throwable, Throwable> {
-		RetryWhenMainSubscriber<?> main;
-
+			implements InnerConsumer<Object>, OptimizableOperator<Throwable, Throwable> {
 		final DirectProcessor<Throwable> completionSignal = new DirectProcessor<>();
+		RetryWhenMainSubscriber<?> main;
 
 		@Override
 		public Context currentContext() {
@@ -261,66 +317,5 @@ final class FluxRetryWhen<T> extends InternalFluxOperator<T, T> {
 		public OptimizableOperator<?, ? extends Throwable> nextOptimizableSource() {
 			return null;
 		}
-	}
-
-	static Function<Flux<Throwable>, Publisher<Long>> randomExponentialBackoffFunction(
-			long numRetries, Duration firstBackoff, Duration maxBackoff,
-			double jitterFactor, Scheduler backoffScheduler) {
-		if (jitterFactor < 0 || jitterFactor > 1) throw new IllegalArgumentException("jitterFactor must be between 0 and 1 (default 0.5)");
-		Objects.requireNonNull(firstBackoff, "firstBackoff is required");
-		Objects.requireNonNull(maxBackoff, "maxBackoff is required");
-		Objects.requireNonNull(backoffScheduler, "backoffScheduler is required");
-
-		return t -> t.index()
-		             .flatMap(t2 -> {
-			             long iteration = t2.getT1();
-
-			             if (iteration >= numRetries) {
-				             return Mono.<Long>error(new IllegalStateException("Retries exhausted: " + iteration + "/" + numRetries, t2.getT2()));
-			             }
-
-			             Duration nextBackoff;
-			             try {
-				             nextBackoff = firstBackoff.multipliedBy((long) Math.pow(2, iteration));
-				             if (nextBackoff.compareTo(maxBackoff) > 0) {
-					             nextBackoff = maxBackoff;
-				             }
-			             }
-			             catch (ArithmeticException overflow) {
-				             nextBackoff = maxBackoff;
-			             }
-
-			             //short-circuit delay == 0 case
-			             if (nextBackoff.isZero()) {
-				             return Mono.just(iteration);
-			             }
-
-			             ThreadLocalRandom random = ThreadLocalRandom.current();
-
-			             long jitterOffset;
-			             try {
-				             jitterOffset = nextBackoff.multipliedBy((long) (100 * jitterFactor))
-				                                       .dividedBy(100)
-				                                       .toMillis();
-			             }
-			             catch (ArithmeticException ae) {
-				             jitterOffset = Math.round(Long.MAX_VALUE * jitterFactor);
-			             }
-			             long lowBound = Math.max(firstBackoff.minus(nextBackoff)
-			                                                  .toMillis(), -jitterOffset);
-			             long highBound = Math.min(maxBackoff.minus(nextBackoff)
-			                                                 .toMillis(), jitterOffset);
-
-			             long jitter;
-			             if (highBound == lowBound) {
-				             if (highBound == 0) jitter = 0;
-				             else jitter = random.nextLong(highBound);
-			             }
-			             else {
-				             jitter = random.nextLong(lowBound, highBound);
-			             }
-			             Duration effectiveBackoff = nextBackoff.plusMillis(jitter);
-			             return Mono.delay(effectiveBackoff, backoffScheduler);
-		             });
 	}
 }

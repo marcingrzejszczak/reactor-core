@@ -54,18 +54,22 @@ public class ParallelSchedulerTest extends AbstractSchedulerTest {
 	public void scheduledDoesntReject() {
 		Scheduler s = scheduler();
 
-		assertThat(s.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+		assertThat(s.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct delayed scheduling")
 				.isNotNull();
-		assertThat(s.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+		assertThat(s.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct periodic scheduling")
 				.isNotNull();
 
 		Scheduler.Worker w = s.createWorker();
-		assertThat(w.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+		assertThat(w.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker delayed scheduling")
 				.isNotNull();
-		assertThat(w.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+		assertThat(w.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker periodic scheduling")
 				.isNotNull();
 	}
@@ -83,9 +87,9 @@ public class ParallelSchedulerTest extends AbstractSchedulerTest {
 						.doOnSubscribe(sub -> start.set(System.nanoTime()))
 						.doOnTerminate(() -> end.set(System.nanoTime()))
 				)
-				            .expectSubscription()
-				            .expectNext(0L)
-				            .verifyComplete();
+						.expectSubscription()
+						.expectNext(0L)
+						.verifyComplete();
 
 				long endValue = end.longValue();
 				long startValue = start.longValue();
@@ -108,14 +112,14 @@ public class ParallelSchedulerTest extends AbstractSchedulerTest {
 
 		try {
 			StepVerifier.create(Flux.interval(Duration.ofMillis(100), Duration.ofMillis(200), s))
-			            .expectSubscription()
-			            .expectNoEvent(Duration.ofMillis(100))
-			            .expectNext(0L)
-			            .expectNoEvent(Duration.ofMillis(200))
-			            .expectNext(1L)
-			            .expectNoEvent(Duration.ofMillis(200))
-			            .expectNext(2L)
-			            .thenCancel();
+					.expectSubscription()
+					.expectNoEvent(Duration.ofMillis(100))
+					.expectNext(0L)
+					.expectNoEvent(Duration.ofMillis(200))
+					.expectNext(1L)
+					.expectNoEvent(Duration.ofMillis(200))
+					.expectNext(2L)
+					.thenCancel();
 		}
 		finally {
 			s.dispose();
@@ -128,13 +132,13 @@ public class ParallelSchedulerTest extends AbstractSchedulerTest {
 		int m = 25;
 
 		Scheduler scheduler = Schedulers.newParallel("test", n);
-		CountDownLatch latch = new CountDownLatch(m*n);
+		CountDownLatch latch = new CountDownLatch(m * n);
 		ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
 
 		for (int i = 0; i < m * n; i++) {
 			scheduler.schedule(() -> {
 				String threadName = Thread.currentThread().getName();
-				map.compute(threadName, (name, val) -> Optional.ofNullable(val).map(x -> x+1).orElse(1));
+				map.compute(threadName, (name, val) -> Optional.ofNullable(val).map(x -> x + 1).orElse(1));
 				latch.countDown();
 			});
 		}

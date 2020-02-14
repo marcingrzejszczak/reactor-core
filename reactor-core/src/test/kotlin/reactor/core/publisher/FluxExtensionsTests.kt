@@ -171,8 +171,8 @@ class FluxExtensionsTests {
     fun onErrorReturn() {
         StepVerifier
                 .create(IOException()
-                    .toFlux<String>()
-                    .onErrorReturn(IOException::class, "foo"))
+                        .toFlux<String>()
+                        .onErrorReturn(IOException::class, "foo"))
                 .expectNext("foo")
                 .verifyComplete()
     }

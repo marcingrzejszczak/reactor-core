@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
-import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.test.subscriber.AssertSubscriber;
 
@@ -48,8 +47,8 @@ public class MonoSingleTest {
 		Flux.just(1).single().subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -59,14 +58,14 @@ public class MonoSingleTest {
 		Flux.just(1).single().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -77,38 +76,38 @@ public class MonoSingleTest {
 		Flux.<Integer>empty().single().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(NoSuchElementException.class)
-		  .assertNotComplete();
+				.assertError(NoSuchElementException.class)
+				.assertNotComplete();
 	}
 
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.error(new RuntimeException("forced failure"))
-		                        .single())
-		            .verifyErrorMessage("forced failure");
+				.single())
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void errorHide() {
 		StepVerifier.create(Flux.error(new RuntimeException("forced failure"))
-		                        .hide()
-		                        .single())
-		            .verifyErrorMessage("forced failure");
+				.hide()
+				.single())
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void errorDefault() {
 		StepVerifier.create(Flux.error(new RuntimeException("forced failure"))
-		                        .single("bla"))
-		            .verifyErrorMessage("forced failure");
+				.single("bla"))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void errorHideDefault() {
 		StepVerifier.create(Flux.error(new RuntimeException("forced failure"))
-		                        .hide()
-		                        .single("bla"))
-		            .verifyErrorMessage("forced failure");
+				.hide()
+				.single("bla"))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
@@ -118,8 +117,8 @@ public class MonoSingleTest {
 		Flux.<Integer>empty().single(1).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -129,14 +128,14 @@ public class MonoSingleTest {
 		Flux.<Integer>empty().single(1).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -147,8 +146,8 @@ public class MonoSingleTest {
 		Flux.range(1, 10).single().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(IndexOutOfBoundsException.class)
-		  .assertNotComplete();
+				.assertError(IndexOutOfBoundsException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -159,96 +158,97 @@ public class MonoSingleTest {
 		Flux.range(1, 10).single().subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertNoValues()
-		  .assertError(IndexOutOfBoundsException.class)
-		  .assertNotComplete();
+				.assertError(IndexOutOfBoundsException.class)
+				.assertNotComplete();
 	}
 
 	@Test
 	public void singleCallable() {
 		StepVerifier.create(Mono.fromCallable(() -> 1)
-		                        .flux()
-		                        .single())
-		            .expectNext(1)
-		            .verifyComplete();
+				.flux()
+				.single())
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void singleFallbackEmpty() {
 		StepVerifier.create(Flux.empty()
-		                        .single(1))
-		            .expectNext(1)
-		            .verifyComplete();
+				.single(1))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void singleFallbackJust() {
 		StepVerifier.create(Flux.just(1)
-		                        .single(2))
-		            .expectNext(1)
-		            .verifyComplete();
+				.single(2))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void singleFallbackCallable() {
 		StepVerifier.create(Mono.fromCallable(() -> 1)
-		                        .flux()
-		                        .single(2))
-		            .expectNext(1)
-		            .verifyComplete();
+				.flux()
+				.single(2))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void singleJustHide() {
 		StepVerifier.create(Flux.empty()
-		                        .single())
-		            .verifyError(NoSuchElementException.class);
+				.single())
+				.verifyError(NoSuchElementException.class);
 	}
 
 	@Test
 	public void singleFallbackJustHide() {
 		StepVerifier.create(Flux.just(1)
-		                        .hide()
-		                        .single(2))
-		            .expectNext(1)
-		            .verifyComplete();
+				.hide()
+				.single(2))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void singleEmptyFallbackCallable() {
 		StepVerifier.create(Mono.fromCallable(() -> 1)
-		                        .flux()
-		                        .singleOrEmpty())
-		            .expectNext(1)
-		            .verifyComplete();
+				.flux()
+				.singleOrEmpty())
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 
 	@Test
 	public void singleEmptyFallbackJustHide() {
 		StepVerifier.create(Flux.empty()
-		                        .hide()
-		                        .singleOrEmpty())
-		            .verifyComplete();
+				.hide()
+				.singleOrEmpty())
+				.verifyComplete();
 	}
 
 	@Test
 	public void singleEmptyFallbackJustHideError() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .hide()
-		                        .singleOrEmpty())
-		            .verifyError(IndexOutOfBoundsException.class);
+				.hide()
+				.singleOrEmpty())
+				.verifyError(IndexOutOfBoundsException.class);
 	}
 
 	@Test
 	public void scanSubscriber() {
 		CoreSubscriber<String>
-				actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+				actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoSingle.SingleSubscriber<String> test = new MonoSingle.SingleSubscriber<>(
 				actual, "foo", false);
 		Subscription parent = Operators.emptySubscription();

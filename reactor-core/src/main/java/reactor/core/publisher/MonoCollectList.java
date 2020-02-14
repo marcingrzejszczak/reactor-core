@@ -92,7 +92,7 @@ final class MonoCollectList<T> extends MonoFromFluxOperator<T, List<T>> implemen
 
 		@Override
 		public void onError(Throwable t) {
-			if(done) {
+			if (done) {
 				Operators.onErrorDropped(t, actual.currentContext());
 				return;
 			}
@@ -108,7 +108,7 @@ final class MonoCollectList<T> extends MonoFromFluxOperator<T, List<T>> implemen
 
 		@Override
 		public void onComplete() {
-			if(done) {
+			if (done) {
 				return;
 			}
 			done = true;

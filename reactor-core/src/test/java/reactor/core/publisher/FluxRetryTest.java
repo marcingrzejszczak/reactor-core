@@ -28,6 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxRetryTest {
 
+	final Flux<Integer> source = Flux.concat(Flux.range(1, 3),
+			Flux.error(new RuntimeException("forced failure")));
+
 	@Test(expected = NullPointerException.class)
 	public void sourceNull() {
 		new FluxRetry<>(null, 1);
@@ -36,7 +39,7 @@ public class FluxRetryTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void timesInvalid() {
 		Flux.never()
-		    .retry(-1);
+				.retry(-1);
 	}
 
 	@Test
@@ -44,28 +47,25 @@ public class FluxRetryTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .retry(0)
-		    .subscribe(ts);
+				.retry(0)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
-
-	final Flux<Integer> source = Flux.concat(Flux.range(1, 3),
-			Flux.error(new RuntimeException("forced failure")));
 
 	@Test
 	public void zeroRetry() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.retry(0)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -73,12 +73,12 @@ public class FluxRetryTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.retry(1)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 1, 2, 3)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -86,11 +86,11 @@ public class FluxRetryTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(4);
 
 		source.retry(1)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 1)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -98,12 +98,12 @@ public class FluxRetryTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.retry()
-		      .take(10)
-		      .subscribe(ts);
+				.take(10)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 1, 2, 3, 1, 2, 3, 1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -112,33 +112,33 @@ public class FluxRetryTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Flux.just("test", "test2", "test3")
-		                        .doOnNext(d -> {
-			                        if(i.getAndIncrement() < 2)
-				                        throw new RuntimeException("test");
-		                        })
-		                        .retry(2)
-		                        .count())
-		            .expectNext(3L)
-		            .expectComplete()
-		            .verify();
+				.doOnNext(d -> {
+					if (i.getAndIncrement() < 2)
+						throw new RuntimeException("test");
+				})
+				.retry(2)
+				.count())
+				.expectNext(3L)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void doOnNextFails() {
 		Flux.just(1)
-		    .doOnNext(new Consumer<Integer>() {
-			    int i;
+				.doOnNext(new Consumer<Integer>() {
+					int i;
 
-			    @Override
-			    public void accept(Integer t) {
-				    if (i++ < 2) {
-					    throw new RuntimeException("test");
-				    }
-			    }
-		    })
-		    .retry(2)
-		    .subscribeWith(AssertSubscriber.create())
-		    .assertValues(1);
+					@Override
+					public void accept(Integer t) {
+						if (i++ < 2) {
+							throw new RuntimeException("test");
+						}
+					}
+				})
+				.retry(2)
+				.subscribeWith(AssertSubscriber.create())
+				.assertValues(1);
 	}
 
 	@Test
@@ -151,8 +151,8 @@ public class FluxRetryTest {
 				return publisher;
 			});
 			Mono.error(new IllegalStateException("boom"))
-			    .retry(1)
-			    .block();
+					.retry(1)
+					.block();
 		}
 		catch (IllegalStateException ignored) {
 			// ignore

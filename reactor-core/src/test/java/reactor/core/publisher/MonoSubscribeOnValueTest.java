@@ -30,15 +30,15 @@ public class MonoSubscribeOnValueTest {
 	public void testSubscribeOnValueFusion() {
 
 		StepVerifier.create(Mono.just(1)
-		                        .flatMapMany(f -> Mono.just(f + 1)
-		                                              .subscribeOn(Schedulers.parallel())
-		                                              .map(this::slow)))
-		            .expectFusion(Fuseable.ASYNC, Fuseable.NONE)
-		            .expectNext(2)
-		            .verifyComplete();
+				.flatMapMany(f -> Mono.just(f + 1)
+						.subscribeOn(Schedulers.parallel())
+						.map(this::slow)))
+				.expectFusion(Fuseable.ASYNC, Fuseable.NONE)
+				.expectNext(2)
+				.verifyComplete();
 	}
 
-	int slow(int slow){
+	int slow(int slow) {
 		try {
 			Thread.sleep(10);
 			return slow;

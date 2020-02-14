@@ -19,13 +19,11 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.pivovarit.function.ThrowingRunnable;
 import org.assertj.core.data.Offset;
 import org.junit.Test;
-
 import reactor.core.Disposable;
 import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
@@ -67,9 +65,9 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 	@Test(timeout = 10000)
 	public void eviction() throws Exception {
 		Scheduler s = Schedulers.newElastic("test-recycle", 2);
-		((ElasticScheduler)s).evictor.shutdownNow();
+		((ElasticScheduler) s).evictor.shutdownNow();
 
-		try{
+		try {
 			for (int i = 0; i < 100; i++) {
 				Disposable d = s.schedule(() -> {
 					try {
@@ -83,19 +81,19 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 				d.dispose();
 			}
 
-			while(((ElasticScheduler)s).cache.peek() != null){
-				((ElasticScheduler)s).eviction();
+			while (((ElasticScheduler) s).cache.peek() != null) {
+				((ElasticScheduler) s).eviction();
 				Thread.sleep(100);
 			}
 
-			assertThat(((ElasticScheduler)s).all).isEmpty();
+			assertThat(((ElasticScheduler) s).all).isEmpty();
 		}
 		finally {
 			s.dispose();
 			s.dispose();//noop
 		}
 
-		assertThat(((ElasticScheduler)s).cache).isEmpty();
+		assertThat(((ElasticScheduler) s).cache).isEmpty();
 		assertThat(s.isDisposed()).isTrue();
 	}
 
@@ -103,18 +101,22 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 	public void scheduledDoesntReject() {
 		Scheduler s = scheduler();
 
-		assertThat(s.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+		assertThat(s.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct delayed scheduling")
 				.isNotNull();
-		assertThat(s.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+		assertThat(s.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("direct periodic scheduling")
 				.isNotNull();
 
 		Scheduler.Worker w = s.createWorker();
-		assertThat(w.schedule(() -> {}, 100, TimeUnit.MILLISECONDS))
+		assertThat(w.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker delayed scheduling")
 				.isNotNull();
-		assertThat(w.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS))
+		assertThat(w.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS))
 				.describedAs("worker periodic scheduling")
 				.isNotNull();
 	}
@@ -132,9 +134,9 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 						.doOnSubscribe(sub -> start.set(System.nanoTime()))
 						.doOnTerminate(() -> end.set(System.nanoTime()))
 				)
-				            .expectSubscription()
-				            .expectNext(0L)
-				            .verifyComplete();
+						.expectSubscription()
+						.expectNext(0L)
+						.verifyComplete();
 
 				long endValue = end.longValue();
 				long startValue = start.longValue();
@@ -157,14 +159,14 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 
 		try {
 			StepVerifier.create(Flux.interval(Duration.ofMillis(100), Duration.ofMillis(200), s))
-			            .expectSubscription()
-			            .expectNoEvent(Duration.ofMillis(100))
-			            .expectNext(0L)
-			            .expectNoEvent(Duration.ofMillis(200))
-			            .expectNext(1L)
-			            .expectNoEvent(Duration.ofMillis(200))
-			            .expectNext(2L)
-			            .thenCancel();
+					.expectSubscription()
+					.expectNoEvent(Duration.ofMillis(100))
+					.expectNext(0L)
+					.expectNoEvent(Duration.ofMillis(200))
+					.expectNext(1L)
+					.expectNoEvent(Duration.ofMillis(200))
+					.expectNext(2L)
+					.thenCancel();
 		}
 		finally {
 			s.dispose();
@@ -239,9 +241,9 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 			CountDownLatch latch = new CountDownLatch(cacheCount + fastCount);
 			for (int i = 0; i < cacheCount; i++) {
 				Mono.fromRunnable(ThrowingRunnable.unchecked(() -> Thread.sleep(cacheSleep)))
-				    .subscribeOn(scheduler)
-				    .doFinally(sig -> latch.countDown())
-				    .subscribe();
+						.subscribeOn(scheduler)
+						.doFinally(sig -> latch.countDown())
+						.subscribe();
 			}
 
 			int oldActive = 0;
@@ -249,9 +251,9 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 			int activeAtEnd = Integer.MAX_VALUE;
 			for (int i = 0; i < fastCount; i++) {
 				Mono.just(i)
-				    .subscribeOn(scheduler)
-				    .doFinally(sig -> latch.countDown())
-				    .subscribe();
+						.subscribeOn(scheduler)
+						.doFinally(sig -> latch.countDown())
+						.subscribe();
 
 				if (i == 0) {
 					activeAtBeginning = Thread.activeCount() - otherThreads;
@@ -274,8 +276,8 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 
 			assertThat(latch.await(3, TimeUnit.SECONDS)).as("latch 3s").isTrue();
 			assertThat(activeAtEnd).as("active in last round")
-			                       .isLessThan(activeAtBeginning)
-			                       .isCloseTo(1, Offset.offset(5));
+					.isLessThan(activeAtBeginning)
+					.isCloseTo(1, Offset.offset(5));
 		}
 		finally {
 			scheduler.dispose();
@@ -286,7 +288,7 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 	@Test
 	public void doesntRecycleWhileRunningAfterDisposed() throws Exception {
 		Scheduler s = Schedulers.newElastic("test-recycle");
-		((ElasticScheduler)s).evictor.shutdownNow();
+		((ElasticScheduler) s).evictor.shutdownNow();
 
 		try {
 			AtomicBoolean stop = new AtomicBoolean(false);
@@ -294,7 +296,7 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 			Disposable d = s.schedule(() -> {
 				started.countDown();
 				// simulate uninterruptible computation
-				for (;;) {
+				for (; ; ) {
 					if (stop.get()) {
 						break;
 					}
@@ -304,12 +306,12 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 			d.dispose();
 
 			Thread.sleep(100);
-			assertThat(((ElasticScheduler)s).cache).isEmpty();
+			assertThat(((ElasticScheduler) s).cache).isEmpty();
 
 			stop.set(true);
 
 			Thread.sleep(100);
-			assertThat(((ElasticScheduler)s).cache.size()).isEqualTo(1);
+			assertThat(((ElasticScheduler) s).cache.size()).isEqualTo(1);
 		}
 		finally {
 			s.dispose();
@@ -319,7 +321,7 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 	@Test
 	public void recycleOnce() throws Exception {
 		Scheduler s = Schedulers.newElastic("test-recycle");
-		((ElasticScheduler)s).evictor.shutdownNow();
+		((ElasticScheduler) s).evictor.shutdownNow();
 
 		try {
 			Disposable d = s.schedule(() -> {
@@ -336,7 +338,7 @@ public class ElasticSchedulerTest extends AbstractSchedulerTest {
 			d.dispose();
 
 			Thread.sleep(100);
-			assertThat(((ElasticScheduler)s).cache.size()).isEqualTo(1);
+			assertThat(((ElasticScheduler) s).cache.size()).isEqualTo(1);
 		}
 		finally {
 			s.dispose();

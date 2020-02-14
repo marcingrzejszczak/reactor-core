@@ -30,32 +30,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class PublisherProbeTest {
 
-	private static class TestControlFlow {
-
-		private final Mono<Void>   a;
-		private final Mono<String> b;
-
-		TestControlFlow(Mono<Void> a, Mono<String> b) {
-			this.a = a;
-			this.b = b;
-		}
-
-		Mono<Void> toTest(Mono<String> monoOfPrincipal) {
-			return monoOfPrincipal
-					.switchIfEmpty(thisReturnsMonoVoid().then(Mono.empty()))
-					.flatMap(this::thisReturnsMonoVoid);
-		}
-
-		private Mono<Void> thisReturnsMonoVoid() {
-			return this.a;
-		}
-
-		private Mono<Void> thisReturnsMonoVoid(String p) {
-			return this.b.then();
-		}
-
-	}
-
 	@Test
 	public void emptyProbeFlowA() {
 		PublisherProbe<Void> a = PublisherProbe.empty();
@@ -64,7 +38,7 @@ public class PublisherProbeTest {
 		TestControlFlow t = new TestControlFlow(a.mono(), b.mono());
 
 		StepVerifier.create(t.toTest(Mono.empty()))
-		            .verifyComplete();
+				.verifyComplete();
 
 		assertThat(a.wasSubscribed()).isTrue();
 		assertThat(b.wasSubscribed()).isFalse();
@@ -81,7 +55,7 @@ public class PublisherProbeTest {
 		TestControlFlow t = new TestControlFlow(a.mono(), b.mono());
 
 		StepVerifier.create(t.toTest(Mono.just("principal")))
-		            .verifyComplete();
+				.verifyComplete();
 
 		a.assertWasNotSubscribed();
 		b.assertWasSubscribed();
@@ -98,7 +72,7 @@ public class PublisherProbeTest {
 		TestControlFlow t = new TestControlFlow(a.mono(), b.mono());
 
 		StepVerifier.create(t.toTest(Mono.empty()))
-		            .verifyComplete();
+				.verifyComplete();
 
 		assertThat(a.wasSubscribed()).isTrue();
 		assertThat(b.wasSubscribed()).isFalse();
@@ -115,7 +89,7 @@ public class PublisherProbeTest {
 		TestControlFlow t = new TestControlFlow(a.mono(), b.mono());
 
 		StepVerifier.create(t.toTest(Mono.just("principal")))
-		            .verifyComplete();
+				.verifyComplete();
 
 		assertThat(a.wasSubscribed()).isFalse();
 		assertThat(b.wasSubscribed()).isTrue();
@@ -390,6 +364,32 @@ public class PublisherProbeTest {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(probe::assertWasNotRequested)
 				.withMessage("PublisherProbe should not have been requested but it was");
+	}
+
+	private static class TestControlFlow {
+
+		private final Mono<Void> a;
+		private final Mono<String> b;
+
+		TestControlFlow(Mono<Void> a, Mono<String> b) {
+			this.a = a;
+			this.b = b;
+		}
+
+		Mono<Void> toTest(Mono<String> monoOfPrincipal) {
+			return monoOfPrincipal
+					.switchIfEmpty(thisReturnsMonoVoid().then(Mono.empty()))
+					.flatMap(this::thisReturnsMonoVoid);
+		}
+
+		private Mono<Void> thisReturnsMonoVoid() {
+			return this.a;
+		}
+
+		private Mono<Void> thisReturnsMonoVoid(String p) {
+			return this.b.then();
+		}
+
 	}
 
 }

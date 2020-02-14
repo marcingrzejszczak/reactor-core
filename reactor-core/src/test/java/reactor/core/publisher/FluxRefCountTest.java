@@ -45,16 +45,17 @@ public class FluxRefCountTest {
 		AtomicBoolean unexpectedCancellation = new AtomicBoolean();
 
 		Flux<Integer> test = Flux.range(0, 100)
-		                         .delayElements(Duration.ofMillis(2))
-		                         .publish()
-		                         .refCount()
-		                         .onBackpressureBuffer(); //known to potentially cancel twice, but that's another issue
+				.delayElements(Duration.ofMillis(2))
+				.publish()
+				.refCount()
+				.onBackpressureBuffer(); //known to potentially cancel twice, but that's another issue
 
-		test.subscribe(v -> {}, e -> unexpectedCancellation.set(true));
+		test.subscribe(v -> {
+		}, e -> unexpectedCancellation.set(true));
 
 		StepVerifier.create(test.take(3))
-		            .expectNextCount(3)
-		            .verifyComplete();
+				.expectNextCount(3)
+				.verifyComplete();
 
 		assertThat(unexpectedCancellation).as("unexpected cancellation").isFalse();
 	}
@@ -78,11 +79,11 @@ public class FluxRefCountTest {
 				.doOnSubscribe(s -> subCount.incrementAndGet());
 
 		StepVerifier.create(flux.publish()
-		                        .refCount(1)
-		                        .retry(1))
-		            .expectNext(0, 1, 0, 1)
-		            .expectErrorMessage("boom on subscribe #2")
-		            .verify(Duration.ofSeconds(1));
+				.refCount(1)
+				.retry(1))
+				.expectNext(0, 1, 0, 1)
+				.expectErrorMessage("boom on subscribe #2")
+				.verify(Duration.ofSeconds(1));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1385
@@ -104,11 +105,11 @@ public class FluxRefCountTest {
 				.doOnSubscribe(s -> subCount.incrementAndGet());
 
 		StepVerifier.create(flux.publish()
-		                        .refCount(1)
-		                        .repeat(1))
-		            .expectNext(0, 1, 0, 1)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(1));
+				.refCount(1)
+				.repeat(1))
+				.expectNext(0, 1, 0, 1)
+				.expectComplete()
+				.verify(Duration.ofSeconds(1));
 
 		assertThat(subCount).hasValue(2);
 	}
@@ -126,13 +127,13 @@ public class FluxRefCountTest {
 		final Runnable subscriber1 = () -> {
 			for (int i = 0; i < 100_000; i++) {
 				testFlux.next().doOnNext(signal -> signalCount1.incrementAndGet())
-				        .subscribe();
+						.subscribe();
 			}
 		};
 		final Runnable subscriber2 = () -> {
 			for (int i = 0; i < 100_000; i++) {
 				testFlux.next().doOnNext(signal -> signalCount2.incrementAndGet())
-				        .subscribe();
+						.subscribe();
 			}
 		};
 
@@ -208,12 +209,12 @@ public class FluxRefCountTest {
 		Assert.assertFalse("sp has subscribers?", e.downstreamCount() != 0);
 
 		ts1.assertValues(1, 2)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts2.assertValues(1, 2, 3)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 	@Test
@@ -248,12 +249,12 @@ public class FluxRefCountTest {
 		Assert.assertFalse("sp has subscribers?", e.downstreamCount() != 0);
 
 		ts1.assertValues(1, 2)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts2.assertValues(1, 2, 3)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
 
 	@Test
@@ -265,15 +266,15 @@ public class FluxRefCountTest {
 		p.subscribe(ts1);
 
 		ts1.assertValues(1, 2, 3, 4, 5)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		p.subscribe(ts2);
 
 		ts2.assertValues(1, 2, 3, 4, 5)
-		.assertNoError()
-		.assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -322,21 +323,21 @@ public class FluxRefCountTest {
 		Flux<Integer> p;
 		AtomicBoolean error = new AtomicBoolean();
 		p = Flux.range(1, 5)
-		        .subscribeOn(Schedulers.parallel())
-		        .log("publish")
-		        .publish()
-		        .refCount(1)
-		        .doOnNext(v -> {
-			        if (v > 1 && error.compareAndSet(false, true)) {
-				        throw new RuntimeException("test");
-			        }
-		        })
-		        .log("retry")
-		        .retry();
+				.subscribeOn(Schedulers.parallel())
+				.log("publish")
+				.publish()
+				.refCount(1)
+				.doOnNext(v -> {
+					if (v > 1 && error.compareAndSet(false, true)) {
+						throw new RuntimeException("test");
+					}
+				})
+				.log("retry")
+				.retry();
 
 		StepVerifier.create(p)
-		            .expectNext(1, 1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.expectNext(1, 1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
@@ -345,9 +346,9 @@ public class FluxRefCountTest {
 		AtomicReference<SignalType> termination = new AtomicReference<>();
 
 		Flux<Integer> source = Flux.range(1, 50)
-		                           .delayElements(Duration.ofMillis(100))
-		                           .doFinally(termination::set)
-		                           .doOnSubscribe(s -> subscriptionCount.incrementAndGet());
+				.delayElements(Duration.ofMillis(100))
+				.doFinally(termination::set)
+				.doOnSubscribe(s -> subscriptionCount.incrementAndGet());
 
 		Flux<Integer> refCounted = source.publish().refCount(2);
 
@@ -371,7 +372,8 @@ public class FluxRefCountTest {
 			sub1 = refCounted.subscribe();
 			sub2 = refCounted.subscribe();
 			assertThat(subscriptionCount.get()).isEqualTo(2);
-		} finally {
+		}
+		finally {
 			sub1.dispose();
 			sub2.dispose();
 		}
@@ -383,14 +385,14 @@ public class FluxRefCountTest {
 		AtomicInteger cancellations = new AtomicInteger();
 
 		Flux<Long> publishedFlux = p
-			.publish()
-			.refCount(2)
-			.doOnCancel(() -> cancellations.incrementAndGet())
+				.publish()
+				.refCount(2)
+				.doOnCancel(() -> cancellations.incrementAndGet())
 				.log();
 
 		publishedFlux.any(x -> x > 5)
-			.delayElement(Duration.ofMillis(2))
-			.subscribe();
+				.delayElement(Duration.ofMillis(2))
+				.subscribe();
 
 		CompletableFuture<List<Long>> result = publishedFlux.collectList().toFuture();
 
@@ -415,7 +417,8 @@ public class FluxRefCountTest {
 
 	@Test
 	public void scanInner() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, sub -> sub.request(100));
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, sub -> sub.request(100));
 		FluxRefCount<Integer> main = new FluxRefCount<Integer>(Flux.just(10).publish(), 17);
 		FluxRefCount.RefCountInner<Integer> test = new FluxRefCount.RefCountInner<Integer>(actual, new FluxRefCount.RefCountMonitor<>(main));
 		Subscription sub = Operators.emptySubscription();
@@ -435,7 +438,8 @@ public class FluxRefCountTest {
 
 	@Test
 	public void scanInnerCancelled() {
-		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, sub -> sub.request(100));
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, sub -> sub.request(100));
 		FluxRefCount<Integer> main = new FluxRefCount<Integer>(Flux.just(10).publish(), 17);
 		FluxRefCount.RefCountInner<Integer> test = new FluxRefCount.RefCountInner<Integer>(actual, new FluxRefCount.RefCountMonitor<>(main));
 		Subscription sub = Operators.emptySubscription();

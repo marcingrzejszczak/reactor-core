@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -39,7 +38,19 @@ import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-public class MonoReduceTest extends ReduceOperatorTest<String, String>{
+public class MonoReduceTest extends ReduceOperatorTest<String, String> {
+
+	private static final Logger LOG = LoggerFactory.getLogger(MonoReduceTest.class);
+
+	private static String blockingOp(Integer x, Integer y) {
+		try {
+			sleep(1000 - x * 100);
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return "x" + x + "y" + y;
+	}
 
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
@@ -60,8 +71,6 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		);
 	}
 
-	private static final Logger LOG = LoggerFactory.getLogger(MonoReduceTest.class);
-
 	/*@Test
 	public void constructors() {
 		ConstructorTestBuilder ctb = new ConstructorTestBuilder(MonoReduce.class);
@@ -77,12 +86,12 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .reduce((a, b) -> a + b)
-		    .subscribe(ts);
+				.reduce((a, b) -> a + b)
+				.subscribe(ts);
 
 		ts.assertValues(55)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -90,18 +99,18 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0L);
 
 		Flux.range(1, 10)
-		    .reduce((a, b) -> a + b)
-		    .subscribe(ts);
+				.reduce((a, b) -> a + b)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(55)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -109,12 +118,12 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.just(1)
-		    .reduce((a, b) -> a + b)
-		    .subscribe(ts);
+				.reduce((a, b) -> a + b)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -122,11 +131,11 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.<Integer>empty().reduce((a, b) -> a + b)
-		                     .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -134,13 +143,13 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.<Integer>error(new RuntimeException("forced failure")).reduce((a, b) -> a + b)
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith(e -> Assert.assertTrue(e.getMessage()
-		                                           .contains("forced failure")))
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage()
+						.contains("forced failure")))
+				.assertNotComplete();
 	}
 
 	@Test
@@ -148,16 +157,16 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .reduce((a, b) -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.reduce((a, b) -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith(e -> Assert.assertTrue(e.getMessage()
-		                                           .contains("forced failure")))
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage()
+						.contains("forced failure")))
+				.assertNotComplete();
 	}
 
 	@Test
@@ -165,12 +174,12 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .reduce((a, b) -> null)
-		    .subscribe(ts);
+				.reduce((a, b) -> null)
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	/* see issue #230 */
@@ -179,29 +188,20 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 		AtomicInteger count = new AtomicInteger();
 		AtomicInteger countNulls = new AtomicInteger();
 		Flux.range(0, 10).flatMap(x ->
-				Flux.range(0, 2)
-				    .map(y -> blockingOp(x, y))
-				    .subscribeOn(Schedulers.elastic())
-				    .reduce((l, r) -> l + "_" + r)
+						Flux.range(0, 2)
+								.map(y -> blockingOp(x, y))
+								.subscribeOn(Schedulers.elastic())
+								.reduce((l, r) -> l + "_" + r)
 //				    .log("reduced."+x)
-				    .doOnSuccess(s -> {
-					    if (s == null) countNulls.incrementAndGet();
-					    else count.incrementAndGet();
-					    LOG.info("Completed with {}", s);
-				    })
+								.doOnSuccess(s -> {
+									if (s == null) countNulls.incrementAndGet();
+									else count.incrementAndGet();
+									LOG.info("Completed with {}", s);
+								})
 		).blockLast();
 
 		assertEquals(10, count.get());
 		assertEquals(0, countNulls.get());
-	}
-
-	private static String blockingOp(Integer x, Integer y) {
-		try {
-			sleep(1000 - x * 100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return "x" + x + "y" + y;
 	}
 
 	@Test
@@ -232,7 +232,7 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 				new MonoReduce.ReduceSubscriber<>(testSubscriber,
 						(current, next) -> current + next);
 
-		sub.onSubscribe(Operators. emptySubscription());
+		sub.onSubscribe(Operators.emptySubscription());
 
 		sub.onNext(1);
 		assertThat(sub.value).isEqualTo(1);
@@ -253,7 +253,7 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 				new MonoReduce.ReduceSubscriber<>(testSubscriber,
 						(current, next) -> current + next);
 
-		sub.onSubscribe(Operators. emptySubscription());
+		sub.onSubscribe(Operators.emptySubscription());
 
 		sub.onNext(1);
 		assertThat(sub.value).isEqualTo(1);
@@ -306,7 +306,8 @@ public class MonoReduceTest extends ReduceOperatorTest<String, String>{
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoReduce.ReduceSubscriber<String> test = new MonoReduce.ReduceSubscriber<>(actual, (s1, s2) -> s1 + s2);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

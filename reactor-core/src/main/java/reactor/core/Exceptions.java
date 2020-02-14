@@ -46,6 +46,12 @@ public abstract class Exceptions {
 	 */
 	@SuppressWarnings("ThrowableInstanceNeverThrown")
 	public static final Throwable TERMINATED = new StaticThrowable("Operator has been terminated");
+	static final RejectedExecutionException REJECTED_EXECUTION = new StaticRejectedExecutionException("Scheduler unavailable");
+	static final RejectedExecutionException NOT_TIME_CAPABLE_REJECTED_EXECUTION =
+			new StaticRejectedExecutionException("Scheduler is not capable of time-based scheduling");
+
+	Exceptions() {
+	}
 
 	/**
 	 * Update an empty atomic reference with the given exception, or combine further added
@@ -86,7 +92,8 @@ public abstract class Exceptions {
 			Throwable update;
 			if (current == null) {
 				update = exception;
-			} else {
+			}
+			else {
 				update = multiple(current, exception);
 			}
 
@@ -578,24 +585,18 @@ public abstract class Exceptions {
 		}
 	}
 
-	Exceptions() {
-	}
-
-	static final RejectedExecutionException REJECTED_EXECUTION = new StaticRejectedExecutionException("Scheduler unavailable");
-
-	static final RejectedExecutionException NOT_TIME_CAPABLE_REJECTED_EXECUTION =
-			new StaticRejectedExecutionException("Scheduler is not capable of time-based scheduling");
-
 	static class CompositeException extends ReactiveException {
+
+		private static final long serialVersionUID = 8070744939537687606L;
 
 		CompositeException() {
 			super("Multiple exceptions");
 		}
-
-		private static final long serialVersionUID = 8070744939537687606L;
 	}
 
 	static class BubblingException extends ReactiveException {
+
+		private static final long serialVersionUID = 2491425277432776142L;
 
 		BubblingException(String message) {
 			super(message);
@@ -604,14 +605,14 @@ public abstract class Exceptions {
 		BubblingException(Throwable cause) {
 			super(cause);
 		}
-
-		private static final long serialVersionUID = 2491425277432776142L;
 	}
 
 	/**
 	 * An exception that is propagated downward through {@link org.reactivestreams.Subscriber#onError(Throwable)}
 	 */
 	static class ReactiveException extends RuntimeException {
+
+		private static final long serialVersionUID = 2491425227432776143L;
 
 		ReactiveException(Throwable cause) {
 			super(cause);
@@ -626,11 +627,11 @@ public abstract class Exceptions {
 			return getCause() != null ? getCause().fillInStackTrace() :
 					super.fillInStackTrace();
 		}
-
-		private static final long serialVersionUID = 2491425227432776143L;
 	}
 
 	static final class ErrorCallbackNotImplemented extends UnsupportedOperationException {
+
+		private static final long serialVersionUID = 2491425227432776143L;
 
 		ErrorCallbackNotImplemented(Throwable cause) {
 			super(cause);
@@ -640,8 +641,6 @@ public abstract class Exceptions {
 		public synchronized Throwable fillInStackTrace() {
 			return this;
 		}
-
-		private static final long serialVersionUID = 2491425227432776143L;
 	}
 
 	/**
@@ -652,11 +651,11 @@ public abstract class Exceptions {
 	 */
 	static final class CancelException extends BubblingException {
 
+		private static final long serialVersionUID = 2491425227432776144L;
+
 		CancelException() {
 			super("The subscriber has denied dispatching");
 		}
-
-		private static final long serialVersionUID = 2491425227432776144L;
 
 	}
 

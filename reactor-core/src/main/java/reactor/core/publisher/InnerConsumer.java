@@ -41,12 +41,12 @@ interface InnerConsumer<I>
 		String name = getClass().getSimpleName();
 		if (name.contains("@") && name.contains("$")) {
 			name = name
-				.substring(0, name.indexOf('$'))
-				.substring(name.lastIndexOf('.') + 1);
+					.substring(0, name.indexOf('$'))
+					.substring(name.lastIndexOf('.') + 1);
 		}
 		String stripped = OPERATOR_NAME_UNRELATED_WORDS_PATTERN
-			.matcher(name)
-			.replaceAll("");
+				.matcher(name)
+				.replaceAll("");
 
 		if (!stripped.isEmpty()) {
 			return stripped.substring(0, 1).toLowerCase() + stripped.substring(1);

@@ -35,7 +35,9 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
-import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class BlockingTests {
 
@@ -58,72 +60,72 @@ public class BlockingTests {
 	public void blockingFirst() {
 		Assert.assertEquals((Integer) 1,
 				Flux.range(1, 10)
-				    .publishOn(scheduler)
-				    .blockFirst());
+						.publishOn(scheduler)
+						.blockFirst());
 	}
 
 	@Test
 	public void blockingFirst2() {
 		Assert.assertEquals((Integer) 1,
 				Flux.range(1, 10)
-				    .publishOn(scheduler)
-				    .blockFirst(Duration.ofSeconds(10)));
+						.publishOn(scheduler)
+						.blockFirst(Duration.ofSeconds(10)));
 	}
 
 	@Test
 	public void blockingFirstTimeout() {
 		assertThat(Flux.empty()
-		               .blockFirst(Duration.ofMillis(1))).isNull();
+				.blockFirst(Duration.ofMillis(1))).isNull();
 	}
 
 	@Test
 	public void blockingLast() {
 		Assert.assertEquals((Integer) 10,
 				Flux.range(1, 10)
-				    .publishOn(scheduler)
-				    .blockLast());
+						.publishOn(scheduler)
+						.blockLast());
 	}
 
 	@Test
 	public void blockingLast2() {
 		Assert.assertEquals((Integer) 10,
 				Flux.range(1, 10)
-				    .publishOn(scheduler)
-				    .blockLast(Duration.ofSeconds(10)));
+						.publishOn(scheduler)
+						.blockLast(Duration.ofSeconds(10)));
 	}
 
 	@Test
 	public void blockingLastTimeout() {
 		assertThat(Flux.empty()
-		               .blockLast(Duration.ofMillis(1))).isNull();
+				.blockLast(Duration.ofMillis(1))).isNull();
 	}
 
 	@Test(expected = RuntimeException.class)
 	public void blockingFirstError() {
 		Flux.error(new RuntimeException("test"))
-		    .publishOn(scheduler)
-		    .blockFirst();
+				.publishOn(scheduler)
+				.blockFirst();
 	}
 
 	@Test(expected = RuntimeException.class)
 	public void blockingFirstError2() {
 		Flux.error(new RuntimeException("test"))
-		    .publishOn(scheduler)
-		    .blockFirst(Duration.ofSeconds(1));
+				.publishOn(scheduler)
+				.blockFirst(Duration.ofSeconds(1));
 	}
 
 	@Test(expected = RuntimeException.class)
 	public void blockingLastError() {
 		Flux.defer(() -> Mono.error(new RuntimeException("test")))
-		    .subscribeOn(scheduler)
-		    .blockLast();
+				.subscribeOn(scheduler)
+				.blockLast();
 	}
 
 	@Test(expected = RuntimeException.class)
 	public void blockingLastError2() {
 		Flux.defer(() -> Mono.error(new RuntimeException("test")))
-		    .subscribeOn(scheduler)
-		    .blockLast(Duration.ofSeconds(1));
+				.subscribeOn(scheduler)
+				.blockLast(Duration.ofSeconds(1));
 	}
 
 	@Test
@@ -132,7 +134,7 @@ public class BlockingTests {
 		Thread t = new Thread(() -> {
 			try {
 				Flux.never()
-				    .blockLast();
+						.blockLast();
 			}
 			catch (Exception e) {
 				if (Exceptions.unwrap(e) instanceof InterruptedException) {
@@ -197,8 +199,8 @@ public class BlockingTests {
 	public void fluxBlockFirstCancelsOnce() {
 		AtomicLong cancelCount = new AtomicLong();
 		Flux.range(1, 10)
-	        .doOnCancel(cancelCount::incrementAndGet)
-	        .blockFirst();
+				.doOnCancel(cancelCount::incrementAndGet)
+				.blockFirst();
 
 		assertThat(cancelCount.get()).isEqualTo(1);
 	}
@@ -207,8 +209,8 @@ public class BlockingTests {
 	public void fluxBlockLastDoesntCancel() {
 		AtomicLong cancelCount = new AtomicLong();
 		Flux.range(1, 10)
-	        .doOnCancel(cancelCount::incrementAndGet)
-	        .blockLast();
+				.doOnCancel(cancelCount::incrementAndGet)
+				.blockLast();
 
 		assertThat(cancelCount.get()).isEqualTo(0);
 	}
@@ -217,8 +219,8 @@ public class BlockingTests {
 	public void monoBlockDoesntCancel() {
 		AtomicLong cancelCount = new AtomicLong();
 		Mono.just("data")
-	        .doOnCancel(cancelCount::incrementAndGet)
-	        .block();
+				.doOnCancel(cancelCount::incrementAndGet)
+				.block();
 
 		assertThat(cancelCount.get()).isEqualTo(0);
 	}
@@ -227,8 +229,8 @@ public class BlockingTests {
 	public void monoBlockOptionalDoesntCancel() {
 		AtomicLong cancelCount = new AtomicLong();
 		Mono.just("data")
-	        .doOnCancel(cancelCount::incrementAndGet)
-	        .blockOptional();
+				.doOnCancel(cancelCount::incrementAndGet)
+				.blockOptional();
 
 		assertThat(cancelCount.get()).isEqualTo(0);
 	}
@@ -236,113 +238,113 @@ public class BlockingTests {
 	@Test
 	public void fluxBlockFirstForbidden() {
 		Function<String, String> badMapper = v -> Flux.just(v).hide()
-		                                              .blockFirst();
+				.blockFirst();
 		Function<String, String> badMapperTimeout = v -> Flux.just(v).hide()
-		                                                     .blockFirst(Duration.ofMillis(100));
+				.blockFirst(Duration.ofMillis(100));
 
 		Mono<String> forbiddenSequence1 = Mono.just("data")
-		                                     .publishOn(nonBlockingScheduler)
-		                                     .map(badMapper);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapper);
 
 		StepVerifier.create(forbiddenSequence1)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 
 		Mono<String> forbiddenSequence2 = Mono.just("data")
-		                                     .publishOn(nonBlockingScheduler)
-		                                     .map(badMapperTimeout);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapperTimeout);
 
 		StepVerifier.create(forbiddenSequence2)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 	}
 
 	@Test
 	public void fluxBlockLastForbidden() {
 		Function<String, String> badMapper = v -> Flux.just(v).hide()
-		                                              .blockLast();
+				.blockLast();
 		Function<String, String> badMapperTimeout = v -> Flux.just(v).hide()
-		                                                     .blockLast(Duration.ofMillis(100));
+				.blockLast(Duration.ofMillis(100));
 
 		Mono<String> forbiddenSequence1 = Mono.just("data")
-		                                     .publishOn(nonBlockingScheduler)
-		                                     .map(badMapper);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapper);
 
 		StepVerifier.create(forbiddenSequence1)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 
 		Mono<String> forbiddenSequence2 = Mono.just("data")
-		                                     .publishOn(nonBlockingScheduler)
-		                                     .map(badMapperTimeout);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapperTimeout);
 
 		StepVerifier.create(forbiddenSequence2)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 	}
 
 	@Test
 	public void monoBlockForbidden() {
 		Function<String, String> badMapper = v -> Mono.just(v).hide()
-		                                              .block();
+				.block();
 		Function<String, String> badMapperTimeout = v -> Mono.just(v).hide()
-		                                                     .block(Duration.ofMillis(100));
+				.block(Duration.ofMillis(100));
 
 		Mono<String> forbiddenSequence1 = Mono.just("data")
-		                                     .publishOn(nonBlockingScheduler)
-		                                     .map(badMapper);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapper);
 
 		StepVerifier.create(forbiddenSequence1)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 
 		Mono<String> forbiddenSequence2 = Mono.just("data")
-		                                     .publishOn(nonBlockingScheduler)
-		                                     .map(badMapperTimeout);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapperTimeout);
 
 		StepVerifier.create(forbiddenSequence2)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("block()/blockFirst()/blockLast() are blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 	}
 
 	@Test
 	public void monoBlockOptionalForbidden() {
 		Function<String, Optional<String>> badMapper = v -> Mono.just(v).hide()
-		                                                        .blockOptional();
+				.blockOptional();
 		Function<String, Optional<String>> badMapperTimeout = v -> Mono.just(v).hide()
-		                                                               .blockOptional(Duration.ofMillis(100));
+				.blockOptional(Duration.ofMillis(100));
 
 		Mono<Optional<String>> forbiddenSequence1 = Mono.just("data")
-		                                                .publishOn(nonBlockingScheduler)
-		                                                .map(badMapper);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapper);
 
 		StepVerifier.create(forbiddenSequence1)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("blockOptional() is blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("blockOptional() is blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 
 		Mono<Optional<String>> forbiddenSequence2 = Mono.just("data")
-		                                                .publishOn(nonBlockingScheduler)
-		                                                .map(badMapperTimeout);
+				.publishOn(nonBlockingScheduler)
+				.map(badMapperTimeout);
 
 		StepVerifier.create(forbiddenSequence2)
-		            .expectErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessageStartingWith("blockOptional() is blocking, which is not supported in thread nonBlockingScheduler-"))
-		            .verify();
+				.expectErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageStartingWith("blockOptional() is blocking, which is not supported in thread nonBlockingScheduler-"))
+				.verify();
 	}
 
 	@Test
@@ -354,7 +356,7 @@ public class BlockingTests {
 		nonBlockingScheduler.schedule(() -> {
 			try {
 				ref.set(Flux.just(1, 2, 3)
-				            .toIterable());
+						.toIterable());
 			}
 			catch (Throwable e) {
 				refError.set(e);
@@ -380,7 +382,8 @@ public class BlockingTests {
 				assertThatCode(iterable::spliterator).as("spliterator()").doesNotThrowAnyException();
 
 				assertThatExceptionOfType(IllegalStateException.class)
-						.isThrownBy(() -> iterable.forEach(v -> {}))
+						.isThrownBy(() -> iterable.forEach(v -> {
+						}))
 						.as("forEach")
 						.withMessageStartingWith("Iterating over a toIterable() / toStream() is blocking, which is not supported in thread nonBlockingScheduler-");
 			}
@@ -406,7 +409,7 @@ public class BlockingTests {
 		nonBlockingScheduler.schedule(() -> {
 			try {
 				ref.set(Flux.just(1, 2, 3)
-				            .toStream());
+						.toStream());
 			}
 			catch (Throwable e) {
 				refError.set(e);

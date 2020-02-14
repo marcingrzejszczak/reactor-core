@@ -41,7 +41,7 @@ abstract class QueueDrainSubscriber<T, U, V> extends QueueDrainSubscriberPad4
 		implements InnerOperator<T, V> {
 
 	final CoreSubscriber<? super V> actual;
-	final Queue<U>              queue;
+	final Queue<U> queue;
 
 	volatile boolean cancelled;
 
@@ -51,6 +51,101 @@ abstract class QueueDrainSubscriber<T, U, V> extends QueueDrainSubscriberPad4
 	QueueDrainSubscriber(CoreSubscriber<? super V> actual, Queue<U> queue) {
 		this.actual = actual;
 		this.queue = queue;
+	}
+
+	/**
+	 * Drain the queue but give up with an error if there aren't enough requests.
+	 * @param <Q> the queue value type
+	 * @param <S> the emission value type
+	 * @param q the queue
+	 * @param a the subscriber
+	 * @param delayError true if errors should be delayed after all normal items
+	 * @param dispose the disposable to call when termination happens and cleanup is necessary
+	 * @param qd the QueueDrain instance that gives status information to the drain logic
+	 */
+	static <Q, S> void drainMaxLoop(Queue<Q> q, Subscriber<? super S> a, boolean delayError,
+			Disposable dispose, QueueDrainSubscriber<?, Q, S> qd) {
+		int missed = 1;
+
+		for (; ; ) {
+			for (; ; ) {
+				boolean d = qd.done();
+
+				Q v = q.poll();
+
+				boolean empty = v == null;
+
+				if (checkTerminated(d, empty, a, delayError, q, qd)) {
+					if (dispose != null) {
+						dispose.dispose();
+					}
+					return;
+				}
+
+				if (empty) {
+					break;
+				}
+
+				long r = qd.requested();
+				if (r != 0L) {
+					if (qd.accept(a, v)) {
+						if (r != Long.MAX_VALUE) {
+							qd.produced(1);
+						}
+					}
+				}
+				else {
+					q.clear();
+					if (dispose != null) {
+						dispose.dispose();
+					}
+					a.onError(Exceptions.failWithOverflow("Could not emit value due to lack of requests."));
+					return;
+				}
+			}
+
+			missed = qd.leave(-missed);
+			if (missed == 0) {
+				break;
+			}
+		}
+	}
+
+	static <Q, S> boolean checkTerminated(boolean d, boolean empty,
+			Subscriber<?> s, boolean delayError, Queue<?> q, QueueDrainSubscriber<?, Q, S> qd) {
+		if (qd.cancelled()) {
+			q.clear();
+			return true;
+		}
+
+		if (d) {
+			if (delayError) {
+				if (empty) {
+					Throwable err = qd.error();
+					if (err != null) {
+						s.onError(err);
+					}
+					else {
+						s.onComplete();
+					}
+					return true;
+				}
+			}
+			else {
+				Throwable err = qd.error();
+				if (err != null) {
+					q.clear();
+					s.onError(err);
+					return true;
+				}
+				else if (empty) {
+					s.onComplete();
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	@Override
@@ -89,12 +184,14 @@ abstract class QueueDrainSubscriber<T, U, V> extends QueueDrainSubscriberPad4
 				if (leave(-1) == 0) {
 					return;
 				}
-			} else {
+			}
+			else {
 				dispose.dispose();
 				s.onError(Exceptions.failWithOverflow("Could not emit buffer due to lack of requests"));
 				return;
 			}
-		} else {
+		}
+		else {
 			q.offer(value);
 			if (!enter()) {
 				return;
@@ -119,16 +216,19 @@ abstract class QueueDrainSubscriber<T, U, V> extends QueueDrainSubscriberPad4
 					if (leave(-1) == 0) {
 						return;
 					}
-				} else {
+				}
+				else {
 					q.offer(value);
 				}
-			} else {
+			}
+			else {
 				cancelled = true;
 				dispose.dispose();
 				s.onError(Exceptions.failWithOverflow("Could not emit buffer due to lack of requests"));
 				return;
 			}
-		} else {
+		}
+		else {
 			q.offer(value);
 			if (!enter()) {
 				return;
@@ -183,98 +283,6 @@ abstract class QueueDrainSubscriber<T, U, V> extends QueueDrainSubscriberPad4
 		if (key == Attr.ERROR) return error;
 
 		return InnerOperator.super.scanUnsafe(key);
-	}
-
-	/**
-	 * Drain the queue but give up with an error if there aren't enough requests.
-	 * @param <Q> the queue value type
-	 * @param <S> the emission value type
-	 * @param q the queue
-	 * @param a the subscriber
-	 * @param delayError true if errors should be delayed after all normal items
-	 * @param dispose the disposable to call when termination happens and cleanup is necessary
-	 * @param qd the QueueDrain instance that gives status information to the drain logic
-	 */
-	static <Q, S> void drainMaxLoop(Queue<Q> q, Subscriber<? super S> a, boolean delayError,
-			Disposable dispose, QueueDrainSubscriber<?, Q, S> qd) {
-		int missed = 1;
-
-		for (;;) {
-			for (;;) {
-				boolean d = qd.done();
-
-				Q v = q.poll();
-
-				boolean empty = v == null;
-
-				if (checkTerminated(d, empty, a, delayError, q, qd)) {
-					if (dispose != null) {
-						dispose.dispose();
-					}
-					return;
-				}
-
-				if (empty) {
-					break;
-				}
-
-				long r = qd.requested();
-				if (r != 0L) {
-					if (qd.accept(a, v)) {
-						if (r != Long.MAX_VALUE) {
-							qd.produced(1);
-						}
-					}
-				} else {
-					q.clear();
-					if (dispose != null) {
-						dispose.dispose();
-					}
-					a.onError(Exceptions.failWithOverflow("Could not emit value due to lack of requests."));
-					return;
-				}
-			}
-
-			missed = qd.leave(-missed);
-			if (missed == 0) {
-				break;
-			}
-		}
-	}
-
-	static <Q, S> boolean checkTerminated(boolean d, boolean empty,
-			Subscriber<?> s, boolean delayError, Queue<?> q, QueueDrainSubscriber<?, Q, S> qd) {
-		if (qd.cancelled()) {
-			q.clear();
-			return true;
-		}
-
-		if (d) {
-			if (delayError) {
-				if (empty) {
-					Throwable err = qd.error();
-					if (err != null) {
-						s.onError(err);
-					} else {
-						s.onComplete();
-					}
-					return true;
-				}
-			} else {
-				Throwable err = qd.error();
-				if (err != null) {
-					q.clear();
-					s.onError(err);
-					return true;
-				} else
-				if (empty) {
-					s.onComplete();
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 }

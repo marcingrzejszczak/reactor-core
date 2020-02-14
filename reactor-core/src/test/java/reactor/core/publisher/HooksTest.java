@@ -43,7 +43,8 @@ import reactor.test.publisher.TestPublisher;
 import reactor.test.subscriber.AssertSubscriber;
 import reactor.util.context.Context;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * @author Stephane Maldini
@@ -60,20 +61,15 @@ public class HooksTest {
 		Hooks.resetOnLastOperator();
 	}
 
-	void simpleFlux(){
+	void simpleFlux() {
 		Flux.just(1)
-		    .map(d -> d + 1)
-		    .doOnNext(d -> {throw new RuntimeException("test");})
-		    .collectList()
-		    .onErrorReturn(Collections.singletonList(2))
-		    .block();
-	}
-
-	static final class TestException extends RuntimeException {
-
-		public TestException(String message) {
-			super(message);
-		}
+				.map(d -> d + 1)
+				.doOnNext(d -> {
+					throw new RuntimeException("test");
+				})
+				.collectList()
+				.onErrorReturn(Collections.singletonList(2))
+				.block();
 	}
 
 	@Test
@@ -104,7 +100,8 @@ public class HooksTest {
 
 		Hooks.onEachOperator(hook);
 		Hooks.onEachOperator(hook);
-		Hooks.onEachOperatorHook.apply(s -> {});
+		Hooks.onEachOperatorHook.apply(s -> {
+		});
 
 		assertThat(applied.get()).isEqualTo(1);
 	}
@@ -119,7 +116,8 @@ public class HooksTest {
 
 		Hooks.onEachOperator(hook);
 		Hooks.onEachOperator("other", hook);
-		Hooks.onEachOperatorHook.apply(s -> {});
+		Hooks.onEachOperatorHook.apply(s -> {
+		});
 
 		assertThat(applied.get()).isEqualTo(2);
 	}
@@ -151,7 +149,8 @@ public class HooksTest {
 
 		Hooks.onEachOperator("1", hook1);
 		Hooks.onEachOperator("2", hook2);
-		Hooks.onEachOperatorHook.apply(s -> {});
+		Hooks.onEachOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnEachOperatorHooks())
 				.containsOnlyKeys("1", "2");
@@ -161,7 +160,8 @@ public class HooksTest {
 
 		applied.clear();
 		Hooks.onEachOperator("1", hook3);
-		Hooks.onEachOperatorHook.apply(s -> {});
+		Hooks.onEachOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnEachOperatorHooks())
 				.containsOnlyKeys("1", "2");
@@ -184,14 +184,16 @@ public class HooksTest {
 
 		Hooks.onEachOperator("1", hook1);
 		Hooks.onEachOperator(hook2);
-		Hooks.onEachOperatorHook.apply(s -> {});
+		Hooks.onEachOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnEachOperatorHooks()).hasSize(2);
 		assertThat(applied).containsExactly("h1", "h2");
 
 		applied.clear();
 		Hooks.resetOnEachOperator("1");
-		Hooks.onEachOperatorHook.apply(s -> {});
+		Hooks.onEachOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnEachOperatorHooks()).hasSize(1);
 		assertThat(applied).containsExactly("h2");
@@ -241,7 +243,8 @@ public class HooksTest {
 
 		Hooks.onLastOperator(hook);
 		Hooks.onLastOperator(hook);
-		Hooks.onLastOperatorHook.apply(s -> {});
+		Hooks.onLastOperatorHook.apply(s -> {
+		});
 
 		assertThat(applied.get()).isEqualTo(1);
 	}
@@ -256,7 +259,8 @@ public class HooksTest {
 
 		Hooks.onLastOperator(hook);
 		Hooks.onLastOperator("other", hook);
-		Hooks.onLastOperatorHook.apply(s -> {});
+		Hooks.onLastOperatorHook.apply(s -> {
+		});
 
 		assertThat(applied.get()).isEqualTo(2);
 	}
@@ -288,7 +292,8 @@ public class HooksTest {
 
 		Hooks.onLastOperator("1", hook1);
 		Hooks.onLastOperator("2", hook2);
-		Hooks.onLastOperatorHook.apply(s -> {});
+		Hooks.onLastOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnLastOperatorHooks())
 				.containsOnlyKeys("1", "2");
@@ -298,7 +303,8 @@ public class HooksTest {
 
 		applied.clear();
 		Hooks.onLastOperator("1", hook3);
-		Hooks.onLastOperatorHook.apply(s -> {});
+		Hooks.onLastOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnLastOperatorHooks())
 				.containsOnlyKeys("1", "2");
@@ -321,14 +327,16 @@ public class HooksTest {
 
 		Hooks.onLastOperator("1", hook1);
 		Hooks.onLastOperator(hook2);
-		Hooks.onLastOperatorHook.apply(s -> {});
+		Hooks.onLastOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnLastOperatorHooks()).hasSize(2);
 		assertThat(applied).containsExactly("h1", "h2");
 
 		applied.clear();
 		Hooks.resetOnLastOperator("1");
-		Hooks.onLastOperatorHook.apply(s -> {});
+		Hooks.onLastOperatorHook.apply(s -> {
+		});
 
 		assertThat(Hooks.getOnLastOperatorHooks()).hasSize(1);
 		assertThat(applied).containsExactly("h2");
@@ -519,7 +527,7 @@ public class HooksTest {
 
 		Assert.assertTrue(w instanceof TestException);
 		Assert.assertTrue(w.getMessage()
-		                   .equals("hello"));
+				.equals("hello"));
 
 		try {
 			Operators.onNextDropped("hello", Context.empty());
@@ -529,7 +537,7 @@ public class HooksTest {
 			t.printStackTrace();
 			Assert.assertTrue(t instanceof TestException);
 			Assert.assertTrue(t.getMessage()
-			                   .equals("hello"));
+					.equals("hello"));
 		}
 
 		try {
@@ -539,7 +547,7 @@ public class HooksTest {
 		catch (Throwable t) {
 			Assert.assertTrue(t instanceof TestException);
 			Assert.assertTrue(t.getMessage()
-			                   .equals("errorDrop"));
+					.equals("errorDrop"));
 		}
 	}
 
@@ -550,7 +558,7 @@ public class HooksTest {
 			ref.set(d.toString());
 		});
 		Hooks.onNextDropped(d -> {
-			ref.set(ref.get()+"bar");
+			ref.set(ref.get() + "bar");
 		});
 
 		Operators.onNextDropped("foo", Context.empty());
@@ -561,7 +569,7 @@ public class HooksTest {
 			ref.set(d.getMessage());
 		});
 		Hooks.onErrorDropped(d -> {
-			ref.set(ref.get()+"bar");
+			ref.set(ref.get() + "bar");
 		});
 
 		Operators.onErrorDropped(new Exception("foo"), Context.empty());
@@ -576,7 +584,7 @@ public class HooksTest {
 			return new Exception("bar");
 		});
 		Hooks.onOperatorError((error, d) -> {
-			ref.set(ref.get()+error.getMessage());
+			ref.set(ref.get() + error.getMessage());
 			return error;
 		});
 
@@ -591,7 +599,7 @@ public class HooksTest {
 		AtomicReference<Object> hook2 = new AtomicReference<>();
 		Hooks.onEachOperator(h -> {
 			Flux<Object> publisher = TestPublisher.create()
-			                                      .flux();
+					.flux();
 			hook.set(publisher);
 			return publisher;
 		});
@@ -623,7 +631,6 @@ public class HooksTest {
 		assertThat(hook.get()).isNotNull().isEqualTo(hook2.get());
 	}
 
-
 	@Test
 	public void parallelModeFused() {
 		Hooks.onOperatorDebug();
@@ -634,37 +641,37 @@ public class HooksTest {
 		});
 
 		Flux<Integer> source = Mono.just(1)
-		                           .flux()
-		                           .repeat(999)
-		                           .publish()
-		                           .autoConnect();
+				.flux()
+				.repeat(999)
+				.publish()
+				.autoConnect();
 		int ncpu = Math.max(8,
 				Runtime.getRuntime()
-				       .availableProcessors());
+						.availableProcessors());
 
-			Scheduler scheduler = Schedulers.newParallel("test", ncpu);
+		Scheduler scheduler = Schedulers.newParallel("test", ncpu);
 
-			try {
-				Flux<Integer> result = ParallelFlux.from(source, ncpu)
-				                                   .runOn(scheduler)
-				                                   .map(v -> v + 1)
-				                                   .log("test", Level.INFO, true, SignalType.ON_SUBSCRIBE)
-				                                   .sequential();
+		try {
+			Flux<Integer> result = ParallelFlux.from(source, ncpu)
+					.runOn(scheduler)
+					.map(v -> v + 1)
+					.log("test", Level.INFO, true, SignalType.ON_SUBSCRIBE)
+					.sequential();
 
-				AssertSubscriber<Integer> ts = AssertSubscriber.create();
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
-				result.subscribe(ts);
+			result.subscribe(ts);
 
-				ts.await(Duration.ofSeconds(10));
+			ts.await(Duration.ofSeconds(10));
 
-				ts.assertSubscribed()
-				  .assertValueCount(1000)
-				  .assertComplete()
-				  .assertNoError();
-			}
-			finally {
-				scheduler.dispose();
-			}
+			ts.assertSubscribed()
+					.assertValueCount(1000)
+					.assertComplete()
+					.assertNoError();
+		}
+		finally {
+			scheduler.dispose();
+		}
 
 	}
 
@@ -686,7 +693,7 @@ public class HooksTest {
 				"MonoCollectList",
 				"MonoOnErrorResume",
 				"MonoJust"
-				);
+		);
 
 
 		q.clear();
@@ -725,11 +732,11 @@ public class HooksTest {
 			return p;
 		});
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .map(m -> m)
-		                        .takeUntilOther(Mono.never())
-		                        .flatMap(d -> Mono.just(d).hide()))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.map(m -> m)
+				.takeUntilOther(Mono.never())
+				.flatMap(d -> Mono.just(d).hide()))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 
 		Hooks.resetOnLastOperator();
 
@@ -742,9 +749,9 @@ public class HooksTest {
 		try {
 
 			ConnectableFlux<?> t = Flux.empty()
-			    .then(Mono.defer(() -> {
-				    throw new RuntimeException();
-			    })).flux().publish();
+					.then(Mono.defer(() -> {
+						throw new RuntimeException();
+					})).flux().publish();
 
 			t.map(d -> d).subscribe(null,
 					e -> assertThat(e.getSuppressed()[0]).hasMessageContaining("\t|_ Flux.publish"));
@@ -762,7 +769,7 @@ public class HooksTest {
 	@Test
 	public void lastOperatorTest() {
 		Hooks.onLastOperator(Operators.lift((sc, sub) ->
-				new CoreSubscriber<Object>(){
+				new CoreSubscriber<Object>() {
 					@Override
 					public void onSubscribe(Subscription s) {
 						sub.onSubscribe(s);
@@ -770,7 +777,7 @@ public class HooksTest {
 
 					@Override
 					public void onNext(Object o) {
-						sub.onNext(((Integer)o) + 1);
+						sub.onNext(((Integer) o) + 1);
 					}
 
 					@Override
@@ -785,29 +792,29 @@ public class HooksTest {
 				}));
 
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(2, 3, 4)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(2, 3, 4)
+				.verifyComplete();
 
 		StepVerifier.create(Mono.just(1)
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(2)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(2)
+				.verifyComplete();
 
 		StepVerifier.create(ParallelFlux.from(Mono.just(1), Mono.just(1))
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(2, 2)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(2, 2)
+				.verifyComplete();
 	}
 
 	@Test
 	public void lastOperatorFilterTest() {
 		Hooks.onLastOperator(Operators.lift(sc -> sc.tags()
-		                                            .anyMatch(t -> t.getT1()
-		                                                            .contains("metric")),
+						.anyMatch(t -> t.getT1()
+								.contains("metric")),
 				(sc, sub) -> new CoreSubscriber<Object>() {
 					@Override
 					public void onSubscribe(Subscription s) {
@@ -831,49 +838,49 @@ public class HooksTest {
 				}));
 
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .tag("metric", "test")
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(2, 3, 4)
-		            .verifyComplete();
+				.tag("metric", "test")
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(2, 3, 4)
+				.verifyComplete();
 
 		StepVerifier.create(Mono.just(1)
-		                        .tag("metric", "test")
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(2)
-		            .verifyComplete();
+				.tag("metric", "test")
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(2)
+				.verifyComplete();
 
 		StepVerifier.create(ParallelFlux.from(Mono.just(1), Mono.just(1))
-		                                .tag("metric", "test")
-		                                .log("log", Level.FINE)
-		                                .log("log", Level.FINE))
-		            .expectNext(2, 2)
-		            .verifyComplete();
+				.tag("metric", "test")
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(2, 2)
+				.verifyComplete();
 
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 
 		StepVerifier.create(Mono.just(1)
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(1)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(1)
+				.verifyComplete();
 
 		StepVerifier.create(ParallelFlux.from(Mono.just(1), Mono.just(1))
-		                                .log("log", Level.FINE)
-		                                .log("log", Level.FINE))
-		            .expectNext(1, 1)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(1, 1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void eachOperatorTest() {
 		Hooks.onEachOperator(Operators.lift((sc, sub) ->
-				new CoreSubscriber<Object>(){
+				new CoreSubscriber<Object>() {
 					@Override
 					public void onSubscribe(Subscription s) {
 						sub.onSubscribe(s);
@@ -881,7 +888,7 @@ public class HooksTest {
 
 					@Override
 					public void onNext(Object o) {
-						sub.onNext(((Integer)o) + 1);
+						sub.onNext(((Integer) o) + 1);
 					}
 
 					@Override
@@ -896,22 +903,22 @@ public class HooksTest {
 				}));
 
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(4, 5, 6)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(4, 5, 6)
+				.verifyComplete();
 
 		StepVerifier.create(Mono.just(1)
-		                        .log("log", Level.FINE)
-		                        .log("log", Level.FINE))
-		            .expectNext(4)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(4)
+				.verifyComplete();
 
 		StepVerifier.create(ParallelFlux.from(Mono.just(1), Mono.just(1))
-		                                .log("log", Level.FINE)
-		                                .log("log", Level.FINE))
-		            .expectNext(6, 6)
-		            .verifyComplete();
+				.log("log", Level.FINE)
+				.log("log", Level.FINE))
+				.expectNext(6, 6)
+				.verifyComplete();
 	}
 
 	@Test
@@ -939,6 +946,13 @@ public class HooksTest {
 		}
 		finally {
 			Hooks.resetOnNextDropped();
+		}
+	}
+
+	static final class TestException extends RuntimeException {
+
+		public TestException(String message) {
+			super(message);
 		}
 	}
 }

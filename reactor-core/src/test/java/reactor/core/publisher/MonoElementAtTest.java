@@ -59,8 +59,8 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(0).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -70,14 +70,14 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(0).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -87,8 +87,8 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(4).subscribe(ts);
 
 		ts.assertValues(5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -98,14 +98,14 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(4).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(5)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -115,8 +115,8 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(9).subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -126,14 +126,14 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(9).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(10)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -143,8 +143,8 @@ public class MonoElementAtTest {
 		Flux.<Integer>empty().elementAt(0).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertError(IndexOutOfBoundsException.class)
-		  .assertNotComplete();
+				.assertError(IndexOutOfBoundsException.class)
+				.assertNotComplete();
 	}
 
 	@Test
@@ -154,8 +154,8 @@ public class MonoElementAtTest {
 		Flux.<Integer>empty().elementAt(0, 20).subscribe(ts);
 
 		ts.assertValues(20)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -165,14 +165,14 @@ public class MonoElementAtTest {
 		Flux.<Integer>empty().elementAt(0, 20).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(20)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -182,8 +182,8 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(20, 20).subscribe(ts);
 
 		ts.assertValues(20)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -193,14 +193,14 @@ public class MonoElementAtTest {
 		Flux.range(1, 10).elementAt(20, 20).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(20)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -208,8 +208,8 @@ public class MonoElementAtTest {
 		TestPublisher<String> cancelTester = TestPublisher.create();
 
 		MonoProcessor<String> processor = cancelTester.flux()
-		                                              .elementAt(1000)
-		                                              .toProcessor();
+				.elementAt(1000)
+				.toProcessor();
 		processor.subscribe();
 		processor.cancel();
 
@@ -218,7 +218,8 @@ public class MonoElementAtTest {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoElementAt.ElementAtSubscriber<String> test = new MonoElementAt.ElementAtSubscriber<>(actual, 1, "foo");
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

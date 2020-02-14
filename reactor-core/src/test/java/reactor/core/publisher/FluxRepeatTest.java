@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Test;
 import reactor.test.StepVerifier;
@@ -33,80 +32,80 @@ public class FluxRepeatTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void timesInvalid() {
 		Flux.never()
-		    .repeat(-1);
+				.repeat(-1);
 	}
 
 	@Test
 	public void zeroRepeat() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .repeat(0))
-		            .expectNextCount(10)
-		            .verifyComplete();
+				.repeat(0))
+				.expectNextCount(10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void oneRepeat() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .repeat(1))
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.repeat(1))
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void oneRepeatBackpressured() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .repeat(1),
+						.repeat(1),
 				0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(2)
-		            .expectNext(1, 2)
-		            .thenRequest(3)
-		            .expectNext(3, 4, 5)
-		            .thenRequest(10)
-		            .expectNext(6, 7, 8, 9, 10)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .thenRequest(100)
-		            .expectNext(6, 7, 8, 9, 10)
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(2)
+				.expectNext(1, 2)
+				.thenRequest(3)
+				.expectNext(3, 4, 5)
+				.thenRequest(10)
+				.expectNext(6, 7, 8, 9, 10)
+				.expectNext(1, 2, 3, 4, 5)
+				.thenRequest(100)
+				.expectNext(6, 7, 8, 9, 10)
+				.verifyComplete();
 	}
 
 	@Test
 	public void twoRepeat() {
 		StepVerifier.create(Flux.range(1, 5)
-		                        .repeat(2))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.repeat(2))
+				.expectNext(1, 2, 3, 4, 5)
+				.expectNext(1, 2, 3, 4, 5)
+				.expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
 	public void twoRepeatNormal() {
 		StepVerifier.create(Flux.just("test", "test2", "test3")
-		                        .repeat(2)
-		                        .count())
-		            .expectNext(9L)
-		            .expectComplete()
-		            .verify();
+				.repeat(2)
+				.count())
+				.expectNext(9L)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void twoRepeatBackpressured() {
 		StepVerifier.create(Flux.range(1, 5)
-		    .repeat(2), 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(2)
-		            .expectNext(1, 2)
-		            .thenRequest(4)
-		            .expectNext(3, 4, 5).expectNext(1)
-		            .thenRequest(2)
-		            .expectNext(2, 3)
-		            .thenRequest(10)
-		            .expectNext(4, 5).expectNext(1, 2, 3, 4, 5)
-		            .verifyComplete();
+				.repeat(2), 0)
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(2)
+				.expectNext(1, 2)
+				.thenRequest(4)
+				.expectNext(3, 4, 5).expectNext(1)
+				.thenRequest(2)
+				.expectNext(2, 3)
+				.thenRequest(10)
+				.expectNext(4, 5).expectNext(1, 2, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
@@ -114,15 +113,14 @@ public class FluxRepeatTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .repeat()
-		    .take(9)
-		    .subscribe(ts);
+				.repeat()
+				.take(9)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 1, 2, 1, 2, 1, 2, 1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
-
 
 
 	@Test
@@ -130,12 +128,12 @@ public class FluxRepeatTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.range(1, 4)
-		                        .repeat(2, bool::get))
-		            .expectNext(1, 2, 3, 4)
-		            .expectNext(1, 2, 3, 4)
-		            .expectNext(1, 2, 3, 4)
-		            .then(() -> bool.set(false))
-		            .verifyComplete();
+				.repeat(2, bool::get))
+				.expectNext(1, 2, 3, 4)
+				.expectNext(1, 2, 3, 4)
+				.expectNext(1, 2, 3, 4)
+				.then(() -> bool.set(false))
+				.verifyComplete();
 	}
 
 	@Test
@@ -143,9 +141,9 @@ public class FluxRepeatTest {
 		AtomicBoolean bool = new AtomicBoolean(false);
 
 		StepVerifier.create(Flux.range(1, 4)
-		                        .repeat(0, bool::get))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.repeat(0, bool::get))
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
@@ -153,11 +151,11 @@ public class FluxRepeatTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Flux.range(1, 4)
-		                        .repeat(2, bool::get))
-		            .expectNext(1, 2, 3, 4)
-		            .expectNext(1, 2, 3, 4)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.repeat(2, bool::get))
+				.expectNext(1, 2, 3, 4)
+				.expectNext(1, 2, 3, 4)
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
@@ -165,9 +163,9 @@ public class FluxRepeatTest {
 		AtomicBoolean bool = new AtomicBoolean(false);
 
 		StepVerifier.create(Flux.range(1, 4)
-		                        .repeat(2, bool::get))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyComplete();
+				.repeat(2, bool::get))
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
@@ -180,8 +178,8 @@ public class FluxRepeatTest {
 				return publisher;
 			});
 			Mono.just(1)
-			    .repeat(1)
-			    .blockLast();
+					.repeat(1)
+					.blockLast();
 
 			assertThat(onAssemblyCounter).hasValue(1);
 		}

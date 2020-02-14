@@ -40,7 +40,8 @@ public class ParallelMergeSortTest {
 
 	@Test
 	public void scanMainSubscriber() {
-		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> { }, null,
+		LambdaSubscriber<Integer> subscriber = new LambdaSubscriber<>(null, e -> {
+		}, null,
 				s -> s.request(2));
 		MergeSortMain<Integer> test = new MergeSortMain<>(subscriber, 4, Integer::compareTo);
 
@@ -64,7 +65,8 @@ public class ParallelMergeSortTest {
 
 	@Test
 	public void scanInnerSubscriber() {
-		CoreSubscriber<Integer> mainActual = new LambdaSubscriber<>(null, e -> { }, null, null);
+		CoreSubscriber<Integer> mainActual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		MergeSortMain<Integer> main = new MergeSortMain<>(mainActual, 2, Integer::compareTo);
 		MergeSortInner<Integer> test = new MergeSortInner<>(main, 1);
 

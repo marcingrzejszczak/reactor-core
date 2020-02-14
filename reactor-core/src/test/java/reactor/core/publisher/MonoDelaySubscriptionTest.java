@@ -32,7 +32,7 @@ public class MonoDelaySubscriptionTest {
 
 	@Test(expected = NullPointerException.class)
 	public void otherNull() {
-		Mono.never().delaySubscription((Publisher<?>)null);
+		Mono.never().delaySubscription((Publisher<?>) null);
 	}
 
 	@Test
@@ -40,38 +40,38 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .delaySubscription(Mono.just(1))
-		    .subscribe(ts);
+				.delaySubscription(Mono.just(1))
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
-	Mono<Integer> scenario_delayedTrigger(){
+	Mono<Integer> scenario_delayedTrigger() {
 		return Mono.just(1)
-		           .delaySubscription(Duration.ofSeconds(3));
+				.delaySubscription(Duration.ofSeconds(3));
 	}
 
 	@Test
 	public void delayedTrigger() {
 		StepVerifier.withVirtualTime(this::scenario_delayedTrigger)
-		            .thenAwait(Duration.ofSeconds(3))
-		            .expectNext(1)
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(3))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
-	Mono<Integer> scenario_delayedTrigger2(){
+	Mono<Integer> scenario_delayedTrigger2() {
 		return Mono.just(1)
-		           .delaySubscription(Duration.ofMillis(50));
+				.delaySubscription(Duration.ofMillis(50));
 	}
 
 	@Test
 	public void delayedTrigger2() {
 		StepVerifier.withVirtualTime(this::scenario_delayedTrigger2)
-		            .thenAwait(Duration.ofMillis(50))
-		            .expectNext(1)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(50))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -79,18 +79,18 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.just(1)
-		    .delaySubscription(Mono.just(1))
-		    .subscribe(ts);
+				.delaySubscription(Mono.just(1))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -98,12 +98,12 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .delaySubscription(Flux.range(1, 10))
-		    .subscribe(ts);
+				.delaySubscription(Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -111,18 +111,18 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.just(1)
-		    .delaySubscription(Flux.range(1, 10))
-		    .subscribe(ts);
+				.delaySubscription(Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -130,12 +130,12 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .delaySubscription(Mono.empty())
-		    .subscribe(ts);
+				.delaySubscription(Mono.empty())
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -143,18 +143,18 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.just(1)
-		    .delaySubscription(Mono.empty())
-		    .subscribe(ts);
+				.delaySubscription(Mono.empty())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -162,13 +162,12 @@ public class MonoDelaySubscriptionTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.just(1)
-		    .delaySubscription(Mono.never())
-		    .subscribe(ts);
+				.delaySubscription(Mono.never())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 	}
-
 
 }

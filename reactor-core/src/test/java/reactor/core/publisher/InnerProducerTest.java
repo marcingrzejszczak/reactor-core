@@ -34,10 +34,12 @@ public class InnerProducerTest {
 			}
 
 			@Override
-			public void request(long n) { }
+			public void request(long n) {
+			}
 
 			@Override
-			public void cancel() { }
+			public void cancel() {
+			}
 		};
 
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);

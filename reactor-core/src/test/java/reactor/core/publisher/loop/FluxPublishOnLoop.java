@@ -70,6 +70,7 @@ public class FluxPublishOnLoop {
 			publishOnTest.boundedQueueFilter();
 		}
 	}
+
 	@Test
 	public void withFlatMapLoop() {
 		for (int i = 0; i < 200; i++) {
@@ -116,11 +117,11 @@ public class FluxPublishOnLoop {
 		for (int j = 1; j < 256; j *= 2) {
 
 			Flux<Integer> source = Flux.range(1, count)
-			                           .flatMap(v -> Flux.range(v, 2), 128, j)
-			                           .publishOn(scheduler);
+					.flatMap(v -> Flux.range(v, 2), 128, j)
+					.publishOn(scheduler);
 
 			StepVerifier.Step<Integer> v = StepVerifier.create(source)
-			            .expectNextCount(count * 2);
+					.expectNextCount(count * 2);
 
 			for (int i = 0; i < 10000; i++) {
 				v.verifyComplete();

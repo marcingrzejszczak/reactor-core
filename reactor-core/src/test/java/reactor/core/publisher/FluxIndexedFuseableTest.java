@@ -39,9 +39,9 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 	protected Scenario<Integer, Tuple2<Long, Integer>> defaultScenarioOptions(
 			Scenario<Integer, Tuple2<Long, Integer>> defaultOptions) {
 		return super.defaultScenarioOptions(defaultOptions)
-		            .fusionMode(Fuseable.ASYNC)
-		            .producer(10, i -> i)
-		            .receive(10, i -> Tuples.of((long) i, i));
+				.fusionMode(Fuseable.ASYNC)
+				.producer(10, i -> i)
+				.receive(10, i -> Tuples.of((long) i, i));
 	}
 
 	@Override
@@ -68,15 +68,15 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 		AtomicLong counter = new AtomicLong(2);
 		StepVerifier.create(
 				Flux.range(0, 1000)
-				    .index()
+						.index()
 		)
-		            .expectFusion()
-		            .expectNext(Tuples.of(0L, 0))
-		            .expectNextMatches(t -> t.getT1() == t.getT2().longValue())
-		            .thenConsumeWhile(t -> t.getT1() == t.getT2().longValue(),
-				            it -> counter.incrementAndGet())
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(Tuples.of(0L, 0))
+				.expectNextMatches(t -> t.getT1() == t.getT2().longValue())
+				.thenConsumeWhile(t -> t.getT1() == t.getT2().longValue(),
+						it -> counter.incrementAndGet())
+				.expectComplete()
+				.verify();
 
 		assertThat(counter.get()).isEqualTo(1000);
 	}
@@ -87,21 +87,21 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 
 		StepVerifier.create(
 				Flux.range(0, 1000)
-				    .index()
+						.index()
 				, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(1)
-		            .expectNext(Tuples.of(0L, 0))
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(3)
-		            .expectNext(Tuples.of(1L, 1))
-		            .expectNext(Tuples.of(2L, 2))
-		            .expectNext(Tuples.of(3L, 3))
-		            .thenRequest(Long.MAX_VALUE)
-		            .thenConsumeWhile(t -> t.getT1() == t.getT2().longValue(),
-				            it -> counter.incrementAndGet())
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(1)
+				.expectNext(Tuples.of(0L, 0))
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(3)
+				.expectNext(Tuples.of(1L, 1))
+				.expectNext(Tuples.of(2L, 2))
+				.expectNext(Tuples.of(3L, 3))
+				.thenRequest(Long.MAX_VALUE)
+				.thenConsumeWhile(t -> t.getT1() == t.getT2().longValue(),
+						it -> counter.incrementAndGet())
+				.verifyComplete();
 
 		assertThat(counter.get()).isEqualTo(1000);
 	}
@@ -111,16 +111,16 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 		AtomicLong counter = new AtomicLong(2);
 		StepVerifier.create(
 				Flux.range(0, 1000)
-				    .index()
-				    .filter(it -> true)
+						.index()
+						.filter(it -> true)
 		)
-		            .expectFusion()
-		            .expectNext(Tuples.of(0L, 0))
-		            .expectNextMatches(t -> t.getT1() == t.getT2().longValue())
-		            .thenConsumeWhile(t -> t.getT1() == t.getT2().longValue(),
-				            it -> counter.incrementAndGet())
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(Tuples.of(0L, 0))
+				.expectNextMatches(t -> t.getT1() == t.getT2().longValue())
+				.thenConsumeWhile(t -> t.getT1() == t.getT2().longValue(),
+						it -> counter.incrementAndGet())
+				.expectComplete()
+				.verify();
 
 		assertThat(counter.get()).isEqualTo(1000);
 	}
@@ -130,15 +130,15 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 		AtomicLong counter = new AtomicLong(2);
 		StepVerifier.create(
 				Flux.range(0, 1000)
-				    .index((i, v) -> Tuples.of("#" + (i + 1), v))
+						.index((i, v) -> Tuples.of("#" + (i + 1), v))
 		)
-		            .expectFusion()
-		            .expectNext(Tuples.of("#1", 0))
-		            .expectNextMatches(t -> t.getT1().equals("#" + (t.getT2() + 1)))
-		            .thenConsumeWhile(t -> t.getT1().equals("#" + (t.getT2() + 1)),
-				            it -> counter.incrementAndGet())
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(Tuples.of("#1", 0))
+				.expectNextMatches(t -> t.getT1().equals("#" + (t.getT2() + 1)))
+				.thenConsumeWhile(t -> t.getT1().equals("#" + (t.getT2() + 1)),
+						it -> counter.incrementAndGet())
+				.expectComplete()
+				.verify();
 
 		assertThat(counter.get()).isEqualTo(1000);
 	}
@@ -149,21 +149,21 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 
 		StepVerifier.create(
 				Flux.range(0, 1000)
-				    .index((i, v) -> Tuples.of("#" + (i + 1), v))
+						.index((i, v) -> Tuples.of("#" + (i + 1), v))
 				, 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(1)
-		            .expectNext(Tuples.of("#1", 0))
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(3)
-		            .expectNext(Tuples.of("#2", 1))
-		            .expectNext(Tuples.of("#3", 2))
-		            .expectNext(Tuples.of("#4", 3))
-		            .thenRequest(Long.MAX_VALUE)
-		            .thenConsumeWhile(t -> t.getT1().equals("#" + (t.getT2() + 1)),
-				            it -> counter.incrementAndGet())
-		            .verifyComplete();
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(1)
+				.expectNext(Tuples.of("#1", 0))
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(3)
+				.expectNext(Tuples.of("#2", 1))
+				.expectNext(Tuples.of("#3", 2))
+				.expectNext(Tuples.of("#4", 3))
+				.thenRequest(Long.MAX_VALUE)
+				.thenConsumeWhile(t -> t.getT1().equals("#" + (t.getT2() + 1)),
+						it -> counter.incrementAndGet())
+				.verifyComplete();
 
 		assertThat(counter.get()).isEqualTo(1000);
 	}
@@ -173,16 +173,16 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 		AtomicLong counter = new AtomicLong(2);
 		StepVerifier.create(
 				Flux.range(0, 1000)
-				    .index((i, v) -> Tuples.of("#" + (i + 1), v))
-				    .filter(it -> true)
+						.index((i, v) -> Tuples.of("#" + (i + 1), v))
+						.filter(it -> true)
 		)
-		            .expectFusion()
-		            .expectNext(Tuples.of("#1", 0))
-		            .expectNextMatches(t -> t.getT1().equals("#" + (t.getT2() + 1)))
-		            .thenConsumeWhile(t -> t.getT1().equals("#" + (t.getT2() + 1)),
-				            it -> counter.incrementAndGet())
-		            .expectComplete()
-		            .verify();
+				.expectFusion()
+				.expectNext(Tuples.of("#1", 0))
+				.expectNextMatches(t -> t.getT1().equals("#" + (t.getT2() + 1)))
+				.thenConsumeWhile(t -> t.getT1().equals("#" + (t.getT2() + 1)),
+						it -> counter.incrementAndGet())
+				.expectComplete()
+				.verify();
 
 		assertThat(counter.get()).isEqualTo(1000);
 	}
@@ -214,8 +214,8 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 				});
 
 		StepVerifier.create(test)
-		            .expectNext(Tuples.of(0, "foo"))
-		            .verifyErrorMessage("indexMapper returned a null value at raw index 1 for value bar");
+				.expectNext(Tuples.of(0, "foo"))
+				.verifyErrorMessage("indexMapper returned a null value at raw index 1 for value bar");
 	}
 
 	@Test
@@ -228,20 +228,20 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 				});
 
 		StepVerifier.create(test)
-		            .expectNext(Tuples.of(0, "foo"))
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("boom-1"));
+				.expectNext(Tuples.of(0, "foo"))
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("boom-1"));
 	}
 
 	@Test
 	public void fusionThreadBarrierDefaultMapperDoesFuse() {
 		StepVerifier.create(Flux.range(1, 10)
-		                        .index())
-		            .expectFusion(Fuseable.SYNC | Fuseable.THREAD_BARRIER,
-				            Fuseable.SYNC)
-		            .expectNextCount(10)
-		            .verifyComplete();
+				.index())
+				.expectFusion(Fuseable.SYNC | Fuseable.THREAD_BARRIER,
+						Fuseable.SYNC)
+				.expectNextCount(10)
+				.verifyComplete();
 	}
 
 	@Test
@@ -251,13 +251,13 @@ public class FluxIndexedFuseableTest extends FluxOperatorTest<Integer, Tuple2<Lo
 		@SuppressWarnings("unchecked") Fuseable.QueueSubscription<String> qs =
 				Mockito.mock(Fuseable.QueueSubscription.class);
 		Mockito.when(qs.requestFusion(Mockito.anyInt()))
-		       .thenAnswer((Answer<Integer>) mock -> {
-			       int requestedMode = mock.getArgument(0);
-			       if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
-				       return requestedMode - Fuseable.THREAD_BARRIER;
-			       }
-			       return requestedMode;
-		       });
+				.thenAnswer((Answer<Integer>) mock -> {
+					int requestedMode = mock.getArgument(0);
+					if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
+						return requestedMode - Fuseable.THREAD_BARRIER;
+					}
+					return requestedMode;
+				});
 
 		@SuppressWarnings("unchecked") FluxIndexFuseable.IndexFuseableConditionalSubscriber test =
 				new FluxIndexFuseable.IndexFuseableConditionalSubscriber<>(cs, Flux.TUPLE2_BIFUNCTION);

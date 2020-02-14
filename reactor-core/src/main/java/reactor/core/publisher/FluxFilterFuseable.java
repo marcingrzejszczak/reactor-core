@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.reactivestreams.Subscription;
-import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.util.annotation.Nullable;
@@ -53,10 +52,10 @@ final class FluxFilterFuseable<T> extends InternalFluxOperator<T, T> implements 
 
 	static final class FilterFuseableSubscriber<T>
 			implements InnerOperator<T, T>, QueueSubscription<T>,
-			           ConditionalSubscriber<T> {
+			ConditionalSubscriber<T> {
 
 		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
+		final Context ctx;
 
 		final Predicate<? super T> predicate;
 
@@ -270,7 +269,7 @@ final class FluxFilterFuseable<T> extends InternalFluxOperator<T, T> implements 
 
 	static final class FilterFuseableConditionalSubscriber<T>
 			implements InnerOperator<T, T>, ConditionalSubscriber<T>,
-			           QueueSubscription<T> {
+			QueueSubscription<T> {
 
 		final ConditionalSubscriber<? super T> actual;
 		final Context ctx;

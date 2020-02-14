@@ -36,10 +36,11 @@ public class Tuple4<T1, T2, T3, T4> extends Tuple3<T1, T2, T3> {
 
 	private static final long serialVersionUID = -4898704078143033129L;
 
-	@NonNull final T4 t4;
+	@NonNull
+	final T4 t4;
 
 	Tuple4(T1 t1, T2 t2, T3 t3, T4 t4) {
-		super( t1, t2, t3);
+		super(t1, t2, t3);
 		this.t4 = Objects.requireNonNull(t4, "t4");
 	}
 
@@ -104,22 +105,22 @@ public class Tuple4<T1, T2, T3, T4> extends Tuple3<T1, T2, T3> {
 	@Override
 	public Object get(int index) {
 		switch (index) {
-			case 0:
-				return t1;
-			case 1:
-				return t2;
-			case 2:
-				return t3;
-			case 3:
-				return t4;
-			default:
-				return null;
+		case 0:
+			return t1;
+		case 1:
+			return t2;
+		case 2:
+			return t3;
+		case 3:
+			return t4;
+		default:
+			return null;
 		}
 	}
 
 	@Override
 	public Object[] toArray() {
-		return new Object[]{t1, t2, t3, t4};
+		return new Object[] {t1, t2, t3, t4};
 	}
 
 	@Override
@@ -129,7 +130,7 @@ public class Tuple4<T1, T2, T3, T4> extends Tuple3<T1, T2, T3> {
 		if (!super.equals(o)) return false;
 
 		@SuppressWarnings("rawtypes")
-        Tuple4 tuple4 = (Tuple4) o;
+		Tuple4 tuple4 = (Tuple4) o;
 
 		return t4.equals(tuple4.t4);
 

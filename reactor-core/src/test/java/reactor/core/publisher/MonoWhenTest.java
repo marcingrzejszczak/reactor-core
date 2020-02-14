@@ -33,7 +33,7 @@ public class MonoWhenTest {
 	@Test
 	public void pairWise() {
 		Mono<Void> f = Mono.just(1)
-		                   .and(Mono.just("test2"));
+				.and(Mono.just("test2"));
 
 		Assert.assertTrue(f instanceof MonoWhen);
 		MonoWhen s = (MonoWhen) f;
@@ -41,8 +41,8 @@ public class MonoWhenTest {
 		Assert.assertTrue(s.sources.length == 2);
 
 		f.subscribeWith(AssertSubscriber.create())
-		 .assertComplete()
-		.assertNoValues();
+				.assertComplete()
+				.assertNoValues();
 	}
 
 
@@ -50,63 +50,63 @@ public class MonoWhenTest {
 	public void allEmptyPublisherIterable() {
 		Mono<Void> test = Mono.when(Arrays.asList(Mono.empty(), Flux.empty()));
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void allEmptyPublisher() {
 		Mono<Void> test = Mono.when(Mono.empty(), Flux.empty());
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void someEmptyPublisher() {
 		Mono<Void> test = Mono.when(Mono.just(1), Flux.empty());
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void noEmptyPublisher() {
 		Mono<Void> test = Mono.when(Mono.just(1), Flux.just(3));
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void noSourcePublisher() {
 		Mono<Void> test = Mono.when();
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void oneSourcePublisher() {
 		Mono<Void> test = Mono.when(Flux.empty());
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void allEmptyPublisherDelay() {
 		Mono<Void> test = Mono.whenDelayError(Mono.empty(), Flux.empty());
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void noSourcePublisherDelay() {
 		Mono<Void> test = Mono.whenDelayError();
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void oneSourcePublisherDelay() {
 		Mono<Void> test = Mono.whenDelayError(Flux.empty());
 		StepVerifier.create(test)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
@@ -120,9 +120,9 @@ public class MonoWhenTest {
 				Mono.<Void>error(boom2));
 
 		StepVerifier.create(Mono.whenDelayError(voidPublishers))
-		            .verifyErrorMatches(e -> e.getMessage().equals("Multiple exceptions") &&
-				            e.getSuppressed()[0] == boom1 &&
-				            e.getSuppressed()[1] == boom2);
+				.verifyErrorMatches(e -> e.getMessage().equals("Multiple exceptions") &&
+						e.getSuppressed()[0] == boom1 &&
+						e.getSuppressed()[1] == boom2);
 	}
 
 	@Test
@@ -136,7 +136,7 @@ public class MonoWhenTest {
 				Mono.<Void>error(boom2));
 
 		StepVerifier.create(Mono.when(voidPublishers))
-		            .verifyErrorMatches(e -> e == boom1);
+				.verifyErrorMatches(e -> e == boom1);
 	}
 
 	@Test

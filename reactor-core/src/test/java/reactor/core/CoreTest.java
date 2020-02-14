@@ -17,7 +17,6 @@ package reactor.core;
 
 import java.util.Collections;
 
-
 import org.junit.Test;
 import reactor.util.annotation.Nullable;
 
@@ -30,13 +29,14 @@ import static org.junit.Assert.fail;
 public class CoreTest {
 
 	@Test
-	public void defaultDisposable(){
-		Disposable d = () -> {};
+	public void defaultDisposable() {
+		Disposable d = () -> {
+		};
 		assertThat(d.isDisposed()).isFalse();
 	}
 
 	@Test
-	public void defaultFuseableQueueSubscription(){
+	public void defaultFuseableQueueSubscription() {
 		TestQueueSubscription tqs = new TestQueueSubscription();
 		testUnsupported(() -> tqs.peek());
 		testUnsupported(() -> tqs.add(0));
@@ -50,17 +50,17 @@ public class CoreTest {
 		testUnsupported(() -> tqs.contains(0));
 		testUnsupported(() -> tqs.containsAll(Collections.emptyList()));
 		testUnsupported(() -> tqs.iterator());
-		testUnsupported(() -> tqs.toArray((Integer[])null));
+		testUnsupported(() -> tqs.toArray((Integer[]) null));
 		testUnsupported(() -> tqs.toArray());
 		testUnsupported(() -> tqs.peek());
 	}
 
-	final void testUnsupported(Runnable r){
-		try{
+	final void testUnsupported(Runnable r) {
+		try {
 			r.run();
 			fail();
 		}
-		catch (UnsupportedOperationException uoe){
+		catch (UnsupportedOperationException uoe) {
 			//IGNORE
 		}
 	}

@@ -96,7 +96,8 @@ final class MonoAll<T> extends MonoFromFluxOperator<T, Boolean>
 
 			try {
 				b = predicate.test(t);
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				done = true;
 				actual.onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
 				return;

@@ -39,14 +39,14 @@ import reactor.util.concurrent.Queues;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxGroupByTest extends
-                             FluxOperatorTest<String, GroupedFlux<Integer, String>> {
+		FluxOperatorTest<String, GroupedFlux<Integer, String>> {
 
 	@Override
 	protected Scenario<String, GroupedFlux<Integer, String>> defaultScenarioOptions(Scenario<String, GroupedFlux<Integer, String>> defaultOptions) {
 		return defaultOptions.fusionMode(Fuseable.ASYNC)
-		                     .fusionModeThreadBarrier(Fuseable.ANY)
-		                     .prefetch(Queues.SMALL_BUFFER_SIZE)
-		                     .shouldAssertPostTerminateState(false);
+				.fusionModeThreadBarrier(Fuseable.ANY)
+				.prefetch(Queues.SMALL_BUFFER_SIZE)
+				.shouldAssertPostTerminateState(false);
 	}
 
 	@Override
@@ -60,9 +60,9 @@ public class FluxGroupByTest extends
 	protected List<Scenario<String, GroupedFlux<Integer, String>>> scenarios_operatorSuccess() {
 		return Arrays.asList(
 				scenario(f -> f.groupBy(String::hashCode))
-					.receive(g -> assertThat(g.key()).isEqualTo(g.blockFirst().hashCode()),
-							    g -> assertThat(g.key()).isEqualTo(g.blockFirst().hashCode()),
-							    g -> assertThat(g.key()).isEqualTo(g.blockFirst().hashCode()))
+						.receive(g -> assertThat(g.key()).isEqualTo(g.blockFirst().hashCode()),
+								g -> assertThat(g.key()).isEqualTo(g.blockFirst().hashCode()),
+								g -> assertThat(g.key()).isEqualTo(g.blockFirst().hashCode()))
 		);
 	}
 
@@ -78,7 +78,7 @@ public class FluxGroupByTest extends
 				})),
 
 				scenario(f -> f.groupBy(String::hashCode, s -> null))
-						,
+				,
 
 				scenario(f -> f.groupBy(k -> null))
 
@@ -90,23 +90,23 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 2)
-		    .subscribe(ts);
+				.groupBy(k -> k % 2)
+				.subscribe(ts);
 
 		ts.assertValueCount(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		ts.values()
-		  .get(0)
-		  .subscribe(ts1);
+				.get(0)
+				.subscribe(ts1);
 		ts1.assertValues(1, 3, 5, 7, 9);
 
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		ts.values()
-		  .get(1)
-		  .subscribe(ts2);
+				.get(1)
+				.subscribe(ts2);
 		ts2.assertValues(2, 4, 6, 8, 10);
 	}
 
@@ -115,23 +115,23 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 2, v -> -v)
-		    .subscribe(ts);
+				.groupBy(k -> k % 2, v -> -v)
+				.subscribe(ts);
 
 		ts.assertValueCount(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		ts.values()
-		  .get(0)
-		  .subscribe(ts1);
+				.get(0)
+				.subscribe(ts1);
 		ts1.assertValues(-1, -3, -5, -7, -9);
 
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		ts.values()
-		  .get(1)
-		  .subscribe(ts2);
+				.get(1)
+				.subscribe(ts2);
 		ts2.assertValues(-2, -4, -6, -8, -10);
 	}
 
@@ -140,24 +140,24 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 3)
-		    .take(2)
-		    .subscribe(ts);
+				.groupBy(k -> k % 3)
+				.take(2)
+				.subscribe(ts);
 
 		ts.assertValueCount(2)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		ts.values()
-		  .get(0)
-		  .subscribe(ts1);
+				.get(0)
+				.subscribe(ts1);
 		ts1.assertValues(1, 4, 7, 10);
 
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		ts.values()
-		  .get(1)
-		  .subscribe(ts2);
+				.get(1)
+				.subscribe(ts2);
 		ts2.assertValues(2, 5, 8);
 	}
 
@@ -166,8 +166,8 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> (Integer) null)
-		    .subscribe(ts);
+				.groupBy(k -> (Integer) null)
+				.subscribe(ts);
 
 		ts.assertError(NullPointerException.class);
 	}
@@ -177,8 +177,8 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> 1, v -> (Integer) null)
-		    .subscribe(ts);
+				.groupBy(k -> 1, v -> (Integer) null)
+				.subscribe(ts);
 
 		ts.assertError(NullPointerException.class);
 	}
@@ -188,7 +188,7 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create();
 
 		Flux.<Integer>error(new RuntimeException("forced failure")).groupBy(k -> k)
-		                                                           .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertErrorMessage("forced failure");
 	}
@@ -198,22 +198,22 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create(0L);
 
 		Flux.range(1, 10)
-		    .groupBy(k -> 1)
-		    .subscribe(ts);
+				.groupBy(k -> 1)
+				.subscribe(ts);
 
 		ts.assertNoEvents();
 
 		ts.request(1);
 
 		ts.assertValueCount(1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create(0L);
 
 		ts.values()
-		  .get(0)
-		  .subscribe(ts1);
+				.get(0)
+				.subscribe(ts1);
 
 		ts1.assertNoEvents();
 
@@ -227,9 +227,9 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 2)
-		    .flatMap(g -> g)
-		    .subscribe(ts);
+				.groupBy(k -> k % 2)
+				.flatMap(g -> g)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 	}
@@ -239,9 +239,9 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 2)
-		    .flatMap(g -> g.hide())
-		    .subscribe(ts);
+				.groupBy(k -> k % 2)
+				.flatMap(g -> g.hide())
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 	}
@@ -251,9 +251,9 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 2)
-		    .concatMap(g -> g)
-		    .subscribe(ts);
+				.groupBy(k -> k % 2)
+				.concatMap(g -> g)
+				.subscribe(ts);
 
 		ts.assertValues(1, 3, 5, 7, 9, 2, 4, 6, 8, 10);
 	}
@@ -263,10 +263,10 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .groupBy(k -> k % 2)
-		    .hide()
-		    .concatMap(g -> g)
-		    .subscribe(ts);
+				.groupBy(k -> k % 2)
+				.hide()
+				.concatMap(g -> g)
+				.subscribe(ts);
 
 		ts.assertValues(1, 3, 5, 7, 9, 2, 4, 6, 8, 10);
 	}
@@ -276,7 +276,7 @@ public class FluxGroupByTest extends
 		AssertSubscriber<GroupedFlux<Integer, Integer>> ts = AssertSubscriber.create(0L);
 
 		Flux.<Integer>empty().groupBy(v -> v)
-		                     .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues();
 	}
@@ -286,13 +286,13 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
-		    .groupBy(v -> 1)
-		    .flatMap(g -> g)
-		    .subscribe(ts);
+				.groupBy(v -> 1)
+				.flatMap(g -> g)
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -300,13 +300,13 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
-		    .groupBy(v -> 1)
-		    .flatMap(g -> g.hide())
-		    .subscribe(ts);
+				.groupBy(v -> 1)
+				.flatMap(g -> g.hide())
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -314,13 +314,13 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
-		    .groupBy(v -> (v & 1))
-		    .flatMap(g -> g)
-		    .subscribe(ts);
+				.groupBy(v -> (v & 1))
+				.flatMap(g -> g)
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -328,13 +328,13 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
-		    .groupBy(v -> (v & 1))
-		    .flatMap(g -> g.hide())
-		    .subscribe(ts);
+				.groupBy(v -> (v & 1))
+				.flatMap(g -> g.hide())
+				.subscribe(ts);
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -343,16 +343,16 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
-		    .groupBy(v -> (v & 1))
-		    .flatMap(g -> g)
-		    .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-		    .subscribe(ts);
+				.groupBy(v -> (v & 1))
+				.flatMap(g -> g)
+				.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -361,16 +361,16 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
-		    .groupBy(v -> (v & 1))
-		    .flatMap(g -> g.hide())
-		    .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-		    .subscribe(ts);
+				.groupBy(v -> (v & 1))
+				.flatMap(g -> g.hide())
+				.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+				.subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
 
 		ts.assertValueCount(1_000_000)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -382,51 +382,51 @@ public class FluxGroupByTest extends
 		ts3.onSubscribe(Operators.emptySubscription());
 
 		Flux.range(0, 1_000_000)
-		    .groupBy(v -> v & 1)
-		    .subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(Long.MAX_VALUE);
-			    }
+				.groupBy(v -> v & 1)
+				.subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(Long.MAX_VALUE);
+					}
 
-			    @Override
-			    public void onNext(GroupedFlux<Integer, Integer> t) {
-				    if (t.key() == 0) {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts1);
-				    }
-				    else {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts2);
-				    }
-			    }
+					@Override
+					public void onNext(GroupedFlux<Integer, Integer> t) {
+						if (t.key() == 0) {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts1);
+						}
+						else {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts2);
+						}
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    ts3.onError(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						ts3.onError(t);
+					}
 
-			    @Override
-			    public void onComplete() {
-				    ts3.onComplete();
-			    }
-		    });
+					@Override
+					public void onComplete() {
+						ts3.onComplete();
+					}
+				});
 
 		ts1.await(Duration.ofSeconds(5));
 		ts2.await(Duration.ofSeconds(5));
 		ts3.await(Duration.ofSeconds(5));
 
 		ts1.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts2.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts3.assertNoValues()
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -439,62 +439,62 @@ public class FluxGroupByTest extends
 		ts3.onSubscribe(Operators.emptySubscription());
 
 		Flux.range(0, 1_000_000)
-		    .groupBy(v -> v & 1)
-		    .subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(Long.MAX_VALUE);
-			    }
+				.groupBy(v -> v & 1)
+				.subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(Long.MAX_VALUE);
+					}
 
-			    @Override
-			    public void onNext(GroupedFlux<Integer, Integer> t) {
-				    if (t.key() == 0) {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
-							    32)
-					     .subscribe(ts1);
-				    }
-				    else {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
-							    32)
-					     .subscribe(ts2);
-				    }
-			    }
+					@Override
+					public void onNext(GroupedFlux<Integer, Integer> t) {
+						if (t.key() == 0) {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
+									32)
+									.subscribe(ts1);
+						}
+						else {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
+									32)
+									.subscribe(ts2);
+						}
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    ts3.onError(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						ts3.onError(t);
+					}
 
-			    @Override
-			    public void onComplete() {
-				    ts3.onComplete();
-			    }
-		    });
+					@Override
+					public void onComplete() {
+						ts3.onComplete();
+					}
+				});
 
 		if (!ts1.await(Duration.ofSeconds(5))
-		        .isTerminated()) {
+				.isTerminated()) {
 			Assert.fail("main subscriber timed out");
 		}
 		if (!ts2.await(Duration.ofSeconds(5))
-		        .isTerminated()) {
+				.isTerminated()) {
 			Assert.fail("group 0 subscriber timed out");
 		}
 		if (!ts3.await(Duration.ofSeconds(5))
-		        .isTerminated()) {
+				.isTerminated()) {
 			Assert.fail("group 1 subscriber timed out");
 		}
 
 		ts1.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts2.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts3.assertNoValues()
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -507,62 +507,62 @@ public class FluxGroupByTest extends
 		ts3.onSubscribe(Operators.emptySubscription());
 
 		Flux.range(0, 1_000_000)
-		    .groupBy(v -> v & 1)
-		    .subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(Long.MAX_VALUE);
-			    }
+				.groupBy(v -> v & 1)
+				.subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(Long.MAX_VALUE);
+					}
 
-			    @Override
-			    public void onNext(GroupedFlux<Integer, Integer> t) {
-				    if (t.key() == 0) {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
-							    1024)
-					     .subscribe(ts1);
-				    }
-				    else {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
-							    1024)
-					     .subscribe(ts2);
-				    }
-			    }
+					@Override
+					public void onNext(GroupedFlux<Integer, Integer> t) {
+						if (t.key() == 0) {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
+									1024)
+									.subscribe(ts1);
+						}
+						else {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool),
+									1024)
+									.subscribe(ts2);
+						}
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    ts3.onError(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						ts3.onError(t);
+					}
 
-			    @Override
-			    public void onComplete() {
-				    ts3.onComplete();
-			    }
-		    });
+					@Override
+					public void onComplete() {
+						ts3.onComplete();
+					}
+				});
 
 		if (!ts1.await(Duration.ofSeconds(5))
-		        .isTerminated()) {
+				.isTerminated()) {
 			Assert.fail("main subscriber timed out");
 		}
 		if (!ts2.await(Duration.ofSeconds(5))
-		        .isTerminated()) {
+				.isTerminated()) {
 			Assert.fail("group 0 subscriber timed out");
 		}
 		if (!ts3.await(Duration.ofSeconds(5))
-		        .isTerminated()) {
+				.isTerminated()) {
 			Assert.fail("group 1 subscriber timed out");
 		}
 
 		ts1.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts2.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts3.assertNoValues()
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -575,53 +575,53 @@ public class FluxGroupByTest extends
 		ts3.onSubscribe(Operators.emptySubscription());
 
 		Flux.range(0, 1_000_000)
-		    .groupBy(v -> v & 1)
-		    .subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(Long.MAX_VALUE);
-			    }
+				.groupBy(v -> v & 1)
+				.subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(Long.MAX_VALUE);
+					}
 
-			    @Override
-			    public void onNext(GroupedFlux<Integer, Integer> t) {
-				    if (t.key() == 0) {
-					    t.hide()
-					     .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts1);
-				    }
-				    else {
-					    t.hide()
-					     .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts2);
-				    }
-			    }
+					@Override
+					public void onNext(GroupedFlux<Integer, Integer> t) {
+						if (t.key() == 0) {
+							t.hide()
+									.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts1);
+						}
+						else {
+							t.hide()
+									.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts2);
+						}
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    ts3.onError(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						ts3.onError(t);
+					}
 
-			    @Override
-			    public void onComplete() {
-				    ts3.onComplete();
-			    }
-		    });
+					@Override
+					public void onComplete() {
+						ts3.onComplete();
+					}
+				});
 
 		ts1.await(Duration.ofSeconds(5));
 		ts2.await(Duration.ofSeconds(5));
 		ts3.await(Duration.ofSeconds(5));
 
 		ts1.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts2.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts3.assertNoValues()
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -636,55 +636,55 @@ public class FluxGroupByTest extends
 		ts3.onSubscribe(Operators.emptySubscription());
 
 		Flux.range(0, 1_000_000)
-		    .hide()
-		    .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-		    .groupBy(v -> v & 1)
-		    .subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(Long.MAX_VALUE);
-			    }
+				.hide()
+				.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+				.groupBy(v -> v & 1)
+				.subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(Long.MAX_VALUE);
+					}
 
-			    @Override
-			    public void onNext(GroupedFlux<Integer, Integer> t) {
-				    if (t.key() == 0) {
-					    t.hide()
-					     .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts1);
-				    }
-				    else {
-					    t.hide()
-					     .publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts2);
-				    }
-			    }
+					@Override
+					public void onNext(GroupedFlux<Integer, Integer> t) {
+						if (t.key() == 0) {
+							t.hide()
+									.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts1);
+						}
+						else {
+							t.hide()
+									.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts2);
+						}
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    ts3.onError(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						ts3.onError(t);
+					}
 
-			    @Override
-			    public void onComplete() {
-				    ts3.onComplete();
-			    }
-		    });
+					@Override
+					public void onComplete() {
+						ts3.onComplete();
+					}
+				});
 
 		ts1.await(Duration.ofSeconds(5));
 		ts2.await(Duration.ofSeconds(5));
 		ts3.await(Duration.ofSeconds(5));
 
 		ts1.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts2.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts3.assertNoValues()
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -698,52 +698,52 @@ public class FluxGroupByTest extends
 		ts3.onSubscribe(Operators.emptySubscription());
 
 		Flux.range(0, 1_000_000)
-		    .publishOn(Schedulers.fromExecutorService(forkJoinPool), 512)
-		    .groupBy(v -> v & 1)
-		    .subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
-			    @Override
-			    public void onSubscribe(Subscription s) {
-				    s.request(Long.MAX_VALUE);
-			    }
+				.publishOn(Schedulers.fromExecutorService(forkJoinPool), 512)
+				.groupBy(v -> v & 1)
+				.subscribe(new CoreSubscriber<GroupedFlux<Integer, Integer>>() {
+					@Override
+					public void onSubscribe(Subscription s) {
+						s.request(Long.MAX_VALUE);
+					}
 
-			    @Override
-			    public void onNext(GroupedFlux<Integer, Integer> t) {
-				    if (t.key() == 0) {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts1);
-				    }
-				    else {
-					    t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
-					     .subscribe(ts2);
-				    }
-			    }
+					@Override
+					public void onNext(GroupedFlux<Integer, Integer> t) {
+						if (t.key() == 0) {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts1);
+						}
+						else {
+							t.publishOn(Schedulers.fromExecutorService(forkJoinPool))
+									.subscribe(ts2);
+						}
+					}
 
-			    @Override
-			    public void onError(Throwable t) {
-				    ts3.onError(t);
-			    }
+					@Override
+					public void onError(Throwable t) {
+						ts3.onError(t);
+					}
 
-			    @Override
-			    public void onComplete() {
-				    ts3.onComplete();
-			    }
-		    });
+					@Override
+					public void onComplete() {
+						ts3.onComplete();
+					}
+				});
 
 		ts1.await(Duration.ofSeconds(5));
 		ts2.await(Duration.ofSeconds(5));
 		ts3.await(Duration.ofSeconds(5));
 
 		ts1.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts2.assertValueCount(500_000)
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 		ts3.assertNoValues()
-		   .assertNoError()
-		   .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -752,9 +752,9 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(0, 20)
-		    .groupBy(i -> i % 5)
-		    .concatMap(v -> v, 2)
-		    .subscribe(ts);
+				.groupBy(i -> i % 5)
+				.concatMap(v -> v, 2)
+				.subscribe(ts);
 
 		ts.assertValues(0,
 				5,
@@ -776,8 +776,8 @@ public class FluxGroupByTest extends
 				9,
 				14,
 				19)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -785,10 +785,10 @@ public class FluxGroupByTest extends
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(0, 20)
-		    .groupBy(i -> i % 5)
-		    .hide()
-		    .concatMap(v -> v, 2)
-		    .subscribe(ts);
+				.groupBy(i -> i % 5)
+				.hide()
+				.concatMap(v -> v, 2)
+				.subscribe(ts);
 
 		ts.assertValues(0,
 				5,
@@ -810,8 +810,8 @@ public class FluxGroupByTest extends
 				9,
 				14,
 				19)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -819,11 +819,11 @@ public class FluxGroupByTest extends
 		AtomicLong initialRequest = new AtomicLong();
 
 		StepVerifier.create(Flux.range(1, 10)
-		                        .doOnRequest(r -> initialRequest.compareAndSet(0L, r))
-		                        .groupBy(i -> i % 5, 11)
-		                        .concatMap(v -> v))
-		            .expectNextCount(10)
-		            .verifyComplete();
+				.doOnRequest(r -> initialRequest.compareAndSet(0L, r))
+				.groupBy(i -> i % 5, 11)
+				.concatMap(v -> v))
+				.expectNextCount(10)
+				.verifyComplete();
 
 		assertThat(initialRequest.get()).isEqualTo(11);
 	}
@@ -833,22 +833,23 @@ public class FluxGroupByTest extends
 		AtomicLong initialRequest = new AtomicLong();
 
 		StepVerifier.create(Flux.range(1, 10)
-		                        .doOnRequest(r -> initialRequest.compareAndSet(0L, r))
-		                        .groupBy(i -> i % 5, Integer.MAX_VALUE)
-		                        .concatMap(v -> v))
-		            .expectNextCount(10)
-		            .verifyComplete();
+				.doOnRequest(r -> initialRequest.compareAndSet(0L, r))
+				.groupBy(i -> i % 5, Integer.MAX_VALUE)
+				.concatMap(v -> v))
+				.expectNextCount(10)
+				.verifyComplete();
 
 		assertThat(initialRequest.get()).isEqualTo(Long.MAX_VALUE);
 	}
 
 	@Test
 	public void scanMain() {
-		CoreSubscriber<GroupedFlux<Integer, String>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<GroupedFlux<Integer, String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxGroupBy.GroupByMain<Integer, Integer, String> test = new FluxGroupBy.GroupByMain<>(actual,
 				Queues.<GroupedFlux<Integer, String>>one().get(), Queues.one(), 123, i -> i % 5, i -> String.valueOf(i));
 		Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
+		test.onSubscribe(sub);
 
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
@@ -864,13 +865,15 @@ public class FluxGroupByTest extends
 
 	@Test
 	public void scanUnicastGroupedFlux() {
-		CoreSubscriber<GroupedFlux<Integer, String>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<GroupedFlux<Integer, String>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxGroupBy.GroupByMain<Integer, Integer, String> main = new FluxGroupBy.GroupByMain<>(actual,
 				Queues.<GroupedFlux<Integer, String>>one().get(), Queues.one(), 123, i -> i % 5, i -> String.valueOf(i));
 		FluxGroupBy.UnicastGroupedFlux<Integer, String> test = new FluxGroupBy.UnicastGroupedFlux<Integer, String>(1,
 				Queues.<String>one().get(), main, 123);
-		CoreSubscriber<String> sub = new LambdaSubscriber<>(null, e -> {}, null, null);
-        test.subscribe(sub);
+		CoreSubscriber<String> sub = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		test.subscribe(sub);
 
 		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(sub);
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(main);

@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
 import org.reactivestreams.Subscription;
-import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
@@ -85,6 +84,48 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 		return new PeekFuseableSubscriber<>(actual, this);
 	}
 
+	@Override
+	@Nullable
+	public Consumer<? super Subscription> onSubscribeCall() {
+		return onSubscribeCall;
+	}
+
+	@Override
+	@Nullable
+	public Consumer<? super T> onNextCall() {
+		return onNextCall;
+	}
+
+	@Override
+	@Nullable
+	public Consumer<? super Throwable> onErrorCall() {
+		return onErrorCall;
+	}
+
+	@Override
+	@Nullable
+	public Runnable onCompleteCall() {
+		return onCompleteCall;
+	}
+
+	@Override
+	@Nullable
+	public Runnable onAfterTerminateCall() {
+		return onAfterTerminateCall;
+	}
+
+	@Override
+	@Nullable
+	public LongConsumer onRequestCall() {
+		return onRequestCall;
+	}
+
+	@Override
+	@Nullable
+	public Runnable onCancelCall() {
+		return onCancelCall;
+	}
+
 	static final class PeekFuseableSubscriber<T>
 			implements InnerOperator<T, T>, QueueSubscription<T> {
 
@@ -98,6 +139,12 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 
 		volatile boolean done;
 
+		PeekFuseableSubscriber(CoreSubscriber<? super T> actual,
+				SignalPeek<T> parent) {
+			this.actual = actual;
+			this.parent = parent;
+		}
+
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
@@ -107,17 +154,11 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 			return InnerOperator.super.scanUnsafe(key);
 		}
 
-		PeekFuseableSubscriber(CoreSubscriber<? super T> actual,
-				SignalPeek<T> parent) {
-			this.actual = actual;
-			this.parent = parent;
-		}
-
 		@Override
 		public Context currentContext() {
 			Context c = actual.currentContext();
 			final Consumer<? super Context> contextHook = parent.onCurrentContextCall();
-			if(!c.isEmpty() && contextHook != null) {
+			if (!c.isEmpty() && contextHook != null) {
 				contextHook.accept(c);
 			}
 			return c;
@@ -155,7 +196,7 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 		@SuppressWarnings("unchecked")
 		@Override
 		public void onSubscribe(Subscription s) {
-			if(Operators.validate(this.s, s)) {
+			if (Operators.validate(this.s, s)) {
 				final Consumer<? super Subscription> subscribeHook = parent.onSubscribeCall();
 				if (subscribeHook != null) {
 					try {
@@ -378,7 +419,7 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 
 	static final class PeekFuseableConditionalSubscriber<T>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T>,
-			           QueueSubscription<T> {
+			QueueSubscription<T> {
 
 		final ConditionalSubscriber<? super T> actual;
 
@@ -400,7 +441,7 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 		public Context currentContext() {
 			Context c = actual.currentContext();
 			final Consumer<? super Context> contextHook = parent.onCurrentContextCall();
-			if(!c.isEmpty() && contextHook != null) {
+			if (!c.isEmpty() && contextHook != null) {
 				contextHook.accept(c);
 			}
 			return c;
@@ -447,7 +488,7 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 		@SuppressWarnings("unchecked")
 		@Override
 		public void onSubscribe(Subscription s) {
-			if(Operators.validate(this.s, s)) {
+			if (Operators.validate(this.s, s)) {
 				final Consumer<? super Subscription> subscribeHook = parent.onSubscribeCall();
 				if (subscribeHook != null) {
 					try {
@@ -693,48 +734,6 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 		}
 	}
 
-	@Override
-	@Nullable
-	public Consumer<? super Subscription> onSubscribeCall() {
-		return onSubscribeCall;
-	}
-
-	@Override
-	@Nullable
-	public Consumer<? super T> onNextCall() {
-		return onNextCall;
-	}
-
-	@Override
-	@Nullable
-	public Consumer<? super Throwable> onErrorCall() {
-		return onErrorCall;
-	}
-
-	@Override
-	@Nullable
-	public Runnable onCompleteCall() {
-		return onCompleteCall;
-	}
-
-	@Override
-	@Nullable
-	public Runnable onAfterTerminateCall() {
-		return onAfterTerminateCall;
-	}
-
-	@Override
-	@Nullable
-	public LongConsumer onRequestCall() {
-		return onRequestCall;
-	}
-
-	@Override
-	@Nullable
-	public Runnable onCancelCall() {
-		return onCancelCall;
-	}
-
 	static final class PeekConditionalSubscriber<T>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T> {
 
@@ -755,7 +754,7 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 		@Override
 		public Context currentContext() {
 			Context c = actual.currentContext();
-			if(!c.isEmpty() && parent.onCurrentContextCall() != null) {
+			if (!c.isEmpty() && parent.onCurrentContextCall() != null) {
 				parent.onCurrentContextCall().accept(c);
 			}
 			return c;
@@ -792,7 +791,7 @@ final class FluxPeekFuseable<T> extends InternalFluxOperator<T, T>
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			if(Operators.validate(this.s, s)) {
+			if (Operators.validate(this.s, s)) {
 				final Consumer<? super Subscription> subscribeHook = parent.onSubscribeCall();
 				if (subscribeHook != null) {
 					try {

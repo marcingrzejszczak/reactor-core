@@ -41,6 +41,14 @@ final class FluxName<T> extends InternalFluxOperator<T, T> {
 
 	final Set<Tuple2<String, String>> tags;
 
+	FluxName(Flux<? extends T> source,
+			@Nullable String name,
+			@Nullable Set<Tuple2<String, String>> tags) {
+		super(source);
+		this.name = name;
+		this.tags = tags;
+	}
+
 	@SuppressWarnings("unchecked")
 	static <T> Flux<T> createOrAppend(Flux<T> source, String name) {
 		Objects.requireNonNull(name, "name");
@@ -68,7 +76,7 @@ final class FluxName<T> extends InternalFluxOperator<T, T> {
 
 		if (source instanceof FluxName) {
 			FluxName<T> s = (FluxName<T>) source;
-			if(s.tags != null) {
+			if (s.tags != null) {
 				tags = new HashSet<>(tags);
 				tags.addAll(s.tags);
 			}
@@ -86,14 +94,6 @@ final class FluxName<T> extends InternalFluxOperator<T, T> {
 			return new FluxNameFuseable<>(source, null, tags);
 		}
 		return new FluxName<>(source, null, tags);
-	}
-
-	FluxName(Flux<? extends T> source,
-			@Nullable String name,
-			@Nullable Set<Tuple2<String, String>> tags) {
-		super(source);
-		this.name = name;
-		this.tags = tags;
 	}
 
 	@Override
@@ -114,6 +114,5 @@ final class FluxName<T> extends InternalFluxOperator<T, T> {
 
 		return super.scanUnsafe(key);
 	}
-
 
 }

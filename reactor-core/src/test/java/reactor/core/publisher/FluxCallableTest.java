@@ -27,11 +27,11 @@ public class FluxCallableTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.<Integer>fromCallable(() -> null).log().flux()
-		                                      .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -39,12 +39,12 @@ public class FluxCallableTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Mono.fromCallable(() -> 1)
-		    .flux()
-		    .subscribe(ts);
+				.flux()
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -52,18 +52,18 @@ public class FluxCallableTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Mono.fromCallable(() -> 1)
-		    .flux()
-		    .subscribe(ts);
+				.flux()
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -73,12 +73,12 @@ public class FluxCallableTest {
 		Mono.fromCallable(() -> {
 			throw new IOException("forced failure");
 		})
-		    .flux()
-		    .subscribe(ts);
+				.flux()
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(IOException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(IOException.class)
+				.assertErrorMessage("forced failure");
 	}
 }

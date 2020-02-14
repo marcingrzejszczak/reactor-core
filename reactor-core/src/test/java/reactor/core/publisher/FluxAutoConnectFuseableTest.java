@@ -16,11 +16,8 @@
 
 package reactor.core.publisher;
 
-import java.util.function.Consumer;
-
 import org.junit.Test;
 import org.mockito.Mockito;
-import reactor.core.Disposable;
 import reactor.core.Scannable;
 import reactor.test.MockUtils;
 
@@ -33,7 +30,8 @@ public class FluxAutoConnectFuseableTest {
 		@SuppressWarnings("unchecked")
 		ConnectableFlux<String> source = Mockito.mock(MockUtils.TestScannableConnectableFlux.class);
 		Mockito.when(source.getPrefetch()).thenReturn(888);
-		FluxAutoConnectFuseable<String> test = new FluxAutoConnectFuseable<>(source, 123, d -> { });
+		FluxAutoConnectFuseable<String> test = new FluxAutoConnectFuseable<>(source, 123, d -> {
+		});
 
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(source);
 		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(888);

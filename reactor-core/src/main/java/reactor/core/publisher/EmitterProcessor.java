@@ -55,6 +55,47 @@ public final class EmitterProcessor<T> extends FluxProcessor<T, T> {
 
 	@SuppressWarnings("rawtypes")
 	static final FluxPublish.PubSubInner[] EMPTY = new FluxPublish.PublishInner[0];
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<EmitterProcessor, Subscription> S =
+			AtomicReferenceFieldUpdater.newUpdater(EmitterProcessor.class,
+					Subscription.class,
+					"s");
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<EmitterProcessor, FluxPublish.PubSubInner[]>
+			SUBSCRIBERS = AtomicReferenceFieldUpdater.newUpdater(EmitterProcessor.class,
+			FluxPublish.PubSubInner[].class,
+			"subscribers");
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<EmitterProcessor> WIP =
+			AtomicIntegerFieldUpdater.newUpdater(EmitterProcessor.class, "wip");
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<EmitterProcessor, Throwable> ERROR =
+			AtomicReferenceFieldUpdater.newUpdater(EmitterProcessor.class,
+					Throwable.class,
+					"error");
+	final int prefetch;
+
+	final boolean autoCancel;
+
+	volatile Subscription s;
+	volatile FluxPublish.PubSubInner<T>[] subscribers;
+	@SuppressWarnings("unused")
+	volatile int wip;
+	volatile Queue<T> queue;
+	int sourceMode;
+	volatile boolean done;
+	volatile Throwable error;
+
+	EmitterProcessor(boolean autoCancel, int prefetch) {
+		if (prefetch < 1) {
+			throw new IllegalArgumentException("bufferSize must be strictly positive, " + "was: " + prefetch);
+		}
+		this.autoCancel = autoCancel;
+		this.prefetch = prefetch;
+		//doesn't use INIT/CANCELLED distinction, contrary to FluxPublish)
+		//see remove()
+		SUBSCRIBERS.lazySet(this, EMPTY);
+	}
 
 	/**
 	 * Create a new {@link EmitterProcessor} using {@link Queues#SMALL_BUFFER_SIZE}
@@ -104,57 +145,6 @@ public final class EmitterProcessor<T> extends FluxProcessor<T, T> {
 	 */
 	public static <E> EmitterProcessor<E> create(int bufferSize, boolean autoCancel) {
 		return new EmitterProcessor<>(autoCancel, bufferSize);
-	}
-
-	final int prefetch;
-
-	final boolean autoCancel;
-
-	volatile Subscription s;
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<EmitterProcessor, Subscription> S =
-			AtomicReferenceFieldUpdater.newUpdater(EmitterProcessor.class,
-					Subscription.class,
-					"s");
-
-	volatile FluxPublish.PubSubInner<T>[] subscribers;
-
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<EmitterProcessor, FluxPublish.PubSubInner[]>
-			SUBSCRIBERS = AtomicReferenceFieldUpdater.newUpdater(EmitterProcessor.class,
-			FluxPublish.PubSubInner[].class,
-			"subscribers");
-
-	@SuppressWarnings("unused")
-	volatile int wip;
-
-	@SuppressWarnings("rawtypes")
-	static final AtomicIntegerFieldUpdater<EmitterProcessor> WIP =
-			AtomicIntegerFieldUpdater.newUpdater(EmitterProcessor.class, "wip");
-
-	volatile Queue<T> queue;
-
-	int sourceMode;
-
-	volatile boolean done;
-
-	volatile Throwable error;
-
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<EmitterProcessor, Throwable> ERROR =
-			AtomicReferenceFieldUpdater.newUpdater(EmitterProcessor.class,
-					Throwable.class,
-					"error");
-
-	EmitterProcessor(boolean autoCancel, int prefetch) {
-		if (prefetch < 1) {
-			throw new IllegalArgumentException("bufferSize must be strictly positive, " + "was: " + prefetch);
-		}
-		this.autoCancel = autoCancel;
-		this.prefetch = prefetch;
-		//doesn't use INIT/CANCELLED distinction, contrary to FluxPublish)
-		//see remove()
-		SUBSCRIBERS.lazySet(this, EMPTY);
 	}
 
 	@Override
@@ -442,7 +432,7 @@ public final class EmitterProcessor<T> extends FluxProcessor<T, T> {
 					continue;
 				}
 			}
-			else if ( sourceMode == Fuseable.SYNC ) {
+			else if (sourceMode == Fuseable.SYNC) {
 				done = true;
 				if (checkTerminated(true, empty)) { //empty can be true if no subscriber
 					break;
@@ -581,6 +571,5 @@ public final class EmitterProcessor<T> extends FluxProcessor<T, T> {
 			parent.drain();
 		}
 	}
-
 
 }

@@ -68,9 +68,9 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 			BiFunction<? super T, ? super U, ? extends R> zipper2,
 			Supplier<? extends Queue<T>> queueSupplier,
 			int prefetch) {
-		this(new Publisher[]{Objects.requireNonNull(p1, "p1"),
+		this(new Publisher[] {Objects.requireNonNull(p1, "p1"),
 						Objects.requireNonNull(p2, "p2")},
-				new PairwiseZipper<>(new BiFunction[]{
+				new PairwiseZipper<>(new BiFunction[] {
 						Objects.requireNonNull(zipper2, "zipper2")}),
 				queueSupplier,
 				prefetch);
@@ -153,7 +153,7 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 			if (p == null) {
 				Operators.error(s,
 						Operators.onOperatorError(new NullPointerException(
-								"The sourcesIterable returned a null Publisher"),
+										"The sourcesIterable returned a null Publisher"),
 								s.currentContext()));
 				return;
 			}
@@ -335,16 +335,13 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 
 	static final class ZipSingleCoordinator<T, R> extends Operators.MonoSubscriber<R, R> {
 
-		final Function<? super Object[], ? extends R> zipper;
-
-		final Object[] scalars;
-
-		final ZipSingleSubscriber<T>[] subscribers;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ZipSingleCoordinator> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ZipSingleCoordinator.class, "wip");
+		final Function<? super Object[], ? extends R> zipper;
+		final Object[] scalars;
+		final ZipSingleSubscriber<T>[] subscribers;
+		volatile int wip;
 
 		@SuppressWarnings("unchecked")
 		ZipSingleCoordinator(CoreSubscriber<? super R> subscriber,
@@ -446,17 +443,14 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 	static final class ZipSingleSubscriber<T>
 			implements InnerConsumer<T>, Disposable {
 
-		final ZipSingleCoordinator<T, ?> parent;
-
-		final int index;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ZipSingleSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(ZipSingleSubscriber.class,
 						Subscription.class,
 						"s");
-
+		final ZipSingleCoordinator<T, ?> parent;
+		final int index;
+		volatile Subscription s;
 		boolean done;
 
 		ZipSingleSubscriber(ZipSingleCoordinator<T, ?> parent, int index) {
@@ -528,32 +522,25 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 	static final class ZipCoordinator<T, R>
 			implements InnerProducer<R> {
 
-		final CoreSubscriber<? super R> actual;
-
-		final ZipInner<T>[] subscribers;
-
-		final Function<? super Object[], ? extends R> zipper;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ZipCoordinator> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ZipCoordinator.class, "wip");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ZipCoordinator> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ZipCoordinator.class, "requested");
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ZipCoordinator, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(ZipCoordinator.class,
 						Throwable.class,
 						"error");
-
-		volatile boolean cancelled;
-
+		final CoreSubscriber<? super R> actual;
+		final ZipInner<T>[] subscribers;
+		final Function<? super Object[], ? extends R> zipper;
 		final Object[] current;
+		volatile int wip;
+		volatile long requested;
+		volatile Throwable error;
+		volatile boolean cancelled;
 
 		ZipCoordinator(CoreSubscriber<? super R> actual,
 				Function<? super Object[], ? extends R> zipper,
@@ -815,25 +802,18 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 	static final class ZipInner<T>
 			implements InnerConsumer<T> {
 
-		final ZipCoordinator<T, ?> parent;
-
-		final int prefetch;
-
-		final int limit;
-
-		final int index;
-
-		final Supplier<? extends Queue<T>> queueSupplier;
-
-		volatile Queue<T> queue;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ZipInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(ZipInner.class,
 						Subscription.class,
 						"s");
-
+		final ZipCoordinator<T, ?> parent;
+		final int prefetch;
+		final int limit;
+		final int index;
+		final Supplier<? extends Queue<T>> queueSupplier;
+		volatile Queue<T> queue;
+		volatile Subscription s;
 		long produced;
 
 		volatile boolean done;
@@ -918,7 +898,7 @@ final class FluxZip<T, R> extends Flux<R> implements SourceProducer<R> {
 		@Override
 		@Nullable
 		public Object scanUnsafe(Attr key) {
-			if (key == Attr.PARENT) return  s;
+			if (key == Attr.PARENT) return s;
 			if (key == Attr.ACTUAL) return parent;
 			if (key == Attr.CANCELLED) return s == Operators.cancelledSubscription();
 			if (key == Attr.BUFFERED) return queue != null ? queue.size() : 0;

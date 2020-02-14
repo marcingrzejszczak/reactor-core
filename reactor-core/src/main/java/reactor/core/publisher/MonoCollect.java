@@ -68,7 +68,7 @@ final class MonoCollect<T, R> extends MonoFromFluxOperator<T, R>
 		return new CollectSubscriber<>(actual, action, container);
 	}
 
-	static final class CollectSubscriber<T, R> extends Operators.MonoSubscriber<T, R>  {
+	static final class CollectSubscriber<T, R> extends Operators.MonoSubscriber<T, R> {
 
 		final BiConsumer<? super R, ? super T> action;
 

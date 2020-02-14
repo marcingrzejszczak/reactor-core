@@ -47,7 +47,8 @@ public class ParallelSourceTest {
 	public void scanMainSubscriber() {
 		@SuppressWarnings("unchecked")
 		CoreSubscriber<String>[] subs = new CoreSubscriber[1];
-		subs[0] = new LambdaSubscriber<>(null, e -> {}, null, null);
+		subs[0] = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		ParallelSource.ParallelSourceMain<String> test = new ParallelSource.ParallelSourceMain<>(
 				subs, 123, Queues.one());
 
@@ -78,8 +79,10 @@ public class ParallelSourceTest {
 	public void scanInnerSubscriber() {
 		@SuppressWarnings("unchecked")
 		CoreSubscriber<String>[] subs = new CoreSubscriber[2];
-		subs[0] = new LambdaSubscriber<>(null, e -> {}, null, null);
-		subs[1] = new LambdaSubscriber<>(null, e -> {}, null, null);
+		subs[0] = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		subs[1] = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		ParallelSource.ParallelSourceMain<String> main = new ParallelSource.ParallelSourceMain<>(
 				subs, 123, Queues.one());
 

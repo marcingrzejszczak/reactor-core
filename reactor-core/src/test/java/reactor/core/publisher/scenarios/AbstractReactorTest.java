@@ -30,8 +30,12 @@ import reactor.core.scheduler.Schedulers;
  */
 public abstract class AbstractReactorTest {
 
-	protected static Scheduler      asyncGroup;
-	protected static Scheduler      ioGroup;
+	protected static Scheduler asyncGroup;
+	protected static Scheduler ioGroup;
+
+	static {
+		System.setProperty("reactor.trace.cancel", "true");
+	}
 
 	protected final Map<Thread, AtomicLong> counters = new ConcurrentHashMap<>();
 
@@ -47,10 +51,6 @@ public abstract class AbstractReactorTest {
 		asyncGroup.dispose();
 	}
 
-	static {
-		System.setProperty("reactor.trace.cancel", "true");
-	}
-
 	protected void monitorThreadUse() {
 		monitorThreadUse(null);
 	}
@@ -60,7 +60,7 @@ public abstract class AbstractReactorTest {
 		if (counter == null) {
 			counter = new AtomicLong();
 			AtomicLong prev = counters.putIfAbsent(Thread.currentThread(), counter);
-			if(prev != null){
+			if (prev != null) {
 				counter = prev;
 			}
 		}

@@ -62,7 +62,7 @@ final class MonoDelayElement<T> extends InternalMonoOperator<T, T> {
 		return super.scanUnsafe(key);
 	}
 
-	static final class DelayElementSubscriber<T> extends Operators.MonoSubscriber<T,T> {
+	static final class DelayElementSubscriber<T> extends Operators.MonoSubscriber<T, T> {
 
 		final long delay;
 		final Scheduler scheduler;

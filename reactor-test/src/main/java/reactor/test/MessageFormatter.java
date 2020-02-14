@@ -30,7 +30,7 @@ import reactor.util.annotation.Nullable;
  */
 final class MessageFormatter {
 
-	private static final String                            EMPTY = "";
+	private static final String EMPTY = "";
 
 	final String scenarioPrefix;
 	@Nullable
@@ -47,7 +47,7 @@ final class MessageFormatter {
 		else {
 			scenarioPrefix = "[" + scenarioName + "] ";
 		}
-		this.valueFormatter =  valueFormatter;
+		this.valueFormatter = valueFormatter;
 		this.extractors = extractors;
 	}
 
@@ -63,7 +63,7 @@ final class MessageFormatter {
 	AssertionError fail(@Nullable DefaultStepVerifierBuilder.Event<?> event, String msg, Object... args) {
 		String prefix;
 		if (event != null && event.getDescription()
-		                          .length() > 0) {
+				.length() > 0) {
 			prefix = String.format("expectation \"%s\" failed (", event.getDescription());
 		}
 		else {

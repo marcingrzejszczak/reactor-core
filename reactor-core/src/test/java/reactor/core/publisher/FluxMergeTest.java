@@ -37,19 +37,19 @@ public class FluxMergeTest {
 		Flux.merge(Flux.just(1),
 				Flux.range(2, 2),
 				Flux.just(4, 5, 6)
-				    .hide())
-		    .subscribe(ts);
+						.hide())
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
 	public void normal2() {
 		StepVerifier.create(Mono.just(1).mergeWith(Flux.just(2, 3)))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -68,46 +68,46 @@ public class FluxMergeTest {
 		result.subscribe(ts);
 
 		ts.assertValueCount(n + 1)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
-	public void mergeEmpty(){
+	public void mergeEmpty() {
 		StepVerifier.create(Flux.merge())
-	                .verifyComplete();
+				.verifyComplete();
 	}
 
 
 	@Test
-	public void mergeOne(){
+	public void mergeOne() {
 		StepVerifier.create(Flux.merge(Flux.just(1)))
-		            .expectNext(1)
-	                .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
-	public void mergePublisherPublisher(){
+	public void mergePublisherPublisher() {
 		AtomicLong request = new AtomicLong();
 		StepVerifier.create(Flux.merge(Flux.just(Flux.just(1, 2), Flux.just(3, 4)).doOnRequest(request::set)))
-	                .expectNext(1, 2, 3, 4)
-	                .then(() -> assertThat(request.get()).isEqualTo(1) )
-	                .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.then(() -> assertThat(request.get()).isEqualTo(1))
+				.verifyComplete();
 	}
 
 
 	@Test
-	public void mergePublisherPublisher2(){
+	public void mergePublisherPublisher2() {
 		StepVerifier.create(Flux.merge(Flux.just(Flux.just(1, 2), Flux.just(3, 4)), 1))
-	                .expectNext(1, 2, 3, 4)
-	                .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
-	public void mergePublisherPublisherIterable(){
+	public void mergePublisherPublisherIterable() {
 		StepVerifier.create(Flux.merge(Arrays.asList(Flux.just(1, 2), Flux.just(3, 4))))
-	                .expectNext(1, 2, 3, 4)
-	                .verifyComplete();
+				.expectNext(1, 2, 3, 4)
+				.verifyComplete();
 	}
 
 	@Test
@@ -118,8 +118,8 @@ public class FluxMergeTest {
 				Flux.error(boom).hide(),
 				Flux.range(1, 4)
 		))
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorSatisfies(e -> assertThat(e).isEqualTo(boom));
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorSatisfies(e -> assertThat(e).isEqualTo(boom));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -130,8 +130,8 @@ public class FluxMergeTest {
 						Flux.error(new Exception("test")),
 						Flux.just(3, 4))
 		)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/936
@@ -142,9 +142,9 @@ public class FluxMergeTest {
 						Flux.just(1, 2),
 						Mono.error(new Exception("test")),
 						Flux.just(3, 4))
-				)
-		            .expectNext(1, 2, 3, 4)
-		            .verifyErrorMessage("test");
+		)
+				.expectNext(1, 2, 3, 4)
+				.verifyErrorMessage("test");
 	}
 
 	@Test

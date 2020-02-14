@@ -34,7 +34,7 @@ import reactor.util.annotation.Nullable;
  * @param <R> the result value type
  */
 final class ParallelReduceSeed<T, R> extends ParallelFlux<R> implements
-                                                             Scannable, Fuseable {
+		Scannable, Fuseable {
 
 	final ParallelFlux<? extends T> source;
 

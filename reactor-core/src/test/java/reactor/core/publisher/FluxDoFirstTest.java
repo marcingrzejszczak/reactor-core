@@ -23,7 +23,6 @@ import java.util.function.Function;
 
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-
 import reactor.core.Fuseable;
 import reactor.test.StepVerifier;
 
@@ -50,14 +49,14 @@ public class FluxDoFirstTest {
 
 		StepVerifier.create(
 				Flux.just(1)
-				    .map(divZero)
-				    .hide()
-				    .doFirst(() -> order.add("one"))
-				    .doFirst(() -> order.add("two"))
-				    .doFirst(() -> order.add("three"))
+						.map(divZero)
+						.hide()
+						.doFirst(() -> order.add("one"))
+						.doFirst(() -> order.add("two"))
+						.doFirst(() -> order.add("three"))
 		)
-		            .expectNoFusionSupport()
-		            .verifyError(ArithmeticException.class);
+				.expectNoFusionSupport()
+				.verifyError(ArithmeticException.class);
 
 		assertThat(order).containsExactly("three", "two", "one");
 	}
@@ -71,13 +70,13 @@ public class FluxDoFirstTest {
 
 		StepVerifier.create(
 				Flux.just(1)
-				    .map(divZero)
-				    .doFirst(() -> order.add("one"))
-				    .doFirst(() -> order.add("two"))
-				    .doFirst(() -> order.add("three"))
+						.map(divZero)
+						.doFirst(() -> order.add("one"))
+						.doFirst(() -> order.add("two"))
+						.doFirst(() -> order.add("three"))
 		)
-		            .expectFusion()
-		            .verifyError(ArithmeticException.class);
+				.expectFusion()
+				.verifyError(ArithmeticException.class);
 
 		assertThat(order).containsExactly("three", "two", "one");
 	}
@@ -88,16 +87,16 @@ public class FluxDoFirstTest {
 
 		StepVerifier.create(
 				Flux.just(1, 2)
-				    .hide()
-				    .doOnNext(i -> order.add("doOnNext" + i))
-				    .doFirst(() -> order.add("doFirst1"))
-				    .doOnSubscribe(sub -> order.add("doOnSubscribe1"))
-				    .doFirst(() -> order.add("doFirst2"))
-				    .doOnSubscribe(sub -> order.add("doOnSubscribe2"))
+						.hide()
+						.doOnNext(i -> order.add("doOnNext" + i))
+						.doFirst(() -> order.add("doFirst1"))
+						.doOnSubscribe(sub -> order.add("doOnSubscribe1"))
+						.doFirst(() -> order.add("doFirst2"))
+						.doOnSubscribe(sub -> order.add("doOnSubscribe2"))
 		)
-		            .expectNoFusionSupport()
-		            .expectNext(1, 2)
-		            .verifyComplete();
+				.expectNoFusionSupport()
+				.expectNext(1, 2)
+				.verifyComplete();
 
 		assertThat(order).containsExactly("doFirst2", "doFirst1", "doOnSubscribe1",
 				"doOnSubscribe2", "doOnNext1", "doOnNext2");
@@ -108,16 +107,16 @@ public class FluxDoFirstTest {
 		List<String> order = new ArrayList<>();
 
 		StepVerifier.create(
-		Flux.just(1, 2)
-		    .doOnNext(i -> order.add("doOnNext" + i))
-		    .doFirst(() -> order.add("doFirst1"))
-		    .doOnSubscribe(sub -> order.add("doOnSubscribe1"))
-		    .doFirst(() -> order.add("doFirst2"))
-		    .doOnSubscribe(sub -> order.add("doOnSubscribe2"))
+				Flux.just(1, 2)
+						.doOnNext(i -> order.add("doOnNext" + i))
+						.doFirst(() -> order.add("doFirst1"))
+						.doOnSubscribe(sub -> order.add("doOnSubscribe1"))
+						.doFirst(() -> order.add("doFirst2"))
+						.doOnSubscribe(sub -> order.add("doOnSubscribe2"))
 		)
-		            .expectFusion()
-		            .expectNext(1, 2)
-		            .verifyComplete();
+				.expectFusion()
+				.expectNext(1, 2)
+				.verifyComplete();
 
 		assertThat(order).containsExactly("doFirst2", "doFirst1", "doOnSubscribe1",
 				"doOnSubscribe2", "doOnNext1", "doOnNext2");
@@ -126,37 +125,38 @@ public class FluxDoFirstTest {
 	@Test
 	public void runnableFailure_NotFuseable() {
 		Flux<Integer> test = Flux.just(1, 2)
-		                         .hide()
-		                         .doFirst(() -> {
-			                         throw new IllegalStateException("expected");
-		                         });
+				.hide()
+				.doFirst(() -> {
+					throw new IllegalStateException("expected");
+				});
 
 		assertThat(test).as("doFirst not fuseable").isNotInstanceOf(Fuseable.class);
 		StepVerifier.create(test)
-		            .expectSubscriptionMatches(sub -> sub instanceof Operators.EmptySubscription)
-		            .verifyErrorMessage("expected");
+				.expectSubscriptionMatches(sub -> sub instanceof Operators.EmptySubscription)
+				.verifyErrorMessage("expected");
 	}
 
 	@Test
 	public void runnableFailure_Fuseable() {
 		Flux<Integer> test = Flux.just(1, 2)
-		                         .doFirst(() -> {
-			                         throw new IllegalStateException("expected");
-		                         });
+				.doFirst(() -> {
+					throw new IllegalStateException("expected");
+				});
 
 		assertThat(test).as("doFirst is fuseable").isInstanceOf(Fuseable.class);
 		StepVerifier.create(test)
-		            .expectSubscriptionMatches(sub -> sub instanceof Operators.EmptySubscription)
-		            .verifyErrorMessage("expected");
+				.expectSubscriptionMatches(sub -> sub instanceof Operators.EmptySubscription)
+				.verifyErrorMessage("expected");
 	}
 
 	@Test
 	public void performsDirectSubscriberToSource_NoFusion() {
 		AtomicReference<Subscription> subRef = new AtomicReference<>();
 		Flux<Integer> test = Flux.just(1, 2)
-		                         .hide()
-		                         .doFirst(() -> {})
-		                         .doOnSubscribe(subRef::set);
+				.hide()
+				.doFirst(() -> {
+				})
+				.doOnSubscribe(subRef::set);
 		StepVerifier.create(test).expectNextCount(2).verifyComplete();
 
 		assertThat(subRef.get().getClass()).isEqualTo(FluxHide.HideSubscriber.class);
@@ -166,9 +166,10 @@ public class FluxDoFirstTest {
 	public void performsDirectSubscriberToSource_Fused() {
 		AtomicReference<Subscription> subRef = new AtomicReference<>();
 		Flux<Integer> test = Flux.just(1, 2)
-		                         .map(Function.identity())
-		                         .doFirst(() -> {})
-		                         .doOnSubscribe(subRef::set);
+				.map(Function.identity())
+				.doFirst(() -> {
+				})
+				.doOnSubscribe(subRef::set);
 		StepVerifier.create(test).expectNextCount(2).verifyComplete();
 
 		assertThat(subRef.get().getClass()).isEqualTo(FluxMapFuseable.MapFuseableSubscriber.class);

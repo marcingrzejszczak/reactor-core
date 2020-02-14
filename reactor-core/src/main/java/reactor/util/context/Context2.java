@@ -43,7 +43,7 @@ final class Context2 implements CoreContext {
 		Objects.requireNonNull(key, "key");
 		Objects.requireNonNull(value, "value");
 
-		if(this.key1.equals(key)){
+		if (this.key1.equals(key)) {
 			return new Context2(key, value, key2, value2);
 		}
 
@@ -58,7 +58,7 @@ final class Context2 implements CoreContext {
 	public Context delete(Object key) {
 		Objects.requireNonNull(key, "key");
 
-		if(this.key1.equals(key)){
+		if (this.key1.equals(key)) {
 			return new Context1(key2, value2);
 		}
 
@@ -78,12 +78,12 @@ final class Context2 implements CoreContext {
 	@SuppressWarnings("unchecked")
 	public <T> T get(Object key) {
 		if (this.key1.equals(key)) {
-			return (T)this.value1;
+			return (T) this.value1;
 		}
 		if (this.key2.equals(key)) {
-			return (T)this.value2;
+			return (T) this.value2;
 		}
-		throw new NoSuchElementException("Context does not contain key: "+key);
+		throw new NoSuchElementException("Context does not contain key: " + key);
 	}
 
 	@Override
@@ -113,6 +113,6 @@ final class Context2 implements CoreContext {
 
 	@Override
 	public String toString() {
-		return "Context2{" + key1 + '='+ value1 + ", " + key2 + '=' + value2 + '}';
+		return "Context2{" + key1 + '=' + value1 + ", " + key2 + '=' + value2 + '}';
 	}
 }

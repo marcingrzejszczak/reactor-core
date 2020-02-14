@@ -124,60 +124,38 @@ final class FluxGroupJoin<TLeft, TRight, TLeftEnd, TRightEnd, R>
 	static final class GroupJoinSubscription<TLeft, TRight, TLeftEnd, TRightEnd, R>
 			implements JoinSupport<R> {
 
-		final Queue<Object>               queue;
-		final BiPredicate<Object, Object> queueBiOffer;
-
-		final Disposable.Composite cancellations;
-
-		final Map<Integer, UnicastProcessor<TRight>> lefts;
-
-		final Map<Integer, TRight> rights;
-
-		final Function<? super TLeft, ? extends Publisher<TLeftEnd>> leftEnd;
-
-		final Function<? super TRight, ? extends Publisher<TRightEnd>> rightEnd;
-
-		final BiFunction<? super TLeft, ? super Flux<TRight>, ? extends R> resultSelector;
-
-		final Supplier<? extends Queue<TRight>> processorQueueSupplier;
-
-		final CoreSubscriber<? super R>             actual;
-
-		int leftIndex;
-
-		int rightIndex;
-
-		volatile int wip;
-
 		static final AtomicIntegerFieldUpdater<GroupJoinSubscription> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(GroupJoinSubscription.class, "wip");
-
-		volatile int active;
-
 		static final AtomicIntegerFieldUpdater<GroupJoinSubscription> ACTIVE =
 				AtomicIntegerFieldUpdater.newUpdater(GroupJoinSubscription.class,
 						"active");
-
-		volatile long requested;
-
 		static final AtomicLongFieldUpdater<GroupJoinSubscription> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(GroupJoinSubscription.class,
 						"requested");
-
-		volatile Throwable error;
-
 		static final AtomicReferenceFieldUpdater<GroupJoinSubscription, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(GroupJoinSubscription.class,
 						Throwable.class,
 						"error");
-
 		static final Integer LEFT_VALUE = 1;
-
 		static final Integer RIGHT_VALUE = 2;
-
 		static final Integer LEFT_CLOSE = 3;
-
 		static final Integer RIGHT_CLOSE = 4;
+		final Queue<Object> queue;
+		final BiPredicate<Object, Object> queueBiOffer;
+		final Disposable.Composite cancellations;
+		final Map<Integer, UnicastProcessor<TRight>> lefts;
+		final Map<Integer, TRight> rights;
+		final Function<? super TLeft, ? extends Publisher<TLeftEnd>> leftEnd;
+		final Function<? super TRight, ? extends Publisher<TRightEnd>> rightEnd;
+		final BiFunction<? super TLeft, ? super Flux<TRight>, ? extends R> resultSelector;
+		final Supplier<? extends Queue<TRight>> processorQueueSupplier;
+		final CoreSubscriber<? super R> actual;
+		int leftIndex;
+		int rightIndex;
+		volatile int wip;
+		volatile int active;
+		volatile long requested;
+		volatile Throwable error;
 
 		@SuppressWarnings("unchecked")
 		GroupJoinSubscription(CoreSubscriber<? super R> actual,
@@ -480,17 +458,14 @@ final class FluxGroupJoin<TLeft, TRight, TLeftEnd, TRightEnd, R>
 	static final class LeftRightSubscriber
 			implements InnerConsumer<Object>, Disposable {
 
-		final JoinSupport<?> parent;
-
-		final boolean isLeft;
-
-		volatile Subscription subscription;
-
 		final static AtomicReferenceFieldUpdater<LeftRightSubscriber, Subscription>
 				SUBSCRIPTION =
 				AtomicReferenceFieldUpdater.newUpdater(LeftRightSubscriber.class,
 						Subscription.class,
 						"subscription");
+		final JoinSupport<?> parent;
+		final boolean isLeft;
+		volatile Subscription subscription;
 
 		LeftRightSubscriber(JoinSupport<?> parent, boolean isLeft) {
 			this.parent = parent;
@@ -511,7 +486,7 @@ final class FluxGroupJoin<TLeft, TRight, TLeftEnd, TRightEnd, R>
 		@Nullable
 		public Object scanUnsafe(Attr key) {
 			if (key == Attr.PARENT) return subscription;
-			if (key == Attr.ACTUAL ) return parent;
+			if (key == Attr.ACTUAL) return parent;
 			if (key == Attr.CANCELLED) return isDisposed();
 
 			return null;
@@ -549,19 +524,15 @@ final class FluxGroupJoin<TLeft, TRight, TLeftEnd, TRightEnd, R>
 	static final class LeftRightEndSubscriber
 			implements InnerConsumer<Object>, Disposable {
 
-		final JoinSupport<?> parent;
-
-		final boolean isLeft;
-
-		final int index;
-
-		volatile Subscription subscription;
-
 		final static AtomicReferenceFieldUpdater<LeftRightEndSubscriber, Subscription>
 				SUBSCRIPTION = AtomicReferenceFieldUpdater.newUpdater(
 				LeftRightEndSubscriber.class,
 				Subscription.class,
 				"subscription");
+		final JoinSupport<?> parent;
+		final boolean isLeft;
+		final int index;
+		volatile Subscription subscription;
 
 		LeftRightEndSubscriber(JoinSupport<?> parent, boolean isLeft, int index) {
 			this.parent = parent;

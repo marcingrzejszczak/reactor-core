@@ -47,8 +47,6 @@ import reactor.util.annotation.Nullable;
  */
 public final class ValueFormatters {
 
-	private ValueFormatters() {}
-
 	/**
 	 * Default {@link Duration#toString() Duration} {@link ToStringConverter} that removes the PT prefix and
 	 * switches {@link String#toLowerCase() to lower case}.
@@ -57,140 +55,63 @@ public final class ValueFormatters {
 			Duration.class,
 			d -> true,
 			d -> d.toString().replaceFirst("PT", "").toLowerCase());
+	static final Extractor<Signal> DEFAULT_SIGNAL_EXTRACTOR = new Extractor<Signal>() {
 
-	/**
-	 * A generic {@link Object} to {@link String} conversion {@link Function} which is
-	 * also a {@link Predicate}, and which only applies a custom conversion to targets that
-	 * match said {@link Predicate}. Other targets are converted using {@link String#valueOf(Object)}.
-	 */
-	public interface ToStringConverter extends Predicate<Object>, Function<Object, String> {}
-
-	/**
-	 * An extractor of data wrapped in a {@link BiFunction} aiming at producing a customized {@link String}
-	 * representation of a container type and its contained elements, each element being
-	 * potentially itself converted to {@link String} using a {@link ToStringConverter}:
-	 * <ul>
-	 *     <li>it only considers specific container types, see {@link #getTargetClass()}</li>
-	 *     <li>it can further filter these container instances using {@link #matches(Object)}</li>
-	 *     <li>it can be applied to arbitrary objects, as it will default to {@link String#valueOf(Object)}
-	 *     on non-matching containers</li>
-	 *     <li>it can apply a {@link ToStringConverter} to the content, passed as the second
-	 *     parameter of the {@link BiFunction}</li>
-	 *     <li>it reconstructs the {@link String} representation of the container by
-	 *     {@link #explode(Object) exploding} it and then {@link Collectors#joining(CharSequence, CharSequence, CharSequence) joining}
-	 *     it with {#code ", "} delimiter, as well as custom {@link #prefix(Object)} and {@link #suffix(Object)}</li>
-	 * </ul>
-	 *
-	 * @param <CONTAINER> the type of container
-	 */
-	public interface Extractor<CONTAINER> extends Predicate<Object>, BiFunction<Object, Function<Object, String>, String> {
-
-		/**
-		 * Return the targeted container {@link Class}. The {@link BiFunction} shouldn't be
-		 * applied to objects that are not of that class, although it will default to using
-		 * {@link String#valueOf(Object)} on them. This verification is included in {@link #test(Object)}.
-		 *
-		 * @return the target container {@link Class}
-		 */
-		Class<CONTAINER> getTargetClass();
-
-		/**
-		 * An additional test to perform on a matching container to further decide to convert
-		 * it or not. The {@link BiFunction} shouldn't be applied to container that do not
-		 * match that predicate, although it will default to using {@link String#valueOf(Object)}
-		 * on them. This verification is included in {@link #test(Object)}.
-		 * <p>
-		 * Defaults to always matching instances of the {@link #getTargetClass() target Class}.
-		 *
-		 * @param value the candidate container
-		 * @return true if it can be extracted and converted, false otherwise
-		 */
-		default boolean matches(CONTAINER value) {
-			return true;
+		@Override
+		public Class<Signal> getTargetClass() {
+			return Signal.class;
 		}
 
-		/**
-		 * Return the prefix to use in the container's {@link String} representation, given
-		 * the original container.
-		 * <p>
-		 * Defaults to {@code "["}.
-		 *
-		 * @param original the original container
-		 * @return the prefix to use
-		 */
-		default String prefix(CONTAINER original) {
+		@Override
+		public boolean matches(Signal value) {
+			return value.isOnNext() && value.hasValue();
+		}
+
+		@Override
+		public String prefix(Signal original) {
+			return "onNext(";
+		}
+
+		@Override
+		public String suffix(Signal original) {
+			return ")";
+		}
+
+		@Override
+		public Stream<Object> explode(Signal original) {
+			return Stream.of(original.get());
+		}
+	};
+	static final Extractor<Iterable> DEFAULT_ITERABLE_EXTRACTOR = new Extractor<Iterable>() {
+
+		@Override
+		public Class<Iterable> getTargetClass() {
+			return Iterable.class;
+		}
+
+		@Override
+		public boolean matches(Iterable value) {
+			return !(value instanceof Fuseable.QueueSubscription);
+		}
+
+		@Override
+		public String prefix(Iterable original) {
 			return "[";
 		}
 
-		/**
-		 * Return the suffix to use in the container's {@link String} representation, given
-		 * the original container.
-		 * <p>
-		 * Defaults to {@code "]"}.
-		 *
-		 * @param original the original container
-		 * @return the suffix to use
-		 */
-		default String suffix(CONTAINER original) {
+		@Override
+		public String suffix(Iterable original) {
 			return "]";
 		}
 
-		/**
-		 * Explode the container into a {@link Stream} of {@link Object}, each of which
-		 * is a candidate for individual {@link String} conversion by a {@link ToStringConverter}
-		 * when applied as a {@link BiFunction}.
-		 *
-		 * @param original the container to extract contents from
-		 * @return the {@link Stream} of elements contained in the container
-		 */
-		Stream<Object> explode(CONTAINER original);
-
-		/**
-		 * Test if an object is a container that can be extracted and converted by this
-		 * {@link Extractor}. Defaults to testing {@link #getTargetClass()} and {@link #matches(Object)}.
-		 * The {@link BiFunction} shouldn't be applied to objects that do not match this
-		 * test, although it will default to using {@link String#valueOf(Object)} on them.
-		 *
-		 * @param o the arbitrary object to test.
-		 * @return true if the object can be extracted and converted to {@link String}
-		 */
 		@Override
-		default boolean test(Object o) {
-			Class<CONTAINER> containerClass = getTargetClass();
-			if (containerClass.isInstance(o)) {
-				CONTAINER container = containerClass.cast(o);
-				return matches(container);
-			}
-			return false;
+		public Stream<Object> explode(Iterable original) {
+			@SuppressWarnings("unchecked") Spliterator<Object> spliterator = ((Iterable<Object>) original).spliterator();
+			return StreamSupport.stream(spliterator, false);
 		}
+	};
 
-		/**
-		 * Given an arbitrary object and a {@link ToStringConverter}, if the object passes
-		 * the {@link #test(Object)}, extract elements from it and convert them using the
-		 * {@link ToStringConverter}, joining the result together to obtain a customized
-		 * {@link String} representation of both the container and its contents.
-		 * Any object that doesn't match this {@link Extractor} is naively transformed
-		 * using {@link String#valueOf(Object)}, use {@link #test(Object)} to avoid that
-		 * when choosing between multiple {@link Extractor}.
-		 *
-		 * @param target the arbitrary object to potentially convert.
-		 * @param contentFormatter the {@link ToStringConverter} to apply on each element
-		 * contained in the target
-		 * @return the {@link String} representation of the target, customized as needed
-		 */
-		@Nullable
-		default String apply(Object target, Function<Object, String> contentFormatter) {
-			Class<CONTAINER> containerClass = getTargetClass();
-			if (containerClass.isInstance(target)) {
-				CONTAINER container = containerClass.cast(target);
-				if (matches(container)) {
-					return explode(container)
-							.map(contentFormatter)
-							.collect(Collectors.joining(", ", prefix(container), suffix(container)));
-				}
-			}
-			return String.valueOf(target);
-		}
+	private ValueFormatters() {
 	}
 
 	/**
@@ -340,9 +261,144 @@ public final class ValueFormatters {
 		return convertedArgs;
 	}
 
+	/**
+	 * A generic {@link Object} to {@link String} conversion {@link Function} which is
+	 * also a {@link Predicate}, and which only applies a custom conversion to targets that
+	 * match said {@link Predicate}. Other targets are converted using {@link String#valueOf(Object)}.
+	 */
+	public interface ToStringConverter extends Predicate<Object>, Function<Object, String> { }
+
+	/**
+	 * An extractor of data wrapped in a {@link BiFunction} aiming at producing a customized {@link String}
+	 * representation of a container type and its contained elements, each element being
+	 * potentially itself converted to {@link String} using a {@link ToStringConverter}:
+	 * <ul>
+	 *     <li>it only considers specific container types, see {@link #getTargetClass()}</li>
+	 *     <li>it can further filter these container instances using {@link #matches(Object)}</li>
+	 *     <li>it can be applied to arbitrary objects, as it will default to {@link String#valueOf(Object)}
+	 *     on non-matching containers</li>
+	 *     <li>it can apply a {@link ToStringConverter} to the content, passed as the second
+	 *     parameter of the {@link BiFunction}</li>
+	 *     <li>it reconstructs the {@link String} representation of the container by
+	 *     {@link #explode(Object) exploding} it and then {@link Collectors#joining(CharSequence, CharSequence, CharSequence) joining}
+	 *     it with {#code ", "} delimiter, as well as custom {@link #prefix(Object)} and {@link #suffix(Object)}</li>
+	 * </ul>
+	 *
+	 * @param <CONTAINER> the type of container
+	 */
+	public interface Extractor<CONTAINER> extends Predicate<Object>, BiFunction<Object, Function<Object, String>, String> {
+
+		/**
+		 * Return the targeted container {@link Class}. The {@link BiFunction} shouldn't be
+		 * applied to objects that are not of that class, although it will default to using
+		 * {@link String#valueOf(Object)} on them. This verification is included in {@link #test(Object)}.
+		 *
+		 * @return the target container {@link Class}
+		 */
+		Class<CONTAINER> getTargetClass();
+
+		/**
+		 * An additional test to perform on a matching container to further decide to convert
+		 * it or not. The {@link BiFunction} shouldn't be applied to container that do not
+		 * match that predicate, although it will default to using {@link String#valueOf(Object)}
+		 * on them. This verification is included in {@link #test(Object)}.
+		 * <p>
+		 * Defaults to always matching instances of the {@link #getTargetClass() target Class}.
+		 *
+		 * @param value the candidate container
+		 * @return true if it can be extracted and converted, false otherwise
+		 */
+		default boolean matches(CONTAINER value) {
+			return true;
+		}
+
+		/**
+		 * Return the prefix to use in the container's {@link String} representation, given
+		 * the original container.
+		 * <p>
+		 * Defaults to {@code "["}.
+		 *
+		 * @param original the original container
+		 * @return the prefix to use
+		 */
+		default String prefix(CONTAINER original) {
+			return "[";
+		}
+
+		/**
+		 * Return the suffix to use in the container's {@link String} representation, given
+		 * the original container.
+		 * <p>
+		 * Defaults to {@code "]"}.
+		 *
+		 * @param original the original container
+		 * @return the suffix to use
+		 */
+		default String suffix(CONTAINER original) {
+			return "]";
+		}
+
+		/**
+		 * Explode the container into a {@link Stream} of {@link Object}, each of which
+		 * is a candidate for individual {@link String} conversion by a {@link ToStringConverter}
+		 * when applied as a {@link BiFunction}.
+		 *
+		 * @param original the container to extract contents from
+		 * @return the {@link Stream} of elements contained in the container
+		 */
+		Stream<Object> explode(CONTAINER original);
+
+		/**
+		 * Test if an object is a container that can be extracted and converted by this
+		 * {@link Extractor}. Defaults to testing {@link #getTargetClass()} and {@link #matches(Object)}.
+		 * The {@link BiFunction} shouldn't be applied to objects that do not match this
+		 * test, although it will default to using {@link String#valueOf(Object)} on them.
+		 *
+		 * @param o the arbitrary object to test.
+		 * @return true if the object can be extracted and converted to {@link String}
+		 */
+		@Override
+		default boolean test(Object o) {
+			Class<CONTAINER> containerClass = getTargetClass();
+			if (containerClass.isInstance(o)) {
+				CONTAINER container = containerClass.cast(o);
+				return matches(container);
+			}
+			return false;
+		}
+
+		/**
+		 * Given an arbitrary object and a {@link ToStringConverter}, if the object passes
+		 * the {@link #test(Object)}, extract elements from it and convert them using the
+		 * {@link ToStringConverter}, joining the result together to obtain a customized
+		 * {@link String} representation of both the container and its contents.
+		 * Any object that doesn't match this {@link Extractor} is naively transformed
+		 * using {@link String#valueOf(Object)}, use {@link #test(Object)} to avoid that
+		 * when choosing between multiple {@link Extractor}.
+		 *
+		 * @param target the arbitrary object to potentially convert.
+		 * @param contentFormatter the {@link ToStringConverter} to apply on each element
+		 * contained in the target
+		 * @return the {@link String} representation of the target, customized as needed
+		 */
+		@Nullable
+		default String apply(Object target, Function<Object, String> contentFormatter) {
+			Class<CONTAINER> containerClass = getTargetClass();
+			if (containerClass.isInstance(target)) {
+				CONTAINER container = containerClass.cast(target);
+				if (matches(container)) {
+					return explode(container)
+							.map(contentFormatter)
+							.collect(Collectors.joining(", ", prefix(container), suffix(container)));
+				}
+			}
+			return String.valueOf(target);
+		}
+	}
+
 	static class PredicateBasedToStringConverter implements ToStringConverter {
 
-		private final Predicate<Object>        predicate;
+		private final Predicate<Object> predicate;
 		private final Function<Object, String> function;
 
 		PredicateBasedToStringConverter(Predicate<Object> predicate, Function<Object, String> function) {
@@ -395,62 +451,5 @@ public final class ValueFormatters {
 			return String.valueOf(o);
 		}
 	}
-
-	static final Extractor<Signal> DEFAULT_SIGNAL_EXTRACTOR = new Extractor<Signal>() {
-
-		@Override
-		public Class<Signal> getTargetClass() {
-			return Signal.class;
-		}
-
-		@Override
-		public boolean matches(Signal value) {
-			return value.isOnNext() && value.hasValue();
-		}
-
-		@Override
-		public String prefix(Signal original) {
-			return "onNext(";
-		}
-
-		@Override
-		public String suffix(Signal original) {
-			return ")";
-		}
-
-		@Override
-		public Stream<Object> explode(Signal original) {
-			return Stream.of(original.get());
-		}
-	};
-
-	static final Extractor<Iterable> DEFAULT_ITERABLE_EXTRACTOR = new Extractor<Iterable>() {
-
-		@Override
-		public Class<Iterable> getTargetClass() {
-			return Iterable.class;
-		}
-
-		@Override
-		public boolean matches(Iterable value) {
-			return !(value instanceof Fuseable.QueueSubscription);
-		}
-
-		@Override
-		public String prefix(Iterable original) {
-			return "[";
-		}
-
-		@Override
-		public String suffix(Iterable original) {
-			return "]";
-		}
-
-		@Override
-		public Stream<Object> explode(Iterable original) {
-			@SuppressWarnings("unchecked") Spliterator<Object> spliterator = ((Iterable<Object>) original).spliterator();
-			return StreamSupport.stream(spliterator, false);
-		}
-	};
 
 }

@@ -64,8 +64,8 @@ final class FluxErrorSupplied<T> extends Flux<T> implements Fuseable.ScalarCalla
 	@Override
 	public Object call() throws Exception {
 		Throwable error = Objects.requireNonNull(errorSupplier.get(), "errorSupplier produced a null Throwable");
-		if(error instanceof Exception){
-			throw ((Exception)error);
+		if (error instanceof Exception) {
+			throw ((Exception) error);
 		}
 		throw Exceptions.propagate(error);
 	}

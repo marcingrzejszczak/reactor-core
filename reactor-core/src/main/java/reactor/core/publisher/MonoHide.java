@@ -20,21 +20,21 @@ import reactor.core.CoreSubscriber;
 /**
  * Wraps another Publisher/Mono and hides its identity, including its
  * Subscription.
- * 
+ *
  * <p>
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
- * 
+ *
  * @param <T> the value type
- * 
+ *
  */
 final class MonoHide<T> extends InternalMonoOperator<T, T> {
 
-    MonoHide(Mono<? extends T> source) {
-        super(source);
-    }
+	MonoHide(Mono<? extends T> source) {
+		super(source);
+	}
 
-    @Override
-    public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
-        return new FluxHide.HideSubscriber<>(actual);
-    }
+	@Override
+	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
+		return new FluxHide.HideSubscriber<>(actual);
+	}
 }

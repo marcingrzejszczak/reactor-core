@@ -35,16 +35,16 @@ public class MonoDefaultIfEmptyTest {
 	@Test
 	public void error() {
 		StepVerifier.create(Mono.error(new RuntimeException("forced failure"))
-		                        .defaultIfEmpty("blah"))
-		            .verifyErrorMessage("forced failure");
+				.defaultIfEmpty("blah"))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void errorHide() {
 		StepVerifier.create(Mono.error(new RuntimeException("forced failure"))
-		                        .hide()
-		                        .defaultIfEmpty("blah"))
-		            .verifyErrorMessage("forced failure");
+				.hide()
+				.defaultIfEmpty("blah"))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
@@ -54,10 +54,11 @@ public class MonoDefaultIfEmptyTest {
 		Mono.just(1).defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
+
 	@Test
 	public void nonEmptyHide() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
@@ -65,8 +66,8 @@ public class MonoDefaultIfEmptyTest {
 		Mono.just(1).hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -77,14 +78,14 @@ public class MonoDefaultIfEmptyTest {
 		Mono.just(1).hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -95,14 +96,14 @@ public class MonoDefaultIfEmptyTest {
 		Mono.just(1).defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -113,8 +114,8 @@ public class MonoDefaultIfEmptyTest {
 		Mono.<Integer>empty().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -125,8 +126,8 @@ public class MonoDefaultIfEmptyTest {
 		Mono.<Integer>empty().hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -137,14 +138,14 @@ public class MonoDefaultIfEmptyTest {
 		Mono.<Integer>empty().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -155,14 +156,14 @@ public class MonoDefaultIfEmptyTest {
 		Mono.<Integer>empty().hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 

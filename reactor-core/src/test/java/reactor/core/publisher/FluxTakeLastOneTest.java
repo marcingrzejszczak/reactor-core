@@ -25,42 +25,42 @@ public class FluxTakeLastOneTest {
 	@Test
 	public void empty() {
 		Flux<?> f = Flux.empty()
-		                .takeLast(1);
+				.takeLast(1);
 
 		assertThat(f.getPrefetch()).isEqualTo(Integer.MAX_VALUE);
 
 		StepVerifier.create(f)
-	                .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.error(new Exception("test"))
-		                        .takeLast(1))
-	                .verifyErrorMessage("test");
+				.takeLast(1))
+				.verifyErrorMessage("test");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void illegal() {
 		StepVerifier.create(Flux.empty()
-		                        .takeLast(-1))
-	                .verifyComplete();
+				.takeLast(-1))
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal() {
 		StepVerifier.create(Flux.range(1, 100)
-		                        .takeLast(1))
-	                .expectNext(100)
-	                .verifyComplete();
+				.takeLast(1))
+				.expectNext(100)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalHide() {
 		StepVerifier.create(Flux.range(1, 100)
-		                        .hide()
-		                        .takeLast(1))
-	                .expectNext(100)
-	                .verifyComplete();
+				.hide()
+				.takeLast(1))
+				.expectNext(100)
+				.verifyComplete();
 	}
 }

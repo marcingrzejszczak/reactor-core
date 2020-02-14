@@ -51,21 +51,22 @@ public class MonoAnyTest {
 		Flux.range(1, 10).any(v -> true).subscribe(ts);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
 	public void normal2() {
 		StepVerifier.create(Flux.range(1, 10).hasElement(4))
-		            .expectNext(true)
-		            .verifyComplete();
+				.expectNext(true)
+				.verifyComplete();
 	}
+
 	@Test
 	public void error2() {
 		StepVerifier.create(Flux.range(1, 10).hasElement(-4))
-		            .expectNext(false)
-		            .verifyComplete();
+				.expectNext(false)
+				.verifyComplete();
 	}
 
 	@Test
@@ -75,14 +76,14 @@ public class MonoAnyTest {
 		Flux.range(1, 10).any(v -> true).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -92,8 +93,8 @@ public class MonoAnyTest {
 		Flux.range(1, 10).any(v -> false).subscribe(ts);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -103,14 +104,14 @@ public class MonoAnyTest {
 		Flux.range(1, 10).any(v -> false).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -120,8 +121,8 @@ public class MonoAnyTest {
 		Flux.range(1, 10).any(v -> v < 6).subscribe(ts);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -131,14 +132,14 @@ public class MonoAnyTest {
 		Flux.range(1, 10).any(v -> v < 6).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -150,12 +151,12 @@ public class MonoAnyTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith( e -> {
-			  e.printStackTrace();
-			  Assert.assertTrue(e.getMessage().contains("forced failure"));
-		  });
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> {
+					e.printStackTrace();
+					Assert.assertTrue(e.getMessage().contains("forced failure"));
+				});
 	}
 
 	@Test
@@ -163,8 +164,8 @@ public class MonoAnyTest {
 		TestPublisher<String> cancelTester = TestPublisher.create();
 
 		MonoProcessor<Boolean> processor = cancelTester.flux()
-		                                               .any(s -> s.length() > 100)
-		                                               .toProcessor();
+				.any(s -> s.length() > 100)
+				.toProcessor();
 		processor.subscribe();
 		processor.cancel();
 
@@ -173,7 +174,8 @@ public class MonoAnyTest {
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoAny.AnySubscriber<String> test = new MonoAny.AnySubscriber<>(actual, String::isEmpty);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

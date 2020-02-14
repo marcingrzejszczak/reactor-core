@@ -48,7 +48,7 @@ final class OperatorDisposables {
 	 * @return true if successful, false if the field contains the {@link #DISPOSED} instance.
 	 */
 	public static <T> boolean set(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder, @Nullable Disposable newValue) {
-		for (;;) {
+		for (; ; ) {
 			Disposable current = updater.get(holder);
 			if (current == DISPOSED) {
 				if (newValue != null) {
@@ -101,7 +101,7 @@ final class OperatorDisposables {
 	 * the common {@link #DISPOSED} instance and the given disposable is not null but is disposed.
 	 */
 	public static <T> boolean replace(AtomicReferenceFieldUpdater<T, Disposable> updater, T holder, @Nullable Disposable newValue) {
-		for (;;) {
+		for (; ; ) {
 			Disposable current = updater.get(holder);
 			if (current == DISPOSED) {
 				if (newValue != null) {

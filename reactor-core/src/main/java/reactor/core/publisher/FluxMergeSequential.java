@@ -101,49 +101,34 @@ final class FluxMergeSequential<T, R> extends InternalFluxOperator<T, R> {
 
 	static final class MergeSequentialMain<T, R> implements InnerOperator<T, R> {
 
+		static final AtomicReferenceFieldUpdater<MergeSequentialMain, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(MergeSequentialMain.class, Throwable.class, "error");
+		static final AtomicIntegerFieldUpdater<MergeSequentialMain> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(MergeSequentialMain.class, "wip");
+		static final AtomicLongFieldUpdater<MergeSequentialMain> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(MergeSequentialMain.class, "requested");
 		/** the mapper giving the inner publisher for each source value */
 		final Function<? super T, ? extends Publisher<? extends R>> mapper;
-
 		/** how many eagerly subscribed inner stream at a time, at most */
 		final int maxConcurrency;
-
 		/** request size for inner subscribers (size of the inner queues) */
 		final int prefetch;
-
 		final Queue<MergeSequentialInner<R>> subscribers;
-
 		/** whether or not errors should be delayed until the very end of all inner
 		 * publishers or just until the completion of the currently merged inner publisher
 		 */
-		final ErrorMode             errorMode;
-
+		final ErrorMode errorMode;
 		final CoreSubscriber<? super R> actual;
-
 		Subscription s;
-
 		volatile boolean done;
-
 		volatile boolean cancelled;
-
 		volatile Throwable error;
-
-		static final AtomicReferenceFieldUpdater<MergeSequentialMain, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(MergeSequentialMain.class, Throwable.class, "error");
-
 		MergeSequentialInner<R> current;
-
 		/** guard against multiple threads entering the drain loop. allows thread
 		 * stealing by continuing the loop if wip has been incremented externally by
 		 * a separate thread. */
 		volatile int wip;
-
-		static final AtomicIntegerFieldUpdater<MergeSequentialMain> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(MergeSequentialMain.class, "wip");
-
 		volatile long requested;
-
-		static final AtomicLongFieldUpdater<MergeSequentialMain> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(MergeSequentialMain.class, "requested");
 
 		MergeSequentialMain(CoreSubscriber<? super R> actual,
 				Function<? super T, ? extends Publisher<? extends R>> mapper,
@@ -483,22 +468,16 @@ final class FluxMergeSequential<T, R> extends InternalFluxOperator<T, R> {
 	 * order can be restored.
 	 * @param <R> the type of objects emitted by the inner flux
 	 */
-	static final class MergeSequentialInner<R> implements InnerConsumer<R>{
-
-		final MergeSequentialMain<?, R> parent;
-
-		final int prefetch;
-
-		final int limit;
-
-		volatile Queue<R> queue;
-
-		volatile Subscription subscription;
+	static final class MergeSequentialInner<R> implements InnerConsumer<R> {
 
 		static final AtomicReferenceFieldUpdater<MergeSequentialInner, Subscription>
 				SUBSCRIPTION = AtomicReferenceFieldUpdater.newUpdater(
-						MergeSequentialInner.class, Subscription.class, "subscription");
-
+				MergeSequentialInner.class, Subscription.class, "subscription");
+		final MergeSequentialMain<?, R> parent;
+		final int prefetch;
+		final int limit;
+		volatile Queue<R> queue;
+		volatile Subscription subscription;
 		volatile boolean done;
 
 		long produced;
@@ -561,7 +540,8 @@ final class FluxMergeSequential<T, R> extends InternalFluxOperator<T, R> {
 		public void onNext(R t) {
 			if (fusionMode == Fuseable.NONE) {
 				parent.innerNext(this, t);
-			} else {
+			}
+			else {
 				parent.drain();
 			}
 		}
@@ -582,7 +562,8 @@ final class FluxMergeSequential<T, R> extends InternalFluxOperator<T, R> {
 				if (p == limit) {
 					produced = 0L;
 					subscription.request(p);
-				} else {
+				}
+				else {
 					produced = p;
 				}
 			}

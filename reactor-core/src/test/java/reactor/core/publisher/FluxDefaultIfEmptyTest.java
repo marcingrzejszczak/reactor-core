@@ -43,8 +43,8 @@ public class FluxDefaultIfEmptyTest {
 		Flux.range(1, 5).defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -55,20 +55,20 @@ public class FluxDefaultIfEmptyTest {
 		Flux.range(1, 5).defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -79,8 +79,8 @@ public class FluxDefaultIfEmptyTest {
 		Flux.<Integer>empty().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -91,14 +91,14 @@ public class FluxDefaultIfEmptyTest {
 		Flux.<Integer>empty().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -109,8 +109,8 @@ public class FluxDefaultIfEmptyTest {
 		Flux.range(1, 5).hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -121,20 +121,20 @@ public class FluxDefaultIfEmptyTest {
 		Flux.range(1, 5).hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(1, 2)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(10);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -145,8 +145,8 @@ public class FluxDefaultIfEmptyTest {
 		Flux.<Integer>empty().hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -157,20 +157,21 @@ public class FluxDefaultIfEmptyTest {
 		Flux.<Integer>empty().hide().defaultIfEmpty(10).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> { }, null, null);
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxDefaultIfEmpty.DefaultIfEmptySubscriber<String> test =
 				new FluxDefaultIfEmpty.DefaultIfEmptySubscriber<>(actual, "bar");
 		Subscription parent = Operators.emptySubscription();
@@ -188,7 +189,8 @@ public class FluxDefaultIfEmptyTest {
 
 	@Test
 	public void scanSubscriberCancelled() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
 		FluxDefaultIfEmpty.DefaultIfEmptySubscriber<String> test =
 				new FluxDefaultIfEmpty.DefaultIfEmptySubscriber<>(actual, "bar");
 		Subscription parent = Operators.emptySubscription();

@@ -38,7 +38,8 @@ public class Tuple6<T1, T2, T3, T4, T5, T6> extends Tuple5<T1, T2, T3, T4, T5> {
 
 	private static final long serialVersionUID = 770306356087176830L;
 
-	@NonNull final T6 t6;
+	@NonNull
+	final T6 t6;
 
 	Tuple6(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
 		super(t1, t2, t3, t4, t5);
@@ -130,26 +131,26 @@ public class Tuple6<T1, T2, T3, T4, T5, T6> extends Tuple5<T1, T2, T3, T4, T5> {
 	@Override
 	public Object get(int index) {
 		switch (index) {
-			case 0:
-				return t1;
-			case 1:
-				return t2;
-			case 2:
-				return t3;
-			case 3:
-				return t4;
-			case 4:
-				return t5;
-			case 5:
-				return t6;
-			default:
-				return null;
+		case 0:
+			return t1;
+		case 1:
+			return t2;
+		case 2:
+			return t3;
+		case 3:
+			return t4;
+		case 4:
+			return t5;
+		case 5:
+			return t6;
+		default:
+			return null;
 		}
 	}
 
 	@Override
 	public Object[] toArray() {
-		return new Object[]{t1, t2, t3, t4, t5, t6};
+		return new Object[] {t1, t2, t3, t4, t5, t6};
 	}
 
 	@Override
@@ -159,7 +160,7 @@ public class Tuple6<T1, T2, T3, T4, T5, T6> extends Tuple5<T1, T2, T3, T4, T5> {
 		if (!super.equals(o)) return false;
 
 		@SuppressWarnings("rawtypes")
-        Tuple6 tuple6 = (Tuple6) o;
+		Tuple6 tuple6 = (Tuple6) o;
 
 		return t6.equals(tuple6.t6);
 

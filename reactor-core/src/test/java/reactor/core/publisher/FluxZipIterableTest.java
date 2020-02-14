@@ -46,7 +46,7 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 				})),
 
 				scenario(f -> f.zipWithIterable(() ->
-						new Iterator<String>(){
+						new Iterator<String>() {
 							@Override
 							public boolean hasNext() {
 								throw exception();
@@ -59,7 +59,7 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 						}, (a, b) -> a)),
 
 				scenario(f -> f.zipWithIterable(() ->
-						new Iterator<String>(){
+						new Iterator<String>() {
 							@Override
 							public boolean hasNext() {
 								return true;
@@ -72,11 +72,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 						}, (a, b) -> a)),
 
 				scenario(f -> f.zipWithIterable(() ->
-						new Iterator<String>(){
+						new Iterator<String>() {
 							boolean invoked;
+
 							@Override
 							public boolean hasNext() {
-								if(invoked){
+								if (invoked) {
 									throw exception();
 								}
 								invoked = true;
@@ -109,13 +110,13 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 	@Test(expected = NullPointerException.class)
 	public void iterableNull() {
 		Flux.never()
-		    .zipWithIterable(null, (a, b) -> a);
+				.zipWithIterable(null, (a, b) -> a);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void zipperNull() {
 		Flux.never()
-		    .zipWithIterable(Collections.emptyList(), null);
+				.zipWithIterable(Collections.emptyList(), null);
 	}
 
 	@Test
@@ -123,12 +124,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40, 50), (a, b) -> a + b).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40, 50), (a, b) -> a + b).subscribe(ts);
 
 		ts.assertValues(11, 22, 33, 44, 55)
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -136,30 +137,30 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40, 50), (a, b) -> a + b).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40, 50), (a, b) -> a + b).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(1);
 
 		ts.assertValues(11)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(11, 22, 33)
-		.assertNoError()
-		.assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(5);
 
 		ts.assertValues(11, 22, 33, 44, 55)
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -167,12 +168,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 4)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40, 50), (a, b) -> a + b).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40, 50), (a, b) -> a + b).subscribe(ts);
 
 		ts.assertValues(11, 22, 33, 44)
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -180,12 +181,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40), (a, b) -> a + b).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40), (a, b) -> a + b).subscribe(ts);
 
 		ts.assertValues(11, 22, 33, 44)
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -193,12 +194,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 0)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40), (a, b) -> a + b).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40), (a, b) -> a + b).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -206,12 +207,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				Collections.<Integer>emptyList(), (a, b) -> a + b).subscribe(ts);
+				.zipWithIterable(
+						Collections.<Integer>emptyList(), (a, b) -> a + b).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertComplete()
-		.assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -219,12 +220,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40, 50), (a, b) -> (Integer)null).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40, 50), (a, b) -> (Integer) null).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertNotComplete()
-		.assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -232,12 +233,12 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				() -> null, (a, b) -> a).subscribe(ts);
+				.zipWithIterable(
+						() -> null, (a, b) -> a).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertNotComplete()
-		.assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -245,13 +246,15 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				Arrays.asList(10, 20, 30, 40, 50), (a, b) -> { throw new RuntimeException("forced failure"); }).subscribe(ts);
+				.zipWithIterable(
+						Arrays.asList(10, 20, 30, 40, 50), (a, b) -> {
+							throw new RuntimeException("forced failure");
+						}).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertNotComplete()
-		.assertError(RuntimeException.class)
-		  .assertErrorWith( e -> Assert.assertTrue(e.getMessage().contains("forced failure")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage().contains("forced failure")));
 	}
 
 	@Test
@@ -259,38 +262,41 @@ public class FluxZipIterableTest extends FluxOperatorTest<String, String> {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .zipWithIterable(
-				() -> { throw new RuntimeException("forced failure"); }, (a, b) -> a).subscribe(ts);
+				.zipWithIterable(
+						() -> {
+							throw new RuntimeException("forced failure");
+						}, (a, b) -> a).subscribe(ts);
 
 		ts.assertNoValues()
-		.assertNotComplete()
-		.assertError(RuntimeException.class)
-		  .assertErrorWith( e -> Assert.assertTrue(e.getMessage().contains("forced failure")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage().contains("forced failure")));
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
-	public void zipWithIterable(){
+	public void zipWithIterable() {
 		StepVerifier.create(Flux.just(0).zipWithIterable(Arrays.asList(1, 2, 3)))
-	                .expectNext(Tuples.of(0, 1))
-	                .verifyComplete();
+				.expectNext(Tuples.of(0, 1))
+				.verifyComplete();
 	}
 
 
 	@Test
-    public void scanSingleSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxZipIterable.ZipSubscriber<Integer, Integer, Integer> test = new FluxZipIterable.ZipSubscriber<>(actual,
-        		new ArrayList<Integer>().iterator(), (i, j) -> i + j);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanSingleSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxZipIterable.ZipSubscriber<Integer, Integer, Integer> test = new FluxZipIterable.ZipSubscriber<>(actual,
+				new ArrayList<Integer>().iterator(), (i, j) -> i + j);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
 }

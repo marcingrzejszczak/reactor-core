@@ -22,7 +22,7 @@ import reactor.core.CoreSubscriber;
  * termination or cancellation.
  * <p>This should help with odd retention scenarios when running
  * wit non Rx mentality based Publishers.
- * 
+ *
  * @param <T> the value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */

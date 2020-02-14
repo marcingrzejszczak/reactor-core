@@ -31,13 +31,13 @@ import reactor.util.annotation.Nullable;
  * @author Simon Baslé
  */
 class ReactorThreadFactory implements ThreadFactory,
-                                      Supplier<String>,
-                                      Thread.UncaughtExceptionHandler {
+		Supplier<String>,
+		Thread.UncaughtExceptionHandler {
 
-	final private String                        name;
-	final private AtomicLong                    counterReference;
-	final private boolean                       daemon;
-	final private boolean                       rejectBlocking;
+	final private String name;
+	final private AtomicLong counterReference;
+	final private boolean daemon;
+	final private boolean rejectBlocking;
 
 	@Nullable
 	final private BiConsumer<Thread, Throwable> uncaughtExceptionHandler;
@@ -75,7 +75,7 @@ class ReactorThreadFactory implements ThreadFactory,
 			return;
 		}
 
-		uncaughtExceptionHandler.accept(t,e);
+		uncaughtExceptionHandler.accept(t, e);
 	}
 
 	/**

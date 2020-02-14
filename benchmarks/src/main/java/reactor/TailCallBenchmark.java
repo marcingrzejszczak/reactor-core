@@ -16,17 +16,28 @@
 
 package reactor;
 
-import org.openjdk.jmh.annotations.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Operators;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 /**
  * @author Sergei Egorov
@@ -39,63 +50,63 @@ import java.util.stream.Stream;
 @State(Scope.Benchmark)
 public class TailCallBenchmark {
 
-    Flux<Object> source;
+	Flux<Object> source;
 
-    @Param({"5", "10", "20", "50", "75", "100"})
-    int operatorsCount;
+	@Param({"5", "10", "20", "50", "75", "100"})
+	int operatorsCount;
 
-    @Setup(Level.Trial)
-    public void setup() {
-        source = Flux.fromStream(() -> Stream.of(1, 2))
-                .as(flux -> {
-                    for (int i = 0; i < operatorsCount; i++) {
-                        flux = flux.filter(it -> it % 2 == 0);
-                    }
-                    return flux;
-                })
-                .cast(Object.class);
-    }
+	@Setup(Level.Trial)
+	public void setup() {
+		source = Flux.fromStream(() -> Stream.of(1, 2))
+				.as(flux -> {
+					for (int i = 0; i < operatorsCount; i++) {
+						flux = flux.filter(it -> it % 2 == 0);
+					}
+					return flux;
+				})
+				.cast(Object.class);
+	}
 
-    @Benchmark
-    public void without() {
-        // See Flux#subscribe(Subscriber)
-        CorePublisher<Object> publisher = Operators.onLastAssembly(source);
-        CancelSubscriber<Object> cancelSubscriber = new CancelSubscriber<>();
-        CoreSubscriber<Object> subscriber = Operators.<Object>toCoreSubscriber(cancelSubscriber);
-        publisher.subscribe(subscriber);
-        cancelSubscriber.join();
-    }
+	@Benchmark
+	public void without() {
+		// See Flux#subscribe(Subscriber)
+		CorePublisher<Object> publisher = Operators.onLastAssembly(source);
+		CancelSubscriber<Object> cancelSubscriber = new CancelSubscriber<>();
+		CoreSubscriber<Object> subscriber = Operators.<Object>toCoreSubscriber(cancelSubscriber);
+		publisher.subscribe(subscriber);
+		cancelSubscriber.join();
+	}
 
-    @Benchmark
-    public void with() {
-        CancelSubscriber<Object> subscriber = new CancelSubscriber<Object>();
-        source.subscribe(subscriber);
-        subscriber.join();
-    }
+	@Benchmark
+	public void with() {
+		CancelSubscriber<Object> subscriber = new CancelSubscriber<Object>();
+		source.subscribe(subscriber);
+		subscriber.join();
+	}
 
-    /**
-     * Dummy subscriber that will cancel right after the subscription
-     */
-    static class CancelSubscriber<T> extends CompletableFuture<Void> implements Subscriber<T> {
+	/**
+	 * Dummy subscriber that will cancel right after the subscription
+	 */
+	static class CancelSubscriber<T> extends CompletableFuture<Void> implements Subscriber<T> {
 
-        @Override
-        public void onSubscribe(Subscription subscription) {
-            subscription.cancel();
-            complete(null);
-        }
+		@Override
+		public void onSubscribe(Subscription subscription) {
+			subscription.cancel();
+			complete(null);
+		}
 
-        @Override
-        public void onNext(T o) {
-        }
+		@Override
+		public void onNext(T o) {
+		}
 
-        @Override
-        public void onError(Throwable throwable) {
-            completeExceptionally(throwable);
-        }
+		@Override
+		public void onError(Throwable throwable) {
+			completeExceptionally(throwable);
+		}
 
-        @Override
-        public void onComplete() {
-            complete(null);
-        }
-    }
+		@Override
+		public void onComplete() {
+			complete(null);
+		}
+	}
 }

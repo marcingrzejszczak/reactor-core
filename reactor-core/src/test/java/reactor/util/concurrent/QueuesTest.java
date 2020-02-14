@@ -139,7 +139,7 @@ public class QueuesTest {
 		assertThat(q.toArray()).as("toArray").isEmpty();
 		assertThat(q.toArray(new Integer[0])).as("toArray(empty)").isEmpty();
 
-		Integer[] array = new Integer[]{-1, -2, -3};
+		Integer[] array = new Integer[] {-1, -2, -3};
 		assertThat(q.toArray(array)).as("toArray(pre-filled)").containsExactly(null, -2, -3);
 	}
 

@@ -40,8 +40,8 @@ public class BlockingOptionalMonoSubscriberTest {
 	@Test
 	public void optionalValuedDelayed() {
 		Optional<String> result = Mono.just("foo")
-		                              .delayElement(Duration.ofMillis(500))
-		                              .blockOptional();
+				.delayElement(Duration.ofMillis(500))
+				.blockOptional();
 
 		assertThat(result).contains("foo");
 	}
@@ -73,7 +73,7 @@ public class BlockingOptionalMonoSubscriberTest {
 	@Test
 	public void timeoutOptionalValued() {
 		Optional<String> result = Mono.just("foo")
-		                              .blockOptional(Duration.ofMillis(500));
+				.blockOptional(Duration.ofMillis(500));
 
 		assertThat(result).contains("foo");
 	}
@@ -81,7 +81,7 @@ public class BlockingOptionalMonoSubscriberTest {
 	@Test
 	public void timeoutOptionalEmpty() {
 		Optional<String> result = Mono.<String>empty()
-		                              .blockOptional(Duration.ofMillis(500));
+				.blockOptional(Duration.ofMillis(500));
 
 		assertThat(result).isEmpty();
 	}

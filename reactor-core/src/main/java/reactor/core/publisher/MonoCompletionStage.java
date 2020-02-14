@@ -37,67 +37,67 @@ import reactor.util.context.Context;
  * @param <T> the value type
  */
 final class MonoCompletionStage<T> extends Mono<T>
-        implements Fuseable, Scannable {
+		implements Fuseable, Scannable {
 
-    static final Logger LOGGER = Loggers.getLogger(MonoCompletionStage.class);
+	static final Logger LOGGER = Loggers.getLogger(MonoCompletionStage.class);
 
-    final CompletionStage<? extends T> future;
+	final CompletionStage<? extends T> future;
 
-    MonoCompletionStage(CompletionStage<? extends T> future) {
-        this.future = Objects.requireNonNull(future, "future");
-    }
+	MonoCompletionStage(CompletionStage<? extends T> future) {
+		this.future = Objects.requireNonNull(future, "future");
+	}
 
-    @Override
-    public void subscribe(CoreSubscriber<? super T> actual) {
-        Operators.MonoSubscriber<T, T>
-                sds = new Operators.MonoSubscriber<>(actual);
+	@Override
+	public void subscribe(CoreSubscriber<? super T> actual) {
+		Operators.MonoSubscriber<T, T>
+				sds = new Operators.MonoSubscriber<>(actual);
 
-        actual.onSubscribe(sds);
+		actual.onSubscribe(sds);
 
-        if (sds.isCancelled()) {
-            return;
-        }
+		if (sds.isCancelled()) {
+			return;
+		}
 
-        future.whenComplete((v, e) -> {
-            if (sds.isCancelled()) {
-                //nobody is interested in the Mono anymore, don't risk dropping errors
-                Context ctx = sds.currentContext();
-                if (e == null || e instanceof CancellationException) {
-                    //we discard any potential value and ignore Future cancellations
-                    Operators.onDiscard(v, ctx);
-                }
-                else {
-                    //we make sure we keep _some_ track of a Future failure AFTER the Mono cancellation
-                    Operators.onErrorDropped(e, ctx);
-                    //and we discard any potential value just in case both e and v are not null
-                    Operators.onDiscard(v, ctx);
-                }
+		future.whenComplete((v, e) -> {
+			if (sds.isCancelled()) {
+				//nobody is interested in the Mono anymore, don't risk dropping errors
+				Context ctx = sds.currentContext();
+				if (e == null || e instanceof CancellationException) {
+					//we discard any potential value and ignore Future cancellations
+					Operators.onDiscard(v, ctx);
+				}
+				else {
+					//we make sure we keep _some_ track of a Future failure AFTER the Mono cancellation
+					Operators.onErrorDropped(e, ctx);
+					//and we discard any potential value just in case both e and v are not null
+					Operators.onDiscard(v, ctx);
+				}
 
-                return;
-            }
-            try {
-                if (e instanceof CompletionException) {
-                    actual.onError(e.getCause());
-                }
-                else if (e != null) {
-                    actual.onError(e);
-                }
-                else if (v != null) {
-                    sds.complete(v);
-                }
-                else {
-                    actual.onComplete();
-                }
-            }
-            catch (Throwable e1) {
-                Operators.onErrorDropped(e1, actual.currentContext());
-                throw Exceptions.bubble(e1);
-            }
-        });
-    }
+				return;
+			}
+			try {
+				if (e instanceof CompletionException) {
+					actual.onError(e.getCause());
+				}
+				else if (e != null) {
+					actual.onError(e);
+				}
+				else if (v != null) {
+					sds.complete(v);
+				}
+				else {
+					actual.onComplete();
+				}
+			}
+			catch (Throwable e1) {
+				Operators.onErrorDropped(e1, actual.currentContext());
+				throw Exceptions.bubble(e1);
+			}
+		});
+	}
 
-    @Override
-    public Object scanUnsafe(Attr key) {
-        return null; //no particular key to be represented, still useful in hooks
-    }
+	@Override
+	public Object scanUnsafe(Attr key) {
+		return null; //no particular key to be represented, still useful in hooks
+	}
 }

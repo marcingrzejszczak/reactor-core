@@ -19,7 +19,6 @@ package reactor.util.function;
 import java.util.function.Function;
 
 import org.junit.Test;
-import java.lang.Object;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -70,121 +69,121 @@ public class TupleTests {
 	@Test
 	public void fromArrayRejects0() {
 		assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> Tuples.fromArray(new Object[0]))
-		          .withMessageStartingWith("null or too small array, need between 2 and 8 values");
+				.isThrownBy(() -> Tuples.fromArray(new Object[0]))
+				.withMessageStartingWith("null or too small array, need between 2 and 8 values");
 	}
 
 	@Test
 	public void fromArrayRejects1() {
 		assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> Tuples.fromArray(new Object[1]))
-		          .withMessageStartingWith("null or too small array, need between 2 and 8 values");
+				.isThrownBy(() -> Tuples.fromArray(new Object[1]))
+				.withMessageStartingWith("null or too small array, need between 2 and 8 values");
 	}
 
 	@Test
 	public void fromArrayRejectsNull() {
 		assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> Tuples.fromArray(null))
-		          .withMessageStartingWith("null or too small array, need between 2 and 8 values");
+				.isThrownBy(() -> Tuples.fromArray(null))
+				.withMessageStartingWith("null or too small array, need between 2 and 8 values");
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple2CreatedFromArray2() {
-		Integer[] source = new Integer[] { 1, 2 };
+		Integer[] source = new Integer[] {1, 2};
 		Tuple2 expected = Tuples.of(1, 2);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual)
-		          .isExactlyInstanceOf(Tuple2.class)
-		          .isEqualTo(expected);
+				.isExactlyInstanceOf(Tuple2.class)
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple3CreatedFromArray3() {
-		Integer[] source = new Integer[]{1, 2, 3};
+		Integer[] source = new Integer[] {1, 2, 3};
 		Tuple2 expected = Tuples.of(1, 2, 3);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual).isExactlyInstanceOf(Tuple3.class)
-		          .isEqualTo(expected);
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple4CreatedFromArray4() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4 };
+		Integer[] source = new Integer[] {1, 2, 3, 4};
 		Tuple2 expected = Tuples.of(1, 2, 3, 4);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual)
-		          .isExactlyInstanceOf(Tuple4.class)
-		          .isEqualTo(expected);
+				.isExactlyInstanceOf(Tuple4.class)
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple5CreatedFromArray5() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5};
 		Tuple2 expected = Tuples.of(1, 2, 3, 4, 5);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual)
-		          .isExactlyInstanceOf(Tuple5.class)
-		          .isEqualTo(expected);
+				.isExactlyInstanceOf(Tuple5.class)
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple6CreatedFromArray6() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6};
 		Tuple2 expected = Tuples.of(1, 2, 3, 4, 5, 6);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual)
-		          .isExactlyInstanceOf(Tuple6.class)
-		          .isEqualTo(expected);
+				.isExactlyInstanceOf(Tuple6.class)
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple7CreatedFromArray7() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7};
 		Tuple2 expected = Tuples.of(1, 2, 3, 4, 5, 6, 7);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual)
-		          .isExactlyInstanceOf(Tuple7.class)
-		          .isEqualTo(expected);
+				.isExactlyInstanceOf(Tuple7.class)
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void tuple8CreatedFromArray8() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Tuple2 expected = Tuples.of(1, 2, 3, 4, 5, 6, 7, 8);
 		Tuple2 actual = Tuples.fromArray(source);
 
 		assertThat(actual)
-		          .isExactlyInstanceOf(Tuple8.class)
-		          .isEqualTo(expected);
+				.isExactlyInstanceOf(Tuple8.class)
+				.isEqualTo(expected);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void fromArrayRejects9() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 		assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> Tuples.fromArray(source))
-		          .withMessage("too many arguments (9), need between 2 and 8 values");
+				.isThrownBy(() -> Tuples.fromArray(source))
+				.withMessage("too many arguments (9), need between 2 and 8 values");
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void fnAny() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple2<Object, Object> tuple = Tuples.fnAny().apply(source);
 
@@ -197,7 +196,7 @@ public class TupleTests {
 
 	@Test
 	public void fnAnyDelegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple2, Tuple2<Object, Object>> invert = t2 -> new Tuple2<>(t2.getT2(), t2.getT1());
 
 		Tuple2<Object, Object> tuple = Tuples.fnAny(invert).apply(source);
@@ -211,7 +210,7 @@ public class TupleTests {
 
 	@Test
 	public void fn2() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple2<Object, Object> tuple = Tuples.fn2().apply(source);
 
@@ -224,7 +223,7 @@ public class TupleTests {
 
 	@Test
 	public void fn3() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple3<Object, Object, Object> tuple = Tuples.fn3().apply(source);
 
@@ -238,7 +237,7 @@ public class TupleTests {
 
 	@Test
 	public void fn3Delegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple3<Integer, Integer, Integer>, Tuple3> invert = t3 -> new Tuple3<>(t3.getT3(), t3.getT2(), t3.getT1());
 
 		Tuple3 tuple = Tuples.fn3(invert).apply(source);
@@ -251,7 +250,7 @@ public class TupleTests {
 
 	@Test
 	public void fn4() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple4<Object, Object, Object, Object> tuple = Tuples.fn4().apply(source);
 
@@ -266,7 +265,7 @@ public class TupleTests {
 
 	@Test
 	public void fn4Delegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple4<Integer, Integer, Integer, Integer>, Tuple4> invert =
 				t4 -> new Tuple4<>(t4.getT4(), t4.getT3(), t4.getT2(), t4.getT1());
 
@@ -281,7 +280,7 @@ public class TupleTests {
 
 	@Test
 	public void fn5() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple5<Object, Object, Object, Object, Object> tuple = Tuples.fn5().apply(source);
 
@@ -297,7 +296,7 @@ public class TupleTests {
 
 	@Test
 	public void fn5Delegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple5<Integer, Integer, Integer, Integer, Integer>, Tuple5> invert =
 				t5 -> new Tuple5<>(t5.getT5(), t5.getT4(), t5.getT3(), t5.getT2(), t5.getT1());
 
@@ -313,7 +312,7 @@ public class TupleTests {
 
 	@Test
 	public void fn6() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple6<Object, Object, Object, Object, Object, Object> tuple = Tuples.fn6().apply(source);
 
@@ -330,7 +329,7 @@ public class TupleTests {
 
 	@Test
 	public void fn6Delegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple6<Integer, Integer, Integer, Integer, Integer, Integer>, Tuple6> invert =
 				t6 -> new Tuple6<>(t6.getT6(), t6.getT5(), t6.getT4(), t6.getT3(), t6.getT2(), t6.getT1());
 
@@ -347,7 +346,7 @@ public class TupleTests {
 
 	@Test
 	public void fn7() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple7<Object, Object, Object, Object, Object, Object, Object> tuple = Tuples.fn7().apply(source);
 
@@ -365,7 +364,7 @@ public class TupleTests {
 
 	@Test
 	public void fn7Delegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple7<Integer, Integer, Integer, Integer, Integer, Integer, Integer>, Tuple7> invert =
 				t7 -> new Tuple7<>(t7.getT7(), t7.getT6(), t7.getT5(), t7.getT4(), t7.getT3(), t7.getT2(), t7.getT1());
 
@@ -380,9 +379,10 @@ public class TupleTests {
 		assertThat(tuple.getT7()).isEqualTo(1);
 		assertThat((Object) tuple).isExactlyInstanceOf(Tuple7.class);
 	}
+
 	@Test
 	public void fn8() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 
 		Tuple8 tuple = Tuples.fn8().apply(source);
 
@@ -398,7 +398,7 @@ public class TupleTests {
 
 	@Test
 	public void fn8Delegate() {
-		Integer[] source = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		Integer[] source = new Integer[] {1, 2, 3, 4, 5, 6, 7, 8};
 		Function<Tuple8<Integer, Integer, Integer, Integer, Integer, Integer, Integer, Integer>, Integer> sum =
 				t8 -> t8.getT8() + t8.getT7() + t8.getT6() + t8.getT5() + t8.getT4() + t8.getT3() + t8.getT2() + t8.getT1();
 
@@ -410,14 +410,14 @@ public class TupleTests {
 	@Test
 	public void tupleStringRepresentationFull() {
 		assertThat(Tuples.tupleStringRepresentation(1, 2, 3, 4, 5)
-		                 .toString())
+				.toString())
 				.isEqualTo("1,2,3,4,5");
 	}
 
 	@Test
 	public void tupleStringRepresentationSparse() {
 		assertThat(Tuples.tupleStringRepresentation(null, 2, null, 4, 5, null)
-		                 .toString())
+				.toString())
 				.isEqualTo(",2,,4,5,");
 	}
 

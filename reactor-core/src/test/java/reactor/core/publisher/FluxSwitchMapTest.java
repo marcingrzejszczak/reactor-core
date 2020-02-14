@@ -38,7 +38,7 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.switchMap(v -> sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
@@ -49,14 +49,14 @@ public class FluxSwitchMapTest {
 		sp2.onComplete();
 
 		ts.assertValues(10, 20, 30, 40)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onComplete();
 
 		ts.assertValues(10, 20, 30, 40)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -68,7 +68,7 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.switchMap(v -> sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
@@ -79,26 +79,26 @@ public class FluxSwitchMapTest {
 		sp2.onComplete();
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10, 20)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onComplete();
 
 		ts.assertValues(10, 20)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		ts.request(2);
 
 		ts.assertValues(10, 20, 30, 40)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -111,7 +111,7 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp3 = DirectProcessor.create();
 
 		sp1.switchMap(v -> v == 1 ? sp2 : sp3)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
@@ -130,14 +130,14 @@ public class FluxSwitchMapTest {
 		sp3.onComplete();
 
 		ts.assertValues(10, 20, 300, 400)
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp1.onComplete();
 
 		ts.assertValues(10, 20, 300, 400)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -148,8 +148,8 @@ public class FluxSwitchMapTest {
 				ConcurrentLinkedQueue::new, 128);
 
 		StepVerifier.create(test)
-		            .expectNext(1, 1, 2, 1, 2, 3)
-		            .verifyComplete();
+				.expectNext(1, 1, 2, 1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -160,14 +160,14 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.switchMap(v -> sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 		sp1.onComplete();
 
 		ts.assertNoValues()
-		  .assertNoError()
-		  .assertNotComplete();
+				.assertNoError()
+				.assertNotComplete();
 
 		sp2.onNext(10);
 		sp2.onNext(20);
@@ -176,8 +176,8 @@ public class FluxSwitchMapTest {
 		sp2.onComplete();
 
 		ts.assertValues(10, 20, 30, 40)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -189,7 +189,7 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.switchMap(v -> sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 		sp1.onError(new RuntimeException("forced failure"));
@@ -201,9 +201,9 @@ public class FluxSwitchMapTest {
 		sp2.onComplete();
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -214,7 +214,7 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.switchMap(v -> sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
@@ -225,9 +225,9 @@ public class FluxSwitchMapTest {
 		sp2.onError(new RuntimeException("forced failure"));
 
 		ts.assertValues(10, 20, 30, 40)
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("sp1 has subscribers?", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers?", sp2.hasDownstreams());
@@ -242,14 +242,14 @@ public class FluxSwitchMapTest {
 		sp1.switchMap(v -> {
 			throw new RuntimeException("forced failure");
 		})
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
 		ts.assertNoValues()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 	}
 
 	@Test
@@ -259,21 +259,21 @@ public class FluxSwitchMapTest {
 		DirectProcessor<Integer> sp1 = DirectProcessor.create();
 
 		sp1.switchMap(v -> null)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		sp1.onNext(1);
 
 		ts.assertNoValues()
-		  .assertError(NullPointerException.class)
-		  .assertNotComplete();
+				.assertError(NullPointerException.class)
+				.assertNotComplete();
 	}
 
 	@Test
 	public void switchOnNextDynamically() {
 		StepVerifier.create(Flux.just(1, 2, 3)
-		                        .switchMap(s -> Flux.range(s, 3)))
-		            .expectNext(1, 2, 3, 2, 3, 4, 3, 4, 5)
-		            .verifyComplete();
+				.switchMap(s -> Flux.range(s, 3)))
+				.expectNext(1, 2, 3, 2, 3, 4, 3, 4, 5)
+				.verifyComplete();
 	}
 
 	@Test
@@ -284,52 +284,54 @@ public class FluxSwitchMapTest {
 		up.onNext(Flux.range(4, 3));
 		up.onComplete();
 		StepVerifier.create(Flux.switchOnNext(up))
-		            .expectNext(1, 2, 3, 2, 3, 4, 4, 5, 6)
-		            .verifyComplete();
+				.expectNext(1, 2, 3, 2, 3, 4, 4, 5, 6)
+				.verifyComplete();
 	}
 
 	@Test
-    public void scanMain() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSwitchMap.SwitchMapMain<Integer, Integer> test =
-        		new FluxSwitchMap.SwitchMapMain<>(actual, i -> Mono.just(i), Queues.unbounded().get(), 234);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanMain() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSwitchMap.SwitchMapMain<Integer, Integer> test =
+				new FluxSwitchMap.SwitchMapMain<>(actual, i -> Mono.just(i), Queues.unbounded().get(), 234);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(234);
-        test.requested = 35;
-        Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
-        test.queue.add(new FluxSwitchMap.SwitchMapInner<Integer>(test, 1, 0));
-        Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(234);
+		test.requested = 35;
+		Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35L);
+		test.queue.add(new FluxSwitchMap.SwitchMapInner<Integer>(test, 1, 0));
+		Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.error = new IllegalStateException("boom");
-        Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-        test.onComplete();
-        Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.error = new IllegalStateException("boom");
+		Assertions.assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+		test.onComplete();
+		Assertions.assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
 	@Test
-    public void scanInner() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSwitchMap.SwitchMapMain<Integer, Integer> main =
-        		new FluxSwitchMap.SwitchMapMain<>(actual, i -> Mono.just(i), Queues.unbounded().get(), 234);
-        FluxSwitchMap.SwitchMapInner<Integer> test = new FluxSwitchMap.SwitchMapInner<Integer>(main, 1, 0);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanInner() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSwitchMap.SwitchMapMain<Integer, Integer> main =
+				new FluxSwitchMap.SwitchMapMain<>(actual, i -> Mono.just(i), Queues.unbounded().get(), 234);
+		FluxSwitchMap.SwitchMapInner<Integer> test = new FluxSwitchMap.SwitchMapInner<Integer>(main, 1, 0);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
-        Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+		Assertions.assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(1);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

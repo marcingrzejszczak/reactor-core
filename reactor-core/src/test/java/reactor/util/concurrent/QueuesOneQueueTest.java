@@ -16,9 +16,9 @@
 
 package reactor.util.concurrent;
 
-import org.junit.Test;
-
 import java.util.Queue;
+
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,7 +47,7 @@ public class QueuesOneQueueTest {
 		Integer[] convertedArray = q.toArray(passedArray);
 		//then
 		assertThat(convertedArray)
-				.containsExactly((Integer)null)
+				.containsExactly((Integer) null)
 				.isSameAs(passedArray);
 	}
 

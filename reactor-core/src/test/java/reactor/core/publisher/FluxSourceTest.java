@@ -16,8 +16,6 @@
 package reactor.core.publisher;
 
 import org.junit.Test;
-import org.reactivestreams.Subscription;
-import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
 import reactor.test.StepVerifier;
 
@@ -27,13 +25,13 @@ import static org.junit.Assert.assertTrue;
 public class FluxSourceTest {
 
 	@Test
-	public void wrapToFlux(){
+	public void wrapToFlux() {
 		MonoProcessor<String> mp = MonoProcessor.create();
 
 		mp.onNext("test");
 		StepVerifier.create(Flux.from(mp))
-		            .expectNext("test")
-		            .verifyComplete();
+				.expectNext("test")
+				.verifyComplete();
 	}
 
 	@Test
@@ -41,7 +39,7 @@ public class FluxSourceTest {
 		Flux<Integer> m = Flux.from(Mono.empty());
 		assertTrue(m == Flux.<Integer>empty());
 		StepVerifier.create(m)
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
@@ -49,8 +47,8 @@ public class FluxSourceTest {
 		Flux<Integer> m = Flux.from(Mono.just(1));
 		assertTrue(m instanceof FluxJust);
 		StepVerifier.create(m)
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -58,7 +56,7 @@ public class FluxSourceTest {
 		Flux<Integer> m = Flux.from(Mono.error(new Exception("test")));
 		assertTrue(m instanceof FluxError);
 		StepVerifier.create(m)
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
@@ -66,7 +64,7 @@ public class FluxSourceTest {
 		Flux<Integer> m = Flux.from(Mono.error(new Error("test")));
 		assertTrue(m instanceof FluxError);
 		StepVerifier.create(m)
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 
@@ -74,45 +72,45 @@ public class FluxSourceTest {
 	public void wrap() {
 		Flux<Integer> m = Flux.wrap(Flux.just(1));
 		StepVerifier.create(m)
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 
 		m = Flux.wrap(Flux.just(1).hide());
 		StepVerifier.create(m)
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void asJust() {
 		StepVerifier.create(Mono.just(1).as(Flux::from))
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void fluxJust() {
 		StepVerifier.create(Mono.just(1).flux())
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void fluxError() {
 		StepVerifier.create(Mono.error(new Exception("test")).flux())
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 
 	@Test
 	public void fluxEmpty() {
 		StepVerifier.create(Mono.empty().flux())
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
 	public void scanMain() {
-		Flux<Integer> parent = Flux.range(1,  10).map(i -> i);
+		Flux<Integer> parent = Flux.range(1, 10).map(i -> i);
 		FluxSource<Integer> test = new FluxSource<>(parent);
 
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
@@ -121,7 +119,7 @@ public class FluxSourceTest {
 
 	@Test
 	public void scanMainHide() {
-		Flux<Integer> parent = Flux.range(1,  10).hide();
+		Flux<Integer> parent = Flux.range(1, 10).hide();
 		FluxSource<Integer> test = new FluxSource<>(parent);
 
 		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);

@@ -18,7 +18,6 @@ package reactor.core.publisher;
 
 import org.junit.Test;
 import reactor.core.Scannable;
-import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,13 +50,13 @@ public class ParallelLogTest {
 		Flux<Integer> source = Flux.range(1, 1_000);
 		for (int i = 1; i < 33; i++) {
 			Flux<Integer> result = ParallelFlux.from(source, i)
-			                                   .log()
-			                                   .filter(t -> true)
-			                                   .sequential();
+					.log()
+					.filter(t -> true)
+					.sequential();
 
 			StepVerifier.create(result)
-			            .expectNextCount(1_000)
-			            .verifyComplete();
+					.expectNextCount(1_000)
+					.verifyComplete();
 		}
 	}
 }

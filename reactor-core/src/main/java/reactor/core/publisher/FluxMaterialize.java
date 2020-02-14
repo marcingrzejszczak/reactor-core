@@ -41,28 +41,24 @@ final class FluxMaterialize<T> extends InternalFluxOperator<T, Signal<T>> {
 	}
 
 	final static class MaterializeSubscriber<T>
-	extends AbstractQueue<Signal<T>>
+			extends AbstractQueue<Signal<T>>
 			implements InnerOperator<T, Signal<T>>, BooleanSupplier {
-	    
-	    final CoreSubscriber<? super Signal<T>> actual;
-	    final Context                           cachedContext;
 
-	    Signal<T> terminalSignal;
-	    
-	    volatile boolean cancelled;
-	    
-	    volatile long requested;
-	    @SuppressWarnings("rawtypes")
-        static final AtomicLongFieldUpdater<MaterializeSubscriber> REQUESTED =
-	            AtomicLongFieldUpdater.newUpdater(MaterializeSubscriber.class, "requested");
-	    
-	    long produced;
-	    
-	    Subscription s;
-	    
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<MaterializeSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(MaterializeSubscriber.class, "requested");
+		static final Signal empty = new ImmutableSignal<>(Context.empty(), SignalType.ON_NEXT, null, null, null);
+		final CoreSubscriber<? super Signal<T>> actual;
+		final Context cachedContext;
+		Signal<T> terminalSignal;
+		volatile boolean cancelled;
+		volatile long requested;
+		long produced;
+		Subscription s;
+
 		MaterializeSubscriber(CoreSubscriber<? super Signal<T>> subscriber) {
-		    this.actual = subscriber;
-		    this.cachedContext = actual.currentContext();
+			this.actual = subscriber;
+			this.cachedContext = actual.currentContext();
 		}
 
 		@Override
@@ -90,111 +86,109 @@ final class FluxMaterialize<T> extends InternalFluxOperator<T, Signal<T>> {
 
 		@Override
 		public void onSubscribe(Subscription s) {
-		    if (Operators.validate(this.s, s)) {
-		        this.s = s;
+			if (Operators.validate(this.s, s)) {
+				this.s = s;
 
-		        actual.onSubscribe(this);
-		    }
+				actual.onSubscribe(this);
+			}
 		}
 
 		@Override
 		public void onNext(T ev) {
-			if(terminalSignal != null){
+			if (terminalSignal != null) {
 				Operators.onNextDropped(ev, this.cachedContext);
 				return;
 			}
-		    produced++;
+			produced++;
 			actual.onNext(Signal.next(ev, this.cachedContext));
 		}
 
 		@Override
 		public void onError(Throwable ev) {
-			if(terminalSignal != null){
+			if (terminalSignal != null) {
 				Operators.onErrorDropped(ev, this.cachedContext);
 				return;
 			}
 			terminalSignal = Signal.error(ev, this.cachedContext);
-            long p = produced;
-            if (p != 0L) {
-	            Operators.addCap(REQUESTED, this, -p);
-            }
-            DrainUtils.postComplete(actual, this, REQUESTED, this, this);
+			long p = produced;
+			if (p != 0L) {
+				Operators.addCap(REQUESTED, this, -p);
+			}
+			DrainUtils.postComplete(actual, this, REQUESTED, this, this);
 		}
 
 		@Override
 		public void onComplete() {
-			if(terminalSignal != null){
+			if (terminalSignal != null) {
 				return;
 			}
 			terminalSignal = Signal.complete(this.cachedContext);
-            long p = produced;
-            if (p != 0L) {
-	            Operators.addCap(REQUESTED, this, -p);
-            }
-            DrainUtils.postComplete(actual, this, REQUESTED, this, this);
+			long p = produced;
+			if (p != 0L) {
+				Operators.addCap(REQUESTED, this, -p);
+			}
+			DrainUtils.postComplete(actual, this, REQUESTED, this, this);
 		}
-		
+
 		@Override
 		public void request(long n) {
-		    if (Operators.validate(n)) {
-		        if (!DrainUtils.postCompleteRequest(n, actual, this, REQUESTED, this, this)) {
-		            s.request(n);
-		        }
-		    }
+			if (Operators.validate(n)) {
+				if (!DrainUtils.postCompleteRequest(n, actual, this, REQUESTED, this, this)) {
+					s.request(n);
+				}
+			}
 		}
-		
+
 		@Override
 		public void cancel() {
-			if(cancelled){
+			if (cancelled) {
 				return;
 			}
-		    cancelled = true;
-		    s.cancel();
+			cancelled = true;
+			s.cancel();
 		}
-		
+
 		@Override
 		public boolean getAsBoolean() {
-		    return cancelled;
+			return cancelled;
 		}
 
-        @Override
-        public boolean offer(Signal<T> e) {
-            throw new UnsupportedOperationException();
-        }
+		@Override
+		public boolean offer(Signal<T> e) {
+			throw new UnsupportedOperationException();
+		}
 
-        @Override
-        @Nullable
-        @SuppressWarnings("unchecked")
-        public Signal<T> poll() {
-            Signal<T> v = terminalSignal;
-            if (v != null && v != empty) {
-	            terminalSignal = (Signal<T>)empty;
-                return v;
-            }
-            return null;
-        }
+		@Override
+		@Nullable
+		@SuppressWarnings("unchecked")
+		public Signal<T> poll() {
+			Signal<T> v = terminalSignal;
+			if (v != null && v != empty) {
+				terminalSignal = (Signal<T>) empty;
+				return v;
+			}
+			return null;
+		}
 
-        @Override
-        @Nullable
-        public Signal<T> peek() {
-            return empty == terminalSignal ? null : terminalSignal;
-        }
+		@Override
+		@Nullable
+		public Signal<T> peek() {
+			return empty == terminalSignal ? null : terminalSignal;
+		}
 
-        @Override
-        public Iterator<Signal<T>> iterator() {
-            throw new UnsupportedOperationException();
-        }
+		@Override
+		public Iterator<Signal<T>> iterator() {
+			throw new UnsupportedOperationException();
+		}
 
-        @Override
-        public int size() {
-            return terminalSignal == null || terminalSignal == empty ? 0 : 1;
-        }
+		@Override
+		public int size() {
+			return terminalSignal == null || terminalSignal == empty ? 0 : 1;
+		}
 
 		@Override
 		public String toString() {
 			return "MaterializeSubscriber";
 		}
-
-		static final Signal empty = new ImmutableSignal<>(Context.empty(), SignalType.ON_NEXT, null, null, null);
 	}
 }

@@ -35,12 +35,12 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.never(), v -> Flux.never())
-		    .subscribe(ts);
+				.timeout(Flux.never(), v -> Flux.never())
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -48,12 +48,12 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.empty(), v -> Flux.never())
-		    .subscribe(ts);
+				.timeout(Flux.empty(), v -> Flux.never())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(TimeoutException.class);
+				.assertNotComplete()
+				.assertError(TimeoutException.class);
 	}
 
 	@Test
@@ -61,12 +61,12 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.never(), v -> Flux.empty())
-		    .subscribe(ts);
+				.timeout(Flux.never(), v -> Flux.empty())
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertError(TimeoutException.class);
+				.assertNotComplete()
+				.assertError(TimeoutException.class);
 	}
 
 	//Fail
@@ -75,12 +75,12 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.empty(), v -> Flux.never(), Flux.range(1, 10))
-		    .subscribe(ts);
+				.timeout(Flux.empty(), v -> Flux.never(), Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -88,12 +88,12 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.never(), v -> Flux.empty(), Flux.range(1, 10))
-		    .subscribe(ts);
+				.timeout(Flux.never(), v -> Flux.empty(), Flux.range(1, 10))
+				.subscribe(ts);
 
 		ts.assertValues(1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.timeout(tp, v -> Flux.never(), Flux.range(1, 10))
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		source.onNext(0);
 
@@ -116,8 +116,8 @@ public class FluxTimeoutTest {
 		Assert.assertFalse("Timeout has subscribers?", tp.hasDownstreams());
 
 		ts.assertValues(0)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -129,7 +129,7 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.timeout(tp, v -> Flux.never(), Flux.range(1, 10))
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		source.onNext(0);
 
@@ -140,8 +140,8 @@ public class FluxTimeoutTest {
 		Assert.assertFalse("Timeout has subscribers?", tp.hasDownstreams());
 
 		ts.assertValues(0)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -153,7 +153,7 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		source.timeout(tp, v -> Flux.never(), Flux.range(1, 10))
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		source.onNext(0);
 
@@ -164,8 +164,8 @@ public class FluxTimeoutTest {
 		Assert.assertFalse("Timeout has subscribers?", tp.hasDownstreams());
 
 		ts.assertValues(0)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -173,15 +173,15 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.never(), v -> {
-			    throw new RuntimeException("forced failure");
-		    })
-		    .subscribe(ts);
+				.timeout(Flux.never(), v -> {
+					throw new RuntimeException("forced failure");
+				})
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -189,12 +189,12 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.never(), v -> null)
-		    .subscribe(ts);
+				.timeout(Flux.never(), v -> null)
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -202,14 +202,14 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.error(new RuntimeException("forced " + "failure")),
-				    v -> Flux.never())
-		    .subscribe(ts);
+				.timeout(Flux.error(new RuntimeException("forced " + "failure")),
+						v -> Flux.never())
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -217,14 +217,14 @@ public class FluxTimeoutTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .timeout(Flux.never(),
-				    v -> Flux.error(new RuntimeException("forced failure")))
-		    .subscribe(ts);
+				.timeout(Flux.never(),
+						v -> Flux.error(new RuntimeException("forced failure")))
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 	}
 
 	@Test
@@ -236,7 +236,7 @@ public class FluxTimeoutTest {
 		DirectProcessor<Integer> tp = DirectProcessor.create();
 
 		source.timeout(tp, v -> tp)
-		      .subscribe(ts);
+				.subscribe(ts);
 
 		tp.onNext(1);
 
@@ -244,8 +244,8 @@ public class FluxTimeoutTest {
 		source.onComplete();
 
 		ts.assertNoValues()
-		  .assertError(TimeoutException.class)
-		  .assertNotComplete();
+				.assertError(TimeoutException.class)
+				.assertNotComplete();
 	}
 
 	Flux<Integer> scenario_timeoutCanBeBoundWithCallback() {
@@ -255,21 +255,21 @@ public class FluxTimeoutTest {
 	@Test
 	public void timeoutCanBeBoundWithCallback() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutCanBeBoundWithCallback)
-		            .thenAwait(Duration.ofMillis(500))
-		            .expectNext(-5)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(500))
+				.expectNext(-5)
+				.verifyComplete();
 	}
 
 	Flux<?> scenario_timeoutThrown() {
 		return Flux.never()
-		           .timeout(Duration.ofMillis(500));
+				.timeout(Duration.ofMillis(500));
 	}
 
 	@Test
 	public void fluxPropagatesErrorUsingAwait() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutThrown)
-		            .thenAwait(Duration.ofMillis(500))
-		            .verifyError(TimeoutException.class);
+				.thenAwait(Duration.ofMillis(500))
+				.verifyError(TimeoutException.class);
 	}
 
 	Flux<Integer> scenario_timeoutCanBeBoundWithCallback2() {
@@ -279,40 +279,40 @@ public class FluxTimeoutTest {
 	@Test
 	public void timeoutCanBeBoundWithCallback2() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutCanBeBoundWithCallback2)
-		            .thenAwait(Duration.ofMillis(500))
-		            .expectNext(-5)
-		            .verifyComplete();
+				.thenAwait(Duration.ofMillis(500))
+				.expectNext(-5)
+				.verifyComplete();
 	}
 
 	Flux<?> scenario_timeoutThrown2() {
 		return Flux.never()
-		           .timeout(Duration.ofMillis(500));
+				.timeout(Duration.ofMillis(500));
 	}
 
 	@Test
 	public void fluxPropagatesErrorUsingAwait2() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutThrown2)
-		            .thenAwait(Duration.ofMillis(500))
-		            .verifyError(TimeoutException.class);
+				.thenAwait(Duration.ofMillis(500))
+				.verifyError(TimeoutException.class);
 	}
 
 	Flux<?> scenario_timeoutThrown3() {
 		return Flux.never()
-		           .timeout(Duration.ofMillis(500), Schedulers.parallel());
+				.timeout(Duration.ofMillis(500), Schedulers.parallel());
 	}
 
 	@Test
 	public void fluxPropagatesErrorUsingAwait3() {
 		StepVerifier.withVirtualTime(this::scenario_timeoutThrown3)
-		            .thenAwait(Duration.ofMillis(500))
-		            .verifyError(TimeoutException.class);
+				.thenAwait(Duration.ofMillis(500))
+				.verifyError(TimeoutException.class);
 	}
 
 	@Test
 	public void fluxTimeoutOther() {
 		StepVerifier.create(Flux.never().timeout(Flux.just(1)))
-		            .thenAwait(Duration.ofMillis(500))
-		            .verifyError(TimeoutException.class);
+				.thenAwait(Duration.ofMillis(500))
+				.verifyError(TimeoutException.class);
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/744
@@ -321,15 +321,16 @@ public class FluxTimeoutTest {
 		for (int i = 0; i < 50; i++) {
 			StepVerifier.withVirtualTime(
 					() -> Flux.just("cat")
-					          .delaySubscription(Duration.ofMillis(3))
-					          // We cancel on another scheduler that won't do anything to force it to act like
-					          // the event is already in flight
-					          .cancelOn(Schedulers.fromExecutor(r -> {}))
-					          .timeout(Duration.ofMillis(2))
+							.delaySubscription(Duration.ofMillis(3))
+							// We cancel on another scheduler that won't do anything to force it to act like
+							// the event is already in flight
+							.cancelOn(Schedulers.fromExecutor(r -> {
+							}))
+							.timeout(Duration.ofMillis(2))
 			)
-			            .thenAwait(Duration.ofSeconds(5))
-			            .expectError(TimeoutException.class)
-			            .verify();
+					.thenAwait(Duration.ofSeconds(5))
+					.expectError(TimeoutException.class)
+					.verify();
 		}
 	}
 
@@ -339,27 +340,28 @@ public class FluxTimeoutTest {
 		for (int i = 0; i < 50; i++) {
 			StepVerifier.withVirtualTime(
 					() -> Flux.just("cat")
-					          .delaySubscription(Duration.ofMillis(3))
-					          // We cancel on another scheduler that won't do anything to force it to act like
-					          // the event is already in flight
-					          .cancelOn(Schedulers.fromExecutor(r -> {}))
-					          .timeout(Duration.ofMillis(2), Flux.just("dog").delayElements(Duration.ofMillis(5)))
+							.delaySubscription(Duration.ofMillis(3))
+							// We cancel on another scheduler that won't do anything to force it to act like
+							// the event is already in flight
+							.cancelOn(Schedulers.fromExecutor(r -> {
+							}))
+							.timeout(Duration.ofMillis(2), Flux.just("dog").delayElements(Duration.ofMillis(5)))
 			)
-			            .thenAwait(Duration.ofSeconds(5))
-			            .expectNext("dog")
-			            .expectComplete()
-			            .verify();
+					.thenAwait(Duration.ofSeconds(5))
+					.expectNext("dog")
+					.expectComplete()
+					.verify();
 		}
 	}
 
 	@Test
 	public void timeoutDurationMessageDefault() {
 		StepVerifier.withVirtualTime(() -> Flux.never()
-		                                       .timeout(Duration.ofHours(1)))
-		            .thenAwait(Duration.ofHours(2))
-		            .expectErrorMessage("Did not observe any item or terminal signal within " +
-				            "3600000ms in 'source(FluxNever)' (and no fallback has been configured)")
-		            .verify();
+				.timeout(Duration.ofHours(1)))
+				.thenAwait(Duration.ofHours(2))
+				.expectErrorMessage("Did not observe any item or terminal signal within " +
+						"3600000ms in 'source(FluxNever)' (and no fallback has been configured)")
+				.verify();
 	}
 
 	@Test
@@ -377,25 +379,25 @@ public class FluxTimeoutTest {
 	@Test
 	public void timeoutNotDurationMessageFirstTimeout() {
 		StepVerifier.create(Flux.never()
-		                        .timeout(Mono.just("immediate")))
-		            .expectErrorMessage("Did not observe any item or terminal signal within " +
-				            "first signal from a Publisher in 'source(FluxNever)' (and no fallback has been configured)")
-		            .verify();
+				.timeout(Mono.just("immediate")))
+				.expectErrorMessage("Did not observe any item or terminal signal within " +
+						"first signal from a Publisher in 'source(FluxNever)' (and no fallback has been configured)")
+				.verify();
 	}
 
 	@Test
 	public void timeoutNotDurationMessageSecondTimeout() {
 		AtomicBoolean generatorUsed = new AtomicBoolean();
 		StepVerifier.create(Flux.concat(Mono.just("foo"), Mono.just("bar").delayElement(Duration.ofMillis(500)))
-		                        .timeout(Mono.delay(Duration.ofMillis(100)),
-				                        v -> {
-					                        generatorUsed.set(true);
-					                        return Mono.delay(Duration.ofMillis(100));
-				                        }))
-		            .expectNext("foo")
-		            .expectErrorMessage("Did not observe any item or terminal signal within " +
-				            "first signal from a Publisher in 'source(FluxConcatArray)' (and no fallback has been configured)")
-		            .verify();
+				.timeout(Mono.delay(Duration.ofMillis(100)),
+						v -> {
+							generatorUsed.set(true);
+							return Mono.delay(Duration.ofMillis(100));
+						}))
+				.expectNext("foo")
+				.expectErrorMessage("Did not observe any item or terminal signal within " +
+						"first signal from a Publisher in 'source(FluxConcatArray)' (and no fallback has been configured)")
+				.verify();
 
 		assertThat(generatorUsed.get()).as("generator used").isTrue();
 	}

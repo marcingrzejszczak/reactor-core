@@ -56,12 +56,12 @@ public class MonoUsingTest {
 		AtomicInteger cleanup = new AtomicInteger();
 
 		Mono.using(() -> 1, r -> Mono.just(1), cleanup::set, false)
-		    .doAfterTerminate(() ->  Assert.assertEquals(0, cleanup.get()))
-		    .subscribe(ts);
+				.doAfterTerminate(() -> Assert.assertEquals(0, cleanup.get()))
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -73,14 +73,14 @@ public class MonoUsingTest {
 		AtomicInteger cleanup = new AtomicInteger();
 
 		Mono.using(() -> 1, r -> Mono.just(1)
-		                             .doOnSuccessOrError((value, error) ->  Assert.assertEquals(0, cleanup.get())),
+						.doOnSuccessOrError((value, error) -> Assert.assertEquals(0, cleanup.get())),
 				cleanup::set,
 				true)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -109,18 +109,18 @@ public class MonoUsingTest {
 			}
 			return Mono.just(1);
 		}, cleanup::set, eager)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		if (fail) {
 			ts.assertNoValues()
-			  .assertError(RuntimeException.class)
-			  .assertNotComplete()
-			  .assertErrorMessage("forced failure");
+					.assertError(RuntimeException.class)
+					.assertNotComplete()
+					.assertErrorMessage("forced failure");
 		}
 		else {
 			ts.assertValues(1)
-			  .assertComplete()
-			  .assertNoError();
+					.assertComplete()
+					.assertNoError();
 		}
 
 		Assert.assertEquals(1, cleanup.get());
@@ -156,12 +156,12 @@ public class MonoUsingTest {
 		Mono.using(() -> {
 			throw new RuntimeException("forced failure");
 		}, r -> Mono.just(1), cleanup::set, false)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		Assert.assertEquals(0, cleanup.get());
 	}
@@ -175,12 +175,12 @@ public class MonoUsingTest {
 		Mono.using(() -> 1, r -> {
 			throw new RuntimeException("forced failure");
 		}, cleanup::set, false)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure");
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure");
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -197,8 +197,8 @@ public class MonoUsingTest {
 				false).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 
 		Assert.assertEquals(1, cleanup.get());
 	}
@@ -212,15 +212,15 @@ public class MonoUsingTest {
 		MonoProcessor<Integer> tp = MonoProcessor.create();
 
 		Mono.using(() -> 1, r -> tp, cleanup::set, true)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		Assert.assertTrue("No subscriber?", tp.hasDownstreams());
 
 		tp.onNext(1);
 
 		ts.assertValues(1)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 
 		Assert.assertEquals(1, cleanup.get());
@@ -238,73 +238,85 @@ public class MonoUsingTest {
 				}, "suppressing <%s>", sourceEx);
 
 		Mono<String> test = new MonoUsing<>(() -> "foo",
-				o -> { throw sourceEx; },
-				s -> { throw cleanupEx; },
+				o -> {
+					throw sourceEx;
+				},
+				s -> {
+					throw cleanupEx;
+				},
 				false);
 
 		StepVerifier.create(test)
-		            .verifyErrorMatches(
-				            e -> assertThat(e)
-						            .hasMessage("resourceCleanup")
-						            .is(suppressingFactory) != null);
+				.verifyErrorMatches(
+						e -> assertThat(e)
+								.hasMessage("resourceCleanup")
+								.is(suppressingFactory) != null);
 
 	}
 
 	@Test
 	public void cleanupIsRunBeforeOnNext_fusedEager() {
 		Mono.using(() -> "resource", s -> Mono.just(s.length()),
-				res -> { throw new IllegalStateException("boom"); },
+				res -> {
+					throw new IllegalStateException("boom");
+				},
 				true)
-		    .as(StepVerifier::create)
-		    .expectFusion()
-		    .expectErrorMessage("boom")
-		    .verifyThenAssertThat()
-		    .hasDiscarded(8)
-		    .hasNotDroppedElements()
-		    .hasNotDroppedErrors();
+				.as(StepVerifier::create)
+				.expectFusion()
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscarded(8)
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 	}
 
 	@Test
 	public void cleanupIsRunBeforeOnNext_normalEager() {
 		Mono.using(() -> "resource", s -> Mono.just(s.length()).hide(),
-				res -> { throw new IllegalStateException("boom"); })
-		    .as(StepVerifier::create)
-		    .expectNoFusionSupport()
-		    .expectErrorMessage("boom")
-		    .verifyThenAssertThat()
-		    .hasDiscarded(8)
-		    .hasNotDroppedElements()
-		    .hasNotDroppedErrors();
+				res -> {
+					throw new IllegalStateException("boom");
+				})
+				.as(StepVerifier::create)
+				.expectNoFusionSupport()
+				.expectErrorMessage("boom")
+				.verifyThenAssertThat()
+				.hasDiscarded(8)
+				.hasNotDroppedElements()
+				.hasNotDroppedErrors();
 	}
 
 	@Test
 	public void cleanupDropsThrowable_fusedNotEager() {
 		Mono.using(() -> "resource", s -> Mono.just(s.length()),
-				res -> { throw new IllegalStateException("boom"); },
+				res -> {
+					throw new IllegalStateException("boom");
+				},
 				false)
-		    .as(StepVerifier::create)
-		    .expectFusion()
-		    .expectNext(8)
-		    .expectComplete()
-		    .verifyThenAssertThat()
-		    .hasNotDiscardedElements()
-		    .hasNotDroppedElements()
-		    .hasDroppedErrorWithMessage("boom");
+				.as(StepVerifier::create)
+				.expectFusion()
+				.expectNext(8)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDiscardedElements()
+				.hasNotDroppedElements()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test
 	public void cleanupDropsThrowable_normalNotEager() {
 		Mono.using(() -> "resource", s -> Mono.just(s.length()).hide(),
-				res -> { throw new IllegalStateException("boom"); },
+				res -> {
+					throw new IllegalStateException("boom");
+				},
 				false)
-		    .as(StepVerifier::create)
-		    .expectNoFusionSupport()
-		    .expectNext(8)
-		    .expectComplete()
-		    .verifyThenAssertThat()
-		    .hasNotDiscardedElements()
-		    .hasNotDroppedElements()
-		    .hasDroppedErrorWithMessage("boom");
+				.as(StepVerifier::create)
+				.expectNoFusionSupport()
+				.expectNext(8)
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasNotDiscardedElements()
+				.hasNotDroppedElements()
+				.hasDroppedErrorWithMessage("boom");
 	}
 
 	@Test
@@ -312,17 +324,17 @@ public class MonoUsingTest {
 		AtomicBoolean cleaned = new AtomicBoolean();
 		Mono.using(() -> cleaned,
 				ab -> Flux.just("foo", "bar", "baz")
-				          .delayElements(Duration.ofMillis(100))
-				          .count()
-				          .map(i -> "" + i + ab.get())
-				          .hide(),
+						.delayElements(Duration.ofMillis(100))
+						.count()
+						.map(i -> "" + i + ab.get())
+						.hide(),
 				ab -> ab.set(true),
 				true)
-		    .as(StepVerifier::create)
-		    .expectNoFusionSupport()
-		    .expectNext("3false")
-		    .expectComplete()
-		    .verify();
+				.as(StepVerifier::create)
+				.expectNoFusionSupport()
+				.expectNext("3false")
+				.expectComplete()
+				.verify();
 
 		assertThat(cleaned).isTrue();
 	}
@@ -332,16 +344,16 @@ public class MonoUsingTest {
 		AtomicBoolean cleaned = new AtomicBoolean();
 		Mono.using(() -> cleaned,
 				ab -> Flux.just("foo", "bar", "baz")
-				          .delayElements(Duration.ofMillis(100))
-				          .count()
-				          .map(i -> "" + i + ab.get()),
+						.delayElements(Duration.ofMillis(100))
+						.count()
+						.map(i -> "" + i + ab.get()),
 				ab -> ab.set(true),
 				true)
-		    .as(StepVerifier::create)
-		    .expectFusion()
-		    .expectNext("3false")
-		    .expectComplete()
-		    .verify();
+				.as(StepVerifier::create)
+				.expectFusion()
+				.expectNext("3false")
+				.expectComplete()
+				.verify();
 
 		assertThat(cleaned).isTrue();
 	}
@@ -351,22 +363,22 @@ public class MonoUsingTest {
 		AtomicBoolean cleaned = new AtomicBoolean();
 		Mono.using(() -> cleaned,
 				ab -> Flux.just("foo", "bar", "baz")
-				          .delayElements(Duration.ofMillis(100))
-				          .count()
-				          .map(i -> "" + i + ab.get())
-				          .hide(),
+						.delayElements(Duration.ofMillis(100))
+						.count()
+						.map(i -> "" + i + ab.get())
+						.hide(),
 				ab -> ab.set(true),
 				false)
-		    .as(StepVerifier::create)
-		    .expectNoFusionSupport()
-		    .expectNext("3false")
-		    .expectComplete()
-		    .verify();
+				.as(StepVerifier::create)
+				.expectNoFusionSupport()
+				.expectNext("3false")
+				.expectComplete()
+				.verify();
 
 		//since the handler is executed after onComplete, we allow some delay
 		await().atMost(100, TimeUnit.MILLISECONDS)
-		       .with().pollInterval(10, TimeUnit.MILLISECONDS)
-		       .untilAsserted(assertThat(cleaned)::isTrue);
+				.with().pollInterval(10, TimeUnit.MILLISECONDS)
+				.untilAsserted(assertThat(cleaned)::isTrue);
 	}
 
 	@Test
@@ -374,20 +386,20 @@ public class MonoUsingTest {
 		AtomicBoolean cleaned = new AtomicBoolean();
 		Mono.using(() -> cleaned,
 				ab -> Flux.just("foo", "bar", "baz")
-				          .delayElements(Duration.ofMillis(100))
-				          .count()
-				          .map(i -> "" + i + ab.get()),
+						.delayElements(Duration.ofMillis(100))
+						.count()
+						.map(i -> "" + i + ab.get()),
 				ab -> ab.set(true),
 				false)
-		    .as(StepVerifier::create)
-		    .expectFusion()
-		    .expectNext("3false")
-		    .expectComplete()
-		    .verify();
+				.as(StepVerifier::create)
+				.expectFusion()
+				.expectNext("3false")
+				.expectComplete()
+				.verify();
 
 		//since the handler is executed after onComplete, we allow some delay
 		await().atMost(100, TimeUnit.MILLISECONDS)
-		       .with().pollInterval(10, TimeUnit.MILLISECONDS)
-		       .untilAsserted(assertThat(cleaned)::isTrue);
+				.with().pollInterval(10, TimeUnit.MILLISECONDS)
+				.untilAsserted(assertThat(cleaned)::isTrue);
 	}
 }

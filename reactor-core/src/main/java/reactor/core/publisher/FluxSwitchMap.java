@@ -46,15 +46,12 @@ import reactor.util.context.Context;
  */
 final class FluxSwitchMap<T, R> extends InternalFluxOperator<T, R> {
 
-	final Function<? super T, ? extends Publisher<? extends R>> mapper;
-
-	final Supplier<? extends Queue<Object>> queueSupplier;
-
-	final int prefetch;
-
 	@SuppressWarnings("ConstantConditions")
 	static final SwitchMapInner<Object> CANCELLED_INNER =
 			new SwitchMapInner<>(null, 0, Long.MAX_VALUE);
+	final Function<? super T, ? extends Publisher<? extends R>> mapper;
+	final Supplier<? extends Queue<Object>> queueSupplier;
+	final int prefetch;
 
 	FluxSwitchMap(Flux<? extends T> source,
 			Function<? super T, ? extends Publisher<? extends R>> mapper,
@@ -89,58 +86,46 @@ final class FluxSwitchMap<T, R> extends InternalFluxOperator<T, R> {
 
 	static final class SwitchMapMain<T, R> implements InnerOperator<T, R> {
 
-		final Function<? super T, ? extends Publisher<? extends R>> mapper;
-
-		final Queue<Object>               queue;
-		final BiPredicate<Object, Object> queueBiAtomic;
-		final int                         prefetch;
-		final CoreSubscriber<? super R>   actual;
-
-		Subscription s;
-
-		volatile boolean done;
-
-		volatile Throwable error;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SwitchMapMain, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(SwitchMapMain.class,
 						Throwable.class,
 						"error");
-
-		volatile boolean cancelled;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SwitchMapMain> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(SwitchMapMain.class, "once");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SwitchMapMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(SwitchMapMain.class, "requested");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SwitchMapMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(SwitchMapMain.class, "wip");
-
-		volatile SwitchMapInner<R> inner;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SwitchMapMain, SwitchMapInner> INNER =
 				AtomicReferenceFieldUpdater.newUpdater(SwitchMapMain.class,
 						SwitchMapInner.class,
 						"inner");
-
-		volatile long index;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SwitchMapMain> INDEX =
 				AtomicLongFieldUpdater.newUpdater(SwitchMapMain.class, "index");
-
-		volatile int active;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SwitchMapMain> ACTIVE =
 				AtomicIntegerFieldUpdater.newUpdater(SwitchMapMain.class, "active");
+		final Function<? super T, ? extends Publisher<? extends R>> mapper;
+		final Queue<Object> queue;
+		final BiPredicate<Object, Object> queueBiAtomic;
+		final int prefetch;
+		final CoreSubscriber<? super R> actual;
+		Subscription s;
+		volatile boolean done;
+		volatile Throwable error;
+		volatile boolean cancelled;
+		volatile int once;
+		volatile long requested;
+		volatile int wip;
+		volatile SwitchMapInner<R> inner;
+		volatile long index;
+		volatile int active;
 
 		@SuppressWarnings("unchecked")
 		SwitchMapMain(CoreSubscriber<? super R> actual,
@@ -152,7 +137,7 @@ final class FluxSwitchMap<T, R> extends InternalFluxOperator<T, R> {
 			this.queue = queue;
 			this.prefetch = prefetch;
 			this.active = 1;
-			if(queue instanceof BiPredicate){
+			if (queue instanceof BiPredicate) {
 				this.queueBiAtomic = (BiPredicate<Object, Object>) queue;
 			}
 			else {
@@ -214,7 +199,7 @@ final class FluxSwitchMap<T, R> extends InternalFluxOperator<T, R> {
 
 			try {
 				p = Objects.requireNonNull(mapper.apply(t),
-				"The mapper returned a null publisher");
+						"The mapper returned a null publisher");
 			}
 			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, actual.currentContext()));
@@ -429,26 +414,20 @@ final class FluxSwitchMap<T, R> extends InternalFluxOperator<T, R> {
 
 	static final class SwitchMapInner<R> implements InnerConsumer<R>, Subscription {
 
-		final SwitchMapMain<?, R> parent;
-
-		final int prefetch;
-
-		final int limit;
-
-		final long index;
-
-		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SwitchMapInner> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(SwitchMapInner.class, "once");
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SwitchMapInner, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(SwitchMapInner.class,
 						Subscription.class,
 						"s");
-
+		final SwitchMapMain<?, R> parent;
+		final int prefetch;
+		final int limit;
+		final long index;
+		volatile int once;
+		volatile Subscription s;
 		int produced;
 
 		SwitchMapInner(SwitchMapMain<?, R> parent, int prefetch, long index) {

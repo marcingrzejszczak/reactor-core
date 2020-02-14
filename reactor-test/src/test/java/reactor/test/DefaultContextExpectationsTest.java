@@ -109,6 +109,7 @@ public class DefaultContextExpectationsTest {
 		assertContextExpectation(s -> s.subscriberContext(Context.of("foo", "bar")),
 				e -> e.hasKey("foo"));
 	}
+
 	@Test
 	public void notHasKey() throws Exception {
 		assertContextExpectationFails(s -> s.subscriberContext(Context.of("foo", "bar")),
@@ -125,7 +126,7 @@ public class DefaultContextExpectationsTest {
 	@Test
 	public void notHasSize() throws Exception {
 		assertContextExpectationFails(s -> s.subscriberContext(Context.of("foo", "bar", "foobar", "baz"))
-		                                    .subscriberContext(Context.of("fails", true)),
+						.subscriberContext(Context.of("fails", true)),
 				e -> e.hasSize(2))
 				.withMessageStartingWith("Expected Context of size 2, got 3 for Context Context3{");
 	}
@@ -249,7 +250,9 @@ public class DefaultContextExpectationsTest {
 	@Test
 	public void notAssertThat() throws Exception {
 		assertContextExpectationFails(s -> s.subscriberContext(Context.of("foo", "bar")),
-				e -> e.assertThat(c -> { throw new AssertionError("boom"); }))
+				e -> e.assertThat(c -> {
+					throw new AssertionError("boom");
+				}))
 				.withMessage("boom");
 	}
 
@@ -282,7 +285,7 @@ public class DefaultContextExpectationsTest {
 	@Test
 	public void notMatchesWithDescriptionAndScenarioName() {
 		Flux<Integer> source = Flux.range(1, 10)
-		                           .subscriberContext(Context.of("foo", "bar"));
+				.subscriberContext(Context.of("foo", "bar"));
 
 		Step<Integer> step = StepVerifier.create(source);
 		final DefaultContextExpectations<Integer> base = new DefaultContextExpectations<>(step, new MessageFormatter("scenario", null, null));
@@ -290,8 +293,8 @@ public class DefaultContextExpectationsTest {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(
 						base.matches(Objects::isNull, "someDescription")
-						    .then()
-						    .expectNextCount(10)::verifyComplete)
+								.then()
+								.expectNextCount(10)::verifyComplete)
 				.withMessage("[scenario] Context Context1{foo=bar} doesn't match predicate someDescription");
 	}
 

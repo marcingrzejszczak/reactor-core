@@ -17,7 +17,6 @@
 package reactor.core.publisher;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.util.annotation.Nullable;
 
@@ -38,7 +37,7 @@ final class FluxDematerialize<T> extends InternalFluxOperator<Signal<T>, T> {
 	static final class DematerializeSubscriber<T> implements InnerOperator<Signal<T>, T> {
 
 		final CoreSubscriber<? super T> actual;
-		final boolean                   completeAfterOnNext;
+		final boolean completeAfterOnNext;
 
 		Subscription s;
 

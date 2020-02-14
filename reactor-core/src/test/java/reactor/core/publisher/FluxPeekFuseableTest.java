@@ -49,11 +49,25 @@ import reactor.util.context.Context;
 
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 import static reactor.core.scheduler.Schedulers.parallel;
 
 public class FluxPeekFuseableTest {
+
+	static String blockingOp(Integer x, Integer y) {
+		try {
+			sleep(10);
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return "x" + x + "y" + y;
+	}
 
 	@Test(expected = NullPointerException.class)
 	public void nullSource() {
@@ -221,10 +235,10 @@ public class FluxPeekFuseableTest {
 		Throwable err = new Exception("test");
 
 		Flux.just(1)
-		    .doOnNext(d -> {
-			    throw Exceptions.propagate(err);
-		    })
-		    .subscribe(ts);
+				.doOnNext(d -> {
+					throw Exceptions.propagate(err);
+				})
+				.subscribe(ts);
 
 		//nominal error path (DownstreamException)
 		ts.assertErrorMessage("test");
@@ -233,10 +247,10 @@ public class FluxPeekFuseableTest {
 
 		try {
 			Flux.just(1)
-			    .doOnNext(d -> {
-				    throw Exceptions.bubble(err);
-			    })
-			    .subscribe(ts);
+					.doOnNext(d -> {
+						throw Exceptions.bubble(err);
+					})
+					.subscribe(ts);
 
 			Assert.fail();
 		}
@@ -252,10 +266,10 @@ public class FluxPeekFuseableTest {
 		Throwable err = new Exception("test");
 
 		Flux.just(1)
-		    .doOnComplete(() -> {
-			    throw Exceptions.propagate(err);
-		    })
-		    .subscribe(ts);
+				.doOnComplete(() -> {
+					throw Exceptions.propagate(err);
+				})
+				.subscribe(ts);
 
 		//nominal error path (DownstreamException)
 		ts.assertErrorMessage("test");
@@ -264,10 +278,10 @@ public class FluxPeekFuseableTest {
 
 		try {
 			Flux.just(1)
-			    .doOnComplete(() -> {
-				    throw Exceptions.bubble(err);
-			    })
-			    .subscribe(ts);
+					.doOnComplete(() -> {
+						throw Exceptions.bubble(err);
+					})
+					.subscribe(ts);
 
 			Assert.fail();
 		}
@@ -282,7 +296,9 @@ public class FluxPeekFuseableTest {
 
 		FluxPeekFuseable<String> flux = new FluxPeekFuseable<>(
 				Flux.error(new IllegalArgumentException("bar")), null, null,
-				e -> { throw err; },
+				e -> {
+					throw err;
+				},
 				null, null, null, null);
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
@@ -302,13 +318,13 @@ public class FluxPeekFuseableTest {
 		Throwable err = new Exception("test");
 
 		Flux.just(1)
-		    .doOnNext(d -> {
-			    throw new RuntimeException();
-		    })
-		    .doOnError(e -> {
-			    throw Exceptions.propagate(err);
-		    })
-		    .subscribe(ts);
+				.doOnNext(d -> {
+					throw new RuntimeException();
+				})
+				.doOnError(e -> {
+					throw Exceptions.propagate(err);
+				})
+				.subscribe(ts);
 
 		//nominal error path (DownstreamException)
 		ts.assertErrorMessage("test");
@@ -316,13 +332,13 @@ public class FluxPeekFuseableTest {
 		ts = AssertSubscriber.create();
 		try {
 			Flux.just(1)
-			    .doOnNext(d -> {
-				    throw new RuntimeException();
-			    })
-			    .doOnError(d -> {
-				    throw Exceptions.bubble(err);
-			    })
-			    .subscribe(ts);
+					.doOnNext(d -> {
+						throw new RuntimeException();
+					})
+					.doOnError(d -> {
+						throw Exceptions.bubble(err);
+					})
+					.subscribe(ts);
 
 			Assert.fail();
 		}
@@ -337,14 +353,14 @@ public class FluxPeekFuseableTest {
 		AssertSubscriber<Integer> assertSubscriber = new AssertSubscriber<>();
 
 		Mono.just(1)
-		    .publishOn(parallel())
-		    .doOnNext(i -> {
-			    throw new IllegalArgumentException();
-		    })
-		    .doOnError(e -> {
-			    throw new IllegalStateException(e);
-		    })
-		    .subscribe(assertSubscriber);
+				.publishOn(parallel())
+				.doOnNext(i -> {
+					throw new IllegalArgumentException();
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException(e);
+				})
+				.subscribe(assertSubscriber);
 
 		assertSubscriber
 				.await()
@@ -359,7 +375,9 @@ public class FluxPeekFuseableTest {
 
 		FluxPeekFuseable<String> flux = new FluxPeekFuseable<>(
 				Flux.empty(), null, null, errorCallbackCapture::set, null,
-				() -> { throw err; }, null, null);
+				() -> {
+					throw err;
+				}, null, null);
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 
@@ -383,7 +401,9 @@ public class FluxPeekFuseableTest {
 		Error fatal = new LinkageError();
 		FluxPeekFuseable<String> flux = new FluxPeekFuseable<>(
 				Flux.empty(), null, null, errorCallbackCapture::set, null,
-				() -> { throw fatal; }, null, null);
+				() -> {
+					throw fatal;
+				}, null, null);
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 
@@ -404,7 +424,9 @@ public class FluxPeekFuseableTest {
 		errorCallbackCapture.set(null);
 		flux = new FluxPeekFuseable<>(
 				Flux.error(new NullPointerException()), null, null, errorCallbackCapture::set, null,
-				() -> { throw fatal; }, null, null);
+				() -> {
+					throw fatal;
+				}, null, null);
 
 		ts = AssertSubscriber.create();
 
@@ -427,9 +449,13 @@ public class FluxPeekFuseableTest {
 		IllegalArgumentException err2 = new IllegalArgumentException("error");
 
 		FluxPeekFuseable<String> flux = new FluxPeekFuseable<>(
-				Flux.empty(), null, null, e -> { throw err2; },
+				Flux.empty(), null, null, e -> {
+			throw err2;
+		},
 				null,
-				() -> { throw err; }, null, null);
+				() -> {
+					throw err;
+				}, null, null);
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 
@@ -456,7 +482,11 @@ public class FluxPeekFuseableTest {
 		FluxPeekFuseable<String> flux = new FluxPeekFuseable<>(
 				Flux.error(err),
 				null, null,
-				e -> { throw error; }, null, () -> { throw afterTerminate; },
+				e -> {
+					throw error;
+				}, null, () -> {
+			throw afterTerminate;
+		},
 				null, null);
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
@@ -479,15 +509,14 @@ public class FluxPeekFuseableTest {
 		ts.assertErrorMessage("error");
 	}
 
-
 	@Test
 	public void syncFusionAvailable() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .doOnNext(v -> {
-		    })
-		    .subscribe(ts);
+				.doOnNext(v -> {
+				})
+				.subscribe(ts);
 
 		Subscription s = ts.upstream();
 		Assert.assertTrue("Non-fuseable upstream: " + s,
@@ -499,9 +528,9 @@ public class FluxPeekFuseableTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		UnicastProcessor.create(Queues.<Integer>get(2).get())
-		                .doOnNext(v -> {
-		                })
-		                .subscribe(ts);
+				.doOnNext(v -> {
+				})
+				.subscribe(ts);
 
 		Subscription s = ts.upstream();
 		Assert.assertTrue("Non-fuseable upstream" + s,
@@ -521,14 +550,14 @@ public class FluxPeekFuseableTest {
 				Operators.complete(u);
 			}
 		})
-		          .doOnNext(v -> {
-		          })
-		          .filter(v -> true)
-		          .subscribe(ts);
+				.doOnNext(v -> {
+				})
+				.filter(v -> true)
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertComplete();
+				.assertNoValues()
+				.assertComplete();
 	}
 
 	@Test
@@ -544,14 +573,14 @@ public class FluxPeekFuseableTest {
 				Operators.complete(u);
 			}
 		})
-		    .doOnNext(v -> {
-		          })
-		    .filter(v -> true)
-		    .subscribe(ts);
+				.doOnNext(v -> {
+				})
+				.filter(v -> true)
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertNoValues()
-		  .assertComplete();
+				.assertNoValues()
+				.assertComplete();
 	}
 
 	//TODO was these 2 tests supposed to trigger sync fusion and go through poll() ?
@@ -562,12 +591,12 @@ public class FluxPeekFuseableTest {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .doOnComplete(() -> onComplete.set(true))
-		    .subscribe(ts);
+				.doOnComplete(() -> onComplete.set(true))
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(1, 2)
-		  .assertComplete();
+				.assertValues(1, 2)
+				.assertComplete();
 
 		Assert.assertTrue("onComplete not called back", onComplete.get());
 	}
@@ -579,12 +608,12 @@ public class FluxPeekFuseableTest {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.range(1, 2)
-		    .doAfterTerminate(() -> onTerminate.set(true))
-		    .subscribe(ts);
+				.doAfterTerminate(() -> onTerminate.set(true))
+				.subscribe(ts);
 
 		ts.assertNoError()
-		  .assertValues(1, 2)
-		  .assertComplete();
+				.assertValues(1, 2)
+				.assertComplete();
 
 		Assert.assertTrue("onComplete not called back", onTerminate.get());
 	}
@@ -593,11 +622,11 @@ public class FluxPeekFuseableTest {
 	public void syncPollCompleteCalled() {
 		AtomicBoolean onComplete = new AtomicBoolean();
 		Flux<Integer> f = Flux.just(1)
-		                      .doOnComplete(() -> onComplete.set(true));
+				.doOnComplete(() -> onComplete.set(true));
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectFusion()
+				.expectNext(1)
+				.verifyComplete();
 
 		assertThat(onComplete.get()).withFailMessage("onComplete not called back").isTrue();
 	}
@@ -606,12 +635,12 @@ public class FluxPeekFuseableTest {
 	public void syncPollConditionalCompleteCalled() {
 		AtomicBoolean onComplete = new AtomicBoolean();
 		Flux<Integer> f = Flux.just(1)
-		                      .doOnComplete(() -> onComplete.set(true))
-		                      .filter(v -> true);
+				.doOnComplete(() -> onComplete.set(true))
+				.filter(v -> true);
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectFusion()
+				.expectNext(1)
+				.verifyComplete();
 
 		assertThat(onComplete.get()).withFailMessage("onComplete not called back").isTrue();
 	}
@@ -620,11 +649,11 @@ public class FluxPeekFuseableTest {
 	public void syncPollAfterTerminateCalledWhenComplete() {
 		AtomicBoolean onAfterTerminate = new AtomicBoolean();
 		Flux<Integer> f = Flux.just(1)
-		                      .doAfterTerminate(() -> onAfterTerminate.set(true));
+				.doAfterTerminate(() -> onAfterTerminate.set(true));
 		StepVerifier.create(f)
-		            .expectFusion()
-                    .expectNext(1)
-		            .verifyComplete();
+				.expectFusion()
+				.expectNext(1)
+				.verifyComplete();
 
 		assertThat(onAfterTerminate.get()).withFailMessage("onAfterTerminate not called back").isTrue();
 	}
@@ -633,12 +662,12 @@ public class FluxPeekFuseableTest {
 	public void syncPollConditionalAfterTerminateCalledWhenComplete() {
 		AtomicBoolean onAfterTerminate = new AtomicBoolean();
 		Flux<Integer> f = Flux.just(1)
-		                      .doAfterTerminate(() -> onAfterTerminate.set(true))
-		                      .filter(v -> true);
+				.doAfterTerminate(() -> onAfterTerminate.set(true))
+				.filter(v -> true);
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(1)
-		            .verifyComplete();
+				.expectFusion()
+				.expectNext(1)
+				.verifyComplete();
 
 		assertThat(onAfterTerminate.get()).withFailMessage("onAfterTerminate not called back").isTrue();
 	}
@@ -647,12 +676,12 @@ public class FluxPeekFuseableTest {
 	public void syncPollAfterTerminateCalledWhenError() {
 		AtomicBoolean onAfterTerminate = new AtomicBoolean();
 		Flux<Integer> f = Flux.just(1, 0, 3)
-		                      .map(i -> 100 / i)
-		                      .doAfterTerminate(() -> onAfterTerminate.set(true));
+				.map(i -> 100 / i)
+				.doAfterTerminate(() -> onAfterTerminate.set(true));
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(100)
-		            .verifyError(ArithmeticException.class);
+				.expectFusion()
+				.expectNext(100)
+				.verifyError(ArithmeticException.class);
 
 		assertThat(onAfterTerminate.get()).withFailMessage("onAfterTerminate not called back").isTrue();
 	}
@@ -661,13 +690,13 @@ public class FluxPeekFuseableTest {
 	public void syncPollConditionalAfterTerminateCalledWhenError() {
 		AtomicBoolean onAfterTerminate = new AtomicBoolean();
 		Flux<Integer> f = Flux.just(1, 0, 3)
-		                      .map(i -> 100 / i)
-		                      .doAfterTerminate(() -> onAfterTerminate.set(true))
-		                      .filter(v -> true);
+				.map(i -> 100 / i)
+				.doAfterTerminate(() -> onAfterTerminate.set(true))
+				.filter(v -> true);
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(100)
-		            .verifyError(ArithmeticException.class);
+				.expectFusion()
+				.expectNext(100)
+				.verifyError(ArithmeticException.class);
 
 		assertThat(onAfterTerminate.get()).withFailMessage("onAfterTerminate not called back").isTrue();
 	}
@@ -675,80 +704,84 @@ public class FluxPeekFuseableTest {
 	@Test
 	public void syncPollAfterTerminateFailureWhenError() {
 		Flux<Integer> f = Flux.just(1, 0, 3)
-		                      .map(i -> 100 / i)
-		                      .doAfterTerminate(() -> { throw new IllegalStateException("doAfterTerminate boom"); });
+				.map(i -> 100 / i)
+				.doAfterTerminate(() -> {
+					throw new IllegalStateException("doAfterTerminate boom");
+				});
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(100)
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("doAfterTerminate boom")
-				            .hasSuppressedException(new ArithmeticException("/ by zero"))
-		            );
+				.expectFusion()
+				.expectNext(100)
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("doAfterTerminate boom")
+						.hasSuppressedException(new ArithmeticException("/ by zero"))
+				);
 	}
 
 	@Test
 	public void syncPollConditionalAfterTerminateFailureWhenError() {
 		Flux<Integer> f = Flux.just(1, 0, 3)
-		                      .map(i -> 100 / i)
-		                      .doAfterTerminate(() -> { throw new IllegalStateException("doAfterTerminate boom"); })
-		                      .filter(v -> true);
+				.map(i -> 100 / i)
+				.doAfterTerminate(() -> {
+					throw new IllegalStateException("doAfterTerminate boom");
+				})
+				.filter(v -> true);
 		StepVerifier.create(f)
-		            .expectFusion()
-		            .expectNext(100)
-		            .verifyErrorSatisfies(e -> assertThat(e)
-				            .isInstanceOf(IllegalStateException.class)
-				            .hasMessage("doAfterTerminate boom")
-				            .hasSuppressedException(new ArithmeticException("/ by zero"))
-		            );
+				.expectFusion()
+				.expectNext(100)
+				.verifyErrorSatisfies(e -> assertThat(e)
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessage("doAfterTerminate boom")
+						.hasSuppressedException(new ArithmeticException("/ by zero"))
+				);
 	}
 
 	@Test
 	public void fusedDoOnNextOnErrorBothFailing() {
 		ConnectableFlux<Integer> f = Flux.just(1)
-		                                 .doOnNext(i -> {
-			                                 throw new IllegalArgumentException("fromOnNext");
-		                                 })
-		                                 .doOnError(e -> {
-			                                 throw new IllegalStateException("fromOnError", e);
-		                                 })
-		                                 .publish();
+				.doOnNext(i -> {
+					throw new IllegalArgumentException("fromOnNext");
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException("fromOnError", e);
+				})
+				.publish();
 
 		StepVerifier.create(f)
-		            .then(f::connect)
-		            .verifyErrorMatches(e -> e instanceof IllegalStateException
-				            && "fromOnError".equals(e.getMessage())
-				            && e.getCause() instanceof IllegalArgumentException
-				            && "fromOnNext".equals(e.getCause().getMessage()));
+				.then(f::connect)
+				.verifyErrorMatches(e -> e instanceof IllegalStateException
+						&& "fromOnError".equals(e.getMessage())
+						&& e.getCause() instanceof IllegalArgumentException
+						&& "fromOnNext".equals(e.getCause().getMessage()));
 	}
 
 	@Test
 	public void fusedDoOnNextOnErrorDoOnErrorAllFailing() {
 		ConnectableFlux<Integer> f = Flux.just(1)
-		                                 .doOnNext(i -> {
-			                                 throw new IllegalArgumentException("fromOnNext");
-		                                 })
-		                                 .doOnError(e -> {
-			                                 throw new IllegalStateException("fromOnError", e);
-		                                 })
-		                                 .doOnError(e -> {
-			                                 throw new IllegalStateException("fromOnError2", e);
-		                                 })
-		                                 .publish();
+				.doOnNext(i -> {
+					throw new IllegalArgumentException("fromOnNext");
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException("fromOnError", e);
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException("fromOnError2", e);
+				})
+				.publish();
 
 		StepVerifier.create(f)
-		            .then(f::connect)
-		            .verifyErrorSatisfies(e -> {
-					            assertThat(e)
-					                      .isInstanceOf(IllegalStateException.class)
-					                      .hasMessage("fromOnError2")
-					                      .hasCauseInstanceOf(IllegalStateException.class);
-					            assertThat(e.getCause())
-					                      .hasMessage("fromOnError")
-					                      .hasCauseInstanceOf(IllegalArgumentException.class);
-					            assertThat(e.getCause().getCause())
-					                      .hasMessage("fromOnNext");
-				            });
+				.then(f::connect)
+				.verifyErrorSatisfies(e -> {
+					assertThat(e)
+							.isInstanceOf(IllegalStateException.class)
+							.hasMessage("fromOnError2")
+							.hasCauseInstanceOf(IllegalStateException.class);
+					assertThat(e.getCause())
+							.hasMessage("fromOnError")
+							.hasCauseInstanceOf(IllegalArgumentException.class);
+					assertThat(e.getCause().getCause())
+							.hasMessage("fromOnNext");
+				});
 	}
 
 	@Test
@@ -756,16 +789,16 @@ public class FluxPeekFuseableTest {
 		AtomicBoolean passedOnError = new AtomicBoolean();
 
 		ConnectableFlux<Integer> f = Flux.just(1)
-		                                 .doOnNext(i -> {
-			                                 throw new IllegalArgumentException("fromOnNext");
-		                                 })
-		                                 .doOnError(e -> passedOnError.set(true))
-		                                 .publish();
+				.doOnNext(i -> {
+					throw new IllegalArgumentException("fromOnNext");
+				})
+				.doOnError(e -> passedOnError.set(true))
+				.publish();
 
 		StepVerifier.create(f)
-		            .then(f::connect)
-		            .verifyErrorMatches(e -> e instanceof IllegalArgumentException
-				            && "fromOnNext".equals(e.getMessage()));
+				.then(f::connect)
+				.verifyErrorMatches(e -> e instanceof IllegalArgumentException
+						&& "fromOnNext".equals(e.getMessage()));
 
 		assertThat(passedOnError.get()).isTrue();
 	}
@@ -773,51 +806,51 @@ public class FluxPeekFuseableTest {
 	@Test
 	public void conditionalFusedDoOnNextOnErrorBothFailing() {
 		ConnectableFlux<Integer> f = Flux.just(1)
-		                                 .doOnNext(i -> {
-			                                 throw new IllegalArgumentException("fromOnNext");
-		                                 })
-		                                 .doOnError(e -> {
-			                                 throw new IllegalStateException("fromOnError", e);
-		                                 })
-		                                 .filter(v -> true)
-		                                 .publish();
+				.doOnNext(i -> {
+					throw new IllegalArgumentException("fromOnNext");
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException("fromOnError", e);
+				})
+				.filter(v -> true)
+				.publish();
 
 		StepVerifier.create(f)
-		            .then(f::connect)
-		            .verifyErrorMatches(e -> e instanceof IllegalStateException
-				            && "fromOnError".equals(e.getMessage())
-				            && e.getCause() instanceof IllegalArgumentException
-				            && "fromOnNext".equals(e.getCause().getMessage()));
+				.then(f::connect)
+				.verifyErrorMatches(e -> e instanceof IllegalStateException
+						&& "fromOnError".equals(e.getMessage())
+						&& e.getCause() instanceof IllegalArgumentException
+						&& "fromOnNext".equals(e.getCause().getMessage()));
 	}
 
 	@Test
 	public void conditionalFusedDoOnNextOnErrorDoOnErrorAllFailing() {
 		ConnectableFlux<Integer> f = Flux.just(1)
-		                                 .doOnNext(i -> {
-			                                 throw new IllegalArgumentException("fromOnNext");
-		                                 })
-		                                 .doOnError(e -> {
-			                                 throw new IllegalStateException("fromOnError", e);
-		                                 })
-		                                 .doOnError(e -> {
-			                                 throw new IllegalStateException("fromOnError2", e);
-		                                 })
-		                                 .filter(v -> true)
-		                                 .publish();
+				.doOnNext(i -> {
+					throw new IllegalArgumentException("fromOnNext");
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException("fromOnError", e);
+				})
+				.doOnError(e -> {
+					throw new IllegalStateException("fromOnError2", e);
+				})
+				.filter(v -> true)
+				.publish();
 
 		StepVerifier.create(f)
-		            .then(f::connect)
-		            .verifyErrorSatisfies(e -> {
-					            assertThat(e)
-					                      .isInstanceOf(IllegalStateException.class)
-					                      .hasMessage("fromOnError2")
-					                      .hasCauseInstanceOf(IllegalStateException.class);
-					            assertThat(e.getCause())
-					                      .hasMessage("fromOnError")
-					                      .hasCauseInstanceOf(IllegalArgumentException.class);
-					            assertThat(e.getCause().getCause())
-					                      .hasMessage("fromOnNext");
-				            });
+				.then(f::connect)
+				.verifyErrorSatisfies(e -> {
+					assertThat(e)
+							.isInstanceOf(IllegalStateException.class)
+							.hasMessage("fromOnError2")
+							.hasCauseInstanceOf(IllegalStateException.class);
+					assertThat(e.getCause())
+							.hasMessage("fromOnError")
+							.hasCauseInstanceOf(IllegalArgumentException.class);
+					assertThat(e.getCause().getCause())
+							.hasMessage("fromOnNext");
+				});
 	}
 
 	@Test
@@ -825,17 +858,17 @@ public class FluxPeekFuseableTest {
 		AtomicBoolean passedOnError = new AtomicBoolean();
 
 		ConnectableFlux<Integer> f = Flux.just(1)
-		                                 .doOnNext(i -> {
-			                                 throw new IllegalArgumentException("fromOnNext");
-		                                 })
-		                                 .doOnError(e -> passedOnError.set(true))
-		                                 .filter(v -> true)
-		                                 .publish();
+				.doOnNext(i -> {
+					throw new IllegalArgumentException("fromOnNext");
+				})
+				.doOnError(e -> passedOnError.set(true))
+				.filter(v -> true)
+				.publish();
 
 		StepVerifier.create(f)
-		            .then(f::connect)
-		            .verifyErrorMatches(e -> e instanceof IllegalArgumentException
-				            && "fromOnNext".equals(e.getMessage()));
+				.then(f::connect)
+				.verifyErrorMatches(e -> e instanceof IllegalArgumentException
+						&& "fromOnNext".equals(e.getMessage()));
 
 		assertThat(passedOnError.get()).isTrue();
 	}
@@ -847,16 +880,16 @@ public class FluxPeekFuseableTest {
 			List<Integer> rs = Collections.synchronizedList(new ArrayList<>());
 			AtomicInteger count = new AtomicInteger();
 			Flux.range(0, 10)
-			    .flatMap(x -> Flux.range(0, 2)
-			                      .doOnNext(rs::add)
-			                      .map(y -> blockingOp(x, y))
-			                      .subscribeOn(Schedulers.parallel())
-			                      .reduce((l, r) -> l + "_" + r +" ("+x+", it:"+n+")")
-			    )
-			    .doOnNext(s -> {
-				    count.incrementAndGet();
-			    })
-			    .blockLast();
+					.flatMap(x -> Flux.range(0, 2)
+							.doOnNext(rs::add)
+							.map(y -> blockingOp(x, y))
+							.subscribeOn(Schedulers.parallel())
+							.reduce((l, r) -> l + "_" + r + " (" + x + ", it:" + n + ")")
+					)
+					.doOnNext(s -> {
+						count.incrementAndGet();
+					})
+					.blockLast();
 
 			assertEquals(10, count.get());
 		}
@@ -867,66 +900,178 @@ public class FluxPeekFuseableTest {
 		for (int i = 0; i < 20; i++) {
 			AtomicInteger count = new AtomicInteger();
 			Flux.range(0, 10)
-			    .flatMap(x -> Flux.range(0, 2)
-			                      .map(y -> blockingOp(x, y))
-			                      .subscribeOn(Schedulers.parallel())
-			                      .reduce((l, r) -> l + "_" + r)
-			                      .doOnSuccess(s -> {
-				                      count.incrementAndGet();
-			                      })
-			                      .filter(v -> true))
-			    .blockLast();
+					.flatMap(x -> Flux.range(0, 2)
+							.map(y -> blockingOp(x, y))
+							.subscribeOn(Schedulers.parallel())
+							.reduce((l, r) -> l + "_" + r)
+							.doOnSuccess(s -> {
+								count.incrementAndGet();
+							})
+							.filter(v -> true))
+					.blockLast();
 
 			assertEquals(10, count.get());
 		}
 	}
 
-	static String blockingOp(Integer x, Integer y) {
-		try {
-			sleep(10);
-		}
-		catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return "x" + x + "y" + y;
+	@Test
+	public void scanFuseableSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxPeek<Integer> peek = new FluxPeek<>(Flux.just(1), s -> {
+		}, s -> {
+		},
+				e -> {
+				}, () -> {
+		}, () -> {
+		}, r -> {
+		}, () -> {
+		});
+		PeekFuseableSubscriber<Integer> test = new PeekFuseableSubscriber<>(actual, peek);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
+
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
 	}
 
+	@Test
+	public void scanFuseableConditionalSubscriber() {
+		@SuppressWarnings("unchecked")
+		Fuseable.ConditionalSubscriber<Integer> actual = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
+		FluxPeek<Integer> peek = new FluxPeek<>(Flux.just(1), s -> {
+		}, s -> {
+		},
+				e -> {
+				}, () -> {
+		}, () -> {
+		}, r -> {
+		}, () -> {
+		});
+		PeekFuseableConditionalSubscriber<Integer> test =
+				new PeekFuseableConditionalSubscriber<>(actual, peek);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
+
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		test.onError(new IllegalStateException("boom"));
+		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+	}
 
 	@Test
-    public void scanFuseableSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxPeek<Integer> peek = new FluxPeek<>(Flux.just(1), s -> {}, s -> {},
-        		e -> {}, () -> {}, () -> {}, r -> {}, () -> {});
-        PeekFuseableSubscriber<Integer> test = new PeekFuseableSubscriber<>(actual, peek);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void resumeConditional() {
+		RuntimeException nextError = new IllegalStateException("next");
+		List<Throwable> resumedErrors = new ArrayList<>();
+		List<Object> resumedValues = new ArrayList<>();
+		Context context = Context.of(OnNextFailureStrategy.KEY_ON_NEXT_ERROR_STRATEGY,
+				OnNextFailureStrategy.resume((t, s) -> {
+					resumedErrors.add(t);
+					resumedValues.add(s);
+				}));
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		ConditionalAssertSubscriber<Integer> actual = new ConditionalAssertSubscriber<>(context);
+		SignalPeekThrowNext<Integer> peekParent = new SignalPeekThrowNext<>(nextError);
+		AssertQueueSubscription<Integer> qs = new AssertQueueSubscription<>();
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		PeekConditionalSubscriber<Integer> test = new PeekConditionalSubscriber<>(actual, peekParent);
+		test.onSubscribe(qs);
 
-    @Test
-    public void scanFuseableConditionalSubscriber() {
-	    @SuppressWarnings("unchecked")
-	    Fuseable.ConditionalSubscriber<Integer> actual = Mockito.mock(MockUtils.TestScannableConditionalSubscriber.class);
-        FluxPeek<Integer> peek = new FluxPeek<>(Flux.just(1), s -> {}, s -> {},
-        		e -> {}, () -> {}, () -> {}, r -> {}, () -> {});
-        PeekFuseableConditionalSubscriber<Integer> test =
-        		new PeekFuseableConditionalSubscriber<>(actual, peek);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+		test.onNext(1);
+		assertThat(actual.next).as("onNext skips").isEmpty();
+		assertThat(qs.requested).as("onNext requested more").isEqualTo(1);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		boolean tryOnNext = test.tryOnNext(2);
+		assertThat(tryOnNext).as("tryOnNext skips").isFalse();
 
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-        test.onError(new IllegalStateException("boom"));
-        assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-    }
+		test.onComplete();
+
+		assertThat(actual.error).isNull();
+		assertThat(actual.completed).isTrue();
+
+		assertThat(resumedErrors).containsExactly(nextError, nextError);
+		assertThat(resumedValues).containsExactly(1, 2);
+	}
+
+	@Test
+	public void resumeFuseable() {
+		RuntimeException nextError = new IllegalStateException("next");
+		List<Throwable> resumedErrors = new ArrayList<>();
+		List<Object> resumedValues = new ArrayList<>();
+		Context context = Context.of(OnNextFailureStrategy.KEY_ON_NEXT_ERROR_STRATEGY,
+				OnNextFailureStrategy.resume((t, s) -> {
+					resumedErrors.add(t);
+					resumedValues.add(s);
+				}));
+
+		AssertSubscriber<Integer> actual = new AssertSubscriber<>(context, 0);
+		SignalPeekThrowNext<Integer> peekParent = new SignalPeekThrowNext<>(nextError);
+		AssertQueueSubscription<Integer> qs = new AssertQueueSubscription<>();
+
+		PeekFuseableSubscriber<Integer> test = new PeekFuseableSubscriber<>(actual, peekParent);
+		test.onSubscribe(qs);
+
+		test.onNext(1);
+		actual.assertNoValues();
+		assertThat(qs.requested).as("onNext requested more").isEqualTo(1);
+
+		qs.offer(3);
+		Integer polled = test.poll();
+		assertThat(polled).as("poll skips").isNull();
+
+		test.onComplete();
+
+		actual.assertNoValues();
+		actual.assertNoError();
+		actual.assertComplete();
+
+		assertThat(resumedErrors).containsExactly(nextError, nextError);
+		assertThat(resumedValues).containsExactly(1, 3);
+	}
+
+	@Test
+	public void resumeFuseableConditional() {
+		RuntimeException nextError = new IllegalStateException("next");
+		List<Throwable> resumedErrors = new ArrayList<>();
+		List<Object> resumedValues = new ArrayList<>();
+		Context context = Context.of(OnNextFailureStrategy.KEY_ON_NEXT_ERROR_STRATEGY,
+				OnNextFailureStrategy.resume((t, s) -> {
+					resumedErrors.add(t);
+					resumedValues.add(s);
+				}));
+
+		ConditionalAssertSubscriber<Integer> actual = new ConditionalAssertSubscriber<>(context);
+		SignalPeekThrowNext<Integer> peekParent = new SignalPeekThrowNext<>(nextError);
+		AssertQueueSubscription<Integer> qs = new AssertQueueSubscription<>();
+
+		PeekFuseableConditionalSubscriber<Integer> test = new PeekFuseableConditionalSubscriber<>(actual, peekParent);
+		test.onSubscribe(qs);
+
+		test.onNext(1);
+		assertThat(actual.next).as("onNext skips").isEmpty();
+		assertThat(qs.requested).as("onNext requested more").isEqualTo(1);
+
+		boolean tryOnNext = test.tryOnNext(2);
+		assertThat(tryOnNext).as("tryOnNext skips").isFalse();
+
+		qs.offer(3);
+		Integer polled = test.poll();
+		assertThat(polled).as("poll skips").isNull();
+
+		test.onComplete();
+
+		assertThat(actual.error).isNull();
+		assertThat(actual.completed).isTrue();
+
+		assertThat(resumedErrors).containsExactly(nextError, nextError, nextError);
+		assertThat(resumedValues).containsExactly(1, 2, 3);
+	}
 
 	static final class SignalPeekThrowNext<T> implements SignalPeek<T> {
 
@@ -938,7 +1083,9 @@ public class FluxPeekFuseableTest {
 
 		@Override
 		public Consumer<? super T> onNextCall() {
-			return t -> { throw exception; };
+			return t -> {
+				throw exception;
+			};
 		}
 
 		@Nullable
@@ -986,12 +1133,11 @@ public class FluxPeekFuseableTest {
 
 	static class ConditionalAssertSubscriber<T> implements Fuseable.ConditionalSubscriber<T> {
 
+		private final Context context;
 		List<T> next = new ArrayList<>();
 		boolean subscribed;
 		Throwable error;
 		boolean completed;
-
-		private final Context context;
 
 		ConditionalAssertSubscriber(Context context) {
 			this.context = context;
@@ -1108,113 +1254,5 @@ public class FluxPeekFuseableTest {
 		public void cancel() {
 			isCancelled = true;
 		}
-	}
-
-	@Test
-	public void resumeConditional() {
-		RuntimeException nextError = new IllegalStateException("next");
-		List<Throwable> resumedErrors = new ArrayList<>();
-		List<Object> resumedValues = new ArrayList<>();
-		Context context = Context.of(OnNextFailureStrategy.KEY_ON_NEXT_ERROR_STRATEGY,
-				OnNextFailureStrategy.resume((t, s) -> {
-					resumedErrors.add(t);
-					resumedValues.add(s);
-				}));
-
-		ConditionalAssertSubscriber<Integer> actual = new ConditionalAssertSubscriber<>(context);
-		SignalPeekThrowNext<Integer> peekParent = new SignalPeekThrowNext<>(nextError);
-		AssertQueueSubscription<Integer> qs = new AssertQueueSubscription<>();
-
-		PeekConditionalSubscriber<Integer> test = new PeekConditionalSubscriber<>(actual, peekParent);
-		test.onSubscribe(qs);
-
-		test.onNext(1);
-		assertThat(actual.next).as("onNext skips").isEmpty();
-		assertThat(qs.requested).as("onNext requested more").isEqualTo(1);
-
-		boolean tryOnNext = test.tryOnNext(2);
-		assertThat(tryOnNext).as("tryOnNext skips").isFalse();
-
-		test.onComplete();
-
-		assertThat(actual.error).isNull();
-		assertThat(actual.completed).isTrue();
-
-		assertThat(resumedErrors).containsExactly(nextError, nextError);
-		assertThat(resumedValues).containsExactly(1, 2);
-	}
-
-	@Test
-	public void resumeFuseable() {
-		RuntimeException nextError = new IllegalStateException("next");
-		List<Throwable> resumedErrors = new ArrayList<>();
-		List<Object> resumedValues = new ArrayList<>();
-		Context context = Context.of(OnNextFailureStrategy.KEY_ON_NEXT_ERROR_STRATEGY,
-									 OnNextFailureStrategy.resume((t, s) -> {
-										 resumedErrors.add(t);
-										 resumedValues.add(s);
-									 }));
-
-		AssertSubscriber<Integer> actual = new AssertSubscriber<>(context, 0);
-		SignalPeekThrowNext<Integer> peekParent = new SignalPeekThrowNext<>(nextError);
-		AssertQueueSubscription<Integer> qs = new AssertQueueSubscription<>();
-
-		PeekFuseableSubscriber<Integer> test = new PeekFuseableSubscriber<>(actual, peekParent);
-		test.onSubscribe(qs);
-
-		test.onNext(1);
-		actual.assertNoValues();
-		assertThat(qs.requested).as("onNext requested more").isEqualTo(1);
-
-		qs.offer(3);
-		Integer polled = test.poll();
-		assertThat(polled).as("poll skips").isNull();
-
-		test.onComplete();
-
-		actual.assertNoValues();
-		actual.assertNoError();
-		actual.assertComplete();
-
-		assertThat(resumedErrors).containsExactly(nextError, nextError);
-		assertThat(resumedValues).containsExactly(1, 3);
-	}
-
-	@Test
-	public void resumeFuseableConditional() {
-		RuntimeException nextError = new IllegalStateException("next");
-		List<Throwable> resumedErrors = new ArrayList<>();
-		List<Object> resumedValues = new ArrayList<>();
-		Context context = Context.of(OnNextFailureStrategy.KEY_ON_NEXT_ERROR_STRATEGY,
-									 OnNextFailureStrategy.resume((t, s) -> {
-										 resumedErrors.add(t);
-										 resumedValues.add(s);
-									 }));
-
-		ConditionalAssertSubscriber<Integer> actual = new ConditionalAssertSubscriber<>(context);
-		SignalPeekThrowNext<Integer> peekParent = new SignalPeekThrowNext<>(nextError);
-		AssertQueueSubscription<Integer> qs = new AssertQueueSubscription<>();
-
-		PeekFuseableConditionalSubscriber<Integer> test = new PeekFuseableConditionalSubscriber<>(actual, peekParent);
-		test.onSubscribe(qs);
-
-		test.onNext(1);
-		assertThat(actual.next).as("onNext skips").isEmpty();
-		assertThat(qs.requested).as("onNext requested more").isEqualTo(1);
-
-		boolean tryOnNext = test.tryOnNext(2);
-		assertThat(tryOnNext).as("tryOnNext skips").isFalse();
-
-		qs.offer(3);
-		Integer polled = test.poll();
-		assertThat(polled).as("poll skips").isNull();
-
-		test.onComplete();
-
-		assertThat(actual.error).isNull();
-		assertThat(actual.completed).isTrue();
-
-		assertThat(resumedErrors).containsExactly(nextError, nextError, nextError);
-		assertThat(resumedValues).containsExactly(1, 2, 3);
 	}
 }

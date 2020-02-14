@@ -31,9 +31,9 @@ import reactor.util.annotation.Nullable;
 final class ParallelMap<T, R> extends ParallelFlux<R> implements Scannable {
 
 	final ParallelFlux<T> source;
-	
+
 	final Function<? super T, ? extends R> mapper;
-	
+
 	ParallelMap(ParallelFlux<T> source, Function<? super T, ? extends R> mapper) {
 		this.source = source;
 		this.mapper = mapper;
@@ -54,7 +54,7 @@ final class ParallelMap<T, R> extends ParallelFlux<R> implements Scannable {
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
 		CoreSubscriber<? super T>[] parents = new CoreSubscriber[n];
 
@@ -70,7 +70,7 @@ final class ParallelMap<T, R> extends ParallelFlux<R> implements Scannable {
 				parents[i] = new FluxMap.MapSubscriber<>(subscribers[i], mapper);
 			}
 		}
-		
+
 		source.subscribe(parents);
 	}
 

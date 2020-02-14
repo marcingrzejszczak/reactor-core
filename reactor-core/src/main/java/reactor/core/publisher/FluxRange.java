@@ -55,12 +55,12 @@ final class FluxRange extends Flux<Integer>
 		if (st == en) {
 			Operators.complete(actual);
 			return;
-		} else
-		if (st + 1 == en) {
-			actual.onSubscribe(Operators.scalarSubscription(actual, (int)st));
+		}
+		else if (st + 1 == en) {
+			actual.onSubscribe(Operators.scalarSubscription(actual, (int) st));
 			return;
 		}
-		
+
 		if (actual instanceof ConditionalSubscriber) {
 			actual.onSubscribe(new RangeSubscriptionConditional((ConditionalSubscriber<? super Integer>) actual, st, en));
 			return;
@@ -74,19 +74,15 @@ final class FluxRange extends Flux<Integer>
 	}
 
 	static final class RangeSubscription implements InnerProducer<Integer>,
-	                                                SynchronousSubscription<Integer> {
+			SynchronousSubscription<Integer> {
 
-		final CoreSubscriber<? super Integer> actual;
-
-		final long end;
-
-		volatile boolean cancelled;
-
-		long index;
-
-		volatile long requested;
 		static final AtomicLongFieldUpdater<RangeSubscription> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(RangeSubscription.class, "requested");
+				AtomicLongFieldUpdater.newUpdater(RangeSubscription.class, "requested");
+		final CoreSubscriber<? super Integer> actual;
+		final long end;
+		volatile boolean cancelled;
+		long index;
+		volatile long requested;
 
 		RangeSubscription(CoreSubscriber<? super Integer> actual, long start, long end) {
 			this.actual = actual;
@@ -105,7 +101,8 @@ final class FluxRange extends Flux<Integer>
 				if (Operators.addCap(REQUESTED, this, n) == 0) {
 					if (n == Long.MAX_VALUE) {
 						fastPath();
-					} else {
+					}
+					else {
 						slowPath(n);
 					}
 				}
@@ -200,7 +197,7 @@ final class FluxRange extends Flux<Integer>
 				return null;
 			}
 			index = i + 1;
-			return (int)i;
+			return (int) i;
 		}
 
 		@Override
@@ -212,28 +209,24 @@ final class FluxRange extends Flux<Integer>
 		public void clear() {
 			index = end;
 		}
-		
+
 		@Override
 		public int size() {
-			return (int)(end - index);
+			return (int) (end - index);
 		}
 	}
-	
+
 	static final class RangeSubscriptionConditional
 			implements InnerProducer<Integer>,
-			           SynchronousSubscription<Integer> {
+			SynchronousSubscription<Integer> {
 
-		final ConditionalSubscriber<? super Integer> actual;
-
-		final long end;
-
-		volatile boolean cancelled;
-
-		long index;
-
-		volatile long requested;
 		static final AtomicLongFieldUpdater<RangeSubscriptionConditional> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(RangeSubscriptionConditional.class, "requested");
+		final ConditionalSubscriber<? super Integer> actual;
+		final long end;
+		volatile boolean cancelled;
+		long index;
+		volatile long requested;
 
 		RangeSubscriptionConditional(ConditionalSubscriber<? super Integer> actual,
 				long start,
@@ -254,7 +247,8 @@ final class FluxRange extends Flux<Integer>
 				if (Operators.addCap(REQUESTED, this, n) == 0) {
 					if (n == Long.MAX_VALUE) {
 						fastPath();
-					} else {
+					}
+					else {
 						slowPath(n);
 					}
 				}
@@ -350,7 +344,7 @@ final class FluxRange extends Flux<Integer>
 				return null;
 			}
 			index = i + 1;
-			return (int)i;
+			return (int) i;
 		}
 
 		@Override
@@ -365,7 +359,7 @@ final class FluxRange extends Flux<Integer>
 
 		@Override
 		public int size() {
-			return (int)(end - index);
+			return (int) (end - index);
 		}
 	}
 }

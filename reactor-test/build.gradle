@@ -21,60 +21,60 @@ apply plugin: 'kotlin'
 description = 'Reactor Test support'
 
 dependencies {
-  compile project(":reactor-core")
+	compile project(":reactor-core")
 
-  testCompile "junit:junit:$jUnitVersion"
+	testCompile "junit:junit:$jUnitVersion"
 
-  testRuntime "ch.qos.logback:logback-classic:$logbackVersion"
+	testRuntime "ch.qos.logback:logback-classic:$logbackVersion"
 
-  testCompile "org.assertj:assertj-core:$assertJVersion",
-          "org.mockito:mockito-core:$mockitoVersion"
+	testCompile "org.assertj:assertj-core:$assertJVersion",
+			"org.mockito:mockito-core:$mockitoVersion"
 }
 
 task downloadBaseline {
-  if (project.gradle.startParameter.isOffline()) {
-    println "Offline: skipping downloading of baseline and JAPICMP"
-  }
-  else if ("$compatibleVersion" == "SKIP") {
-    println "SKIP: Instructed to skip the baseline comparison"
-  }
-  else {
-    println "Will download and perform baseline comparison with ${compatibleVersion}"
-    finalizedBy { doDownloadBaseline }
-  }
+	if (project.gradle.startParameter.isOffline()) {
+		println "Offline: skipping downloading of baseline and JAPICMP"
+	}
+	else if ("$compatibleVersion" == "SKIP") {
+		println "SKIP: Instructed to skip the baseline comparison"
+	}
+	else {
+		println "Will download and perform baseline comparison with ${compatibleVersion}"
+		finalizedBy { doDownloadBaseline }
+	}
 }
 
 task doDownloadBaseline(type: Download) {
-  onlyIfNewer true
-  compress true
+	onlyIfNewer true
+	compress true
 
-  src "${repositories.jcenter().url}io/projectreactor/reactor-test/$compatibleVersion/reactor-test-${compatibleVersion}.jar"
-  dest "${buildDir}/baselineLibs/reactor-test-${compatibleVersion}.jar"
+	src "${repositories.jcenter().url}io/projectreactor/reactor-test/$compatibleVersion/reactor-test-${compatibleVersion}.jar"
+	dest "${buildDir}/baselineLibs/reactor-test-${compatibleVersion}.jar"
 
-  finalizedBy { japicmp }
+	finalizedBy { japicmp }
 }
 
 task japicmp(type: JapicmpTask) {
-  oldClasspath = files("${buildDir}/baselineLibs/reactor-test-${compatibleVersion}.jar")
-  newClasspath = files(jar.archivePath)
-  onlyBinaryIncompatibleModified = true
-  failOnModification = true
-  failOnSourceIncompatibility = true
-  txtOutputFile = file("${project.buildDir}/reports/japi.txt")
-  ignoreMissingClasses = true
-  includeSynthetic = true
+	oldClasspath = files("${buildDir}/baselineLibs/reactor-test-${compatibleVersion}.jar")
+	newClasspath = files(jar.archivePath)
+	onlyBinaryIncompatibleModified = true
+	failOnModification = true
+	failOnSourceIncompatibility = true
+	txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+	ignoreMissingClasses = true
+	includeSynthetic = true
 
-  //TODO after a release, remove the reactor-test exclusions below if any
+	//TODO after a release, remove the reactor-test exclusions below if any
 }
 
 //javadoc is configured in gradle/javadoc.gradle
 
 jar {
-  manifest {
-    attributes 'Implementation-Title': 'reactor-test',
-            'Implementation-Version': version,
-            'Automatic-Module-Name': 'reactor.test'
-  }
+	manifest {
+		attributes 'Implementation-Title': 'reactor-test',
+				'Implementation-Version': version,
+				'Automatic-Module-Name': 'reactor.test'
+	}
 }
 
 jar.finalizedBy(downloadBaseline)

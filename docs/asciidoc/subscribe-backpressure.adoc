@@ -43,10 +43,10 @@ Cancelling after having received 1
 ----
 ====
 
-WARNING: When manipulating a request, you must be careful to produce enough demand for
-the sequence to advance, or your Flux can get "`stuck`". That is why `BaseSubscriber`
-defaults to an unbounded request in `hookOnSubscribe`. When overriding this hook, you should usually
-call `request` at least once.
+WARNING: When manipulating a request, you must be careful to produce enough demand for the sequence to advance, or your Flux can get "`stuck`".
+That is why `BaseSubscriber`
+defaults to an unbounded request in `hookOnSubscribe`.
+When overriding this hook, you should usually call `request` at least once.
 
 ==== Operators that Change the Demand from Downstream
 
@@ -74,5 +74,6 @@ The operator has a variant that also lets you tune the replenishing amount (refe
 Choosing a `lowTide` of `0` results in *strict* batches of `highTide` requests, instead of batches further reworked by the replenishing strategy.
 
 `limitRequest(N)`, on the other hand, *caps* the downstream request to a maximum total demand.
-It adds up requests up to `N`. If a single `request` does not make the total demand overflow over `N`, that particular request is wholly propagated upstream.
+It adds up requests up to `N`.
+If a single `request` does not make the total demand overflow over `N`, that particular request is wholly propagated upstream.
 After that amount has been emitted by the source, `limitRequest` considers the sequence complete, sends an `onComplete` signal downstream, and cancels the source.

@@ -41,7 +41,6 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-
 import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
@@ -65,20 +64,20 @@ public class ParallelFluxTest {
 	@Test
 	public void sequentialMode() {
 		Flux<Integer> source = Flux.range(1, 1_000_000)
-		                           .hide();
+				.hide();
 		for (int i = 1; i < 33; i++) {
 			Flux<Integer> result = ParallelFlux.from(source, i)
-			                                   .map(v -> v + 1)
-			                                   .sequential();
+					.map(v -> v + 1)
+					.sequential();
 
 			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 			result.subscribe(ts);
 
 			ts.assertSubscribed()
-			  .assertValueCount(1_000_000)
-			  .assertComplete()
-			  .assertNoError();
+					.assertValueCount(1_000_000)
+					.assertComplete()
+					.assertNoError();
 		}
 
 	}
@@ -88,17 +87,17 @@ public class ParallelFluxTest {
 		Flux<Integer> source = Flux.range(1, 1_000_000);
 		for (int i = 1; i < 33; i++) {
 			Flux<Integer> result = ParallelFlux.from(source, i)
-			                                   .map(v -> v + 1)
-			                                   .sequential();
+					.map(v -> v + 1)
+					.sequential();
 
 			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 			result.subscribe(ts);
 
 			ts.assertSubscribed()
-			  .assertValueCount(1_000_000)
-			  .assertComplete()
-			  .assertNoError();
+					.assertValueCount(1_000_000)
+					.assertComplete()
+					.assertNoError();
 		}
 
 	}
@@ -106,19 +105,19 @@ public class ParallelFluxTest {
 	@Test
 	public void parallelMode() {
 		Flux<Integer> source = Flux.range(1, 1_000_000)
-		                           .hide();
+				.hide();
 		int ncpu = Math.max(8,
 				Runtime.getRuntime()
-				       .availableProcessors());
+						.availableProcessors());
 		for (int i = 1; i < ncpu + 1; i++) {
 
 			Scheduler scheduler = Schedulers.newParallel("test", i);
 
 			try {
 				Flux<Integer> result = ParallelFlux.from(source, i)
-				                                   .runOn(scheduler)
-				                                   .map(v -> v + 1)
-				                                   .sequential();
+						.runOn(scheduler)
+						.map(v -> v + 1)
+						.sequential();
 
 				AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
@@ -127,9 +126,9 @@ public class ParallelFluxTest {
 				ts.await(Duration.ofSeconds(10));
 
 				ts.assertSubscribed()
-				  .assertValueCount(1_000_000)
-				  .assertComplete()
-				  .assertNoError();
+						.assertValueCount(1_000_000)
+						.assertComplete()
+						.assertNoError();
 			}
 			finally {
 				scheduler.dispose();
@@ -143,16 +142,16 @@ public class ParallelFluxTest {
 		Flux<Integer> source = Flux.range(1, 1_000_000);
 		int ncpu = Math.max(8,
 				Runtime.getRuntime()
-				       .availableProcessors());
+						.availableProcessors());
 		for (int i = 1; i < ncpu + 1; i++) {
 
 			Scheduler scheduler = Schedulers.newParallel("test", i);
 
 			try {
 				Flux<Integer> result = ParallelFlux.from(source, i)
-				                                   .runOn(scheduler)
-				                                   .map(v -> v + 1)
-				                                   .sequential();
+						.runOn(scheduler)
+						.map(v -> v + 1)
+						.sequential();
 
 				AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
@@ -161,9 +160,9 @@ public class ParallelFluxTest {
 				ts.await(Duration.ofSeconds(10));
 
 				ts.assertSubscribed()
-				  .assertValueCount(1_000_000)
-				  .assertComplete()
-				  .assertNoError();
+						.assertValueCount(1_000_000)
+						.assertComplete()
+						.assertNoError();
 			}
 			finally {
 				scheduler.dispose();
@@ -177,9 +176,9 @@ public class ParallelFluxTest {
 		AssertSubscriber<List<Integer>> ts = AssertSubscriber.create();
 
 		Flux.just(10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-		    .parallel()
-		    .collectSortedList(Comparator.naturalOrder())
-		    .subscribe(ts);
+				.parallel()
+				.collectSortedList(Comparator.naturalOrder())
+				.subscribe(ts);
 
 		ts.assertValues(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
 	}
@@ -189,9 +188,9 @@ public class ParallelFluxTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(0);
 
 		Flux.just(10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-		    .parallel()
-		    .sorted(Comparator.naturalOrder())
-		    .subscribe(ts);
+				.parallel()
+				.sorted(Comparator.naturalOrder())
+				.subscribe(ts);
 
 		ts.assertNoValues();
 
@@ -213,14 +212,14 @@ public class ParallelFluxTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 10)
-		    .parallel()
-		    .groups()
-		    .flatMap(v -> v)
-		    .subscribe(ts);
+				.parallel()
+				.groups()
+				.flatMap(v -> v)
+				.subscribe(ts);
 
 		ts.assertContainValues(new HashSet<>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)))
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -228,12 +227,12 @@ public class ParallelFluxTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		ParallelFlux.from(Flux.range(1, 5), Flux.range(6, 5))
-		            .sequential()
-		            .subscribe(ts);
+				.sequential()
+				.subscribe(ts);
 
 		ts.assertContainValues(new HashSet<>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)))
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 	}
 
 	@Test
@@ -241,14 +240,14 @@ public class ParallelFluxTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .parallel()
-		    .concatMap(v -> Flux.range(v * 10 + 1, 3))
-		    .sequential()
-		    .subscribe(ts);
+				.parallel()
+				.concatMap(v -> Flux.range(v * 10 + 1, 3))
+				.sequential()
+				.subscribe(ts);
 
 		ts.assertValues(11, 12, 13, 21, 22, 23, 31, 32, 33, 41, 42, 43, 51, 52, 53)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -257,14 +256,14 @@ public class ParallelFluxTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 5)
-		    .parallel()
-		    .flatMap(v -> Flux.range(v * 10 + 1, 3))
-		    .sequential()
-		    .subscribe(ts);
+				.parallel()
+				.flatMap(v -> Flux.range(v * 10 + 1, 3))
+				.sequential()
+				.subscribe(ts);
 
 		ts.assertValues(11, 12, 13, 21, 22, 23, 31, 32, 33, 41, 42, 43, 51, 52, 53)
-		  .assertNoError()
-		  .assertComplete();
+				.assertNoError()
+				.assertComplete();
 
 	}
 
@@ -273,11 +272,11 @@ public class ParallelFluxTest {
 		List<Signal<Integer>> signals = Collections.synchronizedList(new ArrayList<>(4));
 		List<Integer> values = Collections.synchronizedList(new ArrayList<>(2));
 		ParallelFlux<Integer> flux = Flux.just(1, 2)
-		                                 .parallel(3)
-		                                 .doOnEach(signals::add)
-		                                 .doOnEach(s -> {
-			                                 if (s.isOnNext()) values.add(s.get());
-		                                 });
+				.parallel(3)
+				.doOnEach(signals::add)
+				.doOnEach(s -> {
+					if (s.isOnNext()) values.add(s.get());
+				});
 
 		//we use a lambda subscriber and latch to avoid using `sequential`
 		CountDownLatch latch = new CountDownLatch(2);
@@ -295,13 +294,13 @@ public class ParallelFluxTest {
 				.isEqualTo(2);
 		assertTrue("onComplete for rail 1 expected",
 				signals.get(2)
-				       .isOnComplete());
+						.isOnComplete());
 		assertTrue("onComplete for rail 2 expected",
 				signals.get(3)
-				       .isOnComplete());
+						.isOnComplete());
 		assertTrue("onComplete for rail 3 expected",
 				signals.get(4)
-				       .isOnComplete());
+						.isOnComplete());
 		assertThat(values.get(0)).as("1st onNext value unexpected").isEqualTo(1);
 		assertThat(values.get(1)).as("2nd onNext value unexpected").isEqualTo(2);
 	}
@@ -310,8 +309,8 @@ public class ParallelFluxTest {
 	public void testDoOnEachSignalWithError() throws InterruptedException {
 		List<Signal<Integer>> signals = Collections.synchronizedList(new ArrayList<>(4));
 		ParallelFlux<Integer> flux = Flux.<Integer>error(new IllegalArgumentException("boom")).parallel(2)
-		                                                                                      .runOn(Schedulers.parallel())
-		                                                                                      .doOnEach(signals::add);
+				.runOn(Schedulers.parallel())
+				.doOnEach(signals::add);
 
 		//we use a lambda subscriber and latch to avoid using `sequential`
 		CountDownLatch latch = new CountDownLatch(2);
@@ -323,10 +322,10 @@ public class ParallelFluxTest {
 		assertThat(signals).hasSize(2);
 		assertTrue("rail 1 onError expected",
 				signals.get(0)
-				       .isOnError());
+						.isOnError());
 		assertTrue("rail 2 onError expected",
 				signals.get(1)
-				       .isOnError());
+						.isOnError());
 		assertThat(signals.get(0).getThrowable()).as("plain exception rail 1 expected")
 				.hasMessage("boom");
 		assertThat(signals.get(1).getThrowable()).as("plain exception rail 2 expected")
@@ -336,16 +335,16 @@ public class ParallelFluxTest {
 	@Test(expected = NullPointerException.class)
 	public void testDoOnEachSignalNullConsumer() {
 		Flux.just(1)
-		    .parallel()
-		    .doOnEach(null);
+				.parallel()
+				.doOnEach(null);
 	}
 
 	@Test
 	public void testDoOnEachSignalToSubscriber() {
 		AssertSubscriber<Integer> peekSubscriber = AssertSubscriber.create();
 		ParallelFlux<Integer> flux = Flux.just(1, 2)
-		                                 .parallel(3)
-		                                 .doOnEach(s -> s.accept(peekSubscriber));
+				.parallel(3)
+				.doOnEach(s -> s.accept(peekSubscriber));
 
 		flux.subscribe();
 
@@ -353,8 +352,8 @@ public class ParallelFluxTest {
 		peekSubscriber.assertValues(1, 2);
 
 		Assertions.assertThatExceptionOfType(AssertionError.class)
-		          .isThrownBy(peekSubscriber::assertComplete)
-		          .withMessage("Multiple completions: 3");
+				.isThrownBy(peekSubscriber::assertComplete)
+				.withMessage("Multiple completions: 3");
 	}
 
 	@Test
@@ -362,35 +361,35 @@ public class ParallelFluxTest {
 		Set<Integer> values = new ConcurrentSkipListSet<>();
 
 		Flux<Integer> flux = Flux.range(1, 10)
-		                         .parallel(3)
-		                         .runOn(Schedulers.parallel())
-		                         .doOnNext(values::add)
-		                         .transformGroups(p -> p.log("rail" + p.key())
-		                                             .map(i -> (p.key() + 1) * 100 + i))
-		                         .sequential();
+				.parallel(3)
+				.runOn(Schedulers.parallel())
+				.doOnNext(values::add)
+				.transformGroups(p -> p.log("rail" + p.key())
+						.map(i -> (p.key() + 1) * 100 + i))
+				.sequential();
 
 		StepVerifier.create(flux.sort())
-		            .assertNext(i -> assertThat(i - 100)
-		                                       .isBetween(1, 10))
-		            .thenConsumeWhile(i -> i / 100 == 1)
-		            .assertNext(i -> assertThat(i - 200)
-		                                       .isBetween(1, 10))
-		            .thenConsumeWhile(i -> i / 100 == 2)
-		            .assertNext(i -> assertThat(i - 300)
-		                                       .isBetween(1, 10))
-		            .thenConsumeWhile(i -> i / 100 == 3)
-		            .verifyComplete();
+				.assertNext(i -> assertThat(i - 100)
+						.isBetween(1, 10))
+				.thenConsumeWhile(i -> i / 100 == 1)
+				.assertNext(i -> assertThat(i - 200)
+						.isBetween(1, 10))
+				.thenConsumeWhile(i -> i / 100 == 2)
+				.assertNext(i -> assertThat(i - 300)
+						.isBetween(1, 10))
+				.thenConsumeWhile(i -> i / 100 == 3)
+				.verifyComplete();
 
 		assertThat(values)
-		          .hasSize(10)
-		          .contains(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+				.hasSize(10)
+				.contains(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 	}
 
 	@Test
 	public void transformGroupsMaintainsParallelismAndPrefetch() {
 		ParallelFlux<Integer> parallelFlux = Flux.range(1, 10)
-		                                         .parallel(3)
-		                                         .runOn(Schedulers.parallel(), 123);
+				.parallel(3)
+				.runOn(Schedulers.parallel(), 123);
 
 		ParallelFlux<Integer> composed = parallelFlux.transformGroups(rail -> rail.map(i -> i + 2));
 
@@ -408,8 +407,8 @@ public class ParallelFluxTest {
 	@Test
 	public void transformGroupsMaintainsParallelism() {
 		ParallelFlux<Integer> parallelFlux = Flux.range(1, 10)
-		                                         .parallel(3)
-		                                         .map(i -> i + 2);
+				.parallel(3)
+				.map(i -> i + 2);
 
 		ParallelFlux<Integer> composed = parallelFlux.transformGroups(rail -> rail.map(i -> i + 2));
 
@@ -431,46 +430,46 @@ public class ParallelFluxTest {
 	@Test
 	public void fromSourceHasCpuParallelism() {
 		int cpus = Runtime.getRuntime()
-		                  .availableProcessors();
+				.availableProcessors();
 		ParallelFlux<Integer> parallelFlux = ParallelFlux.from(Flux.range(1, 10));
 
 		assertThat(parallelFlux.parallelism())
-		          .isEqualTo(cpus);
+				.isEqualTo(cpus);
 	}
 
 	@Test
 	public void fromZeroParallelismRejected() {
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.from(Mono.just(1), 0))
-		          .withMessage("parallelism > 0 required but it was 0");
+				.isThrownBy(() -> ParallelFlux.from(Mono.just(1), 0))
+				.withMessage("parallelism > 0 required but it was 0");
 	}
 
 	@Test
 	public void fromNegativeParallelismRejected() {
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.from(Mono.just(1), -1))
-		          .withMessage("parallelism > 0 required but it was -1");
+				.isThrownBy(() -> ParallelFlux.from(Mono.just(1), -1))
+				.withMessage("parallelism > 0 required but it was -1");
 	}
 
 	@Test
 	public void fromZeroPrefetchRejected() {
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.from(Mono.just(1), 1, 0, Queues.small()))
-		          .withMessage("prefetch > 0 required but it was 0");
+				.isThrownBy(() -> ParallelFlux.from(Mono.just(1), 1, 0, Queues.small()))
+				.withMessage("prefetch > 0 required but it was 0");
 	}
 
 	@Test
 	public void fromNegativePrefetchRejected() {
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.from(Mono.just(1), 1, -1, Queues.small()))
-		          .withMessage("prefetch > 0 required but it was -1");
+				.isThrownBy(() -> ParallelFlux.from(Mono.just(1), 1, -1, Queues.small()))
+				.withMessage("prefetch > 0 required but it was -1");
 	}
 
 	@Test
 	public void fromZeroPublishersRejected() {
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.<Integer>from())
-		          .withMessage("Zero publishers not supported");
+				.isThrownBy(() -> ParallelFlux.<Integer>from())
+				.withMessage("Zero publishers not supported");
 	}
 
 	@Test
@@ -478,23 +477,23 @@ public class ParallelFluxTest {
 	public void fromZeroLengthArrayPublishersRejected() {
 		Publisher<Integer>[] array = new Publisher[0];
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.from(array))
-		          .withMessage("Zero publishers not supported");
+				.isThrownBy(() -> ParallelFlux.from(array))
+				.withMessage("Zero publishers not supported");
 	}
 
 	@Test
 	public void fromNullPublisherRejected() {
 		Assertions.assertThatExceptionOfType(NullPointerException.class)
-		          .isThrownBy(() -> ParallelFlux.from((Publisher<?>) null))
-		          .withMessage("source");
+				.isThrownBy(() -> ParallelFlux.from((Publisher<?>) null))
+				.withMessage("source");
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	public void fromNullPublisherArrayRejected() {
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> ParallelFlux.from((Publisher[]) null))
-		          .withMessage("Zero publishers not supported");
+				.isThrownBy(() -> ParallelFlux.from((Publisher[]) null))
+				.withMessage("Zero publishers not supported");
 	}
 
 	@Test
@@ -503,30 +502,30 @@ public class ParallelFluxTest {
 		final ConcurrentHashMap<String, String> processing = new ConcurrentHashMap<>();
 
 		Flux<Integer> test = Flux.range(1, 10)
-		                         .publishOn(Schedulers.single(), false, 1)
-		                         .doOnNext(v -> between.add(Thread.currentThread()
-		                                                          .getName()))
-		                         .parallel(2, 1)
-		                         .runOn(Schedulers.elastic(), 1)
-		                         .map(v -> {
-			                         processing.putIfAbsent(Thread.currentThread()
-			                                                      .getName(), "");
-			                         return v;
-		                         })
-		                         .sequential();
+				.publishOn(Schedulers.single(), false, 1)
+				.doOnNext(v -> between.add(Thread.currentThread()
+						.getName()))
+				.parallel(2, 1)
+				.runOn(Schedulers.elastic(), 1)
+				.map(v -> {
+					processing.putIfAbsent(Thread.currentThread()
+							.getName(), "");
+					return v;
+				})
+				.sequential();
 
 		StepVerifier.create(test)
-		            .expectSubscription()
-		            .recordWith(() -> Collections.synchronizedList(new ArrayList<>(10)))
-		            .expectNextCount(10)
-		            .consumeRecordedWith(r -> assertThat(r).containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(5));
+				.expectSubscription()
+				.recordWith(() -> Collections.synchronizedList(new ArrayList<>(10)))
+				.expectNextCount(10)
+				.consumeRecordedWith(r -> assertThat(r).containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+				.expectComplete()
+				.verify(Duration.ofSeconds(5));
 
 		assertThat(between).hasSize(1);
 		assertThat(between).first()
-		                   .asString()
-		                   .startsWith("single-");
+				.asString()
+				.startsWith("single-");
 
 		assertThat(processing.keySet())
 				.allSatisfy(k -> assertThat(k).startsWith("elastic-"));
@@ -537,8 +536,8 @@ public class ParallelFluxTest {
 		ParallelFlux<Integer> validSoFar = ParallelFlux.from(Mono.just(1));
 
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> validSoFar.runOn(Schedulers.parallel(), 0))
-		          .withMessage("prefetch > 0 required but it was 0");
+				.isThrownBy(() -> validSoFar.runOn(Schedulers.parallel(), 0))
+				.withMessage("prefetch > 0 required but it was 0");
 	}
 
 	@Test
@@ -546,8 +545,8 @@ public class ParallelFluxTest {
 		ParallelFlux<Integer> validSoFar = ParallelFlux.from(Mono.just(1));
 
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> validSoFar.runOn(Schedulers.parallel(), -1))
-		          .withMessage("prefetch > 0 required but it was -1");
+				.isThrownBy(() -> validSoFar.runOn(Schedulers.parallel(), -1))
+				.withMessage("prefetch > 0 required but it was -1");
 	}
 
 	@Test
@@ -555,8 +554,8 @@ public class ParallelFluxTest {
 		ParallelFlux<Integer> validSoFar = ParallelFlux.from(Mono.just(1));
 
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> validSoFar.sequential(0))
-		          .withMessage("prefetch > 0 required but it was 0");
+				.isThrownBy(() -> validSoFar.sequential(0))
+				.withMessage("prefetch > 0 required but it was 0");
 	}
 
 	@Test
@@ -564,8 +563,8 @@ public class ParallelFluxTest {
 		ParallelFlux<Integer> validSoFar = ParallelFlux.from(Mono.just(1));
 
 		Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
-		          .isThrownBy(() -> validSoFar.sequential(-1))
-		          .withMessage("prefetch > 0 required but it was -1");
+				.isThrownBy(() -> validSoFar.sequential(-1))
+				.withMessage("prefetch > 0 required but it was -1");
 	}
 
 	@Test
@@ -573,9 +572,9 @@ public class ParallelFluxTest {
 		LongAdder valueAdder = new LongAdder();
 		LongAdder errorAdder = new LongAdder();
 		Flux.range(1, 3)
-		    .concatWith(Mono.error(new IllegalStateException("boom")))
-		    .parallel(2)
-	        .subscribe(v -> valueAdder.increment(), e -> errorAdder.increment());
+				.concatWith(Mono.error(new IllegalStateException("boom")))
+				.parallel(2)
+				.subscribe(v -> valueAdder.increment(), e -> errorAdder.increment());
 
 		assertThat(valueAdder.intValue()).isEqualTo(3);
 		assertThat(errorAdder.intValue()).isEqualTo(2);
@@ -585,6 +584,7 @@ public class ParallelFluxTest {
 	public void validateTooFewSubscribers() {
 		validateSubscribers(2);
 	}
+
 	@Test
 	public void validateTooManySubscribers() {
 		validateSubscribers(4);
@@ -597,10 +597,13 @@ public class ParallelFluxTest {
 		for (int i = 0; i < subs.length; i++) {
 			subs[i] = new BaseSubscriber<Integer>() {
 				@Override
-				protected void hookOnSubscribe(Subscription subscription) { requestUnbounded(); }
+				protected void hookOnSubscribe(Subscription subscription) {
+					requestUnbounded();
+				}
 
 				@Override
-				protected void hookOnNext(Integer value) { }
+				protected void hookOnNext(Integer value) {
+				}
 
 				@Override
 				protected void hookOnError(Throwable throwable) {
@@ -610,12 +613,12 @@ public class ParallelFluxTest {
 		}
 
 		Flux.range(1, 3)
-		    .parallel(3)
-		    .validate(subs);
+				.parallel(3)
+				.validate(subs);
 
 		assertThat(errors)
-		          .hasSize(size)
-		          .allSatisfy(e -> assertThat(e).hasMessage("parallelism = 3, subscribers = " + size));
+				.hasSize(size)
+				.allSatisfy(e -> assertThat(e).hasMessage("parallelism = 3, subscribers = " + size));
 	}
 
 	@Test
@@ -634,32 +637,32 @@ public class ParallelFluxTest {
 	public void fromPublishersSequentialSubscribe() {
 		List<Integer> values = Collections.synchronizedList(new ArrayList<>(10));
 		ParallelFlux.from(Flux.range(1, 3), Flux.range(4, 3))
-		            .runOn(Schedulers.parallel())
-		            .doOnNext(values::add)
-		            .sequential()
-		            .blockLast();
+				.runOn(Schedulers.parallel())
+				.doOnNext(values::add)
+				.sequential()
+				.blockLast();
 
 		assertThat(values)
-	              .hasSize(6)
-	              .containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6);
+				.hasSize(6)
+				.containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6);
 	}
 
 	@Test
 	public void asChangesParallelism() {
 		assertThat(ParallelFlux.from(Flux.range(1, 10), 3)
-		                       .as(pf -> ParallelFlux.from(pf.sequential(), 5)
-		                                             .log("secondParallel"))
-		                       .parallelism())
+				.as(pf -> ParallelFlux.from(pf.sequential(), 5)
+						.log("secondParallel"))
+				.parallelism())
 				.isEqualTo(5);
 	}
 
 	@Test
 	public void transformChangesPrefetch() {
 		assertThat(ParallelFlux.from(Flux.range(1, 10), 3, 12, Queues.small())
-		                       .transform(pf -> pf.runOn(Schedulers.parallel(), 3)
-		                                          .log()
-		                                          .hide())
-		                       .getPrefetch())
+				.transform(pf -> pf.runOn(Schedulers.parallel(), 3)
+						.log()
+						.hide())
+				.getPrefetch())
 				.isEqualTo(3);
 	}
 
@@ -676,16 +679,17 @@ public class ParallelFluxTest {
 		LongAdder afterTerminateCount = new LongAdder();
 
 		ParallelFlux.from(Flux.range(1, 10), 2)
-	                .doOnEach(signals::add)
-	                .doOnSubscribe(s -> subscribeCount.increment())
-	                .doOnNext(v -> valueCount.increment())
-	                .doOnRequest(r -> requestCount.increment())
-	                .doOnComplete(completeCount::increment)
-	                .doOnCancel(cancelCount::increment)
-	                .doOnError(e -> errorCount.increment())
-	                .doOnTerminate(terminateCount::increment)
-	                .doAfterTerminate(afterTerminateCount::increment)
-	                .subscribe(v -> {});
+				.doOnEach(signals::add)
+				.doOnSubscribe(s -> subscribeCount.increment())
+				.doOnNext(v -> valueCount.increment())
+				.doOnRequest(r -> requestCount.increment())
+				.doOnComplete(completeCount::increment)
+				.doOnCancel(cancelCount::increment)
+				.doOnError(e -> errorCount.increment())
+				.doOnTerminate(terminateCount::increment)
+				.doAfterTerminate(afterTerminateCount::increment)
+				.subscribe(v -> {
+				});
 
 		assertThat(signals).as("signals").hasSize(10 + 2); //2x5 onNext, 2x1 onComplete
 		assertThat(subscribeCount.longValue()).as("subscribe").isEqualTo(2); //1 per rail
@@ -697,6 +701,7 @@ public class ParallelFluxTest {
 		assertThat(terminateCount.longValue()).as("terminate").isEqualTo(2); //1 per rail
 		assertThat(afterTerminateCount.longValue()).as("afterTerminate").isEqualTo(2); //1 per rail
 	}
+
 	@Test
 	public void testPeekError() {
 		List<Signal> signals = Collections.synchronizedList(new ArrayList<>());
@@ -710,16 +715,18 @@ public class ParallelFluxTest {
 		LongAdder afterTerminateCount = new LongAdder();
 
 		ParallelFlux.from(Flux.range(1, 4).concatWith(Mono.error(new IllegalStateException("boom"))), 2)
-		            .doOnEach(signals::add)
-	                .doOnSubscribe(s -> subscribeCount.increment())
-	                .doOnNext(v -> valueCount.increment())
-	                .doOnRequest(r -> requestCount.increment())
-	                .doOnComplete(completeCount::increment)
-	                .doOnCancel(cancelCount::increment)
-	                .doOnError(e -> errorCount.increment())
-	                .doOnTerminate(terminateCount::increment)
-	                .doAfterTerminate(afterTerminateCount::increment)
-	                .subscribe(v -> {}, e -> {}); //error callback so that afterTerminate isn't swallowed
+				.doOnEach(signals::add)
+				.doOnSubscribe(s -> subscribeCount.increment())
+				.doOnNext(v -> valueCount.increment())
+				.doOnRequest(r -> requestCount.increment())
+				.doOnComplete(completeCount::increment)
+				.doOnCancel(cancelCount::increment)
+				.doOnError(e -> errorCount.increment())
+				.doOnTerminate(terminateCount::increment)
+				.doAfterTerminate(afterTerminateCount::increment)
+				.subscribe(v -> {
+				}, e -> {
+				}); //error callback so that afterTerminate isn't swallowed
 
 		assertThat(signals).as("signals").hasSize(4 + 2); //2x2 onNext, 2x1 onError
 		assertThat(subscribeCount.longValue()).as("subscribe").isEqualTo(2); //1 per rail
@@ -731,6 +738,7 @@ public class ParallelFluxTest {
 		assertThat(terminateCount.longValue()).as("terminate").isEqualTo(2); //1 per rail
 		assertThat(afterTerminateCount.longValue()).as("afterTerminate").isEqualTo(2); //1 per rail
 	}
+
 	@Test
 	public void testPeekCancel() {
 		List<Signal> signals = Collections.synchronizedList(new ArrayList<>());
@@ -744,16 +752,16 @@ public class ParallelFluxTest {
 		LongAdder afterTerminateCount = new LongAdder();
 
 		ParallelFlux.from(Flux.range(1, 10), 2)
-		            .doOnEach(signals::add)
-	                .doOnSubscribe(s -> subscribeCount.increment())
-	                .doOnNext(v -> valueCount.increment())
-	                .doOnRequest(r -> requestCount.increment())
-	                .doOnComplete(completeCount::increment)
-	                .doOnCancel(cancelCount::increment)
-	                .doOnError(e -> errorCount.increment())
-	                .doOnTerminate(terminateCount::increment)
-	                .doAfterTerminate(afterTerminateCount::increment)
-	                .sequential().take(4).subscribe();
+				.doOnEach(signals::add)
+				.doOnSubscribe(s -> subscribeCount.increment())
+				.doOnNext(v -> valueCount.increment())
+				.doOnRequest(r -> requestCount.increment())
+				.doOnComplete(completeCount::increment)
+				.doOnCancel(cancelCount::increment)
+				.doOnError(e -> errorCount.increment())
+				.doOnTerminate(terminateCount::increment)
+				.doAfterTerminate(afterTerminateCount::increment)
+				.sequential().take(4).subscribe();
 
 		assertThat(signals).as("signals").hasSize(4); //2x2 onNext (+ 2 non-represented cancels)
 		assertThat(subscribeCount.longValue()).as("subscribe").isEqualTo(2); //1 per rail
@@ -770,83 +778,83 @@ public class ParallelFluxTest {
 	@Test
 	public void testConcatMapPrefetch() {
 		ParallelFlux<Integer> pf = ParallelFlux.from(Flux.range(1, 4), 2)
-		                                      .concatMap(i -> Flux.just(i, 100 * i), 4);
+				.concatMap(i -> Flux.just(i, 100 * i), 4);
 
 		assertThat(pf.getPrefetch()).isEqualTo(4);
 		StepVerifier.create(pf)
-		            .expectNext(1, 100, 2, 200, 3, 300, 4, 400)
-		            .verifyComplete();
+				.expectNext(1, 100, 2, 200, 3, 300, 4, 400)
+				.verifyComplete();
 	}
 
 	@Test
 	public void testConcatMapDelayError() {
 		ParallelFlux<Integer> pf = ParallelFlux.from(Flux.range(1, 4), 2)
-		                                       .concatMapDelayError(i -> {
-		                                       	if (i == 1)
-		                                       		return Mono.<Integer>error(new IllegalStateException("boom")).hide();
-		                                       	return Flux.just(i, 100 * i);
-		                                       });
+				.concatMapDelayError(i -> {
+					if (i == 1)
+						return Mono.<Integer>error(new IllegalStateException("boom")).hide();
+					return Flux.just(i, 100 * i);
+				});
 
 		StepVerifier.create(pf)
-		            .expectNext(2, 200, 3, 300, 4, 400)
-		            .verifyErrorMessage("boom");
+				.expectNext(2, 200, 3, 300, 4, 400)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void testConcatMapDelayErrorPrefetch() {
 		ParallelFlux<Integer> pf = ParallelFlux.from(Flux.range(1, 4), 2)
-		                                       .concatMapDelayError(i -> {
-			                                       if (i == 1)
-				                                       return Mono.<Integer>error(new IllegalStateException("boom")).hide();
-			                                       return Flux.just(i, 100 * i);
-		                                       }, 4);
+				.concatMapDelayError(i -> {
+					if (i == 1)
+						return Mono.<Integer>error(new IllegalStateException("boom")).hide();
+					return Flux.just(i, 100 * i);
+				}, 4);
 
 		assertThat(pf.getPrefetch()).isEqualTo(4);
 		StepVerifier.create(pf)
-		            .expectNext(2, 200, 3, 300, 4, 400)
-		            .verifyErrorMessage("boom");
+				.expectNext(2, 200, 3, 300, 4, 400)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void testConcatMapDelayErrorPrefetchDelayUntilEnd() {
 		ParallelFlux<Integer> pf = ParallelFlux.from(Flux.range(1, 4), 2)
-		                                       .concatMapDelayError(i -> {
-			                                       if (i == 1)
-				                                       return Mono.error(new IllegalStateException("boom"));
-			                                       return Flux.just(i, 100 * i);
-		                                       }, false, 4);
+				.concatMapDelayError(i -> {
+					if (i == 1)
+						return Mono.error(new IllegalStateException("boom"));
+					return Flux.just(i, 100 * i);
+				}, false, 4);
 
 		assertThat(pf.getPrefetch()).isEqualTo(4);
 		StepVerifier.create(pf)
-		            .verifyErrorMessage("boom");
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void testFlatMapDelayError() {
 		ParallelFlux<Integer> pf = ParallelFlux.from(Flux.range(1, 4), 2)
-		                                       .flatMap(i -> {
-			                                       if (i == 1)
-				                                       return Mono.<Integer>error(new IllegalStateException("boom")).hide();
-			                                       return Flux.just(i, 100 * i);
-		                                       }, true);
+				.flatMap(i -> {
+					if (i == 1)
+						return Mono.<Integer>error(new IllegalStateException("boom")).hide();
+					return Flux.just(i, 100 * i);
+				}, true);
 
 		StepVerifier.create(pf)
-		            .expectNext(2, 200, 3, 300, 4, 400)
-		            .verifyErrorMessage("boom");
+				.expectNext(2, 200, 3, 300, 4, 400)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
 	public void testFlatMapDelayErrorMaxConcurrency() {
 		ParallelFlux<Integer> pf = ParallelFlux.from(Flux.range(1, 4), 2)
-		                                       .flatMap(i -> {
-			                                       if (i == 1)
-				                                       return Mono.<Integer>error(new IllegalStateException("boom")).hide();
-			                                       return Flux.just(i, 100 * i);
-		                                       }, true, 2);
+				.flatMap(i -> {
+					if (i == 1)
+						return Mono.<Integer>error(new IllegalStateException("boom")).hide();
+					return Flux.just(i, 100 * i);
+				}, true, 2);
 
 		StepVerifier.create(pf)
-		            .expectNext(2, 200, 3, 300, 4, 400)
-		            .verifyErrorMessage("boom");
+				.expectNext(2, 200, 3, 300, 4, 400)
+				.verifyErrorMessage("boom");
 	}
 
 	@Test
@@ -924,8 +932,7 @@ public class ParallelFluxTest {
 
 
 	@Test
-	public void testParallelism() throws Exception
-	{
+	public void testParallelism() throws Exception {
 		Flux<Integer> flux = Flux.just(1, 2, 3);
 
 		Set<String> threadNames = Collections.synchronizedSet(new TreeSet<>());
@@ -941,7 +948,7 @@ public class ParallelFluxTest {
 				.subscribe(i ->
 				{
 					threadNames.add(Thread.currentThread()
-					                      .getName());
+							.getName());
 					count.incrementAndGet();
 					latch.countDown();
 
@@ -997,10 +1004,10 @@ public class ParallelFluxTest {
 			List<Integer> results = new CopyOnWriteArrayList<>();
 			CountDownLatch latch = new CountDownLatch(1);
 			Flux.just(1, 2, 3)
-			    .parallel()
-			    .doOnNext(results::add)
-			    .doOnComplete(latch::countDown)
-			    .subscribe();
+					.parallel()
+					.doOnNext(results::add)
+					.doOnComplete(latch::countDown)
+					.subscribe();
 
 			latch.await(1, TimeUnit.SECONDS);
 
@@ -1047,15 +1054,15 @@ public class ParallelFluxTest {
 	public void doOnEachContext() {
 		List<String> results = new CopyOnWriteArrayList<>();
 		Flux.just(1, 2, 3)
-		    .parallel(3)
-		    .doOnEach(s -> {
-			    String valueFromContext = s.getContext()
-			                               .getOrDefault("test", null);
-			    results.add(s + " " + valueFromContext);
-		    })
-		    .reduce(Integer::sum)
-		    .subscriberContext(Context.of("test", "Hello!"))
-		    .block();
+				.parallel(3)
+				.doOnEach(s -> {
+					String valueFromContext = s.getContext()
+							.getOrDefault("test", null);
+					results.add(s + " " + valueFromContext);
+				})
+				.reduce(Integer::sum)
+				.subscriberContext(Context.of("test", "Hello!"))
+				.block();
 
 		assertThat(results).containsExactlyInAnyOrder(
 				"onNext(1) Hello!",
@@ -1067,14 +1074,11 @@ public class ParallelFluxTest {
 		);
 	}
 
-	private void tryToSleep(long value)
-	{
-		try
-		{
+	private void tryToSleep(long value) {
+		try {
 			Thread.sleep(value);
 		}
-		catch(InterruptedException e)
-		{
+		catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}

@@ -23,7 +23,6 @@ import org.junit.Test;
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
 import reactor.test.subscriber.AssertSubscriber;
-import reactor.util.concurrent.Queues;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,8 +58,8 @@ public class FluxJoinTest {
 		source2.onComplete();
 
 		ts.assertValues(17, 18, 20, 33, 34, 36, 65, 66, 68)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -87,8 +86,8 @@ public class FluxJoinTest {
 		source2.onComplete();
 
 		ts.assertValues(17, 18, 20, 24)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 
 	}
 
@@ -114,8 +113,8 @@ public class FluxJoinTest {
 		source2.onComplete();
 
 		ts.assertValues(17, 18, 33, 34, 65, 66)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -133,8 +132,8 @@ public class FluxJoinTest {
 		source1.onError(new RuntimeException("Forced failure"));
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -152,8 +151,8 @@ public class FluxJoinTest {
 		source2.onError(new RuntimeException("Forced failure"));
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -170,8 +169,8 @@ public class FluxJoinTest {
 		source1.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -188,8 +187,8 @@ public class FluxJoinTest {
 		source2.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -208,8 +207,8 @@ public class FluxJoinTest {
 		source1.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -228,8 +227,8 @@ public class FluxJoinTest {
 		source2.onNext(1);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
@@ -250,13 +249,14 @@ public class FluxJoinTest {
 		source2.onNext(2);
 
 		ts.assertErrorMessage("Forced failure")
-		  .assertNotComplete()
-		  .assertNoValues();
+				.assertNotComplete()
+				.assertNoValues();
 	}
 
 	@Test
 	public void scanSubscription() {
-		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, sub -> sub.request(100));
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, sub -> sub.request(100));
 		FluxJoin.JoinSubscription<String, String, String, String, String> test =
 				new FluxJoin.JoinSubscription<>(actual,
 						s -> Mono.just(s),

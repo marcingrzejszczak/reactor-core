@@ -44,8 +44,8 @@ public class MonoAllTest {
 		Flux.range(1, 10).all(v -> true).subscribe(ts);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -55,14 +55,14 @@ public class MonoAllTest {
 		Flux.range(1, 10).all(v -> true).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(true)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -72,8 +72,8 @@ public class MonoAllTest {
 		Flux.range(1, 10).all(v -> v < 6).subscribe(ts);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -83,14 +83,14 @@ public class MonoAllTest {
 		Flux.range(1, 10).all(v -> v < 6).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 
 		ts.request(1);
 
 		ts.assertValues(false)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -102,15 +102,16 @@ public class MonoAllTest {
 		}).subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(RuntimeException.class)
-		  .assertErrorWith(e -> Assert.assertTrue(e.getMessage()
-		                                           .contains("forced failure")));
+				.assertNotComplete()
+				.assertError(RuntimeException.class)
+				.assertErrorWith(e -> Assert.assertTrue(e.getMessage()
+						.contains("forced failure")));
 	}
 
 	@Test
 	public void scanSubscriber() {
-		CoreSubscriber<Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
+		CoreSubscriber<Boolean> actual = new LambdaMonoSubscriber<>(null, e -> {
+		}, null, null);
 		MonoAll.AllSubscriber<String> test = new MonoAll.AllSubscriber<>(actual, String::isEmpty);
 		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);

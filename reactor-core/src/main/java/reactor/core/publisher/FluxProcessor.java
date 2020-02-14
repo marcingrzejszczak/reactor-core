@@ -85,7 +85,7 @@ public abstract class FluxProcessor<IN, OUT> extends Flux<OUT>
 	 *
 	 * @return the number of active {@link Subscriber} or {@literal -1} if untracked
 	 */
-	public long downstreamCount(){
+	public long downstreamCount() {
 		return inners().count();
 	}
 
@@ -225,15 +225,15 @@ public abstract class FluxProcessor<IN, OUT> extends Flux<OUT>
 	 */
 	public final FluxSink<IN> sink(FluxSink.OverflowStrategy strategy) {
 		Objects.requireNonNull(strategy, "strategy");
-		if (getBufferSize() == Integer.MAX_VALUE){
+		if (getBufferSize() == Integer.MAX_VALUE) {
 			strategy = FluxSink.OverflowStrategy.IGNORE;
 		}
 
 		FluxCreate.BaseSink<IN> s = FluxCreate.createSink(this, strategy);
 		onSubscribe(s);
 
-		if(s.isCancelled() ||
-				(isSerialized() && getBufferSize() == Integer.MAX_VALUE)){
+		if (s.isCancelled() ||
+				(isSerialized() && getBufferSize() == Integer.MAX_VALUE)) {
 			return s;
 		}
 		if (serializeAlways())

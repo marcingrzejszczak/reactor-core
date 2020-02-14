@@ -56,14 +56,8 @@ import reactor.util.context.Context;
 final class FluxBufferPredicate<T, C extends Collection<? super T>>
 		extends InternalFluxOperator<T, C> {
 
-	public enum Mode {
-		UNTIL, UNTIL_CUT_BEFORE, WHILE
-	}
-
 	final Predicate<? super T> predicate;
-
 	final Supplier<C> bufferSupplier;
-
 	final Mode mode;
 
 	FluxBufferPredicate(Flux<? extends T> source, Predicate<? super T> predicate,
@@ -98,36 +92,30 @@ final class FluxBufferPredicate<T, C extends Collection<? super T>>
 		return parent;
 	}
 
+	public enum Mode {
+		UNTIL, UNTIL_CUT_BEFORE, WHILE
+	}
+
 	static final class BufferPredicateSubscriber<T, C extends Collection<? super T>>
 			extends AbstractQueue<C>
 			implements ConditionalSubscriber<T>, InnerOperator<T, C>, BooleanSupplier {
-
-		final CoreSubscriber<? super C> actual;
-
-		final Supplier<C> bufferSupplier;
-
-		final Mode mode;
-
-		final Predicate<? super T> predicate;
-
-		C buffer;
-
-		boolean done;
-
-		volatile boolean fastpath;
-
-		volatile long requested;
 
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferPredicateSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BufferPredicateSubscriber.class,
 						"requested");
-
-		volatile Subscription s;
-
 		static final AtomicReferenceFieldUpdater<BufferPredicateSubscriber,
 				Subscription> S = AtomicReferenceFieldUpdater.newUpdater
 				(BufferPredicateSubscriber.class, Subscription.class, "s");
+		final CoreSubscriber<? super C> actual;
+		final Supplier<C> bufferSupplier;
+		final Mode mode;
+		final Predicate<? super T> predicate;
+		C buffer;
+		boolean done;
+		volatile boolean fastpath;
+		volatile long requested;
+		volatile Subscription s;
 
 		BufferPredicateSubscriber(CoreSubscriber<? super C> actual, C initialBuffer,
 				Supplier<C> bufferSupplier, Predicate<? super T> predicate, Mode mode) {
@@ -296,7 +284,7 @@ final class FluxBufferPredicate<T, C extends Collection<? super T>>
 				return false;
 			}
 			long r = REQUESTED.getAndDecrement(this);
-			if(r > 0){
+			if (r > 0) {
 				actual.onNext(b);
 				return requested > 0;
 			}
@@ -374,9 +362,9 @@ final class FluxBufferPredicate<T, C extends Collection<? super T>>
 
 	static class ChangedPredicate<T, K> implements Predicate<T>, Disposable {
 
-		private Function<? super T, ? extends K>  keySelector;
+		private Function<? super T, ? extends K> keySelector;
 		private BiPredicate<? super K, ? super K> keyComparator;
-		private K                                 lastKey;
+		private K lastKey;
 
 		ChangedPredicate(Function<? super T, ? extends K> keySelector,
 				BiPredicate<? super K, ? super K> keyComparator) {

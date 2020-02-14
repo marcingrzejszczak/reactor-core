@@ -147,6 +147,110 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	}
 
 	/**
+	 * Invoke {@link Hooks} pointcut given a {@link ParallelFlux} and returning an
+	 * eventually new {@link ParallelFlux}
+	 *
+	 * @param <T> the value type
+	 * @param source the source to wrap
+	 *
+	 * @return the potentially wrapped source
+	 */
+	@SuppressWarnings("unchecked")
+	protected static <T> ParallelFlux<T> onAssembly(ParallelFlux<T> source) {
+		Function<Publisher, Publisher> hook = Hooks.onEachOperatorHook;
+		if (hook != null) {
+			source = (ParallelFlux<T>) hook.apply(source);
+		}
+		if (Hooks.GLOBAL_TRACE) {
+			AssemblySnapshot stacktrace = new AssemblySnapshot(null, Traces.callSiteSupplierFactory.get());
+			source = (ParallelFlux<T>) Hooks.addAssemblyInfo(source, stacktrace);
+		}
+		return source;
+	}
+
+	/**
+	 * Invoke {@link Hooks} pointcut given a {@link ParallelFlux} and returning an
+	 * eventually new {@link ParallelFlux}
+	 *
+	 * @param <T> the value type
+	 * @param source the source to wrap
+	 *
+	 * @return the potentially wrapped source
+	 * @deprecated use {@link Operators#onLastAssembly(CorePublisher)}
+	 */
+	@SuppressWarnings("unchecked")
+	@Deprecated
+	protected static <T> ParallelFlux<T> onLastAssembly(ParallelFlux<T> source) {
+		Function<Publisher, Publisher> hook = Hooks.onLastOperatorHook;
+		if (hook == null) {
+			return source;
+		}
+		return (ParallelFlux<T>) Objects.requireNonNull(hook.apply(source),
+				"LastOperator hook returned null");
+	}
+
+	@SuppressWarnings("unchecked")
+	static <T> ParallelFlux<T> doOnSignal(ParallelFlux<T> source,
+			@Nullable Consumer<? super T> onNext,
+			@Nullable Consumer<? super T> onAfterNext,
+			@Nullable Consumer<? super Throwable> onError,
+			@Nullable Runnable onComplete,
+			@Nullable Runnable onAfterTerminate,
+			@Nullable Consumer<? super Subscription> onSubscribe,
+			@Nullable LongConsumer onRequest,
+			@Nullable Runnable onCancel) {
+		return onAssembly(new ParallelPeek<>(source,
+				onNext,
+				onAfterNext,
+				onError,
+				onComplete,
+				onAfterTerminate,
+				onSubscribe,
+				onRequest,
+				onCancel));
+	}
+
+	static final <T> List<T> sortedMerger(List<T> a, List<T> b, Comparator<? super T> comparator) {
+		int n = a.size() + b.size();
+		if (n == 0) {
+			return new ArrayList<>();
+		}
+		List<T> both = new ArrayList<>(n);
+
+		Iterator<T> at = a.iterator();
+		Iterator<T> bt = b.iterator();
+
+		T s1 = at.hasNext() ? at.next() : null;
+		T s2 = bt.hasNext() ? bt.next() : null;
+
+		while (s1 != null && s2 != null) {
+			if (comparator.compare(s1, s2) < 0) { // s1 comes before s2
+				both.add(s1);
+				s1 = at.hasNext() ? at.next() : null;
+			}
+			else {
+				both.add(s2);
+				s2 = bt.hasNext() ? bt.next() : null;
+			}
+		}
+
+		if (s1 != null) {
+			both.add(s1);
+			while (at.hasNext()) {
+				both.add(at.next());
+			}
+		}
+		else if (s2 != null) {
+			both.add(s2);
+			while (bt.hasNext()) {
+				both.add(bt.next());
+			}
+		}
+
+		return both;
+	}
+
+	/**
 	 * Perform a fluent transformation to a value via a converter function which receives
 	 * this ParallelFlux.
 	 *
@@ -307,7 +411,6 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 		return merged;
 	}
 
-
 	/**
 	 * Allows composing operators off the 'rails', as individual {@link GroupedFlux} instances keyed by
 	 * the zero based rail's index. The transformed groups are {@link Flux#parallel parallelized} back
@@ -326,8 +429,8 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 			? extends Publisher<? extends U>> composer) {
 		if (getPrefetch() > -1) {
 			return from(groups().flatMap(composer::apply),
-				parallelism(), getPrefetch(),
-				Queues.small());
+					parallelism(), getPrefetch(),
+					Queues.small());
 		}
 		else {
 			return from(groups().flatMap(composer::apply), parallelism());
@@ -960,9 +1063,9 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	public final Flux<T> sorted(Comparator<? super T> comparator, int capacityHint) {
 		int ch = capacityHint / parallelism() + 1;
 		ParallelFlux<List<T>> railReduced = reduce(() -> new ArrayList<>(ch), (a, b) -> {
-					a.add(b);
-					return a;
-				});
+			a.add(b);
+			return a;
+		});
 		ParallelFlux<List<T>> railSorted = railReduced.map(list -> {
 			list.sort(comparator);
 			return list;
@@ -984,7 +1087,7 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	 * Subscribes to this {@link ParallelFlux} and triggers the execution chain for all
 	 * 'rails'.
 	 */
-	public final Disposable subscribe(){
+	public final Disposable subscribe() {
 		return subscribe(null, null, null);
 	}
 
@@ -994,7 +1097,7 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	 *
 	 * @param onNext consumer of onNext signals
 	 */
-	public final Disposable subscribe(Consumer<? super T> onNext){
+	public final Disposable subscribe(Consumer<? super T> onNext) {
 		return subscribe(onNext, null, null);
 	}
 
@@ -1006,7 +1109,7 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	 * @param onError consumer of error signal
 	 */
 	public final Disposable subscribe(@Nullable Consumer<? super T> onNext, Consumer<? super Throwable>
-			onError){
+			onError) {
 		return subscribe(onNext, onError, null);
 	}
 
@@ -1083,7 +1186,7 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 			LambdaSubscriber<? super T>[] subscribers = new LambdaSubscriber[parallelism()];
 
 			int i = 0;
-			while(i < subscribers.length){
+			while (i < subscribers.length) {
 				subscribers[i++] =
 						new LambdaSubscriber<>(onNext, onError, onComplete, onSubscribe, initialContext);
 			}
@@ -1131,8 +1234,6 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	public final ParallelFlux<T> tag(String key, String value) {
 		return ParallelFluxName.createOrAppend(this, key, value);
 	}
-
-
 
 	/**
 	 * Emit an onComplete or onError signal once all values across 'rails' have been observed.
@@ -1248,7 +1349,7 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 			Publisher<? extends R>> mapper,
 			boolean delayUntilEnd,
 			int prefetch) {
-		return concatMap(mapper, prefetch, delayUntilEnd ? ErrorMode.END: ErrorMode.BOUNDARY);
+		return concatMap(mapper, prefetch, delayUntilEnd ? ErrorMode.END : ErrorMode.BOUNDARY);
 	}
 
 	/**
@@ -1274,111 +1375,6 @@ public abstract class ParallelFlux<T> implements CorePublisher<T> {
 	 */
 	public int getPrefetch() {
 		return -1;
-	}
-
-
-	/**
-	 * Invoke {@link Hooks} pointcut given a {@link ParallelFlux} and returning an
-	 * eventually new {@link ParallelFlux}
-	 *
-	 * @param <T> the value type
-	 * @param source the source to wrap
-	 *
-	 * @return the potentially wrapped source
-	 */
-	@SuppressWarnings("unchecked")
-	protected static <T> ParallelFlux<T> onAssembly(ParallelFlux<T> source) {
-		Function<Publisher, Publisher> hook = Hooks.onEachOperatorHook;
-		if(hook != null) {
-			source = (ParallelFlux<T>) hook.apply(source);
-		}
-		if (Hooks.GLOBAL_TRACE) {
-			AssemblySnapshot stacktrace = new AssemblySnapshot(null, Traces.callSiteSupplierFactory.get());
-			source = (ParallelFlux<T>) Hooks.addAssemblyInfo(source, stacktrace);
-		}
-		return source;
-	}
-
-	/**
-	 * Invoke {@link Hooks} pointcut given a {@link ParallelFlux} and returning an
-	 * eventually new {@link ParallelFlux}
-	 *
-	 * @param <T> the value type
-	 * @param source the source to wrap
-	 *
-	 * @return the potentially wrapped source
-	 * @deprecated use {@link Operators#onLastAssembly(CorePublisher)}
-	 */
-	@SuppressWarnings("unchecked")
-	@Deprecated
-	protected static <T> ParallelFlux<T> onLastAssembly(ParallelFlux<T> source) {
-		Function<Publisher, Publisher> hook = Hooks.onLastOperatorHook;
-		if (hook == null) {
-			return source;
-		}
-		return (ParallelFlux<T>) Objects.requireNonNull(hook.apply(source),
-				"LastOperator hook returned null");
-	}
-
-	@SuppressWarnings("unchecked")
-	static <T> ParallelFlux<T> doOnSignal(ParallelFlux<T> source,
-			@Nullable Consumer<? super T> onNext,
-			@Nullable Consumer<? super T> onAfterNext,
-			@Nullable Consumer<? super Throwable> onError,
-			@Nullable Runnable onComplete,
-			@Nullable Runnable onAfterTerminate,
-			@Nullable Consumer<? super Subscription> onSubscribe,
-			@Nullable LongConsumer onRequest,
-			@Nullable Runnable onCancel) {
-		return onAssembly(new ParallelPeek<>(source,
-				onNext,
-				onAfterNext,
-				onError,
-				onComplete,
-				onAfterTerminate,
-				onSubscribe,
-				onRequest,
-				onCancel));
-	}
-
-	static final <T> List<T> sortedMerger(List<T> a, List<T> b, Comparator<? super T> comparator) {
-		int n = a.size() + b.size();
-		if (n == 0) {
-			return new ArrayList<>();
-		}
-		List<T> both = new ArrayList<>(n);
-
-		Iterator<T> at = a.iterator();
-		Iterator<T> bt = b.iterator();
-
-		T s1 = at.hasNext() ? at.next() : null;
-		T s2 = bt.hasNext() ? bt.next() : null;
-
-		while (s1 != null && s2 != null) {
-			if (comparator.compare(s1, s2) < 0) { // s1 comes before s2
-				both.add(s1);
-				s1 = at.hasNext() ? at.next() : null;
-			}
-			else {
-				both.add(s2);
-				s2 = bt.hasNext() ? bt.next() : null;
-			}
-		}
-
-		if (s1 != null) {
-			both.add(s1);
-			while (at.hasNext()) {
-				both.add(at.next());
-			}
-		}
-		else if (s2 != null) {
-			both.add(s2);
-			while (bt.hasNext()) {
-				both.add(bt.next());
-			}
-		}
-
-		return both;
 	}
 
 }

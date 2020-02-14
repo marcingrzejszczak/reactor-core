@@ -33,8 +33,10 @@ import reactor.core.publisher.Flux;
 public class CheckpointBenchmark {
 
 	Flux<String> findAllUserByName(Flux<String> source) {
-		return source.map(s -> { throw new IllegalStateException("boom"); })
-		             .map(s -> s + "-user");
+		return source.map(s -> {
+			throw new IllegalStateException("boom");
+		})
+				.map(s -> s + "-user");
 	}
 
 	@Benchmark()
@@ -45,11 +47,11 @@ public class CheckpointBenchmark {
 	@BenchmarkMode({Mode.Throughput, Mode.SampleTime})
 	public void withFullCheckpoint() {
 		this.findAllUserByName(Flux.just("pedro", "simon", "stephane"))
-		    .transform(f -> f.filter(s -> s.startsWith("s")))
-		    .transform(f -> f.elapsed())
-		    .checkpoint("checkpoint description", true)
-		    .subscribe(System.out::println, t -> {
-		    });
+				.transform(f -> f.filter(s -> s.startsWith("s")))
+				.transform(f -> f.elapsed())
+				.checkpoint("checkpoint description", true)
+				.subscribe(System.out::println, t -> {
+				});
 	}
 
 	@Benchmark
@@ -60,10 +62,10 @@ public class CheckpointBenchmark {
 	@BenchmarkMode({Mode.Throughput, Mode.SampleTime})
 	public void withLightCheckpoint() {
 		this.findAllUserByName(Flux.just("pedro", "simon", "stephane"))
-		    .transform(f -> f.filter(s -> s.startsWith("s")))
-		    .transform(f -> f.elapsed())
-		    .checkpoint("light checkpoint identifier")
-		    .subscribe(System.out::println, t -> {
-		    });
+				.transform(f -> f.filter(s -> s.startsWith("s")))
+				.transform(f -> f.elapsed())
+				.checkpoint("light checkpoint identifier")
+				.subscribe(System.out::println, t -> {
+				});
 	}
 }

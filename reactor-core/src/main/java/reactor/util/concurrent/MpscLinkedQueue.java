@@ -33,14 +33,12 @@ import reactor.util.annotation.Nullable;
  * @param <E> the contained value type
  */
 final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E, E> {
-	private volatile LinkedQueueNode<E> producerNode;
-
 	private final static AtomicReferenceFieldUpdater<MpscLinkedQueue, LinkedQueueNode> PRODUCER_NODE_UPDATER
 			= AtomicReferenceFieldUpdater.newUpdater(MpscLinkedQueue.class, LinkedQueueNode.class, "producerNode");
-
-	private volatile LinkedQueueNode<E> consumerNode;
 	private final static AtomicReferenceFieldUpdater<MpscLinkedQueue, LinkedQueueNode> CONSUMER_NODE_UPDATER
 			= AtomicReferenceFieldUpdater.newUpdater(MpscLinkedQueue.class, LinkedQueueNode.class, "consumerNode");
+	private volatile LinkedQueueNode<E> producerNode;
+	private volatile LinkedQueueNode<E> consumerNode;
 
 	public MpscLinkedQueue() {
 		LinkedQueueNode<E> node = new LinkedQueueNode<>();
@@ -139,8 +137,7 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 		LinkedQueueNode<E> currConsumerNode = consumerNode; // don't load twice, it's alright
 		LinkedQueueNode<E> nextNode = currConsumerNode.lvNext();
 
-		if (nextNode != null)
-		{
+		if (nextNode != null) {
 			// we have to null out the value because we are going to hang on to the node
 			final E nextValue = nextNode.getAndNullValue();
 
@@ -152,9 +149,9 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 			// currConsumerNode is now no longer referenced and can be collected
 			return nextValue;
 		}
-		else if (currConsumerNode != producerNode)
-		{
-			while ((nextNode = currConsumerNode.lvNext()) == null) { }
+		else if (currConsumerNode != producerNode) {
+			while ((nextNode = currConsumerNode.lvNext()) == null) {
+			}
 			// got the next node...
 			// we have to null out the value because we are going to hang on to the node
 			final E nextValue = nextNode.getAndNullValue();
@@ -176,13 +173,12 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 		LinkedQueueNode<E> currConsumerNode = consumerNode; // don't load twice, it's alright
 		LinkedQueueNode<E> nextNode = currConsumerNode.lvNext();
 
-		if (nextNode != null)
-		{
+		if (nextNode != null) {
 			return nextNode.lpValue();
 		}
-		else if (currConsumerNode != producerNode)
-		{
-			while ((nextNode = currConsumerNode.lvNext()) == null) { }
+		else if (currConsumerNode != producerNode) {
+			while ((nextNode = currConsumerNode.lvNext()) == null) {
+			}
 			// got the next node...
 			return nextNode.lpValue();
 		}
@@ -198,7 +194,8 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 
 	@Override
 	public void clear() {
-		while (poll() != null && !isEmpty()) { } // NOPMD
+		while (poll() != null && !isEmpty()) {
+		} // NOPMD
 	}
 
 	@Override
@@ -216,8 +213,7 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 			LinkedQueueNode<E> next;
 			next = chaserNode.lvNext();
 			// check if this node has been consumed, if so return what we have
-			if (next == chaserNode)
-			{
+			if (next == chaserNode) {
 				return size;
 			}
 			chaserNode = next;
@@ -236,22 +232,18 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 		throw new UnsupportedOperationException();
 	}
 
-	static final class LinkedQueueNode<E>
-	{
-		private volatile LinkedQueueNode<E> next;
+	static final class LinkedQueueNode<E> {
 		private final static AtomicReferenceFieldUpdater<LinkedQueueNode, LinkedQueueNode> NEXT_UPDATER
 				= AtomicReferenceFieldUpdater.newUpdater(LinkedQueueNode.class, LinkedQueueNode.class, "next");
-
+		private volatile LinkedQueueNode<E> next;
 		private E value;
 
-		LinkedQueueNode()
-		{
+		LinkedQueueNode() {
 			this(null);
 		}
 
 
-		LinkedQueueNode(@Nullable E val)
-		{
+		LinkedQueueNode(@Nullable E val) {
 			spValue(val);
 		}
 
@@ -261,32 +253,27 @@ final class MpscLinkedQueue<E> extends AbstractQueue<E> implements BiPredicate<E
 		 * @return value
 		 */
 		@Nullable
-		public E getAndNullValue()
-		{
+		public E getAndNullValue() {
 			E temp = lpValue();
 			spValue(null);
 			return temp;
 		}
 
 		@Nullable
-		public E lpValue()
-		{
+		public E lpValue() {
 			return value;
 		}
 
-		public void spValue(@Nullable E newValue)
-		{
+		public void spValue(@Nullable E newValue) {
 			value = newValue;
 		}
 
-		public void soNext(@Nullable LinkedQueueNode<E> n)
-		{
+		public void soNext(@Nullable LinkedQueueNode<E> n) {
 			NEXT_UPDATER.lazySet(this, n);
 		}
 
 		@Nullable
-		public LinkedQueueNode<E> lvNext()
-		{
+		public LinkedQueueNode<E> lvNext() {
 			return next;
 		}
 	}

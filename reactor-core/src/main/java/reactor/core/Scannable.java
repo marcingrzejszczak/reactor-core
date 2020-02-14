@@ -51,288 +51,12 @@ import reactor.util.function.Tuple2;
 @FunctionalInterface
 public interface Scannable {
 
-    /**
-     * The pattern for matching words unrelated to operator name.
-     * Used to strip an operator name of various prefixes and suffixes.
-     */
-	Pattern OPERATOR_NAME_UNRELATED_WORDS_PATTERN =
-		Pattern.compile("Parallel|Flux|Mono|Publisher|Subscriber|Fuseable|Operator|Conditional");
-
 	/**
-	 * Base class for {@link Scannable} attributes, which all can define a meaningful
-	 * default.
-	 *
-	 * @param <T> the type of data associated with an attribute
+	 * The pattern for matching words unrelated to operator name.
+	 * Used to strip an operator name of various prefixes and suffixes.
 	 */
-	class Attr<T> {
-
-		/* IMPLEMENTATION NOTE
-		Note that some attributes define a object-to-T converter, which means their
-		private {@link #tryConvert(Object)} method can safely be used by
-		{@link Scannable#scan(Attr)}, making them resilient to class cast exceptions.
-		 */
-
-		/**
-		 * The direct dependent component downstream reference if any. Operators in
-		 * Flux/Mono for instance delegate to a target Subscriber, which is going to be
-		 * the actual chain navigated with this reference key. Subscribers are not always
-		 * {@link Scannable}, but this attribute will convert these raw results to an
-		 * {@link Scannable#isScanAvailable() unavailable scan} object in this case.
-		 * <p>
-		 *  A reference chain downstream can be navigated via {@link Scannable#actuals()}.
-		 */
-		public static final Attr<Scannable> ACTUAL = new Attr<>(null,
-				Scannable::from);
-
-		/**
-		 * Indicate that for some purposes a {@link Scannable} should be used as additional
-		 * source of information about a contiguous {@link Scannable} in the chain.
-		 * <p>
-		 * For example {@link Scannable#steps()} uses this to collate the
-		 * {@link Scannable#stepName() stepName} of an assembly trace to its
-		 * wrapped operator (the one before it in the assembly chain).
-		 */
-		public static final Attr<Boolean> ACTUAL_METADATA = new Attr<>(false);
-
-		/**
-		 * A {@link Integer} attribute implemented by components with a backlog
-		 * capacity. It will expose current queue size or similar related to
-		 * user-provided held data. Note that some operators and processors CAN keep
-		 * a backlog larger than {@code Integer.MAX_VALUE}, in which case
-		 * the {@link Attr#LARGE_BUFFERED Attr} {@literal LARGE_BUFFERED}
-		 * should be used instead. Such operators will attempt to serve a BUFFERED
-		 * query but will return {@link Integer#MIN_VALUE} when actual buffer size is
-		 * oversized for int.
-		 */
-		public static final Attr<Integer> BUFFERED = new Attr<>(0);
-
-		/**
-		 * Return an an {@link Integer} capacity when no {@link #PREFETCH} is defined or
-		 * when an arbitrary maximum limit is applied to the backlog capacity of the
-		 * scanned component. {@link Integer#MAX_VALUE} signal unlimited capacity.
-		 * <p>
-		 * Note: This attribute usually resolves to a constant value.
-		 */
-		public static final Attr<Integer> CAPACITY = new Attr<>(0);
-
-		/**
-		 * A {@link Boolean} attribute indicating whether or not a downstream component
-		 * has interrupted consuming this scanned component, e.g., a cancelled
-		 * subscription. Note that it differs from {@link #TERMINATED} which is
-		 * intended for "normal" shutdown cycles.
-		 */
-		public static final Attr<Boolean> CANCELLED = new Attr<>(false);
-
-		/**
-		 * Delay_Error exposes a {@link Boolean} whether the scanned component
-		 * actively supports error delaying if it manages a backlog instead of fast
-		 * error-passing which might drop pending backlog.
-		 * <p>
-		 * Note: This attribute usually resolves to a constant value.
-		 */
-		public static final Attr<Boolean> DELAY_ERROR = new Attr<>(false);
-
-		/**
-		 * a {@link Throwable} attribute which indicate an error state if the scanned
-		 * component keeps track of it.
-		 */
-		public static final Attr<Throwable> ERROR = new Attr<>(null);
-
-		/**
-		 * Similar to {@link Attr#BUFFERED}, but reserved for operators that can hold
-		 * a backlog of items that can grow beyond {@literal Integer.MAX_VALUE}. These
-		 * operators will also answer to a {@link Attr#BUFFERED} query up to the point
-		 * where their buffer is actually too large, at which point they'll return
-		 * {@literal Integer.MIN_VALUE}, which serves as a signal that this attribute
-		 * should be used instead. Defaults to {@literal null}.
-		 * <p>
-		 * {@code Flux.flatMap}, {@code Flux.filterWhen}
-		 * and {@code Flux.window} (with overlap) are known to use this attribute.
-		 */
-		public static final Attr<Long> LARGE_BUFFERED = new Attr<>(null);
-
-		/**
-		 * An arbitrary name given to the operator component. Defaults to {@literal null}.
-		 */
-		public static final Attr<String> NAME = new Attr<>(null);
-
-		/**
-		 * Parent key exposes the direct upstream relationship of the scanned component.
-		 * It can be a Publisher source to an operator, a Subscription to a Subscriber
-		 * (main flow if ambiguous with inner Subscriptions like flatMap), a Scheduler to
-		 * a Worker. These types are not always {@link Scannable}, but this attribute
-		 * will convert such raw results to an {@link Scannable#isScanAvailable() unavailable scan}
-		 * object in this case.
-		 * <p>
-		 * {@link Scannable#parents()} can be used to navigate the parent chain.
-		 */
-		public static final Attr<Scannable> PARENT = new Attr<>(null,
-				Scannable::from);
-
-		/**
-		 * A key that links a {@link Scannable} to another {@link Scannable} it runs on.
-		 * Usually exposes a link between an operator/subscriber and its {@link Worker} or
-		 * {@link Scheduler}, provided these are {@link Scannable}. Will return
-		 * {@link Attr#UNAVAILABLE_SCAN} if the supporting execution is not Scannable or
-		 * {@link Attr#NULL_SCAN} if the operator doesn't define a specific runtime.
-		 */
-		public static final Attr<Scannable> RUN_ON = new Attr<>(null, Scannable::from);
-
-		/**
-		 * Prefetch is an {@link Integer} attribute defining the rate of processing in a
-		 * component which has capacity to request and hold a backlog of data. It
-		 * usually maps to a component capacity when no arbitrary {@link #CAPACITY} is
-		 * set. {@link Integer#MAX_VALUE} signal unlimited capacity and therefore
-		 * unbounded demand.
-		 * <p>
-		 * Note: This attribute usually resolves to a constant value.
-		 */
-		public static final Attr<Integer> PREFETCH = new Attr<>(0);
-
-		/**
-		 * A {@link Long} attribute exposing the current pending demand of a downstream
-		 * component. Note that {@link Long#MAX_VALUE} indicates an unbounded (push-style)
-		 * demand as specified in {@link org.reactivestreams.Subscription#request(long)}.
-		 */
-		public static final Attr<Long> REQUESTED_FROM_DOWNSTREAM = new Attr<>(0L);
-
-		/**
-		 * A {@link Boolean} attribute indicating whether or not an upstream component
-		 * terminated this scanned component. e.g. a post onComplete/onError subscriber.
-		 * By opposition to {@link #CANCELLED} which determines if a downstream
-		 * component interrupted this scanned component.
-		 */
-		public static final Attr<Boolean> TERMINATED = new Attr<>(false);
-
-		/**
-		 * A {@link Stream} of {@link reactor.util.function.Tuple2} representing key/value
-		 * pairs for tagged components. Defaults to {@literal null}.
-		 */
-		public static final Attr<Stream<Tuple2<String, String>>> TAGS = new Attr<>(null);
-
-		/**
-		 * Meaningful and always applicable default value for the attribute, returned
-		 * instead of {@literal null} when a specific value hasn't been defined for a
-		 * component. {@literal null} if no sensible generic default is available.
-		 *
-		 * @return the default value applicable to all components or null if none.
-		 */
-		@Nullable
-		public T defaultValue(){
-			return defaultValue;
-		}
-
-		/**
-		 * Checks if this attribute is capable of safely converting any Object into
-		 * a {@code T} via {@link #tryConvert(Object)} (potentially returning {@code null}
-		 * or a Null Object for incompatible raw values).
-		 * @return true if the attribute can safely convert any object, false if it can
-		 * throw {@link ClassCastException}
-		 */
-		boolean isConversionSafe() {
-			return safeConverter != null;
-		}
-
-		/**
-		 * Attempt to convert any {@link Object} instance o into a {@code T}. By default
-		 * unsafe attributes will just try forcing a cast, which can lead to {@link ClassCastException}.
-		 * However, attributes for which {@link #isConversionSafe()} returns true are
-		 * required to not throw an exception (but rather return {@code null} or a Null
-		 * Object).
-		 *
-		 * @param o the instance to attempt conversion on
-		 * @return the converted instance
-		 */
-		@Nullable
-		T tryConvert(@Nullable Object o) {
-			if (o == null) {
-				return null;
-			}
-			if (safeConverter == null) {
-				@SuppressWarnings("unchecked") T t = (T) o;
-				return t;
-			}
-			return safeConverter.apply(o);
-		}
-
-		final T                             defaultValue;
-		final Function<Object, ? extends T> safeConverter;
-
-		protected Attr(@Nullable T defaultValue){
-			this(defaultValue, null);
-		}
-
-		protected Attr(@Nullable T defaultValue,
-				@Nullable Function<Object, ? extends T> safeConverter) {
-			this.defaultValue = defaultValue;
-			this.safeConverter = safeConverter;
-		}
-
-		/**
-		 * A constant that represents {@link Scannable} returned via {@link #from(Object)}
-		 * when the passed non-null reference is not a {@link Scannable}
-		 */
-		static final Scannable UNAVAILABLE_SCAN = new Scannable() {
-			@Override
-			public Object scanUnsafe(Attr key) {
-				return null;
-			}
-
-			@Override
-			public boolean isScanAvailable() {
-				return false;
-			}
-
-			@Override
-			public String toString() {
-				return "UNAVAILABLE_SCAN";
-			}
-		};
-
-		/**
-		 * A constant that represents {@link Scannable} returned via {@link #from(Object)}
-		 * when the passed reference is null
-		 */
-		static final Scannable NULL_SCAN = new Scannable() {
-			@Override
-			public Object scanUnsafe(Attr key) {
-				return null;
-			}
-
-			@Override
-			public boolean isScanAvailable() {
-				return false;
-			}
-
-			@Override
-			public String toString() {
-				return "NULL_SCAN";
-			}
-		};
-
-		static Stream<? extends Scannable> recurse(Scannable _s,
-				Attr<Scannable> key){
-			Scannable s = Scannable.from(_s.scan(key));
-			if(!s.isScanAvailable()) {
-				return Stream.empty();
-			}
-			return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new Iterator<Scannable>() {
-				Scannable c = s;
-
-				@Override
-				public boolean hasNext() {
-					return c != null && c.isScanAvailable();
-				}
-
-				@Override
-				public Scannable next() {
-					Scannable _c = c;
-					c = Scannable.from(c.scan(key));
-					return _c;
-				}
-			}, 0),false);
-		}
-	}
+	Pattern OPERATOR_NAME_UNRELATED_WORDS_PATTERN =
+			Pattern.compile("Parallel|Flux|Mono|Publisher|Subscriber|Fuseable|Operator|Conditional");
 
 	/**
 	 * Attempt to cast the Object to a {@link Scannable}. Return {@link Attr#NULL_SCAN} if
@@ -379,7 +103,7 @@ public interface Scannable {
 	 *
 	 * @return true whether the component is available for {@link #scan(Attr)} resolution.
 	 */
-	default boolean isScanAvailable(){
+	default boolean isScanAvailable() {
 		return true;
 	}
 
@@ -418,12 +142,12 @@ public interface Scannable {
 		String name = toString();
 		if (name.contains("@") && name.contains("$")) {
 			name = name
-				.substring(0, name.indexOf('$'))
-				.substring(name.lastIndexOf('.') + 1);
+					.substring(0, name.indexOf('$'))
+					.substring(name.lastIndexOf('.') + 1);
 		}
 		String stripped = OPERATOR_NAME_UNRELATED_WORDS_PATTERN
-			.matcher(name)
-			.replaceAll("");
+				.matcher(name)
+				.replaceAll("");
 
 		if (!stripped.isEmpty()) {
 			return stripped.substring(0, 1).toLowerCase() + stripped.substring(1);
@@ -560,6 +284,264 @@ public interface Scannable {
 				thisTags,
 				parentTags
 		);
+	}
+
+	/**
+	 * Base class for {@link Scannable} attributes, which all can define a meaningful
+	 * default.
+	 *
+	 * @param <T> the type of data associated with an attribute
+	 */
+	class Attr<T> {
+
+		/* IMPLEMENTATION NOTE
+		Note that some attributes define a object-to-T converter, which means their
+		private {@link #tryConvert(Object)} method can safely be used by
+		{@link Scannable#scan(Attr)}, making them resilient to class cast exceptions.
+		 */
+
+		/**
+		 * Indicate that for some purposes a {@link Scannable} should be used as additional
+		 * source of information about a contiguous {@link Scannable} in the chain.
+		 * <p>
+		 * For example {@link Scannable#steps()} uses this to collate the
+		 * {@link Scannable#stepName() stepName} of an assembly trace to its
+		 * wrapped operator (the one before it in the assembly chain).
+		 */
+		public static final Attr<Boolean> ACTUAL_METADATA = new Attr<>(false);
+		/**
+		 * A {@link Integer} attribute implemented by components with a backlog
+		 * capacity. It will expose current queue size or similar related to
+		 * user-provided held data. Note that some operators and processors CAN keep
+		 * a backlog larger than {@code Integer.MAX_VALUE}, in which case
+		 * the {@link Attr#LARGE_BUFFERED Attr} {@literal LARGE_BUFFERED}
+		 * should be used instead. Such operators will attempt to serve a BUFFERED
+		 * query but will return {@link Integer#MIN_VALUE} when actual buffer size is
+		 * oversized for int.
+		 */
+		public static final Attr<Integer> BUFFERED = new Attr<>(0);
+		/**
+		 * Return an an {@link Integer} capacity when no {@link #PREFETCH} is defined or
+		 * when an arbitrary maximum limit is applied to the backlog capacity of the
+		 * scanned component. {@link Integer#MAX_VALUE} signal unlimited capacity.
+		 * <p>
+		 * Note: This attribute usually resolves to a constant value.
+		 */
+		public static final Attr<Integer> CAPACITY = new Attr<>(0);
+		/**
+		 * A {@link Boolean} attribute indicating whether or not a downstream component
+		 * has interrupted consuming this scanned component, e.g., a cancelled
+		 * subscription. Note that it differs from {@link #TERMINATED} which is
+		 * intended for "normal" shutdown cycles.
+		 */
+		public static final Attr<Boolean> CANCELLED = new Attr<>(false);
+		/**
+		 * Delay_Error exposes a {@link Boolean} whether the scanned component
+		 * actively supports error delaying if it manages a backlog instead of fast
+		 * error-passing which might drop pending backlog.
+		 * <p>
+		 * Note: This attribute usually resolves to a constant value.
+		 */
+		public static final Attr<Boolean> DELAY_ERROR = new Attr<>(false);
+		/**
+		 * a {@link Throwable} attribute which indicate an error state if the scanned
+		 * component keeps track of it.
+		 */
+		public static final Attr<Throwable> ERROR = new Attr<>(null);
+		/**
+		 * Similar to {@link Attr#BUFFERED}, but reserved for operators that can hold
+		 * a backlog of items that can grow beyond {@literal Integer.MAX_VALUE}. These
+		 * operators will also answer to a {@link Attr#BUFFERED} query up to the point
+		 * where their buffer is actually too large, at which point they'll return
+		 * {@literal Integer.MIN_VALUE}, which serves as a signal that this attribute
+		 * should be used instead. Defaults to {@literal null}.
+		 * <p>
+		 * {@code Flux.flatMap}, {@code Flux.filterWhen}
+		 * and {@code Flux.window} (with overlap) are known to use this attribute.
+		 */
+		public static final Attr<Long> LARGE_BUFFERED = new Attr<>(null);
+		/**
+		 * An arbitrary name given to the operator component. Defaults to {@literal null}.
+		 */
+		public static final Attr<String> NAME = new Attr<>(null);
+		/**
+		 * Prefetch is an {@link Integer} attribute defining the rate of processing in a
+		 * component which has capacity to request and hold a backlog of data. It
+		 * usually maps to a component capacity when no arbitrary {@link #CAPACITY} is
+		 * set. {@link Integer#MAX_VALUE} signal unlimited capacity and therefore
+		 * unbounded demand.
+		 * <p>
+		 * Note: This attribute usually resolves to a constant value.
+		 */
+		public static final Attr<Integer> PREFETCH = new Attr<>(0);
+		/**
+		 * A {@link Long} attribute exposing the current pending demand of a downstream
+		 * component. Note that {@link Long#MAX_VALUE} indicates an unbounded (push-style)
+		 * demand as specified in {@link org.reactivestreams.Subscription#request(long)}.
+		 */
+		public static final Attr<Long> REQUESTED_FROM_DOWNSTREAM = new Attr<>(0L);
+		/**
+		 * A {@link Boolean} attribute indicating whether or not an upstream component
+		 * terminated this scanned component. e.g. a post onComplete/onError subscriber.
+		 * By opposition to {@link #CANCELLED} which determines if a downstream
+		 * component interrupted this scanned component.
+		 */
+		public static final Attr<Boolean> TERMINATED = new Attr<>(false);
+		/**
+		 * A {@link Stream} of {@link reactor.util.function.Tuple2} representing key/value
+		 * pairs for tagged components. Defaults to {@literal null}.
+		 */
+		public static final Attr<Stream<Tuple2<String, String>>> TAGS = new Attr<>(null);
+		/**
+		 * A constant that represents {@link Scannable} returned via {@link #from(Object)}
+		 * when the passed non-null reference is not a {@link Scannable}
+		 */
+		static final Scannable UNAVAILABLE_SCAN = new Scannable() {
+			@Override
+			public Object scanUnsafe(Attr key) {
+				return null;
+			}
+
+			@Override
+			public boolean isScanAvailable() {
+				return false;
+			}
+
+			@Override
+			public String toString() {
+				return "UNAVAILABLE_SCAN";
+			}
+		};
+		/**
+		 * A constant that represents {@link Scannable} returned via {@link #from(Object)}
+		 * when the passed reference is null
+		 */
+		static final Scannable NULL_SCAN = new Scannable() {
+			@Override
+			public Object scanUnsafe(Attr key) {
+				return null;
+			}
+
+			@Override
+			public boolean isScanAvailable() {
+				return false;
+			}
+
+			@Override
+			public String toString() {
+				return "NULL_SCAN";
+			}
+		};
+		/**
+		 * The direct dependent component downstream reference if any. Operators in
+		 * Flux/Mono for instance delegate to a target Subscriber, which is going to be
+		 * the actual chain navigated with this reference key. Subscribers are not always
+		 * {@link Scannable}, but this attribute will convert these raw results to an
+		 * {@link Scannable#isScanAvailable() unavailable scan} object in this case.
+		 * <p>
+		 *  A reference chain downstream can be navigated via {@link Scannable#actuals()}.
+		 */
+		public static final Attr<Scannable> ACTUAL = new Attr<>(null,
+				Scannable::from);
+		/**
+		 * Parent key exposes the direct upstream relationship of the scanned component.
+		 * It can be a Publisher source to an operator, a Subscription to a Subscriber
+		 * (main flow if ambiguous with inner Subscriptions like flatMap), a Scheduler to
+		 * a Worker. These types are not always {@link Scannable}, but this attribute
+		 * will convert such raw results to an {@link Scannable#isScanAvailable() unavailable scan}
+		 * object in this case.
+		 * <p>
+		 * {@link Scannable#parents()} can be used to navigate the parent chain.
+		 */
+		public static final Attr<Scannable> PARENT = new Attr<>(null,
+				Scannable::from);
+		/**
+		 * A key that links a {@link Scannable} to another {@link Scannable} it runs on.
+		 * Usually exposes a link between an operator/subscriber and its {@link Worker} or
+		 * {@link Scheduler}, provided these are {@link Scannable}. Will return
+		 * {@link Attr#UNAVAILABLE_SCAN} if the supporting execution is not Scannable or
+		 * {@link Attr#NULL_SCAN} if the operator doesn't define a specific runtime.
+		 */
+		public static final Attr<Scannable> RUN_ON = new Attr<>(null, Scannable::from);
+		final T defaultValue;
+		final Function<Object, ? extends T> safeConverter;
+		protected Attr(@Nullable T defaultValue) {
+			this(defaultValue, null);
+		}
+
+		protected Attr(@Nullable T defaultValue,
+				@Nullable Function<Object, ? extends T> safeConverter) {
+			this.defaultValue = defaultValue;
+			this.safeConverter = safeConverter;
+		}
+
+		static Stream<? extends Scannable> recurse(Scannable _s,
+				Attr<Scannable> key) {
+			Scannable s = Scannable.from(_s.scan(key));
+			if (!s.isScanAvailable()) {
+				return Stream.empty();
+			}
+			return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new Iterator<Scannable>() {
+				Scannable c = s;
+
+				@Override
+				public boolean hasNext() {
+					return c != null && c.isScanAvailable();
+				}
+
+				@Override
+				public Scannable next() {
+					Scannable _c = c;
+					c = Scannable.from(c.scan(key));
+					return _c;
+				}
+			}, 0), false);
+		}
+
+		/**
+		 * Meaningful and always applicable default value for the attribute, returned
+		 * instead of {@literal null} when a specific value hasn't been defined for a
+		 * component. {@literal null} if no sensible generic default is available.
+		 *
+		 * @return the default value applicable to all components or null if none.
+		 */
+		@Nullable
+		public T defaultValue() {
+			return defaultValue;
+		}
+
+		/**
+		 * Checks if this attribute is capable of safely converting any Object into
+		 * a {@code T} via {@link #tryConvert(Object)} (potentially returning {@code null}
+		 * or a Null Object for incompatible raw values).
+		 * @return true if the attribute can safely convert any object, false if it can
+		 * throw {@link ClassCastException}
+		 */
+		boolean isConversionSafe() {
+			return safeConverter != null;
+		}
+
+		/**
+		 * Attempt to convert any {@link Object} instance o into a {@code T}. By default
+		 * unsafe attributes will just try forcing a cast, which can lead to {@link ClassCastException}.
+		 * However, attributes for which {@link #isConversionSafe()} returns true are
+		 * required to not throw an exception (but rather return {@code null} or a Null
+		 * Object).
+		 *
+		 * @param o the instance to attempt conversion on
+		 * @return the converted instance
+		 */
+		@Nullable
+		T tryConvert(@Nullable Object o) {
+			if (o == null) {
+				return null;
+			}
+			if (safeConverter == null) {
+				@SuppressWarnings("unchecked") T t = (T) o;
+				return t;
+			}
+			return safeConverter.apply(o);
+		}
 	}
 
 }

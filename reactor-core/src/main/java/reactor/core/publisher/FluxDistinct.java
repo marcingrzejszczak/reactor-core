@@ -43,9 +43,9 @@ import reactor.util.context.Context;
 final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 
 	final Function<? super T, ? extends K> keyExtractor;
-	final Supplier<C>                      collectionSupplier;
-	final BiPredicate<C, K>                distinctPredicate;
-	final Consumer<C>                      cleanupCallback;
+	final Supplier<C> collectionSupplier;
+	final BiPredicate<C, K> distinctPredicate;
+	final Consumer<C> cleanupCallback;
 
 	FluxDistinct(Flux<? extends T> source,
 			Function<? super T, ? extends K> keyExtractor,
@@ -143,7 +143,7 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 
 			try {
 				k = Objects.requireNonNull(keyExtractor.apply(t),
-				"The distinct extractor returned a null value.");
+						"The distinct extractor returned a null value.");
 			}
 			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, this.ctx));
@@ -166,7 +166,7 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 				actual.onNext(t);
 				return true;
 			}
-			Operators.onDiscard(t , ctx);
+			Operators.onDiscard(t, ctx);
 			return false;
 		}
 
@@ -231,7 +231,7 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 		final Function<? super T, ? extends K> keyExtractor;
 
 		final BiPredicate<C, K> distinctPredicate;
-		final Consumer<C>       cleanupCallback;
+		final Consumer<C> cleanupCallback;
 
 		Subscription s;
 
@@ -270,7 +270,7 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 
 			try {
 				k = Objects.requireNonNull(keyExtractor.apply(t),
-				"The distinct extractor returned a null value.");
+						"The distinct extractor returned a null value.");
 			}
 			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, this.ctx));
@@ -390,7 +390,7 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 
 	static final class DistinctFuseableSubscriber<T, K, C>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T>,
-			           QueueSubscription<T> {
+			QueueSubscription<T> {
 
 		final CoreSubscriber<? super T> actual;
 		final Context ctx;
@@ -398,8 +398,8 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 		final C collection;
 
 		final Function<? super T, ? extends K> keyExtractor;
-		final BiPredicate<C, K>                distinctPredicate;
-		final Consumer<C>                      cleanupCallback;
+		final BiPredicate<C, K> distinctPredicate;
+		final Consumer<C> cleanupCallback;
 
 		QueueSubscription<T> qs;
 
@@ -570,15 +570,15 @@ final class FluxDistinct<T, K, C> extends InternalFluxOperator<T, T> {
 						return null;
 					}
 					try {
-					K r = Objects.requireNonNull(keyExtractor.apply(v),
-							"The keyExtractor returned a null collection");
+						K r = Objects.requireNonNull(keyExtractor.apply(v),
+								"The keyExtractor returned a null collection");
 
-					if (distinctPredicate.test(collection, r)) {
-						return v;
-					}
-					else {
-						Operators.onDiscard(v, ctx);
-					}
+						if (distinctPredicate.test(collection, r)) {
+							return v;
+						}
+						else {
+							Operators.onDiscard(v, ctx);
+						}
 					}
 					catch (Throwable error) {
 						Operators.onDiscard(v, this.ctx);

@@ -33,7 +33,6 @@ import org.assertj.core.data.Offset;
 import org.awaitility.Awaitility;
 import org.junit.AfterClass;
 import org.junit.Test;
-
 import reactor.core.Disposable;
 import reactor.core.Scannable;
 import reactor.core.publisher.Mono;
@@ -41,7 +40,10 @@ import reactor.test.util.RaceTestUtils;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * @author Simon Baslé
@@ -52,7 +54,7 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 
 	static Stream<String> dumpThreadNames() {
 		Thread[] tarray;
-		for(;;) {
+		for (; ; ) {
 			tarray = new Thread[Thread.activeCount()];
 			int dumped = Thread.enumerate(tarray);
 			if (dumped <= tarray.length) {
@@ -62,15 +64,15 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		return Arrays.stream(tarray).filter(Objects::nonNull).map(Thread::getName);
 	}
 
-	@Override
-	protected boolean shouldCheckInterrupted() {
-		return true;
-	}
-
 	@AfterClass
 	public static void dumpThreads() {
 		LOGGER.debug("Remaining threads after test class:");
 		LOGGER.debug(dumpThreadNames().collect(Collectors.joining(", ")));
+	}
+
+	@Override
+	protected boolean shouldCheckInterrupted() {
+		return true;
 	}
 
 	@Override
@@ -101,26 +103,30 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		assertThat(worker4).isExactlyInstanceOf(BoundedElasticScheduler.ActiveWorker.class);
 		assertThat(worker5).isExactlyInstanceOf(BoundedElasticScheduler.DeferredWorker.class);
 
-		worker1.schedule(() -> {});
-		worker2.schedule(() -> {});
-		worker3.schedule(() -> {});
-		worker4.schedule(() -> {});
+		worker1.schedule(() -> {
+		});
+		worker2.schedule(() -> {
+		});
+		worker3.schedule(() -> {
+		});
+		worker4.schedule(() -> {
+		});
 		Disposable periodicDeferredTask = worker5.schedulePeriodically(taskRun::incrementAndGet, 0L, 100, TimeUnit.MILLISECONDS);
 
 		Awaitility.with().pollDelay(100, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> assertThat(taskRun).as("task held due to worker cap").hasValue(0));
+				.untilAsserted(() -> assertThat(taskRun).as("task held due to worker cap").hasValue(0));
 
 		worker1.dispose(); //should trigger work stealing of worker5
 
 		Awaitility.waitAtMost(250, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> assertThat(taskRun).as("task running periodically").hasValue(3));
+				.untilAsserted(() -> assertThat(taskRun).as("task running periodically").hasValue(3));
 
 		periodicDeferredTask.dispose();
 
 		int onceCancelled = taskRun.get();
 		Awaitility.with()
-		          .pollDelay(200, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> assertThat(taskRun).as("task has stopped").hasValue(onceCancelled));
+				.pollDelay(200, TimeUnit.MILLISECONDS)
+				.untilAsserted(() -> assertThat(taskRun).as("task has stopped").hasValue(onceCancelled));
 	}
 
 	@Test
@@ -132,9 +138,12 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker worker3 = afterTest.autoDispose(s.createWorker());
 		Scheduler.Worker worker4 = afterTest.autoDispose(s.createWorker());
 
-		Disposable extraDirect1 = afterTest.autoDispose(s.schedule(() -> { }));
-		Disposable extraDirect2 = afterTest.autoDispose(s.schedule(() -> {}, 100, TimeUnit.MILLISECONDS));
-		Disposable extraDirect3 = afterTest.autoDispose(s.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS));
+		Disposable extraDirect1 = afterTest.autoDispose(s.schedule(() -> {
+		}));
+		Disposable extraDirect2 = afterTest.autoDispose(s.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS));
+		Disposable extraDirect3 = afterTest.autoDispose(s.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS));
 
 		assertThat(extraDirect1)
 				.as("extraDirect1")
@@ -163,7 +172,7 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 	@Test
 	public void negativeTtl() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new BoundedElasticScheduler(1, Integer.MAX_VALUE,null, -1));
+				.isThrownBy(() -> new BoundedElasticScheduler(1, Integer.MAX_VALUE, null, -1));
 	}
 
 	@Test
@@ -211,14 +220,14 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		worker3.dispose();
 
 		Awaitility.with()
-		          .pollInterval(50, TimeUnit.MILLISECONDS)
-		          .await()
-		          //the evictor in the background can and does have a shift, but not more than 1s
-		          .between(1, TimeUnit.SECONDS, 2500, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> {
-		          	assertThat(s.allServices).hasSize(0);
-		          	assertThat(s.deferredFacades).hasSize(0);
-		          });
+				.pollInterval(50, TimeUnit.MILLISECONDS)
+				.await()
+				//the evictor in the background can and does have a shift, but not more than 1s
+				.between(1, TimeUnit.SECONDS, 2500, TimeUnit.MILLISECONDS)
+				.untilAsserted(() -> {
+					assertThat(s.allServices).hasSize(0);
+					assertThat(s.deferredFacades).hasSize(0);
+				});
 	}
 
 	@Test
@@ -233,25 +242,25 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		afterTest.autoDispose(s.schedule(() -> taskRanIn.set(Thread.currentThread().getName())));
 
 		assertThat(taskRanIn).as("before thread freed")
-		                     .hasValue(null);
+				.hasValue(null);
 
 		worker1.dispose();
 		worker2.dispose();
 
 		Awaitility.with()
-		          .pollInterval(50, TimeUnit.MILLISECONDS)
-		          .await()
-		          //the evictor in the background can and does have a shift, but not more than 1s
-		          .between(1, TimeUnit.SECONDS, 2500, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> {
-			          assertThat(s.allServices).as("allServices").hasSize(0);
-			          assertThat(s.deferredFacades).as("deferredWorkers").hasSize(0);
-			          assertThat(taskRanIn).as("task ran").doesNotHaveValue(null);
+				.pollInterval(50, TimeUnit.MILLISECONDS)
+				.await()
+				//the evictor in the background can and does have a shift, but not more than 1s
+				.between(1, TimeUnit.SECONDS, 2500, TimeUnit.MILLISECONDS)
+				.untilAsserted(() -> {
+					assertThat(s.allServices).as("allServices").hasSize(0);
+					assertThat(s.deferredFacades).as("deferredWorkers").hasSize(0);
+					assertThat(taskRanIn).as("task ran").doesNotHaveValue(null);
 
-			          assertThat(dumpThreadNames())
-					          .as("threads")
-					          .doesNotContain(taskRanIn.get());
-		          });
+					assertThat(dumpThreadNames())
+							.as("threads")
+							.doesNotContain(taskRanIn.get());
+				});
 	}
 
 	@Test
@@ -267,9 +276,9 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 			CountDownLatch latch = new CountDownLatch(cacheCount + fastCount);
 			for (int i = 0; i < cacheCount; i++) {
 				Mono.fromRunnable(ThrowingRunnable.unchecked(() -> Thread.sleep(cacheSleep)))
-				    .subscribeOn(scheduler)
-				    .doFinally(sig -> latch.countDown())
-				    .subscribe();
+						.subscribeOn(scheduler)
+						.doFinally(sig -> latch.countDown())
+						.subscribe();
 			}
 
 			int oldActive = 0;
@@ -277,9 +286,9 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 			int activeAtEnd = Integer.MAX_VALUE;
 			for (int i = 0; i < fastCount; i++) {
 				Mono.just(i)
-				    .subscribeOn(scheduler)
-				    .doFinally(sig -> latch.countDown())
-				    .subscribe();
+						.subscribeOn(scheduler)
+						.doFinally(sig -> latch.countDown())
+						.subscribe();
 
 				if (i == 0) {
 					activeAtBeginning = Thread.activeCount() - otherThreads;
@@ -302,8 +311,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 
 			assertThat(latch.await(3, TimeUnit.SECONDS)).as("latch 3s").isTrue();
 			assertThat(activeAtEnd).as("active in last round")
-			                       .isLessThan(activeAtBeginning)
-			                       .isCloseTo(1, Offset.offset(5));
+					.isLessThan(activeAtBeginning)
+					.isCloseTo(1, Offset.offset(5));
 		}
 		finally {
 			scheduler.dispose();
@@ -329,13 +338,13 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		s.dispose();
 
 		Awaitility.with().pollInterval(100, TimeUnit.MILLISECONDS)
-		          .await().atMost(500, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> assertThat(dumpThreadNames()).doesNotContain(threadName.get()));
+				.await().atMost(500, TimeUnit.MILLISECONDS)
+				.untilAsserted(() -> assertThat(dumpThreadNames()).doesNotContain(threadName.get()));
 	}
 
 	@Test
 	public void deferredWorkerDisposedEarly() {
-		BoundedElasticScheduler s = afterTest.autoDispose(new BoundedElasticScheduler(1, Integer.MAX_VALUE, Thread::new,10));
+		BoundedElasticScheduler s = afterTest.autoDispose(new BoundedElasticScheduler(1, Integer.MAX_VALUE, Thread::new, 10));
 		Scheduler.Worker firstWorker = afterTest.autoDispose(s.createWorker());
 		Scheduler.Worker worker = s.createWorker();
 
@@ -354,7 +363,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		BoundedElasticScheduler
 				scheduler = afterTest.autoDispose((BoundedElasticScheduler) Schedulers.newBoundedElastic(1, Integer.MAX_VALUE, "regrowFromEviction", 1));
 		Scheduler.Worker worker = scheduler.createWorker();
-		worker.schedule(() -> {});
+		worker.schedule(() -> {
+		});
 
 		List<BoundedElasticScheduler.CachedService> beforeEviction = new ArrayList<>(scheduler.allServices);
 		assertThat(beforeEviction)
@@ -372,7 +382,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 
 		Scheduler.Worker regrowWorker = afterTest.autoDispose(scheduler.createWorker());
 		assertThat(regrowWorker).isInstanceOf(BoundedElasticScheduler.ActiveWorker.class);
-		regrowWorker.schedule(() -> {});
+		regrowWorker.schedule(() -> {
+		});
 
 		assertThat(scheduler.allServices)
 				.as("after regrowth")
@@ -390,31 +401,49 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker deferredWorker2 = boundedElasticScheduler.createWorker();
 
 		//enqueue tasks in first deferred worker
-		deferredWorker1.schedule(() -> {});
-		deferredWorker1.schedule(() -> {}, 100, TimeUnit.MILLISECONDS);
-		deferredWorker1.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS);
+		deferredWorker1.schedule(() -> {
+		});
+		deferredWorker1.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS);
+		deferredWorker1.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS);
 
 		//enqueue tasks in second deferred worker
-		deferredWorker2.schedule(() -> {});
-		deferredWorker2.schedule(() -> {}, 100, TimeUnit.MILLISECONDS);
-		deferredWorker2.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS);
+		deferredWorker2.schedule(() -> {
+		});
+		deferredWorker2.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS);
+		deferredWorker2.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS);
 
 		//enqueue tasks directly on scheduler
-		boundedElasticScheduler.schedule(() -> {});
-		boundedElasticScheduler.schedule(() -> {}, 100, TimeUnit.MILLISECONDS);
-		boundedElasticScheduler.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS);
+		boundedElasticScheduler.schedule(() -> {
+		});
+		boundedElasticScheduler.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS);
+		boundedElasticScheduler.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS);
 
 		//any attempt at scheduling more task should result in rejection
 		assertThat(boundedElasticScheduler.remainingDeferredTasks).isEqualTo(0);
-		assertThatExceptionOfType(RejectedExecutionException.class).as("worker1 immediate").isThrownBy(() -> deferredWorker1.schedule(() -> {}));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("worker1 delayed").isThrownBy(() -> deferredWorker1.schedule(() -> {}, 100, TimeUnit.MILLISECONDS));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("worker1 periodic").isThrownBy(() -> deferredWorker1.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("worker2 immediate").isThrownBy(() -> deferredWorker2.schedule(() -> {}));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("worker2 delayed").isThrownBy(() -> deferredWorker2.schedule(() -> {}, 100, TimeUnit.MILLISECONDS));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("worker2 periodic").isThrownBy(() -> deferredWorker2.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("scheduler immediate").isThrownBy(() -> boundedElasticScheduler.schedule(() -> {}));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("scheduler delayed").isThrownBy(() -> boundedElasticScheduler.schedule(() -> {}, 100, TimeUnit.MILLISECONDS));
-		assertThatExceptionOfType(RejectedExecutionException.class).as("scheduler periodic").isThrownBy(() -> boundedElasticScheduler.schedulePeriodically(() -> {}, 100, 100, TimeUnit.MILLISECONDS));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("worker1 immediate").isThrownBy(() -> deferredWorker1.schedule(() -> {
+		}));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("worker1 delayed").isThrownBy(() -> deferredWorker1.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("worker1 periodic").isThrownBy(() -> deferredWorker1.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("worker2 immediate").isThrownBy(() -> deferredWorker2.schedule(() -> {
+		}));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("worker2 delayed").isThrownBy(() -> deferredWorker2.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("worker2 periodic").isThrownBy(() -> deferredWorker2.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("scheduler immediate").isThrownBy(() -> boundedElasticScheduler.schedule(() -> {
+		}));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("scheduler delayed").isThrownBy(() -> boundedElasticScheduler.schedule(() -> {
+		}, 100, TimeUnit.MILLISECONDS));
+		assertThatExceptionOfType(RejectedExecutionException.class).as("scheduler periodic").isThrownBy(() -> boundedElasticScheduler.schedulePeriodically(() -> {
+		}, 100, 100, TimeUnit.MILLISECONDS));
 	}
 
 	@Test
@@ -424,7 +453,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker activeWorker = boundedElasticScheduler.createWorker();
 
 		//enqueue tasks directly on scheduler
-		boundedElasticScheduler.schedule(() -> {});
+		boundedElasticScheduler.schedule(() -> {
+		});
 		assertThat(boundedElasticScheduler.remainingDeferredTasks).isEqualTo(0);
 
 		activeWorker.dispose();
@@ -439,7 +469,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker deferredWorker = boundedElasticScheduler.createWorker();
 
 		//enqueue tasks on deferred worker
-		deferredWorker.schedule(() -> {});
+		deferredWorker.schedule(() -> {
+		});
 		assertThat(boundedElasticScheduler.remainingDeferredTasks).isEqualTo(0);
 
 		activeWorker.dispose();
@@ -452,7 +483,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 				boundedElasticScheduler = afterTest.autoDispose(new BoundedElasticScheduler(1, 1, Thread::new, 10));
 		Scheduler.Worker activeWorker = boundedElasticScheduler.createWorker();
 
-		Disposable d = boundedElasticScheduler.schedule(() -> {});
+		Disposable d = boundedElasticScheduler.schedule(() -> {
+		});
 		assertThat(boundedElasticScheduler.remainingDeferredTasks).isEqualTo(0);
 
 		d.dispose();
@@ -467,7 +499,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker deferredWorker = boundedElasticScheduler.createWorker();
 
 		//enqueue tasks on deferred worker
-		Disposable d = deferredWorker.schedule(() -> {});
+		Disposable d = deferredWorker.schedule(() -> {
+		});
 		assertThat(boundedElasticScheduler.remainingDeferredTasks).isEqualTo(0);
 
 		d.dispose();
@@ -490,8 +523,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		activeWorker.dispose();
 
 		Awaitility.with().pollDelay(0, TimeUnit.MILLISECONDS).and().pollInterval(10, TimeUnit.MILLISECONDS)
-		          .await().atMost(100, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> assertThat(runCount).hasValue(3));
+				.await().atMost(100, TimeUnit.MILLISECONDS)
+				.untilAsserted(() -> assertThat(runCount).hasValue(3));
 	}
 
 	@Test
@@ -509,8 +542,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		activeWorker.dispose();
 
 		Awaitility.with().pollDelay(0, TimeUnit.MILLISECONDS).and().pollInterval(10, TimeUnit.MILLISECONDS)
-		          .await().atMost(100, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() -> assertThat(runCount).hasValue(3));
+				.await().atMost(100, TimeUnit.MILLISECONDS)
+				.untilAsserted(() -> assertThat(runCount).hasValue(3));
 	}
 
 	@Test
@@ -521,8 +554,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		Scheduler.Worker deferredWorker = afterTest.autoDispose(scheduler.createWorker());
 
 		assertThat(scheduler.deferredFacades).as("before dispose")
-		                                     .hasSize(1)
-		                                     .containsExactly((BoundedElasticScheduler.DeferredFacade) deferredWorker);
+				.hasSize(1)
+				.containsExactly((BoundedElasticScheduler.DeferredFacade) deferredWorker);
 
 		deferredWorker.dispose();
 		assertThat(scheduler.deferredFacades).as("after dispose").isEmpty();
@@ -533,11 +566,12 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		BoundedElasticScheduler
 				scheduler = afterTest.autoDispose((BoundedElasticScheduler) Schedulers.newBoundedElastic(1, Integer.MAX_VALUE, "test"));
 		Scheduler.Worker activeWorker = afterTest.autoDispose(scheduler.createWorker());
-		Disposable deferredDirect = scheduler.schedule(() -> {});
+		Disposable deferredDirect = scheduler.schedule(() -> {
+		});
 
 		assertThat(scheduler.deferredFacades).as("before dispose")
-		                                     .hasSize(1)
-		                                     .containsExactly((BoundedElasticScheduler.DeferredFacade) deferredDirect);
+				.hasSize(1)
+				.containsExactly((BoundedElasticScheduler.DeferredFacade) deferredDirect);
 
 		deferredDirect.dispose();
 		assertThat(scheduler.deferredFacades).as("after dispose").isEmpty();
@@ -563,7 +597,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		BoundedElasticScheduler
 				scheduler = afterTest.autoDispose((BoundedElasticScheduler) Schedulers.newBoundedElastic(1, Integer.MAX_VALUE, "test"));
 		BoundedElasticScheduler.ActiveWorker activeWorker = (BoundedElasticScheduler.ActiveWorker) afterTest.autoDispose(scheduler.createWorker());
-		BoundedElasticScheduler.DeferredDirect deferredDirect = (BoundedElasticScheduler.DeferredDirect) afterTest.autoDispose(scheduler.schedule(() -> {}));
+		BoundedElasticScheduler.DeferredDirect deferredDirect = (BoundedElasticScheduler.DeferredDirect) afterTest.autoDispose(scheduler.schedule(() -> {
+		}));
 
 		deferredDirect.dispose();
 
@@ -581,17 +616,20 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		deferredWorker.dispose();
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> deferredWorker.schedule(() -> {}))
+				.isThrownBy(() -> deferredWorker.schedule(() -> {
+				}))
 				.as("immediate schedule after dispose")
 				.withMessage("Worker has been disposed");
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> deferredWorker.schedule(() -> {}, 10, TimeUnit.MILLISECONDS))
+				.isThrownBy(() -> deferredWorker.schedule(() -> {
+				}, 10, TimeUnit.MILLISECONDS))
 				.as("delayed schedule after dispose")
 				.withMessage("Worker has been disposed");
 
 		assertThatExceptionOfType(RejectedExecutionException.class)
-				.isThrownBy(() -> deferredWorker.schedulePeriodically(() -> {}, 10, 10, TimeUnit.MILLISECONDS))
+				.isThrownBy(() -> deferredWorker.schedulePeriodically(() -> {
+				}, 10, 10, TimeUnit.MILLISECONDS))
 				.as("periodic schedule after dispose")
 				.withMessage("Worker has been disposed");
 	}
@@ -642,19 +680,19 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		activeWorker.dispose();
 
 		Awaitility.await().atMost(500, TimeUnit.MILLISECONDS)
-		          .untilAsserted(() ->
-				          assertThat(taskDone).as("all fakeWorker tasks done")
-				                              .hasValue(workerCount)
-		          );
+				.untilAsserted(() ->
+						assertThat(taskDone).as("all fakeWorker tasks done")
+								.hasValue(workerCount)
+				);
 
 		fakeWorker.dispose();
 
 		//TODO maybe investigate: large amount of direct deferred tasks takes more time to be executed
 		Awaitility.await().atMost(10, TimeUnit.SECONDS)
-		          .untilAsserted(() ->
-				          assertThat(taskDone).as("all deferred tasks done")
-				                              .hasValue(limit)
-		          );
+				.untilAsserted(() ->
+						assertThat(taskDone).as("all deferred tasks done")
+								.hasValue(limit)
+				);
 	}
 
 	@Test
@@ -693,7 +731,7 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		AtomicInteger incrementWon = new AtomicInteger();
 		AtomicInteger rejected = new AtomicInteger();
 		int rounds = 0;
-		while(rounds++ < maxRounds) {
+		while (rounds++ < maxRounds) {
 			try {
 				if (rounds % 10 == 0) { //from time to time reverse the race
 					RaceTestUtils.race(
@@ -715,10 +753,11 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 
 		System.out.println("incremented=" + incrementWon.get() + "/" + maxRounds + ", rejected=" + rejected.get());
 
-		assertThatCode(() -> boundedElasticScheduler.schedule(() -> {})).doesNotThrowAnyException();
+		assertThatCode(() -> boundedElasticScheduler.schedule(() -> {
+		})).doesNotThrowAnyException();
 		assertThat(incrementWon).as("some but not all increments win")
-		                        .hasPositiveValue()
-		                        .hasValueLessThan(maxRounds);
+				.hasPositiveValue()
+				.hasValueLessThan(maxRounds);
 		assertThat(rejected).as("rejected").hasValue(0);
 	}
 
@@ -790,7 +829,8 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 		BoundedElasticScheduler parent = afterTest.autoDispose(new BoundedElasticScheduler(3, 10, Thread::new, 60));
 		BoundedElasticScheduler.REMAINING_DEFERRED_TASKS.decrementAndGet(parent);
 
-		BoundedElasticScheduler.DeferredDirect deferredDirect = new BoundedElasticScheduler.DeferredDirect(() -> {}, 10, 10, TimeUnit.MILLISECONDS, parent);
+		BoundedElasticScheduler.DeferredDirect deferredDirect = new BoundedElasticScheduler.DeferredDirect(() -> {
+		}, 10, 10, TimeUnit.MILLISECONDS, parent);
 
 		assertThat(deferredDirect.scan(Scannable.Attr.TERMINATED)).as("TERMINATED").isFalse();
 		assertThat(deferredDirect.scan(Scannable.Attr.CANCELLED)).as("CANCELLED").isFalse();
@@ -831,8 +871,10 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 
 		//BUFFERED depends on tasks queue size
 		assertThat(deferredWorker.scan(Scannable.Attr.BUFFERED)).as("BUFFERED").isZero();
-		deferredWorker.schedule(() -> {});
-		deferredWorker.schedule(() -> {});
+		deferredWorker.schedule(() -> {
+		});
+		deferredWorker.schedule(() -> {
+		});
 		assertThat(deferredWorker.scan(Scannable.Attr.BUFFERED)).as("BUFFERED once tasks submitted").isEqualTo(2);
 
 		deferredWorker.dispose();

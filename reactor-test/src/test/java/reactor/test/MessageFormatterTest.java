@@ -21,12 +21,21 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.Test;
-
 import reactor.core.publisher.Signal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MessageFormatterTest {
+
+	// === Tests with an empty scenario name ===
+	static final MessageFormatter noScenario = new MessageFormatter("", null, null);
+	// === Tests with a scenario name ===
+	static final MessageFormatter
+			withScenario = new MessageFormatter("MessageFormatterTest", null, null);
+	// === Tests with a value formatter ===
+	static final MessageFormatter withCustomFormatter = new MessageFormatter("withCustomFormatter",
+			ValueFormatters.forClass(String.class, o -> o.getClass().getSimpleName() + "=>" + o),
+			Arrays.asList(ValueFormatters.DEFAULT_SIGNAL_EXTRACTOR, ValueFormatters.DEFAULT_ITERABLE_EXTRACTOR, ValueFormatters.arrayExtractor(Object[].class)));
 
 	@Test
 	public void noScenarioEmpty() {
@@ -47,9 +56,6 @@ public class MessageFormatterTest {
 		assertThat(new MessageFormatter("foo", null, null).scenarioPrefix)
 				.isEqualTo("[foo] ");
 	}
-
-	// === Tests with an empty scenario name ===
-	static final MessageFormatter noScenario = new MessageFormatter("", null, null);
 
 	@Test
 	public void noScenarioFailNullEventNoArgs() {
@@ -80,7 +86,6 @@ public class MessageFormatterTest {
 		assertThat(noScenario.fail(null, "details = %s", "bar"))
 				.hasMessage("expectation failed (details = bar)");
 	}
-
 
 	@Test
 	public void noScenarioFailNoDescriptionHasArgs() {
@@ -147,11 +152,6 @@ public class MessageFormatterTest {
 				.hasMessage("plain");
 	}
 
-
-	// === Tests with a scenario name ===
-	static final MessageFormatter
-			withScenario = new MessageFormatter("MessageFormatterTest", null, null);
-
 	@Test
 	public void withScenarioFailNullEventNoArgs() {
 		assertThat(withScenario.fail(null, "details"))
@@ -181,7 +181,6 @@ public class MessageFormatterTest {
 		assertThat(withScenario.fail(null, "details = %s", "bar"))
 				.hasMessage("[MessageFormatterTest] expectation failed (details = bar)");
 	}
-
 
 	@Test
 	public void withScenarioFailNoDescriptionHasArgs() {
@@ -247,11 +246,6 @@ public class MessageFormatterTest {
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage("[MessageFormatterTest] plain");
 	}
-
-	// === Tests with a value formatter ===
-	static final MessageFormatter withCustomFormatter = new MessageFormatter("withCustomFormatter",
-			ValueFormatters.forClass(String.class, o -> o.getClass().getSimpleName() + "=>" + o),
-			Arrays.asList(ValueFormatters.DEFAULT_SIGNAL_EXTRACTOR, ValueFormatters.DEFAULT_ITERABLE_EXTRACTOR, ValueFormatters.arrayExtractor(Object[].class)));
 
 	@Test
 	public void withCustomFormatterFailNullEventNoArgs() {
@@ -359,14 +353,14 @@ public class MessageFormatterTest {
 	@Test
 	public void withCustomFormatterFormatIterable() {
 		assertThat(withCustomFormatter.format("expectation %s expected %s got %s",
-				Arrays.asList("foo","bar"), "foo", Collections.singletonList("bar")))
+				Arrays.asList("foo", "bar"), "foo", Collections.singletonList("bar")))
 				.isEqualTo("expectation [String=>foo, String=>bar] expected String=>foo got [String=>bar]");
 	}
 
 	@Test
 	public void withCustomFormatterFormatArray() {
 		assertThat(withCustomFormatter.format("expectation %s expected %s got %s",
-				new Object[] {"foo","bar"}, "foo", new Object[] {"bar"}))
+				new Object[] {"foo", "bar"}, "foo", new Object[] {"bar"}))
 				.isEqualTo("expectation [String=>foo, String=>bar] expected String=>foo got [String=>bar]");
 	}
 }

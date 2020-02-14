@@ -68,27 +68,23 @@ final class BoundedElasticScheduler
 		return t;
 	};
 
-	static final CachedService SHUTDOWN            = new CachedService(null);
-	static final int           DEFAULT_TTL_SECONDS = 60;
-
-	final ThreadFactory              factory;
-	final int                        ttlSeconds;
-	final int                        threadCap;
-	final int                        deferredTaskCap;
-	final Deque<CachedServiceExpiry> idleServicesWithExpiry;
-	final Queue<DeferredFacade>      deferredFacades;
-	final Queue<CachedService>       allServices;
-	final ScheduledExecutorService   evictor;
-
-	volatile boolean shutdown;
-
-	volatile int                                                    remainingThreads;
+	static final CachedService SHUTDOWN = new CachedService(null);
+	static final int DEFAULT_TTL_SECONDS = 60;
 	static final AtomicIntegerFieldUpdater<BoundedElasticScheduler> REMAINING_THREADS =
 			AtomicIntegerFieldUpdater.newUpdater(BoundedElasticScheduler.class, "remainingThreads");
-
-	volatile int                                                   remainingDeferredTasks;
-	static final AtomicIntegerFieldUpdater<BoundedElasticScheduler>REMAINING_DEFERRED_TASKS =
+	static final AtomicIntegerFieldUpdater<BoundedElasticScheduler> REMAINING_DEFERRED_TASKS =
 			AtomicIntegerFieldUpdater.newUpdater(BoundedElasticScheduler.class, "remainingDeferredTasks");
+	final ThreadFactory factory;
+	final int ttlSeconds;
+	final int threadCap;
+	final int deferredTaskCap;
+	final Deque<CachedServiceExpiry> idleServicesWithExpiry;
+	final Queue<DeferredFacade> deferredFacades;
+	final Queue<CachedService> allServices;
+	final ScheduledExecutorService evictor;
+	volatile boolean shutdown;
+	volatile int remainingThreads;
+	volatile int remainingDeferredTasks;
 
 
 	BoundedElasticScheduler(int threadCap, int deferredTaskCap, ThreadFactory factory, int ttlSeconds) {
@@ -236,7 +232,7 @@ final class BoundedElasticScheduler
 			return deferredDirect;
 		}
 		else {
-			for (;;) {
+			for (; ; ) {
 				int remTasks = REMAINING_DEFERRED_TASKS.get(this);
 				if (remTasks <= 0) {
 					throw Exceptions.failWithRejected("hard cap on deferred tasks reached for " + this.toString());
@@ -267,7 +263,7 @@ final class BoundedElasticScheduler
 			return deferredDirect;
 		}
 		else {
-			for (;;) {
+			for (; ; ) {
 				int remTasks = REMAINING_DEFERRED_TASKS.get(this);
 				if (remTasks <= 0) {
 					throw Exceptions.failWithRejected("hard cap on deferred tasks reached for " + this.toString());
@@ -298,7 +294,7 @@ final class BoundedElasticScheduler
 			return deferredDirect;
 		}
 		else {
-			for (;;) {
+			for (; ; ) {
 				int remTasks = REMAINING_DEFERRED_TASKS.get(this);
 				if (remTasks <= 0) {
 					throw Exceptions.failWithRejected("hard cap on deferred tasks reached for " + this.toString());
@@ -320,8 +316,8 @@ final class BoundedElasticScheduler
 			ts.append('\"').append(((ReactorThreadFactory) factory).get()).append("\",");
 		}
 		ts.append("maxThreads=").append(threadCap)
-		  .append(",maxTaskQueued=").append(deferredTaskCap == Integer.MAX_VALUE ? "unbounded" : deferredTaskCap)
-		  .append(",ttl=").append(ttlSeconds).append("s)");
+				.append(",maxTaskQueued=").append(deferredTaskCap == Integer.MAX_VALUE ? "unbounded" : deferredTaskCap)
+				.append(",ttl=").append(ttlSeconds).append("s)");
 		return ts.toString();
 	}
 
@@ -336,10 +332,10 @@ final class BoundedElasticScheduler
 	}
 
 	@Override
-		//TODO re-evaluate the inners? should these include deferredWorkers? allServices?
+	//TODO re-evaluate the inners? should these include deferredWorkers? allServices?
 	public Stream<? extends Scannable> inners() {
 		return idleServicesWithExpiry.stream()
-		                             .map(cached -> cached.cached);
+				.map(cached -> cached.cached);
 	}
 
 	void eviction(LongSupplier nowSupplier) {
@@ -356,9 +352,19 @@ final class BoundedElasticScheduler
 		}
 	}
 
+	/**
+	 * Either a {@link reactor.core.scheduler.Scheduler.Worker} or a direct facade for tasks
+	 * that cannot be immediately scheduled due to a lack of available services.
+	 */
+	@FunctionalInterface
+	interface DeferredFacade {
+
+		void setService(CachedService service);
+	}
+
 	static final class CachedService implements Disposable, Scannable {
 
-		final BoundedElasticScheduler  parent;
+		final BoundedElasticScheduler parent;
 		final ScheduledExecutorService exec;
 
 		CachedService(@Nullable BoundedElasticScheduler parent) {
@@ -413,7 +419,7 @@ final class BoundedElasticScheduler
 	static final class CachedServiceExpiry {
 
 		final CachedService cached;
-		final long          expireMillis;
+		final long expireMillis;
 
 		CachedServiceExpiry(CachedService cached, long expireMillis) {
 			this.cached = cached;
@@ -482,32 +488,20 @@ final class BoundedElasticScheduler
 	}
 
 	/**
-	 * Either a {@link reactor.core.scheduler.Scheduler.Worker} or a direct facade for tasks
-	 * that cannot be immediately scheduled due to a lack of available services.
-	 */
-	@FunctionalInterface
-	interface DeferredFacade {
-
-		void setService(CachedService service);
-	}
-
-	/**
 	 * Capture a submitted task, then its deferred execution when an ActiveWorker becomes available.
 	 * Propagates task cancellation, as this would be the outer world {@link Disposable} interface
 	 * even when the task is activated.
 	 */
 	static final class DeferredWorkerTask implements Disposable {
 
-		final DeferredWorker parent;
-		final Runnable       task;
-
-		final long     delay;
-		final long     period;
-		final TimeUnit timeUnit;
-
-		volatile Disposable                                                      activated;
 		static final AtomicReferenceFieldUpdater<DeferredWorkerTask, Disposable> ACTIVATED =
 				AtomicReferenceFieldUpdater.newUpdater(DeferredWorkerTask.class, Disposable.class, "activated");
+		final DeferredWorker parent;
+		final Runnable task;
+		final long delay;
+		final long period;
+		final TimeUnit timeUnit;
+		volatile Disposable activated;
 
 		DeferredWorkerTask(DeferredWorker parent, Runnable task, long delay, long period, TimeUnit unit) {
 			this.parent = parent;
@@ -554,19 +548,16 @@ final class BoundedElasticScheduler
 	 * become available. Propagates cancellation of tasks and disposal of worker in early scenarios.
 	 */
 	static final class DeferredWorker extends ConcurrentLinkedQueue<DeferredWorkerTask> implements Worker, Scannable,
-	                                                                                               DeferredFacade {
+			DeferredFacade {
 
-		final BoundedElasticScheduler parent;
-
-		volatile ActiveWorker delegate;
 		static final AtomicReferenceFieldUpdater<DeferredWorker, ActiveWorker> DELEGATE =
 				AtomicReferenceFieldUpdater.newUpdater(DeferredWorker.class, ActiveWorker.class, "delegate");
-
-		volatile int                                           disposed;
 		static final AtomicIntegerFieldUpdater<DeferredWorker> DISPOSED =
 				AtomicIntegerFieldUpdater.newUpdater(DeferredWorker.class, "disposed");
-
+		final BoundedElasticScheduler parent;
 		final String workerName;
+		volatile ActiveWorker delegate;
+		volatile int disposed;
 
 		DeferredWorker(BoundedElasticScheduler parent) {
 			this.parent = parent;
@@ -581,7 +572,7 @@ final class BoundedElasticScheduler
 			ActiveWorker delegate = new ActiveWorker(service);
 			if (DELEGATE.compareAndSet(this, null, delegate)) {
 				DeferredWorkerTask pendingTask;
-				while((pendingTask = this.poll()) != null) {
+				while ((pendingTask = this.poll()) != null) {
 					pendingTask.activate(delegate);
 				}
 			}
@@ -603,7 +594,7 @@ final class BoundedElasticScheduler
 					return pendingTask;
 				}
 				else {
-					for (;;) {
+					for (; ; ) {
 						int remTasks = REMAINING_DEFERRED_TASKS.get(parent);
 						if (remTasks <= 0) {
 							throw Exceptions.failWithRejected("hard cap on deferred tasks reached for " + this.toString());
@@ -632,7 +623,7 @@ final class BoundedElasticScheduler
 					return pendingTask;
 				}
 				else {
-					for (;;) {
+					for (; ; ) {
 						int remTasks = REMAINING_DEFERRED_TASKS.get(parent);
 						if (remTasks <= 0) {
 							throw Exceptions.failWithRejected("hard cap on deferred tasks reached for " + this.toString());
@@ -659,12 +650,12 @@ final class BoundedElasticScheduler
 			ActiveWorker aw = DELEGATE.get(this);
 			if (aw == null) {
 				if (parent.deferredTaskCap == Integer.MAX_VALUE) {
-						DeferredWorkerTask pendingTask = new DeferredWorkerTask(this, task, initialDelay, period, unit);
-						offer(pendingTask);
-						return pendingTask;
+					DeferredWorkerTask pendingTask = new DeferredWorkerTask(this, task, initialDelay, period, unit);
+					offer(pendingTask);
+					return pendingTask;
 				}
 				else {
-					for (;;) {
+					for (; ; ) {
 						int remTasks = REMAINING_DEFERRED_TASKS.get(parent);
 						if (remTasks <= 0) {
 							throw Exceptions.failWithRejected("hard cap on deferred tasks reached for " + this.toString());
@@ -687,7 +678,7 @@ final class BoundedElasticScheduler
 				//each inner task will decrement the remainingTask counter
 
 				DeferredWorkerTask pendingTask;
-				while((pendingTask = this.poll()) != null) {
+				while ((pendingTask = this.poll()) != null) {
 					pendingTask.disposeInner();
 				}
 
@@ -721,21 +712,19 @@ final class BoundedElasticScheduler
 	 * Propagates cancellation of tasks in early scenarios.
 	 */
 	static final class DeferredDirect extends AtomicReference<CachedService> implements Scannable, Disposable,
-	                                                                                    DeferredFacade {
+			DeferredFacade {
 
-		volatile Disposable                                                  activeTask;
 		static final AtomicReferenceFieldUpdater<DeferredDirect, Disposable> ACTIVE_TASK =
 				AtomicReferenceFieldUpdater.newUpdater(DeferredDirect.class, Disposable.class, "activeTask");
-
-		volatile int                                           disposed;
 		static final AtomicIntegerFieldUpdater<DeferredDirect> DISPOSED =
 				AtomicIntegerFieldUpdater.newUpdater(DeferredDirect.class, "disposed");
-
-		final Runnable                task;
-		final long                    delay;
-		final long                    period;
-		final TimeUnit                timeUnit;
+		final Runnable task;
+		final long delay;
+		final long period;
+		final TimeUnit timeUnit;
 		final BoundedElasticScheduler parent;
+		volatile Disposable activeTask;
+		volatile int disposed;
 
 		DeferredDirect(Runnable task, long delay, long period, TimeUnit unit, BoundedElasticScheduler parent) {
 			this.task = task;

@@ -177,7 +177,7 @@ public class Context3Test {
 		Context put = c.putAll(m);
 
 		assertThat(put).isInstanceOf(Context4.class)
-		               .hasToString("Context4{1=replaced, 2=B, 3=C, A=1}");
+				.hasToString("Context4{1=replaced, 2=B, 3=C, A=1}");
 	}
 
 	@Test
@@ -214,7 +214,7 @@ public class Context3Test {
 		Context result = ((CoreContext) c).putAllInto(initial);
 
 		assertThat(result).isNotSameAs(initial)
-		                  .isNotSameAs(c);
+				.isNotSameAs(c);
 
 		assertThat(result.stream()).containsExactlyElementsOf(c.stream().collect(Collectors.toList()));
 	}
@@ -226,7 +226,7 @@ public class Context3Test {
 		Context result = self.putAllInto(initial);
 
 		assertThat(result).isNotSameAs(initial)
-		                  .isNotSameAs(c);
+				.isNotSameAs(c);
 
 		assertThat(result.stream().map(String::valueOf))
 				.containsExactly("1=1", "2=2", "3=3", "4=4", "5=5", "6=6", "A=1", "B=2", "C=3");

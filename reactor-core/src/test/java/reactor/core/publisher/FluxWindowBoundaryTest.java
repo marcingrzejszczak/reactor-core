@@ -44,9 +44,9 @@ public class FluxWindowBoundaryTest {
 	@SafeVarargs
 	static <T> void expect(AssertSubscriber<Flux<T>> ts, int index, T... values) {
 		toList(ts.values()
-		         .get(index)).assertValues(values)
-		                     .assertComplete()
-		                     .assertNoError();
+				.get(index)).assertValues(values)
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -57,7 +57,7 @@ public class FluxWindowBoundaryTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.window(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(1);
 
@@ -78,7 +78,7 @@ public class FluxWindowBoundaryTest {
 		expect(ts, 1, 4, 5);
 
 		ts.assertNoError()
-		  .assertComplete();
+				.assertComplete();
 
 		Assert.assertFalse("sp1 has subscribers", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers", sp1.hasDownstreams());
@@ -92,7 +92,7 @@ public class FluxWindowBoundaryTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.window(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(1);
 
@@ -113,7 +113,7 @@ public class FluxWindowBoundaryTest {
 		expect(ts, 1, 4, 5);
 
 		ts.assertNoError()
-		  .assertComplete();
+				.assertComplete();
 
 		Assert.assertFalse("sp1 has subscribers", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers", sp1.hasDownstreams());
@@ -127,7 +127,7 @@ public class FluxWindowBoundaryTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.window(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(1);
 
@@ -147,14 +147,14 @@ public class FluxWindowBoundaryTest {
 		expect(ts, 0, 1, 2, 3);
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5)
-		                 .assertError(RuntimeException.class)
-		                 .assertErrorMessage("forced failure")
-		                 .assertNotComplete();
+				.get(1)).assertValues(4, 5)
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		ts.assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("sp1 has subscribers", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers", sp1.hasDownstreams());
@@ -168,7 +168,7 @@ public class FluxWindowBoundaryTest {
 		DirectProcessor<Integer> sp2 = DirectProcessor.create();
 
 		sp1.window(sp2)
-		   .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValueCount(1);
 
@@ -188,14 +188,14 @@ public class FluxWindowBoundaryTest {
 		expect(ts, 0, 1, 2, 3);
 
 		toList(ts.values()
-		         .get(1)).assertValues(4, 5)
-		                 .assertError(RuntimeException.class)
-		                 .assertErrorMessage("forced failure")
-		                 .assertNotComplete();
+				.get(1)).assertValues(4, 5)
+				.assertError(RuntimeException.class)
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		ts.assertError(RuntimeException.class)
-		  .assertErrorMessage("forced failure")
-		  .assertNotComplete();
+				.assertErrorMessage("forced failure")
+				.assertNotComplete();
 
 		Assert.assertFalse("sp1 has subscribers", sp1.hasDownstreams());
 		Assert.assertFalse("sp2 has subscribers", sp1.hasDownstreams());
@@ -204,20 +204,20 @@ public class FluxWindowBoundaryTest {
 
 	Flux<List<Integer>> scenario_windowWillSubdivideAnInputFluxTime() {
 		return Flux.just(1, 2, 3, 4, 5, 6, 7, 8)
-		           .delayElements(Duration.ofMillis(99))
-		           .window(Duration.ofMillis(200))
-		           .concatMap(Flux::buffer);
+				.delayElements(Duration.ofMillis(99))
+				.window(Duration.ofMillis(200))
+				.concatMap(Flux::buffer);
 	}
 
 	@Test
 	public void windowWillSubdivideAnInputFluxTime() {
 		StepVerifier.withVirtualTime(this::scenario_windowWillSubdivideAnInputFluxTime)
-		            .thenAwait(Duration.ofSeconds(10))
-		            .assertNext(t -> assertThat(t).containsExactly(1, 2))
-		            .assertNext(t -> assertThat(t).containsExactly(3, 4))
-		            .assertNext(t -> assertThat(t).containsExactly(5, 6))
-		            .assertNext(t -> assertThat(t).containsExactly(7, 8))
-		            .verifyComplete();
+				.thenAwait(Duration.ofSeconds(10))
+				.assertNext(t -> assertThat(t).containsExactly(1, 2))
+				.assertNext(t -> assertThat(t).containsExactly(3, 4))
+				.assertNext(t -> assertThat(t).containsExactly(5, 6))
+				.assertNext(t -> assertThat(t).containsExactly(7, 8))
+				.verifyComplete();
 	}
 
 	@Test
@@ -229,10 +229,10 @@ public class FluxWindowBoundaryTest {
 		EmitterProcessor<Integer> boundaryFlux = EmitterProcessor.create();
 
 		MonoProcessor<List<List<Integer>>> res = numbers.window(boundaryFlux)
-		                                       .concatMap(Flux::buffer)
-		                                       .buffer()
-		                                       .publishNext()
-		                                       .toProcessor();
+				.concatMap(Flux::buffer)
+				.buffer()
+				.publishNext()
+				.toProcessor();
 		res.subscribe();
 
 		numbers.onNext(1);
@@ -248,11 +248,12 @@ public class FluxWindowBoundaryTest {
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindowBoundary.WindowBoundaryMain<Integer, Integer> test = new FluxWindowBoundary.WindowBoundaryMain<>(actual,
-        		Queues.unbounded(), Queues.<Integer>unbounded().get());
-        Subscription parent = Operators.emptySubscription();
+	public void scanMainSubscriber() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindowBoundary.WindowBoundaryMain<Integer, Integer> test = new FluxWindowBoundary.WindowBoundaryMain<>(actual,
+				Queues.unbounded(), Queues.<Integer>unbounded().get());
+		Subscription parent = Operators.emptySubscription();
 		test.onSubscribe(parent);
 
 		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
@@ -274,25 +275,26 @@ public class FluxWindowBoundaryTest {
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
 		test.cancel();
 		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+	}
 
 	@Test
-    public void scanOtherSubscriber() {
-        CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxWindowBoundary.WindowBoundaryMain<Integer, Integer> main = new FluxWindowBoundary.WindowBoundaryMain<>(actual,
-        		Queues.unbounded(), Queues.<Integer>unbounded().get());
-        FluxWindowBoundary.WindowBoundaryOther<Integer> test =
-        		new FluxWindowBoundary.WindowBoundaryOther<>(main);
-        Subscription parent = Operators.emptySubscription();
-        test.onSubscribe(parent);
+	public void scanOtherSubscriber() {
+		CoreSubscriber<Flux<Integer>> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxWindowBoundary.WindowBoundaryMain<Integer, Integer> main = new FluxWindowBoundary.WindowBoundaryMain<>(actual,
+				Queues.unbounded(), Queues.<Integer>unbounded().get());
+		FluxWindowBoundary.WindowBoundaryOther<Integer> test =
+				new FluxWindowBoundary.WindowBoundaryOther<>(main);
+		Subscription parent = Operators.emptySubscription();
+		test.onSubscribe(parent);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
-        test.requested = 35;
-        Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
+		Assertions.assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(parent);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(main);
+		test.requested = 35;
+		Assertions.assertThat(test.scan(Scannable.Attr.REQUESTED_FROM_DOWNSTREAM)).isEqualTo(35);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

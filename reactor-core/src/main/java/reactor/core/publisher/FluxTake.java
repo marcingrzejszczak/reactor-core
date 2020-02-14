@@ -64,20 +64,15 @@ final class FluxTake<T> extends InternalFluxOperator<T, T> {
 	static final class TakeSubscriber<T>
 			implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final long n;
-
-		long remaining;
-
-		Subscription s;
-
-		boolean done;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<TakeSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(TakeSubscriber.class, "wip");
+				AtomicIntegerFieldUpdater.newUpdater(TakeSubscriber.class, "wip");
+		final CoreSubscriber<? super T> actual;
+		final long n;
+		long remaining;
+		Subscription s;
+		boolean done;
+		volatile int wip;
 
 		public TakeSubscriber(CoreSubscriber<? super T> actual, long n) {
 			this.actual = actual;
@@ -151,7 +146,8 @@ final class FluxTake<T> extends InternalFluxOperator<T, T> {
 			if (wip == 0 && WIP.compareAndSet(this, 0, 1)) {
 				if (n >= this.n) {
 					s.request(Long.MAX_VALUE);
-				} else {
+				}
+				else {
 					s.request(n);
 				}
 				return;
@@ -183,21 +179,16 @@ final class FluxTake<T> extends InternalFluxOperator<T, T> {
 	static final class TakeConditionalSubscriber<T>
 			implements ConditionalSubscriber<T>, InnerOperator<T, T> {
 
-		final ConditionalSubscriber<? super T> actual;
-
-		final long n;
-
-		long remaining;
-
-		Subscription s;
-
-		boolean done;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<TakeConditionalSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(TakeConditionalSubscriber.class,
 						"wip");
+		final ConditionalSubscriber<? super T> actual;
+		final long n;
+		long remaining;
+		Subscription s;
+		boolean done;
+		volatile int wip;
 
 		TakeConditionalSubscriber(ConditionalSubscriber<? super T> actual,
 				long n) {
@@ -333,21 +324,15 @@ final class FluxTake<T> extends InternalFluxOperator<T, T> {
 	static final class TakeFuseableSubscriber<T>
 			implements QueueSubscription<T>, InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-
-		final long n;
-
-		long remaining;
-
-		QueueSubscription<T> qs;
-
-		boolean done;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<TakeFuseableSubscriber> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(TakeFuseableSubscriber.class, "wip");
-
+		final CoreSubscriber<? super T> actual;
+		final long n;
+		long remaining;
+		QueueSubscription<T> qs;
+		boolean done;
+		volatile int wip;
 		int inputMode;
 
 		TakeFuseableSubscriber(CoreSubscriber<? super T> actual, long n) {

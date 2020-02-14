@@ -1,6 +1,7 @@
 package reactor.util.concurrent;
 
 import java.util.Arrays;
+
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +40,7 @@ public class SpscArrayQueueTest {
 
 		q.offer(1);
 		q.offer(2);
-		q.removeAll(Arrays.asList(1,2));
+		q.removeAll(Arrays.asList(1, 2));
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -48,7 +49,7 @@ public class SpscArrayQueueTest {
 
 		q.offer(1);
 		q.offer(2);
-		q.retainAll(Arrays.asList(1,2));
+		q.retainAll(Arrays.asList(1, 2));
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -60,7 +61,7 @@ public class SpscArrayQueueTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void shouldNotAllowAddAll() {
 		SpscArrayQueue<Object> q = new SpscArrayQueue<>(32);
-		q.addAll(Arrays.asList(1,2,3));
+		q.addAll(Arrays.asList(1, 2, 3));
 	}
 
 	@Test
@@ -86,6 +87,7 @@ public class SpscArrayQueueTest {
 
 		for (int i = 0; i < 100; i++) {
 			assertThat(q.peek()).isEqualTo(1);
-			assertThat(q.size()).isEqualTo(2);		}
+			assertThat(q.size()).isEqualTo(2);
+		}
 	}
 }

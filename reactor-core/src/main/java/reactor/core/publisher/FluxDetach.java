@@ -27,7 +27,7 @@ import reactor.util.context.Context;
  * termination or cancellation.
  * <p>This should help with odd retention scenarios when running
  * with non Rx mentality based Publishers.
- * 
+ *
  * @param <T> the value type
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
@@ -45,7 +45,7 @@ final class FluxDetach<T> extends InternalFluxOperator<T, T> {
 	static final class DetachSubscriber<T> implements InnerOperator<T, T> {
 
 		CoreSubscriber<? super T> actual;
-		
+
 		Subscription s;
 
 		DetachSubscriber(CoreSubscriber<? super T> actual) {
@@ -71,11 +71,11 @@ final class FluxDetach<T> extends InternalFluxOperator<T, T> {
 		public void onSubscribe(Subscription s) {
 			if (Operators.validate(this.s, s)) {
 				this.s = s;
-				
+
 				actual.onSubscribe(this);
 			}
 		}
-		
+
 		@Override
 		public void onNext(T t) {
 			Subscriber<? super T> a = actual;
@@ -83,14 +83,14 @@ final class FluxDetach<T> extends InternalFluxOperator<T, T> {
 				a.onNext(t);
 			}
 		}
-		
+
 		@Override
 		public void onError(Throwable t) {
 			Subscriber<? super T> a = actual;
 			if (a != null) {
 				actual = null;
 				s = null;
-				
+
 				a.onError(t);
 			}
 		}
@@ -106,11 +106,11 @@ final class FluxDetach<T> extends InternalFluxOperator<T, T> {
 			if (a != null) {
 				actual = null;
 				s = null;
-				
+
 				a.onComplete();
 			}
 		}
-		
+
 		@Override
 		public void request(long n) {
 			Subscription a = s;
@@ -118,14 +118,14 @@ final class FluxDetach<T> extends InternalFluxOperator<T, T> {
 				a.request(n);
 			}
 		}
-		
+
 		@Override
 		public void cancel() {
 			Subscription a = s;
 			if (a != null) {
 				actual = null;
 				s = null;
-				
+
 				a.cancel();
 			}
 		}

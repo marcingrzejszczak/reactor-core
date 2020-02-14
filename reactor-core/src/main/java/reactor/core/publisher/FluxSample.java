@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
-import reactor.core.CorePublisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.Scannable;
@@ -40,7 +39,7 @@ import reactor.util.context.Context;
  * <p>
  * Both Publishers will run in unbounded mode because the backpressure
  * would interfere with the sampling precision.
- * 
+ *
  * @param <T> the input and output value type
  * @param <U> the value type of the sampler (irrelevant)
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
@@ -73,31 +72,24 @@ final class FluxSample<T, U> extends InternalFluxOperator<T, T> {
 
 	static final class SampleMainSubscriber<T> implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-		final Context ctx;
-
-		volatile T                  value;
-
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Object> VALUE =
-		  AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Object.class, "value");
-
-		volatile Subscription main;
-
+				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Object.class, "value");
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Subscription> MAIN =
-		  AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "main");
-		volatile Subscription other;
-
-
+				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "main");
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Subscription> OTHER =
-		  AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "other");
-		volatile long requested;
-
+				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "other");
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SampleMainSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(SampleMainSubscriber.class, "requested");
+				AtomicLongFieldUpdater.newUpdater(SampleMainSubscriber.class, "requested");
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		volatile T value;
+		volatile Subscription main;
+		volatile Subscription other;
+		volatile long requested;
 
 		SampleMainSubscriber(CoreSubscriber<? super T> actual) {
 			this.actual = actual;
@@ -289,7 +281,6 @@ final class FluxSample<T, U> extends InternalFluxOperator<T, T> {
 
 			m.actual.onComplete();
 		}
-
 
 	}
 }

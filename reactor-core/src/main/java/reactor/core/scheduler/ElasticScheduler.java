@@ -211,7 +211,7 @@ final class ElasticScheduler implements Scheduler, Supplier<ScheduledExecutorSer
 	@Override
 	public Stream<? extends Scannable> inners() {
 		return cache.stream()
-		            .map(cached -> cached.cached);
+				.map(cached -> cached.cached);
 	}
 
 	@Override
@@ -235,7 +235,7 @@ final class ElasticScheduler implements Scheduler, Supplier<ScheduledExecutorSer
 
 	static final class CachedService implements Disposable, Scannable {
 
-		final ElasticScheduler         parent;
+		final ElasticScheduler parent;
 		final ScheduledExecutorService exec;
 
 		CachedService(@Nullable ElasticScheduler parent) {
@@ -283,7 +283,7 @@ final class ElasticScheduler implements Scheduler, Supplier<ScheduledExecutorSer
 	static final class ScheduledExecutorServiceExpiry {
 
 		final CachedService cached;
-		final long          expireMillis;
+		final long expireMillis;
 
 		ScheduledExecutorServiceExpiry(CachedService cached, long expireMillis) {
 			this.cached = cached;

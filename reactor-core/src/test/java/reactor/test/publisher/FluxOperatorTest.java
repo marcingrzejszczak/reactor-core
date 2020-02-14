@@ -33,22 +33,108 @@ public abstract class FluxOperatorTest<I, O>
 	public final Scenario<I, O> scenario(Function<Flux<I>, ? extends Flux<O>> scenario) {
 		if (defaultEmpty) {
 			return Scenario.create(scenario)
-			               .applyAllOptions(defaultScenario.duplicate()
-			                                               .receiverEmpty());
+					.applyAllOptions(defaultScenario.duplicate()
+							.receiverEmpty());
 		}
 		return Scenario.create(scenario)
-		               .applyAllOptions(defaultScenario);
+				.applyAllOptions(defaultScenario);
+	}
+
+	@Override
+	Flux<O> conditional(Flux<O> output) {
+		return output.filter(t -> true);
+	}
+
+	@Override
+	protected Flux<O> doOnSubscribe(Flux<O> output,
+			Consumer<? super Subscription> doOnSubscribe) {
+		return output.doOnSubscribe(doOnSubscribe);
+	}
+
+	@Override
+	Flux<I> hide(Flux<I> input) {
+		return input.hide();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected Flux<I> sourceScalar(OperatorScenario<I, Flux<I>, O, Flux<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return (Flux<I>) Flux.empty();
+		}
+		return Flux.just(scenario.producingMapper.apply(0));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected Flux<I> sourceCallable(OperatorScenario<I, Flux<I>, O, Flux<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return (Flux<I>) Mono.fromRunnable(() -> {
+			})
+					.flux();
+		}
+		return (Flux<I>) Mono.fromCallable(() -> scenario.producingMapper.apply(0))
+				.flux();
+	}
+
+	@Override
+	Flux<I> withFluxSource(Flux<I> input) {
+		return input;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected final OperatorScenario<I, Flux<I>, O, Flux<O>> defaultScenarioOptions(
+			OperatorScenario<I, Flux<I>, O, Flux<O>> defaultOptions) {
+		Scenario<I, O> s = new Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
+				.producer(3,
+						i -> (I) (i == 0 ?
+								"test" :
+								"test" + i))
+				.receive(3,
+						i -> (O) (i == 0 ?
+								"test" :
+								"test" + i))
+				.droppedError(new RuntimeException("dropped"))
+				.droppedItem((I) "dropped");
+		this.defaultScenario = s;
+		return defaultScenarioOptions(s);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected Scenario<I, O> defaultScenarioOptions(Scenario<I, O> defaultOptions) {
+		return defaultOptions;
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorError() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
+		return scenarios_operatorSuccess();
 	}
 
 	static public final class Scenario<I, O>
 			extends OperatorScenario<I, Flux<I>, O, Flux<O>> {
 
-		static <I, O> Scenario<I, O> create(Function<Flux<I>, ? extends Flux<O>> scenario) {
-			return new Scenario<>(scenario, new Exception("scenario:"));
-		}
-
 		Scenario(Function<Flux<I>, ? extends Flux<O>> scenario, Exception stack) {
 			super(scenario, stack);
+		}
+
+		static <I, O> Scenario<I, O> create(Function<Flux<I>, ? extends Flux<O>> scenario) {
+			return new Scenario<>(scenario, new Exception("scenario:"));
 		}
 
 		@Override
@@ -178,91 +264,6 @@ public abstract class FluxOperatorTest<I, O>
 			super.applyAllOptions(source);
 			return this;
 		}
-	}
-
-	@Override
-	Flux<O> conditional(Flux<O> output) {
-		return output.filter(t -> true);
-	}
-
-	@Override
-	protected Flux<O> doOnSubscribe(Flux<O> output,
-			Consumer<? super Subscription> doOnSubscribe) {
-		return output.doOnSubscribe(doOnSubscribe);
-	}
-
-	@Override
-	Flux<I> hide(Flux<I> input) {
-		return input.hide();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected Flux<I> sourceScalar(OperatorScenario<I, Flux<I>, O, Flux<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return (Flux<I>)Flux.empty();
-		}
-		return Flux.just(scenario.producingMapper.apply(0));
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected Flux<I> sourceCallable(OperatorScenario<I, Flux<I>, O, Flux<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return (Flux<I>)Mono.fromRunnable(() -> {})
-			                    .flux();
-		}
-		return (Flux<I>)Mono.fromCallable(() -> scenario.producingMapper.apply(0))
-		                    .flux();
-	}
-
-	@Override
-	Flux<I> withFluxSource(Flux<I> input) {
-		return input;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected final OperatorScenario<I, Flux<I>, O, Flux<O>> defaultScenarioOptions(
-			OperatorScenario<I, Flux<I>, O, Flux<O>> defaultOptions) {
-		Scenario<I, O> s = new Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
-		                                                 .producer(3,
-				                                                 i -> (I) (i == 0 ?
-						                                                 "test" :
-						                                                 "test" + i))
-		                                                 .receive(3,
-				                                                 i -> (O) (i == 0 ?
-						                                                 "test" :
-						                                                 "test" + i))
-		                                                 .droppedError(new RuntimeException("dropped"))
-		                                                 .droppedItem((I)"dropped");
-		this.defaultScenario = s;
-		return defaultScenarioOptions(s);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected Scenario<I, O> defaultScenarioOptions(Scenario<I, O> defaultOptions) {
-		return defaultOptions;
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorError() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
-		return scenarios_operatorSuccess();
 	}
 
 }

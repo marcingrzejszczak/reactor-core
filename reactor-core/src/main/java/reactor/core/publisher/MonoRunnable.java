@@ -22,78 +22,78 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.reactivestreams.Subscription;
-
 import reactor.core.CoreSubscriber;
 import reactor.util.annotation.Nullable;
 
 /**
  * Executes the runnable whenever a Subscriber subscribes to this Mono.
  */
-final class MonoRunnable<T> extends Mono<T> implements Callable<Void>, SourceProducer<T>  {
+final class MonoRunnable<T> extends Mono<T> implements Callable<Void>, SourceProducer<T> {
 
-    final Runnable run;
-    
-    MonoRunnable(Runnable run) {
-        this.run = Objects.requireNonNull(run, "run");
-    }
+	final Runnable run;
 
-    @Override
-    public void subscribe(CoreSubscriber<? super T> actual) {
-        MonoRunnableEagerSubscription s = new MonoRunnableEagerSubscription();
-        actual.onSubscribe(s);
-        if (s.isCancelled()) {
-            return;
-        }
+	MonoRunnable(Runnable run) {
+		this.run = Objects.requireNonNull(run, "run");
+	}
 
-        try {
-            run.run();
-            actual.onComplete();
-        } catch (Throwable ex) {
-            actual.onError(Operators.onOperatorError(ex, actual.currentContext()));
-        }
-    }
-    
-    @Override
-    @Nullable
-    public T block(Duration m) {
-        run.run();
-        return null;
-    }
+	@Override
+	public void subscribe(CoreSubscriber<? super T> actual) {
+		MonoRunnableEagerSubscription s = new MonoRunnableEagerSubscription();
+		actual.onSubscribe(s);
+		if (s.isCancelled()) {
+			return;
+		}
 
-    @Override
-    @Nullable
-    public T block() {
-        run.run();
-        return null;
-    }
+		try {
+			run.run();
+			actual.onComplete();
+		}
+		catch (Throwable ex) {
+			actual.onError(Operators.onOperatorError(ex, actual.currentContext()));
+		}
+	}
 
-    @Override
-    @Nullable
-    public Void call() throws Exception {
-        run.run();
-        return null;
-    }
+	@Override
+	@Nullable
+	public T block(Duration m) {
+		run.run();
+		return null;
+	}
 
-    @Override
-    public Object scanUnsafe(Attr key) {
-        return null; //no particular key to be represented, still useful in hooks
-    }
+	@Override
+	@Nullable
+	public T block() {
+		run.run();
+		return null;
+	}
 
-    static final class MonoRunnableEagerSubscription extends AtomicBoolean implements Subscription {
+	@Override
+	@Nullable
+	public Void call() throws Exception {
+		run.run();
+		return null;
+	}
 
-        @Override
-        public void request(long n) {
-            //NO-OP
-        }
+	@Override
+	public Object scanUnsafe(Attr key) {
+		return null; //no particular key to be represented, still useful in hooks
+	}
 
-        @Override
-        public void cancel() {
-            set(true);
-        }
+	static final class MonoRunnableEagerSubscription extends AtomicBoolean implements Subscription {
 
-        public boolean isCancelled() {
-            return get();
-        }
+		@Override
+		public void request(long n) {
+			//NO-OP
+		}
 
-    }
+		@Override
+		public void cancel() {
+			set(true);
+		}
+
+		public boolean isCancelled() {
+			return get();
+		}
+
+	}
 }

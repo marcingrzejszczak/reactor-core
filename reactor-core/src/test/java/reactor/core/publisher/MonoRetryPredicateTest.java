@@ -29,18 +29,18 @@ public class MonoRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .doOnNext(v -> {
-		                        	if(v < 4) {
-				                        throw new RuntimeException("test");
-			                        }
-			                        else {
-		                        		bool.set(false);
-			                        }
-		                        })
-		                        .retry(3, e -> bool.get()))
-		            .expectNext(4)
-		            .expectComplete()
-		            .verify();
+				.doOnNext(v -> {
+					if (v < 4) {
+						throw new RuntimeException("test");
+					}
+					else {
+						bool.set(false);
+					}
+				})
+				.retry(3, e -> bool.get()))
+				.expectNext(4)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -49,15 +49,15 @@ public class MonoRetryPredicateTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .doOnNext(v -> {
-		                        	if(v < 4) {
-		                        		if( v > 2){
-					                        bool.set(false);
-				                        }
-				                        throw new RuntimeException("test");
-			                        }
-		                        })
-		                        .retry(3, e -> bool.get()))
-		            .verifyErrorMessage("test");
+				.doOnNext(v -> {
+					if (v < 4) {
+						if (v > 2) {
+							bool.set(false);
+						}
+						throw new RuntimeException("test");
+					}
+				})
+				.retry(3, e -> bool.get()))
+				.verifyErrorMessage("test");
 	}
 }

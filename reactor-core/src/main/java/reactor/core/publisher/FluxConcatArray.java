@@ -33,7 +33,7 @@ import reactor.util.annotation.Nullable;
 final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 
 	final Publisher<? extends T>[] array;
-	
+
 	final boolean delayError;
 
 	@SafeVarargs
@@ -55,7 +55,8 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 
 			if (p == null) {
 				Operators.error(actual, new NullPointerException("The single source Publisher is null"));
-			} else {
+			}
+			else {
 				p.subscribe(actual);
 			}
 			return;
@@ -93,7 +94,7 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 	 * the current array of sources.
 	 * <p>
 	 * This operation doesn't change the current FluxMerge instance.
-	 * 
+	 *
 	 * @param source the new source to merge with the others
 	 * @return the new FluxConcatArray instance
 	 */
@@ -103,7 +104,7 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 		Publisher<? extends T>[] newArray = new Publisher[n + 1];
 		System.arraycopy(array, 0, newArray, 0, n);
 		newArray[n] = source;
-		
+
 		return new FluxConcatArray<>(delayError, newArray);
 	}
 
@@ -134,7 +135,7 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 	 * the current array of sources.
 	 * <p>
 	 * This operation doesn't change the current FluxConcatArray instance.
-	 * 
+	 *
 	 * @param source the new source to merge with the others
 	 * @return the new FluxConcatArray instance
 	 */
@@ -144,23 +145,20 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 		Publisher<? extends T>[] newArray = new Publisher[n + 1];
 		System.arraycopy(array, 0, newArray, 1, n);
 		newArray[0] = source;
-		
+
 		return new FluxConcatArray<>(delayError, newArray);
 	}
 
-	
+
 	static final class ConcatArraySubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Publisher<? extends T>[] sources;
-
-		int index;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatArraySubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(ConcatArraySubscriber.class, "wip");
-
+				AtomicIntegerFieldUpdater.newUpdater(ConcatArraySubscriber.class, "wip");
+		final Publisher<? extends T>[] sources;
+		int index;
+		volatile int wip;
 		long produced;
 
 		ConcatArraySubscriber(CoreSubscriber<? super T> actual, Publisher<? extends T>[]
@@ -211,7 +209,8 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 					}
 
 					index = ++i;
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 
 		}
@@ -220,20 +219,16 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 	static final class ConcatArrayDelayErrorSubscriber<T>
 			extends Operators.MultiSubscriptionSubscriber<T, T> {
 
-		final Publisher<? extends T>[] sources;
-
-		int index;
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatArrayDelayErrorSubscriber> WIP =
-		AtomicIntegerFieldUpdater.newUpdater(ConcatArrayDelayErrorSubscriber.class, "wip");
-
-		volatile Throwable error;
+				AtomicIntegerFieldUpdater.newUpdater(ConcatArrayDelayErrorSubscriber.class, "wip");
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ConcatArrayDelayErrorSubscriber, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(ConcatArrayDelayErrorSubscriber.class, Throwable.class, "error");
-		
+		final Publisher<? extends T>[] sources;
+		int index;
+		volatile int wip;
+		volatile Throwable error;
 		long produced;
 
 		ConcatArrayDelayErrorSubscriber(CoreSubscriber<? super T> actual, Publisher<?
@@ -253,7 +248,8 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 		public void onError(Throwable t) {
 			if (Exceptions.addThrowable(ERROR, this, t)) {
 				onComplete();
-			} else {
+			}
+			else {
 				Operators.onErrorDropped(t, actual.currentContext());
 			}
 		}
@@ -282,7 +278,8 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 						Throwable e = Exceptions.terminate(ERROR, this);
 						if (e != null) {
 							actual.onError(e);
-						} else {
+						}
+						else {
 							actual.onComplete();
 						}
 						return;
@@ -307,7 +304,8 @@ final class FluxConcatArray<T> extends Flux<T> implements SourceProducer<T> {
 					}
 
 					index = ++i;
-				} while (WIP.decrementAndGet(this) != 0);
+				}
+				while (WIP.decrementAndGet(this) != 0);
 			}
 
 		}

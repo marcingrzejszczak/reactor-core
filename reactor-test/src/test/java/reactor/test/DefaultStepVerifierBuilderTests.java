@@ -33,7 +33,9 @@ import reactor.test.DefaultStepVerifierBuilder.TaskEvent;
 import reactor.test.DefaultStepVerifierBuilder.WaitEvent;
 import reactor.test.scheduler.VirtualTimeScheduler;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * @author Stephane Maldini
@@ -48,7 +50,7 @@ public class DefaultStepVerifierBuilderTests {
 				new DefaultStepVerifierBuilder<String>(StepVerifierOptions.create().initialRequest(Long.MAX_VALUE), null)
 						.expectNext("foo", "bar")
 						.expectComplete()
-				.toSubscriber();
+						.toSubscriber();
 
 		flux.subscribe(s);
 		flux.subscribe(s);
@@ -70,11 +72,11 @@ public class DefaultStepVerifierBuilderTests {
 					new DefaultStepVerifierBuilder<String>(StepVerifierOptions.create()
 							.initialRequest(Long.MAX_VALUE)
 							.virtualTimeSchedulerSupplier(() -> vts),
-					null)//important to avoid triggering of vts capture-and-enable
-					.thenAwait(Duration.ofSeconds(1))
-					.expectNext("foo")
-					.expectComplete()
-					.toSubscriber();
+							null)//important to avoid triggering of vts capture-and-enable
+							.thenAwait(Duration.ofSeconds(1))
+							.expectNext("foo")
+							.expectComplete()
+							.toSubscriber();
 
 			flux.subscribe(s);
 			vts.advanceTimeBy(Duration.ofSeconds(3));
@@ -96,9 +98,9 @@ public class DefaultStepVerifierBuilderTests {
 				.initialRequest(Long.MAX_VALUE)
 				.virtualTimeSchedulerSupplier(() -> vts),
 				null) //important to avoid triggering of vts capture-and-enable
-							.expectNoEvent(Duration.ofSeconds(4))
-							.expectComplete()
-							.toSubscriber();
+				.expectNoEvent(Duration.ofSeconds(4))
+				.expectComplete()
+				.toSubscriber();
 
 		try {
 			//also test the side effect case where VTS has been enabled and not reset
@@ -115,17 +117,20 @@ public class DefaultStepVerifierBuilderTests {
 		StepVerifier stepVerifier = new DefaultStepVerifierBuilder<String>(StepVerifierOptions.create(), null).expectComplete();
 
 		assertThatIllegalArgumentException().isThrownBy(stepVerifier::verify)
-		                                    .withMessage("no source to automatically subscribe to for verification");
+				.withMessage("no source to automatically subscribe to for verification");
 	}
 
 	@Test
 	public void testConflateOnTaskThenSubscriptionEvents() {
 		List<Event<String>> script = Arrays.asList(
-				new TaskEvent<String>(() -> {}, "A"),
-				new TaskEvent<String>(() -> {}, "B"),
+				new TaskEvent<String>(() -> {
+				}, "A"),
+				new TaskEvent<String>(() -> {
+				}, "B"),
 				new WaitEvent<String>(Duration.ofSeconds(5), "C"),
 				new SubscriptionEvent<String>("D"),
-				new SubscriptionEvent<String>(sub -> { }, "E")
+				new SubscriptionEvent<String>(sub -> {
+				}, "E")
 		);
 
 		Queue<Event<String>> queue =
@@ -135,21 +140,23 @@ public class DefaultStepVerifierBuilderTests {
 				.hasSize(5)
 				.extracting(e -> e.getClass().getName())
 				.containsExactly(
-				        TaskEvent.class.getName(),
-				        TaskEvent.class.getName(),
-				        WaitEvent.class.getName(),
-				        DefaultStepVerifierBuilder.SubscriptionTaskEvent.class.getName(),
-				        DefaultStepVerifierBuilder.SubscriptionTaskEvent.class.getName());
+						TaskEvent.class.getName(),
+						TaskEvent.class.getName(),
+						WaitEvent.class.getName(),
+						DefaultStepVerifierBuilder.SubscriptionTaskEvent.class.getName(),
+						DefaultStepVerifierBuilder.SubscriptionTaskEvent.class.getName());
 	}
 
 	@Test
 	public void testNoConflateOnSignalThenSubscriptionEvents() {
 		List<Event<String>> script = Arrays.asList(
-				new TaskEvent<String>(() -> {}, "A"),
+				new TaskEvent<String>(() -> {
+				}, "A"),
 				new WaitEvent<String>(Duration.ofSeconds(5), "B"),
 				new SignalCountEvent<>(3, "C"),
 				new SubscriptionEvent<String>("D"),
-				new SubscriptionEvent<String>(sub -> { }, "E")
+				new SubscriptionEvent<String>(sub -> {
+				}, "E")
 		);
 
 		Queue<Event<String>> queue =
@@ -169,8 +176,8 @@ public class DefaultStepVerifierBuilderTests {
 	@Test
 	public void testConflateChangesDescriptionAndRemoveAs() {
 		List<Event<String>> script = Arrays.asList(
-				new SignalEvent<String>((s,v) -> Optional.empty(), "A"),
-				new SignalEvent<String>((s,v) -> Optional.empty(), "B"),
+				new SignalEvent<String>((s, v) -> Optional.empty(), "A"),
+				new SignalEvent<String>((s, v) -> Optional.empty(), "B"),
 				new DescriptionEvent<String>("foo"),
 				new DescriptionEvent<String>("bar"),
 				new SignalCountEvent<String>(1, "C"),
@@ -180,7 +187,7 @@ public class DefaultStepVerifierBuilderTests {
 		Queue<Event<String>> queue = DefaultVerifySubscriber.conflateScript(script, null);
 
 		assertThat(queue).hasSize(3)
-		                 .extracting(Event::getDescription)
-		                 .containsExactly("A", "foo", "baz");
+				.extracting(Event::getDescription)
+				.containsExactly("A", "foo", "baz");
 	}
 }

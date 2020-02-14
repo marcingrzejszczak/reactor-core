@@ -28,10 +28,10 @@ import reactor.util.annotation.Nullable;
  *
  * @param <T> the value type
  */
-final class ParallelPeek<T> extends ParallelFlux<T> implements SignalPeek<T>{
+final class ParallelPeek<T> extends ParallelFlux<T> implements SignalPeek<T> {
 
 	final ParallelFlux<T> source;
-	
+
 	final Consumer<? super T> onNext;
 	final Consumer<? super T> onAfterNext;
 	final Consumer<? super Throwable> onError;
@@ -69,7 +69,7 @@ final class ParallelPeek<T> extends ParallelFlux<T> implements SignalPeek<T>{
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		int n = subscribers.length;
 
 		CoreSubscriber<? super T>[] parents = new CoreSubscriber[n];
@@ -79,13 +79,13 @@ final class ParallelPeek<T> extends ParallelFlux<T> implements SignalPeek<T>{
 		for (int i = 0; i < n; i++) {
 			if (conditional) {
 				parents[i] = new FluxPeekFuseable.PeekConditionalSubscriber<>(
-						(Fuseable.ConditionalSubscriber<T>)subscribers[i], this);
+						(Fuseable.ConditionalSubscriber<T>) subscribers[i], this);
 			}
 			else {
 				parents[i] = new FluxPeek.PeekSubscriber<>(subscribers[i], this);
 			}
 		}
-		
+
 		source.subscribe(parents);
 	}
 

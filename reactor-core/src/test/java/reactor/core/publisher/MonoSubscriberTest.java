@@ -37,6 +37,79 @@ import static org.junit.Assert.assertNull;
 
 public class MonoSubscriberTest {
 
+	/**
+	 * Synchronizes the execution of two runnables (as much as possible)
+	 * to test race conditions.
+	 * <p>The method blocks until both have run to completion.
+	 * @param r1 the first runnable
+	 * @param r2 the second runnable
+	 * @param s the scheduler to use
+	 */
+	//TODO pull into reactor-tests?
+	public static void race(final Runnable r1, final Runnable r2, Scheduler s) {
+		final AtomicInteger count = new AtomicInteger(2);
+		final CountDownLatch cdl = new CountDownLatch(2);
+
+		final Throwable[] errors = {null, null};
+
+		s.schedule(() -> {
+			if (count.decrementAndGet() != 0) {
+				while (count.get() != 0) {
+				}
+			}
+
+			try {
+				try {
+					r1.run();
+				}
+				catch (Throwable ex) {
+					errors[0] = ex;
+				}
+			}
+			finally {
+				cdl.countDown();
+			}
+		});
+
+		if (count.decrementAndGet() != 0) {
+			while (count.get() != 0) {
+			}
+		}
+
+		try {
+			try {
+				r2.run();
+			}
+			catch (Throwable ex) {
+				errors[1] = ex;
+			}
+		}
+		finally {
+			cdl.countDown();
+		}
+
+		try {
+			if (!cdl.await(5, TimeUnit.SECONDS)) {
+				throw new AssertionError("The wait timed out!");
+			}
+		}
+		catch (InterruptedException ex) {
+			throw new RuntimeException(ex);
+		}
+		if (errors[0] != null && errors[1] == null) {
+			throw Exceptions.propagate(errors[0]);
+		}
+
+		if (errors[0] == null && errors[1] != null) {
+			throw Exceptions.propagate(errors[1]);
+		}
+
+		if (errors[0] != null && errors[1] != null) {
+			errors[0].addSuppressed(errors[1]);
+			throw Exceptions.propagate(errors[0]);
+		}
+	}
+
 	@Test
 	public void queueSubscriptionSyncRejected() {
 		MonoSubscriber<Integer, Integer> ds = new MonoSubscriber<>(new AssertSubscriber<>());
@@ -111,72 +184,6 @@ public class MonoSubscriberTest {
 		}
 	}
 
-	/**
-	 * Synchronizes the execution of two runnables (as much as possible)
-	 * to test race conditions.
-	 * <p>The method blocks until both have run to completion.
-	 * @param r1 the first runnable
-	 * @param r2 the second runnable
-	 * @param s the scheduler to use
-	 */
-	//TODO pull into reactor-tests?
-	public static void race(final Runnable r1, final Runnable r2, Scheduler s) {
-		final AtomicInteger count = new AtomicInteger(2);
-		final CountDownLatch cdl = new CountDownLatch(2);
-
-		final Throwable[] errors = { null, null };
-
-		s.schedule(() -> {
-			if (count.decrementAndGet() != 0) {
-				while (count.get() != 0) { }
-			}
-
-			try {
-				try {
-					r1.run();
-				} catch (Throwable ex) {
-					errors[0] = ex;
-				}
-			} finally {
-				cdl.countDown();
-			}
-		});
-
-		if (count.decrementAndGet() != 0) {
-			while (count.get() != 0) { }
-		}
-
-		try {
-			try {
-				r2.run();
-			} catch (Throwable ex) {
-				errors[1] = ex;
-			}
-		} finally {
-			cdl.countDown();
-		}
-
-		try {
-			if (!cdl.await(5, TimeUnit.SECONDS)) {
-				throw new AssertionError("The wait timed out!");
-			}
-		} catch (InterruptedException ex) {
-			throw new RuntimeException(ex);
-		}
-		if (errors[0] != null && errors[1] == null) {
-			throw Exceptions.propagate(errors[0]);
-		}
-
-		if (errors[0] == null && errors[1] != null) {
-			throw Exceptions.propagate(errors[1]);
-		}
-
-		if (errors[0] != null && errors[1] != null) {
-			errors[0].addSuppressed(errors[1]);
-			throw Exceptions.propagate(errors[0]);
-		}
-	}
-
 	@Test
 	public void issue1719() {
 		for (int i = 0; i < 10000; i++) {
@@ -186,8 +193,8 @@ public class MonoSubscriberTest {
 					(sink) -> Schedulers.elastic().schedule(() -> sink.success(2))));
 			input.put("three", Mono.just(3));
 			int sum = Flux.fromIterable(input.entrySet())
-			              .flatMap((entry) -> Mono.zip(Mono.just(entry.getKey()), entry.getValue()))
-			              .collectMap(Tuple2::getT1, Tuple2::getT2).map((items) -> {
+					.flatMap((entry) -> Mono.zip(Mono.just(entry.getKey()), entry.getValue()))
+					.collectMap(Tuple2::getT1, Tuple2::getT2).map((items) -> {
 						AtomicInteger result = new AtomicInteger();
 						items.values().forEach(result::addAndGet);
 						return result.get();

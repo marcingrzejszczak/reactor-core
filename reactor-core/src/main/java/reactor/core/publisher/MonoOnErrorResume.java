@@ -33,8 +33,8 @@ final class MonoOnErrorResume<T> extends InternalMonoOperator<T, T> {
 	final Function<? super Throwable, ? extends Publisher<? extends T>> nextFactory;
 
 	MonoOnErrorResume(Mono<? extends T> source,
-						   Function<? super Throwable, ? extends Mono<? extends T>>
-								   nextFactory) {
+			Function<? super Throwable, ? extends Mono<? extends T>>
+					nextFactory) {
 		super(source);
 		this.nextFactory = Objects.requireNonNull(nextFactory, "nextFactory");
 	}

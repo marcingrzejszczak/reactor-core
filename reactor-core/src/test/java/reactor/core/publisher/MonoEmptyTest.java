@@ -23,6 +23,6 @@ public class MonoEmptyTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Mono.empty())
-		            .verifyComplete();
+				.verifyComplete();
 	}
 }

@@ -20,7 +20,6 @@ package reactor.core.publisher;
 import reactor.core.CoreSubscriber;
 import reactor.core.Fuseable;
 import reactor.core.Scannable;
-import reactor.core.publisher.FluxOnAssembly.AssemblyLightSnapshot;
 import reactor.core.publisher.FluxOnAssembly.AssemblySnapshot;
 import reactor.util.annotation.Nullable;
 
@@ -40,7 +39,7 @@ import reactor.util.annotation.Nullable;
 final class ParallelFluxOnAssembly<T> extends ParallelFlux<T>
 		implements Fuseable, AssemblyOp, Scannable {
 
-	final ParallelFlux<T>  source;
+	final ParallelFlux<T> source;
 	final AssemblySnapshot stacktrace;
 
 	/**

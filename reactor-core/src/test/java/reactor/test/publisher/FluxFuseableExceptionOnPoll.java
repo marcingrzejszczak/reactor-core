@@ -31,6 +31,14 @@ import reactor.util.annotation.Nullable;
 final class FluxFuseableExceptionOnPoll<T> extends FluxOperator<T, T>
 		implements Fuseable {
 
+	final RuntimeException exception;
+
+	FluxFuseableExceptionOnPoll(Flux<? extends T> source,
+			RuntimeException exception) {
+		super(source);
+		this.exception = exception;
+	}
+
 	@SuppressWarnings("unchecked")
 	static <I> void next(Subscriber<I> s, I item) {
 		((FuseableExceptionOnPollSubscriber<I>) s).actual.onNext(item);
@@ -45,14 +53,6 @@ final class FluxFuseableExceptionOnPoll<T> extends FluxOperator<T, T>
 	@SuppressWarnings("unchecked")
 	static <I> boolean shouldTryNext(Subscriber<I> s) {
 		return s instanceof FluxFuseableExceptionOnPoll.FuseableExceptionOnPollSubscriber && ((FuseableExceptionOnPollSubscriber) s).actual instanceof ConditionalSubscriber;
-	}
-
-	final RuntimeException exception;
-
-	FluxFuseableExceptionOnPoll(Flux<? extends T> source,
-			RuntimeException exception) {
-		super(source);
-		this.exception = exception;
 	}
 
 	@Override

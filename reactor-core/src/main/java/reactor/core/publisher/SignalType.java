@@ -66,26 +66,26 @@ public enum SignalType {
 	@Override
 	public String toString() {
 		switch (this) {
-			case ON_SUBSCRIBE:
-				return "onSubscribe";
-			case ON_NEXT:
-				return "onNext";
-			case ON_ERROR:
-				return "onError";
-			case ON_COMPLETE:
-				return "onComplete";
-			case REQUEST:
-				return "request";
-			case CANCEL:
-				return "cancel";
-			case CURRENT_CONTEXT:
-				return "currentContext";
-			case ON_CONTEXT:
-				return "onContextUpdate";
-			case AFTER_TERMINATE:
-				return "afterTerminate";
-			default:
-				return "subscribe";
+		case ON_SUBSCRIBE:
+			return "onSubscribe";
+		case ON_NEXT:
+			return "onNext";
+		case ON_ERROR:
+			return "onError";
+		case ON_COMPLETE:
+			return "onComplete";
+		case REQUEST:
+			return "request";
+		case CANCEL:
+			return "cancel";
+		case CURRENT_CONTEXT:
+			return "currentContext";
+		case ON_CONTEXT:
+			return "onContextUpdate";
+		case AFTER_TERMINATE:
+			return "afterTerminate";
+		default:
+			return "subscribe";
 		}
 	}
 }

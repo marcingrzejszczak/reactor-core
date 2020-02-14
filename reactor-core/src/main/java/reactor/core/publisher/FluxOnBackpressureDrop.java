@@ -62,17 +62,14 @@ final class FluxOnBackpressureDrop<T> extends InternalFluxOperator<T, T> {
 	static final class DropSubscriber<T>
 			implements InnerOperator<T, T> {
 
-		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
-		final Consumer<? super T>   onDrop;
-
-		Subscription s;
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<DropSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(DropSubscriber.class, "requested");
-
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		final Consumer<? super T> onDrop;
+		Subscription s;
+		volatile long requested;
 		boolean done;
 
 		DropSubscriber(CoreSubscriber<? super T> actual, Consumer<? super T> onDrop) {
@@ -120,7 +117,7 @@ final class FluxOnBackpressureDrop<T> extends InternalFluxOperator<T, T> {
 			long r = requested;
 			if (r != 0L) {
 				actual.onNext(t);
-				if(r != Long.MAX_VALUE) {
+				if (r != Long.MAX_VALUE) {
 					Operators.produced(REQUESTED, this, 1);
 				}
 			}
@@ -171,7 +168,6 @@ final class FluxOnBackpressureDrop<T> extends InternalFluxOperator<T, T> {
 
 			return InnerOperator.super.scanUnsafe(key);
 		}
-
 
 	}
 }

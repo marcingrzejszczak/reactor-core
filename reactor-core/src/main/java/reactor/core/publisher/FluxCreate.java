@@ -27,7 +27,6 @@ import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
 import org.reactivestreams.Subscriber;
-
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
@@ -46,14 +45,8 @@ import reactor.util.context.Context;
  */
 final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 
-	enum CreateMode {
-		PUSH_ONLY, PUSH_PULL
-	}
-
 	final Consumer<? super FluxSink<T>> source;
-
 	final OverflowStrategy backpressure;
-
 	final CreateMode createMode;
 
 	FluxCreate(Consumer<? super FluxSink<T>> source,
@@ -67,21 +60,21 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 	static <T> BaseSink<T> createSink(CoreSubscriber<? super T> t,
 			OverflowStrategy backpressure) {
 		switch (backpressure) {
-			case IGNORE: {
-				return new IgnoreSink<>(t);
-			}
-			case ERROR: {
-				return new ErrorAsyncSink<>(t);
-			}
-			case DROP: {
-				return new DropAsyncSink<>(t);
-			}
-			case LATEST: {
-				return new LatestAsyncSink<>(t);
-			}
-			default: {
-				return new BufferAsyncSink<>(t, Queues.SMALL_BUFFER_SIZE);
-			}
+		case IGNORE: {
+			return new IgnoreSink<>(t);
+		}
+		case ERROR: {
+			return new ErrorAsyncSink<>(t);
+		}
+		case DROP: {
+			return new DropAsyncSink<>(t);
+		}
+		case LATEST: {
+			return new LatestAsyncSink<>(t);
+		}
+		default: {
+			return new BufferAsyncSink<>(t, Queues.SMALL_BUFFER_SIZE);
+		}
 		}
 	}
 
@@ -106,6 +99,10 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 		return null; //no particular key to be represented, still useful in hooks
 	}
 
+	enum CreateMode {
+		PUSH_ONLY, PUSH_PULL
+	}
+
 	/**
 	 * Serializes calls to onNext, onError and onComplete.
 	 *
@@ -113,22 +110,18 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 	 */
 	static final class SerializedSink<T> implements FluxSink<T>, Scannable {
 
-		final BaseSink<T> sink;
-
-		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SerializedSink, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(SerializedSink.class,
 						Throwable.class,
 						"error");
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SerializedSink> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(SerializedSink.class, "wip");
-
+		final BaseSink<T> sink;
 		final Queue<T> mpscQueue;
-
+		volatile Throwable error;
+		volatile int wip;
 		volatile boolean done;
 
 		SerializedSink(BaseSink<T> sink) {
@@ -318,7 +311,7 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 
 		final BaseSink<T> baseSink;
 		SerializedSink<T> serializedSink;
-		FluxSink<T>       sink;
+		FluxSink<T> sink;
 
 		SerializeOnRequestSink(BaseSink<T> sink) {
 			this.baseSink = sink;
@@ -393,29 +386,25 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 			implements FluxSink<T>, InnerProducer<T> {
 
 		static final Disposable TERMINATED = OperatorDisposables.DISPOSED;
-		static final Disposable CANCELLED  = Disposables.disposed();
-
-		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
-
-		volatile Disposable disposable;
+		static final Disposable CANCELLED = Disposables.disposed();
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<BaseSink, Disposable> DISPOSABLE =
 				AtomicReferenceFieldUpdater.newUpdater(BaseSink.class,
 						Disposable.class,
 						"disposable");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BaseSink> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BaseSink.class, "requested");
-
-		volatile LongConsumer requestConsumer;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<BaseSink, LongConsumer>
 				REQUEST_CONSUMER = AtomicReferenceFieldUpdater.newUpdater(BaseSink.class,
 				LongConsumer.class,
 				"requestConsumer");
+		final CoreSubscriber<? super T> actual;
+		final Context ctx;
+		volatile Disposable disposable;
+		volatile long requested;
+		volatile LongConsumer requestConsumer;
 
 		BaseSink(CoreSubscriber<? super T> actual) {
 			this.actual = actual;
@@ -697,15 +686,13 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 
 	static final class BufferAsyncSink<T> extends BaseSink<T> {
 
-		final Queue<T> queue;
-
-		Throwable error;
-		volatile boolean done; //done is still useful to be able to drain before the terminated handler is executed
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<BufferAsyncSink> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(BufferAsyncSink.class, "wip");
+		final Queue<T> queue;
+		Throwable error;
+		volatile boolean done; //done is still useful to be able to drain before the terminated handler is executed
+		volatile int wip;
 
 		BufferAsyncSink(CoreSubscriber<? super T> actual, int capacityHint) {
 			super(actual);
@@ -856,15 +843,13 @@ final class FluxCreate<T> extends Flux<T> implements SourceProducer<T> {
 
 	static final class LatestAsyncSink<T> extends BaseSink<T> {
 
-		final AtomicReference<T> queue;
-
-		Throwable error;
-		volatile boolean done; //done is still useful to be able to drain before the terminated handler is executed
-
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<LatestAsyncSink> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(LatestAsyncSink.class, "wip");
+		final AtomicReference<T> queue;
+		Throwable error;
+		volatile boolean done; //done is still useful to be able to drain before the terminated handler is executed
+		volatile int wip;
 
 		LatestAsyncSink(CoreSubscriber<? super T> actual) {
 			super(actual);

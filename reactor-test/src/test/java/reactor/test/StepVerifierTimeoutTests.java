@@ -29,8 +29,8 @@ public class StepVerifierTimeoutTests {
 		assertThatExceptionOfType(AssertionError.class)
 				.isThrownBy(() ->
 						StepVerifier.create(Mono.delay(Duration.ofMillis(150)))
-						            .expectComplete()
-						            .verifyThenAssertThat(Duration.ofMillis(50)))
+								.expectComplete()
+								.verifyThenAssertThat(Duration.ofMillis(50)))
 				.withMessageStartingWith("VerifySubscriber timed out");
 	}
 
@@ -41,10 +41,11 @@ public class StepVerifierTimeoutTests {
 
 			Duration longerThanDefaultTimeout = Duration.ofMillis(150);
 			StepVerifier.create(Mono.delay(longerThanDefaultTimeout))
-			            .expectNext(0L)
-			            .expectComplete()
-			            .verifyThenAssertThat(Duration.ofMillis(250));
-		} finally {
+					.expectNext(0L)
+					.expectComplete()
+					.verifyThenAssertThat(Duration.ofMillis(250));
+		}
+		finally {
 			StepVerifier.resetDefaultTimeout();
 		}
 	}

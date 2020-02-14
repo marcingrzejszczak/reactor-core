@@ -25,20 +25,12 @@ import java.util.stream.Stream;
 import org.assertj.core.api.Condition;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class ContextTest {
-
-	static Condition<Context> key(Object k) {
-		return new Condition<>(c -> c.hasKey(k), "key <%s>", k);
-	}
-
-	static Condition<Context> keyValue(Object k, Object value) {
-		return new Condition<>(c -> c.getOrEmpty(k)
-		                             .map(v -> v.equals(value))
-		                             .orElse(false),
-				"key <%s> with value <%s>", k, value);
-	}
 
 	private static final Condition<Context> SIZE_0 = new Condition<>(c -> c instanceof Context0, "size 0");
 	private static final Condition<Context> SIZE_1 = new Condition<>(c -> c instanceof Context1, "size 1");
@@ -47,15 +39,33 @@ public class ContextTest {
 	private static final Condition<Context> SIZE_4 = new Condition<>(c -> c instanceof Context4, "size 4");
 	private static final Condition<Context> SIZE_5 = new Condition<>(c -> c instanceof Context5, "size 5");
 
+	static Condition<Context> key(Object k) {
+		return new Condition<>(c -> c.hasKey(k), "key <%s>", k);
+	}
+
+	static Condition<Context> keyValue(Object k, Object value) {
+		return new Condition<>(c -> c.getOrEmpty(k)
+				.map(v -> v.equals(value))
+				.orElse(false),
+				"key <%s> with value <%s>", k, value);
+	}
+
 	static Condition<Context> size(int n) {
 		switch (n) {
-			case 0: return SIZE_0;
-			case 1: return SIZE_1;
-			case 2: return SIZE_2;
-			case 3: return SIZE_3;
-			case 4: return SIZE_4;
-			case 5: return SIZE_5;
-			default: return new Condition<>(c -> c instanceof ContextN
+		case 0:
+			return SIZE_0;
+		case 1:
+			return SIZE_1;
+		case 2:
+			return SIZE_2;
+		case 3:
+			return SIZE_3;
+		case 4:
+			return SIZE_4;
+		case 5:
+			return SIZE_5;
+		default:
+			return new Condition<>(c -> c instanceof ContextN
 					&& c.stream().count() == n,
 					"size %d", n);
 		}
@@ -117,81 +127,81 @@ public class ContextTest {
 	@Test
 	public void of1NullChecks() {
 		assertThatNullPointerException().as("key1").isThrownBy(() -> Context.of(null, 0))
-		                                .withMessage("key");
+				.withMessage("key");
 		assertThatNullPointerException().as("value1").isThrownBy(() -> Context.of(1, null))
-		                                .withMessage("value");
+				.withMessage("value");
 	}
 
 	@Test
 	public void of2NullChecks() {
 		assertThatNullPointerException().as("key1").isThrownBy(() -> Context.of(null, 0, 2, 0))
-		                                .withMessage("key1");
+				.withMessage("key1");
 		assertThatNullPointerException().as("value1").isThrownBy(() -> Context.of(1, null, 2, 0))
-		                                .withMessage("value1");
+				.withMessage("value1");
 		assertThatNullPointerException().as("key2").isThrownBy(() -> Context.of(1, 0, null, 0))
-		                                .withMessage("key2");
+				.withMessage("key2");
 		assertThatNullPointerException().as("value2").isThrownBy(() -> Context.of(1, 0, 2, null))
-		                                .withMessage("value2");
+				.withMessage("value2");
 	}
 
 	@Test
 	public void of3NullChecks() {
 		assertThatNullPointerException().as("key1").isThrownBy(() -> Context.of(null, 0, 2, 0, 3, 0))
-		                                .withMessage("key1");
+				.withMessage("key1");
 		assertThatNullPointerException().as("value1").isThrownBy(() -> Context.of(1, null, 2, 0, 3, 0))
-		                                .withMessage("value1");
+				.withMessage("value1");
 		assertThatNullPointerException().as("key2").isThrownBy(() -> Context.of(1, 0, null, 0, 3, 0))
-		                                .withMessage("key2");
+				.withMessage("key2");
 		assertThatNullPointerException().as("value2").isThrownBy(() -> Context.of(1, 0, 2, null, 3, 0))
-		                                .withMessage("value2");
+				.withMessage("value2");
 		assertThatNullPointerException().as("key3").isThrownBy(() -> Context.of(1, 0, 2, 0, null, 0))
-		                                .withMessage("key3");
+				.withMessage("key3");
 		assertThatNullPointerException().as("value3").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, null))
-		                                .withMessage("value3");
+				.withMessage("value3");
 	}
 
 	@Test
 	public void of4NullChecks() {
 		assertThatNullPointerException().as("key1").isThrownBy(() -> Context.of(null, 0, 2, 0, 3, 0, 4, 0))
-		                                .withMessage("key1");
+				.withMessage("key1");
 		assertThatNullPointerException().as("value1").isThrownBy(() -> Context.of(1, null, 2, 0, 3, 0, 4, 0))
-		                                .withMessage("value1");
+				.withMessage("value1");
 		assertThatNullPointerException().as("key2").isThrownBy(() -> Context.of(1, 0, null, 0, 3, 0, 4, 0))
-		                                .withMessage("key2");
+				.withMessage("key2");
 		assertThatNullPointerException().as("value2").isThrownBy(() -> Context.of(1, 0, 2, null, 3, 0, 4, 0))
-		                                .withMessage("value2");
+				.withMessage("value2");
 		assertThatNullPointerException().as("key3").isThrownBy(() -> Context.of(1, 0, 2, 0, null, 0, 4, 0))
-		                                .withMessage("key3");
+				.withMessage("key3");
 		assertThatNullPointerException().as("value3").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, null, 4, 0))
-		                                .withMessage("value3");
+				.withMessage("value3");
 		assertThatNullPointerException().as("key4").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, 0, null, 0))
-		                                .withMessage("key4");
+				.withMessage("key4");
 		assertThatNullPointerException().as("value4").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, 0, 4, null))
-		                                .withMessage("value4");
+				.withMessage("value4");
 	}
 
 	@Test
 	public void of5NullChecks() {
 		assertThatNullPointerException().as("key1").isThrownBy(() -> Context.of(null, 0, 2, 0, 3, 0, 4, 0, 5, 0))
-		                                .withMessage("key1");
+				.withMessage("key1");
 		assertThatNullPointerException().as("value1").isThrownBy(() -> Context.of(1, null, 2, 0, 3, 0, 4, 0, 5, 0))
-		                                .withMessage("value1");
+				.withMessage("value1");
 		assertThatNullPointerException().as("key2").isThrownBy(() -> Context.of(1, 0, null, 0, 3, 0, 4, 0, 5, 0))
-		                                .withMessage("key2");
+				.withMessage("key2");
 		assertThatNullPointerException().as("value2").isThrownBy(() -> Context.of(1, 0, 2, null, 3, 0, 4, 0, 5, 0))
-		                                .withMessage("value2");
+				.withMessage("value2");
 		assertThatNullPointerException().as("key3").isThrownBy(() -> Context.of(1, 0, 2, 0, null, 0, 4, 0, 5, 0))
-		                                .withMessage("key3");
+				.withMessage("key3");
 		assertThatNullPointerException().as("value3").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, null, 4, 0, 5, 0))
-		                                .withMessage("value3");
+				.withMessage("value3");
 		assertThatNullPointerException().as("key4").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, 0, null, 0, 5, 0))
-		                                .withMessage("key4");
+				.withMessage("key4");
 		assertThatNullPointerException().as("value4").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, 0, 4, null, 5, 0))
-		                                .withMessage("value4");
+				.withMessage("value4");
 		assertThatNullPointerException().as("key5").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, 0, 4, 0, null, 0))
-		                                .withMessage("key5");
+				.withMessage("key5");
 		assertThatNullPointerException().as("value5").isThrownBy(() -> Context.of(1, 0, 2, 0, 3, 0, 4, 0, 5, null))
-		                                .withMessage("value5");
+				.withMessage("value5");
 	}
 
 	@Test
@@ -242,7 +252,7 @@ public class ContextTest {
 	public void ofMapNull() {
 		Map<String, Integer> nullMap = null;
 		assertThatNullPointerException().isThrownBy(() -> Context.of(nullMap))
-		                                .withMessage("map");
+				.withMessage("map");
 	}
 
 	@Test
@@ -363,7 +373,7 @@ public class ContextTest {
 		map.put(null, "foo");
 
 		assertThatNullPointerException().isThrownBy(() -> Context.of(map))
-		                                .withMessage("null key found");
+				.withMessage("null key found");
 	}
 
 	@Test
@@ -377,7 +387,7 @@ public class ContextTest {
 		map.put("k6", null);
 
 		assertThatNullPointerException().isThrownBy(() -> Context.of(map))
-		                                .withMessage("null value for key k6");
+				.withMessage("null value for key k6");
 	}
 
 	// == tests for default methods ==

@@ -144,7 +144,7 @@ final class FluxScan<T> extends InternalFluxOperator<T, T> {
 		public void request(long n) {
 			s.request(n);
 		}
-		
+
 		@Override
 		public void cancel() {
 			s.cancel();

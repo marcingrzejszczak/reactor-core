@@ -35,9 +35,9 @@ import reactor.util.annotation.Nullable;
 final class ParallelMergeOrdered<T> extends Flux<T> implements Scannable {
 
 	final ParallelFlux<? extends T> source;
-	final int                       prefetch;
-	final Supplier<Queue<T>>        queueSupplier;
-	final Comparator<? super T>     valueComparator;
+	final int prefetch;
+	final Supplier<Queue<T>> queueSupplier;
+	final Comparator<? super T> valueComparator;
 
 	ParallelMergeOrdered(ParallelFlux<? extends T> source, int prefetch,
 			Supplier<Queue<T>> queueSupplier, Comparator<? super T> valueComparator) {

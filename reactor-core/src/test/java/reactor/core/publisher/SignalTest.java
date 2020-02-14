@@ -45,7 +45,7 @@ public class SignalTest {
 	}
 
 	@Test
-	public void completeStateWithContext(){
+	public void completeStateWithContext() {
 		Context context = Context.of("foo", "bar");
 		Signal<Integer> s = Signal.complete(context);
 
@@ -75,11 +75,11 @@ public class SignalTest {
 			sub.onSubscribe(Operators.emptySubscription());
 			s.accept(sub);
 		}))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
-	public void errorStateWithContext(){
+	public void errorStateWithContext() {
 		Context context = Context.of("foo", "bar");
 		Signal<Integer> s = Signal.error(e, context);
 
@@ -112,11 +112,11 @@ public class SignalTest {
 			sub.onSubscribe(Operators.emptySubscription());
 			s.accept(sub);
 		}))
-	                .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
-	public void nextStateWithContext(){
+	public void nextStateWithContext() {
 		Context context = Context.of("foo", "bar");
 		Signal<Integer> s = Signal.next(1, context);
 
@@ -149,13 +149,13 @@ public class SignalTest {
 			sub.onSubscribe(Operators.emptySubscription());
 			s.accept(sub);
 		}))
-		            .expectNext(1)
-		            .thenCancel()
-		            .verify();
+				.expectNext(1)
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
-	public void subscribeStateWithContext(){
+	public void subscribeStateWithContext() {
 		Context context = Context.of("foo", "bar");
 		Signal<Integer> s = Signal.subscribe(Operators.emptySubscription(), context);
 
@@ -184,12 +184,13 @@ public class SignalTest {
 		assertThat(s.getType()).isEqualTo(SignalType.ON_SUBSCRIBE);
 		assertThat(s.toString()).contains("onSubscribe");
 		StepVerifier.create(Flux.<Integer>from(s::accept))
-		            .expectSubscription()
-		            .thenCancel()
-		            .verify();
+				.expectSubscription()
+				.thenCancel()
+				.verify();
 	}
+
 	@Test
-	public void completeState(){
+	public void completeState() {
 		Signal<Integer> s = Signal.complete();
 
 		assertThat(s.isOnComplete()).isTrue();
@@ -216,11 +217,11 @@ public class SignalTest {
 			sub.onSubscribe(Operators.emptySubscription());
 			s.accept(sub);
 		}))
-		            .verifyComplete();
+				.verifyComplete();
 	}
 
 	@Test
-	public void errorState(){
+	public void errorState() {
 		Signal<Integer> s = Signal.error(e);
 
 		assertThat(s.isOnComplete()).isFalse();
@@ -250,11 +251,11 @@ public class SignalTest {
 			sub.onSubscribe(Operators.emptySubscription());
 			s.accept(sub);
 		}))
-	                .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test
-	public void nextState(){
+	public void nextState() {
 		Signal<Integer> s = Signal.next(1);
 
 		assertThat(s.isOnComplete()).isFalse();
@@ -284,13 +285,13 @@ public class SignalTest {
 			sub.onSubscribe(Operators.emptySubscription());
 			s.accept(sub);
 		}))
-		            .expectNext(1)
-		            .thenCancel()
-		            .verify();
+				.expectNext(1)
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
-	public void subscribeState(){
+	public void subscribeState() {
 		Signal<Integer> s = Signal.subscribe(Operators.emptySubscription());
 
 		assertThat(s.isOnComplete()).isFalse();
@@ -316,13 +317,13 @@ public class SignalTest {
 		assertThat(s.getType()).isEqualTo(SignalType.ON_SUBSCRIBE);
 		assertThat(s.toString()).contains("onSubscribe");
 		StepVerifier.create(Flux.<Integer>from(s::accept))
-		            .expectSubscription()
-		            .thenCancel()
-		            .verify();
+				.expectSubscription()
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
-	public void unmatchingSignal(){
+	public void unmatchingSignal() {
 		assertThat(Signal.complete().equals(null)).isFalse();
 		assertThat(Signal.isError(1)).isFalse();
 		assertThat(Signal.complete().equals(Signal.next(1))).isFalse();

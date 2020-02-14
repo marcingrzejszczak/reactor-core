@@ -38,12 +38,12 @@ public class Tuple5Test {
 		Tuple5<String, Integer, Integer, Integer, Integer> base =
 				Tuples.of("Foo", 200, 300, 400, 500);
 
-		Tuple2<?,?> mapped = base.mapT1(String::length);
+		Tuple2<?, ?> mapped = base.mapT1(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(5)
-		                  .containsExactly(3, base.getT2(), base.getT3(), base.getT4(),
-				                  base.getT5());
+				.hasSize(5)
+				.containsExactly(3, base.getT2(), base.getT3(), base.getT4(),
+						base.getT5());
 	}
 
 	@Test
@@ -51,12 +51,12 @@ public class Tuple5Test {
 		Tuple5<Integer, String, Integer, Integer, Integer> base =
 				Tuples.of(100, "Foo", 300, 400, 500);
 
-		Tuple2<?,?> mapped = base.mapT2(String::length);
+		Tuple2<?, ?> mapped = base.mapT2(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(5)
-		                  .containsExactly(base.getT1(), 3, base.getT3(), base.getT4(),
-				                  base.getT5());
+				.hasSize(5)
+				.containsExactly(base.getT1(), 3, base.getT3(), base.getT4(),
+						base.getT5());
 	}
 
 	@Test
@@ -64,12 +64,12 @@ public class Tuple5Test {
 		Tuple5<Integer, Integer, String, Integer, Integer> base =
 				Tuples.of(100, 200, "Foo", 400, 500);
 
-		Tuple2<?,?> mapped = base.mapT3(String::length);
+		Tuple2<?, ?> mapped = base.mapT3(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(5)
-		                  .containsExactly(base.getT1(), base.getT2(), 3, base.getT4(),
-				                  base.getT5());
+				.hasSize(5)
+				.containsExactly(base.getT1(), base.getT2(), 3, base.getT4(),
+						base.getT5());
 	}
 
 	@Test
@@ -77,12 +77,12 @@ public class Tuple5Test {
 		Tuple5<Integer, Integer, Integer, String, Integer> base =
 				Tuples.of(100, 200, 300, "Foo", 500);
 
-		Tuple2<?,?> mapped = base.mapT4(String::length);
+		Tuple2<?, ?> mapped = base.mapT4(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(5)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), 3,
-				                  base.getT5());
+				.hasSize(5)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), 3,
+						base.getT5());
 	}
 
 	@Test
@@ -90,19 +90,19 @@ public class Tuple5Test {
 		Tuple5<Integer, Integer, Integer, Integer, String> base =
 				Tuples.of(100, 200, 300, 400, "Foo");
 
-		Tuple2<?,?> mapped = base.mapT5(String::length);
+		Tuple2<?, ?> mapped = base.mapT5(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(5)
-		                  .containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
-				                  3);
+				.hasSize(5)
+				.containsExactly(base.getT1(), base.getT2(), base.getT3(), base.getT4(),
+						3);
 	}
 
 	@Test
 	public void mapT5Null() {
 		assertThatNullPointerException().isThrownBy(() ->
 				Tuples.of(1, 2, 3, 4, 5)
-				      .mapT5(i -> null)
+						.mapT5(i -> null)
 		).withMessage("t5");
 	}
 
@@ -133,7 +133,7 @@ public class Tuple5Test {
 	@Test
 	public void equalityOfNullOrWrongClass() {
 		assertThat(full).isNotEqualTo(null)
-		                .isNotEqualTo("foo");
+				.isNotEqualTo("foo");
 	}
 
 	@Test

@@ -16,6 +16,12 @@
 
 package reactor.tools.agent;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Iterator;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
 import org.junit.Ignore;
@@ -25,21 +31,21 @@ import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Iterator;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReactorDebugAgentTest {
+
+	static final int methodReturningMonoBaseline = getBaseline();
 
 	static {
 		ReactorDebugAgent.init();
 
 		// Since ReactorDebugAgentTest is already loaded, we need to re-process it
 		ReactorDebugAgent.processExistingClasses();
+	}
+
+	private static int getBaseline() {
+		return new Exception().getStackTrace()[1].getLineNumber();
 	}
 
 	@Test
@@ -135,7 +141,6 @@ public class ReactorDebugAgentTest {
 		assertThat(proxy.doSomething()).isInstanceOf(ProxyMe.MyMono.class);
 	}
 
-	static final int methodReturningMonoBaseline = getBaseline();
 	private Mono<Integer> methodReturningMono(Mono<Integer> mono) {
 		return mono;
 	}
@@ -144,25 +149,21 @@ public class ReactorDebugAgentTest {
 		return null;
 	}
 
-	private static int getBaseline() {
-		return new Exception().getStackTrace()[1].getLineNumber();
-	}
-
 	@Ignore
 	static class ProxyMe {
+		Mono<Void> doSomething() {
+			Mono<Void> myMono = new MyMono();
+			// Make it think that there were operator calls inside
+			myMono.then();
+			return myMono;
+		}
+
 		@Ignore
 		static class MyMono extends Mono<Void> {
 			@Override
 			public void subscribe(CoreSubscriber<? super Void> actual) {
 				Mono.<Void>empty().subscribe(actual);
 			}
-		}
-
-		Mono<Void> doSomething() {
-			Mono<Void> myMono = new MyMono();
-			// Make it think that there were operator calls inside
-			myMono.then();
-			return myMono;
 		}
 	}
 }

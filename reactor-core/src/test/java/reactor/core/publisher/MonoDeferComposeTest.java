@@ -18,64 +18,63 @@ package reactor.core.publisher;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
-
 import reactor.test.subscriber.AssertSubscriber;
 
 public class MonoDeferComposeTest {
 
-    @Test
-    public void perTrackable() {
+	@Test
+	public void perTrackable() {
 
-        Mono<Integer> source = Mono.just(10).transformDeferred(f -> {
-            AtomicInteger value = new AtomicInteger();
-            return f.map(v -> v + value.incrementAndGet());
-        });
+		Mono<Integer> source = Mono.just(10).transformDeferred(f -> {
+			AtomicInteger value = new AtomicInteger();
+			return f.map(v -> v + value.incrementAndGet());
+		});
 
 
-        for (int i = 0; i < 10; i++) {
-            AssertSubscriber<Integer> ts = AssertSubscriber.create();
+		for (int i = 0; i < 10; i++) {
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
-            source.subscribe(ts);
+			source.subscribe(ts);
 
-            ts.assertValues(11)
-            .assertComplete()
-            .assertNoError();
-        }
-    }
+			ts.assertValues(11)
+					.assertComplete()
+					.assertNoError();
+		}
+	}
 
-    @Test
-    public void composerThrows() {
-        Mono<Integer> source = Mono.just(10).transformDeferred(f -> {
-            throw new RuntimeException("Forced failure");
-        });
+	@Test
+	public void composerThrows() {
+		Mono<Integer> source = Mono.just(10).transformDeferred(f -> {
+			throw new RuntimeException("Forced failure");
+		});
 
-        for (int i = 0; i < 10; i++) {
-            AssertSubscriber<Integer> ts = AssertSubscriber.create();
+		for (int i = 0; i < 10; i++) {
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
-            source.subscribe(ts);
+			source.subscribe(ts);
 
-            ts.assertNoValues()
-            .assertNotComplete()
-            .assertError(RuntimeException.class);
-        }
+			ts.assertNoValues()
+					.assertNotComplete()
+					.assertError(RuntimeException.class);
+		}
 
-    }
+	}
 
-    @Test
-    public void composerReturnsNull() {
-        Mono<Integer> source = Mono.just(10).transformDeferred(f -> {
-            return null;
-        });
+	@Test
+	public void composerReturnsNull() {
+		Mono<Integer> source = Mono.just(10).transformDeferred(f -> {
+			return null;
+		});
 
-        for (int i = 0; i < 10; i++) {
-            AssertSubscriber<Integer> ts = AssertSubscriber.create();
+		for (int i = 0; i < 10; i++) {
+			AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
-            source.subscribe(ts);
+			source.subscribe(ts);
 
-            ts.assertNoValues()
-            .assertNotComplete()
-            .assertError(NullPointerException.class);
-        }
+			ts.assertNoValues()
+					.assertNotComplete()
+					.assertError(NullPointerException.class);
+		}
 
-    }
+	}
 }

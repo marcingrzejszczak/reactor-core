@@ -47,12 +47,47 @@ import reactor.util.concurrent.Queues;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static reactor.core.Scannable.Attr;
-import static reactor.core.Scannable.Attr.*;
+import static reactor.core.Scannable.Attr.BUFFERED;
+import static reactor.core.Scannable.Attr.CANCELLED;
+import static reactor.core.Scannable.Attr.CAPACITY;
+import static reactor.core.Scannable.Attr.PREFETCH;
+import static reactor.core.Scannable.Attr.TERMINATED;
 
 /**
  * @author Stephane Maldini
  */
 public class EmitterProcessorTest {
+
+	static final List<String> DATA = new ArrayList<>();
+	static final int MAX_SIZE = 100;
+
+	static {
+		for (int i = 1; i <= MAX_SIZE; i++) {
+			DATA.add("" + i);
+		}
+	}
+
+	/**
+	 * Concurrent subtraction bound to 0 and Long.MAX_VALUE.
+	 * Any concurrent write will "happen" before this operation.
+	 *
+	 * @param sequence current atomic to update
+	 * @param toSub    delta to sub
+	 * @return value before subscription, 0 or Long.MAX_VALUE
+	 */
+	public static long getAndSub(AtomicLong sequence, long toSub) {
+		long r, u;
+		do {
+			r = sequence.get();
+			if (r == 0 || r == Long.MAX_VALUE) {
+				return r;
+			}
+			u = Operators.subOrZero(r, toSub);
+		}
+		while (!sequence.compareAndSet(r, u));
+
+		return r;
+	}
 
 	//see https://github.com/reactor/reactor-core/issues/1364
 	@Test
@@ -61,12 +96,12 @@ public class EmitterProcessorTest {
 
 		StepVerifier.create(
 				Mono.just("DATA")
-				    .subscribeWith(processor)
-				    .map(String::toLowerCase)
+						.subscribeWith(processor)
+						.map(String::toLowerCase)
 		)
-		            .expectNext("data")
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(1));
+				.expectNext("data")
+				.expectComplete()
+				.verify(Duration.ofSeconds(1));
 
 		assertThat(processor.blockFirst()).as("later subscription").isNull();
 	}
@@ -77,10 +112,10 @@ public class EmitterProcessorTest {
 		Processor<Integer, Integer> processor = EmitterProcessor.create(16);
 
 		StepVerifier.create(processor)
-		            .then(() -> Flux.just(1).subscribe(processor))
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(1));
+				.then(() -> Flux.just(1).subscribe(processor))
+				.expectNext(1)
+				.expectComplete()
+				.verify(Duration.ofSeconds(1));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1290
@@ -89,10 +124,10 @@ public class EmitterProcessorTest {
 		Processor<Integer, Integer> processor = EmitterProcessor.create(16);
 
 		StepVerifier.create(processor)
-		            .then(() -> Flux.range(1, 5).subscribe(processor))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(1));
+				.then(() -> Flux.range(1, 5).subscribe(processor))
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify(Duration.ofSeconds(1));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1290
@@ -101,10 +136,10 @@ public class EmitterProcessorTest {
 		Processor<Integer, Integer> processor = EmitterProcessor.create(16);
 
 		StepVerifier.create(processor)
-		            .then(() -> Flux.range(1, 5).publishOn(Schedulers.elastic()).subscribe(processor))
-		            .expectNext(1, 2, 3, 4, 5)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(1));
+				.then(() -> Flux.range(1, 5).publishOn(Schedulers.elastic()).subscribe(processor))
+				.expectNext(1, 2, 3, 4, 5)
+				.expectComplete()
+				.verify(Duration.ofSeconds(1));
 	}
 
 	@Test
@@ -149,7 +184,7 @@ public class EmitterProcessorTest {
 		});
 
 		Flux.range(1, 10)
-		    .subscribe(processor);
+				.subscribe(processor);
 
 
 		//stream.broadcastComplete();
@@ -236,30 +271,30 @@ public class EmitterProcessorTest {
 
 	@Test(expected = NullPointerException.class)
 	public void subscribeNull() {
-		EmitterProcessor.create().subscribe((Subscriber<Object>)null);
+		EmitterProcessor.create().subscribe((Subscriber<Object>) null);
 	}
 
 	@Test
 	public void normal() {
 		EmitterProcessor<Integer> tp = EmitterProcessor.create();
 		StepVerifier.create(tp)
-		            .then(() -> {
-			            Assert.assertTrue("No subscribers?", tp.hasDownstreams());
-			            Assert.assertFalse("Completed?", tp.isTerminated());
-			            Assert.assertNull("Has error?", tp.getError());
-		            })
-		            .then(() -> {
-			            tp.onNext(1);
-			            tp.onNext(2);
-		            })
-		            .expectNext(1, 2)
-		            .then(() -> {
-			            tp.onNext(3);
-			            tp.onComplete();
-		            })
-		            .expectNext(3)
-		            .expectComplete()
-		            .verify();
+				.then(() -> {
+					Assert.assertTrue("No subscribers?", tp.hasDownstreams());
+					Assert.assertFalse("Completed?", tp.isTerminated());
+					Assert.assertNull("Has error?", tp.getError());
+				})
+				.then(() -> {
+					tp.onNext(1);
+					tp.onNext(2);
+				})
+				.expectNext(1, 2)
+				.then(() -> {
+					tp.onNext(3);
+					tp.onComplete();
+				})
+				.expectNext(3)
+				.expectComplete()
+				.verify();
 
 		Assert.assertFalse("Subscribers present?", tp.hasDownstreams());
 		Assert.assertTrue("Not completed?", tp.isTerminated());
@@ -270,20 +305,20 @@ public class EmitterProcessorTest {
 	public void normalBackpressured() {
 		EmitterProcessor<Integer> tp = EmitterProcessor.create();
 		StepVerifier.create(tp, 0L)
-		            .then(() -> {
-			            Assert.assertTrue("No subscribers?", tp.hasDownstreams());
-			            Assert.assertFalse("Completed?", tp.isTerminated());
-			            Assert.assertNull("Has error?", tp.getError());
-		            })
-		            .then(() -> {
-			            tp.onNext(1);
-			            tp.onNext(2);
-			            tp.onComplete();
-		            })
-		            .thenRequest(10L)
-		            .expectNext(1, 2)
-		            .expectComplete()
-		            .verify();
+				.then(() -> {
+					Assert.assertTrue("No subscribers?", tp.hasDownstreams());
+					Assert.assertFalse("Completed?", tp.isTerminated());
+					Assert.assertNull("Has error?", tp.getError());
+				})
+				.then(() -> {
+					tp.onNext(1);
+					tp.onNext(2);
+					tp.onComplete();
+				})
+				.thenRequest(10L)
+				.expectNext(1, 2)
+				.expectComplete()
+				.verify();
 
 		Assert.assertFalse("Subscribers present?", tp.hasDownstreams());
 		Assert.assertTrue("Not completed?", tp.isTerminated());
@@ -294,20 +329,20 @@ public class EmitterProcessorTest {
 	public void normalAtomicRingBufferBackpressured() {
 		EmitterProcessor<Integer> tp = EmitterProcessor.create(100);
 		StepVerifier.create(tp, 0L)
-		            .then(() -> {
-			            Assert.assertTrue("No subscribers?", tp.hasDownstreams());
-			            Assert.assertFalse("Completed?", tp.isTerminated());
-			            Assert.assertNull("Has error?", tp.getError());
-		            })
-		            .then(() -> {
-			            tp.onNext(1);
-			            tp.onNext(2);
-			            tp.onComplete();
-		            })
-		            .thenRequest(10L)
-		            .expectNext(1, 2)
-		            .expectComplete()
-		            .verify();
+				.then(() -> {
+					Assert.assertTrue("No subscribers?", tp.hasDownstreams());
+					Assert.assertFalse("Completed?", tp.isTerminated());
+					Assert.assertNull("Has error?", tp.getError());
+				})
+				.then(() -> {
+					tp.onNext(1);
+					tp.onNext(2);
+					tp.onComplete();
+				})
+				.thenRequest(10L)
+				.expectNext(1, 2)
+				.expectComplete()
+				.verify();
 
 		Assert.assertFalse("Subscribers present?", tp.hasDownstreams());
 		Assert.assertTrue("Not completed?", tp.isTerminated());
@@ -315,7 +350,7 @@ public class EmitterProcessorTest {
 	}
 
 	@Test
-	public void state(){
+	public void state() {
 		EmitterProcessor<Integer> tp = EmitterProcessor.create();
 		assertThat(tp.getPending()).isEqualTo(0);
 		assertThat(tp.getBufferSize()).isEqualTo(Queues.SMALL_BUFFER_SIZE);
@@ -366,7 +401,7 @@ public class EmitterProcessorTest {
 		assertThat(tp.isTerminated()).isTrue();
 
 		StepVerifier.create(tp)
-	                .verifyComplete();
+				.verifyComplete();
 
 		tp.onNext(8); //noop
 		EmitterProcessor<Void> empty = EmitterProcessor.create();
@@ -374,7 +409,6 @@ public class EmitterProcessorTest {
 		assertThat(empty.isTerminated()).isTrue();
 
 	}
-
 
 	@Test(expected = IllegalArgumentException.class)
 	public void failNullBufferSize() {
@@ -395,29 +429,29 @@ public class EmitterProcessorTest {
 	public void failDoubleError() {
 		EmitterProcessor<Integer> ep = EmitterProcessor.create();
 		StepVerifier.create(ep)
-	                .then(() -> {
-		                assertThat(ep.getError()).isNull();
-						ep.onError(new Exception("test"));
-						assertThat(ep.getError()).hasMessage("test");
-						ep.onError(new Exception("test2"));
-	                })
-	                .expectErrorMessage("test")
-	                .verifyThenAssertThat()
-	                .hasDroppedErrorWithMessage("test2");
+				.then(() -> {
+					assertThat(ep.getError()).isNull();
+					ep.onError(new Exception("test"));
+					assertThat(ep.getError()).hasMessage("test");
+					ep.onError(new Exception("test2"));
+				})
+				.expectErrorMessage("test")
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("test2");
 	}
 
 	@Test
 	public void failCompleteThenError() {
 		EmitterProcessor<Integer> ep = EmitterProcessor.create();
 		StepVerifier.create(ep)
-	                .then(() -> {
-						ep.onComplete();
-						ep.onComplete();//noop
-						ep.onError(new Exception("test"));
-	                })
-	                .expectComplete()
-	                .verifyThenAssertThat()
-	                .hasDroppedErrorWithMessage("test");
+				.then(() -> {
+					ep.onComplete();
+					ep.onComplete();//noop
+					ep.onError(new Exception("test"));
+				})
+				.expectComplete()
+				.verifyThenAssertThat()
+				.hasDroppedErrorWithMessage("test");
 	}
 
 	@Test
@@ -430,15 +464,6 @@ public class EmitterProcessorTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void failNegativeBufferSize() {
 		EmitterProcessor.create(-1);
-	}
-
-	static final List<String> DATA     = new ArrayList<>();
-	static final int          MAX_SIZE = 100;
-
-	static {
-		for (int i = 1; i <= MAX_SIZE; i++) {
-			DATA.add("" + i);
-		}
 	}
 
 	@Test
@@ -544,8 +569,8 @@ public class EmitterProcessorTest {
 		processor.subscribe(subscriber);
 
 		Flux.fromIterable(DATA)
-		    .log()
-		    .subscribe(processor);
+				.log()
+				.subscribe(processor);
 
 		subscriber.awaitAndAssertNextValues("1");
 	}
@@ -557,8 +582,8 @@ public class EmitterProcessorTest {
 		processor.subscribe(subscriber);
 
 		Flux.fromIterable(DATA)
-		    .log()
-		    .subscribe(processor);
+				.log()
+				.subscribe(processor);
 
 
 		subscriber.awaitAndAssertNextValues("1");
@@ -575,8 +600,8 @@ public class EmitterProcessorTest {
 		processor.log("after-2").subscribe(second);
 
 		Flux.fromIterable(DATA)
-		    .log()
-		    .subscribe(processor);
+				.log()
+				.subscribe(processor);
 
 		second.request(1);
 		second.assertNoValues();
@@ -602,71 +627,14 @@ public class EmitterProcessorTest {
 		processor.log().subscribe(second);
 
 		Flux.fromIterable(DATA)
-		    .log()
-		    .subscribe(processor);
+				.log()
+				.subscribe(processor);
 
 
 		first.awaitAndAssertNextValues("1");
 
 
 		second.awaitAndAssertNextValues("1", "2", "3");
-	}
-
-	static class MyThread extends Thread {
-
-		private final Flux<String> processor;
-
-		private final CyclicBarrier barrier;
-
-		private final int n;
-
-		private volatile Throwable lastException;
-
-		class MyUncaughtExceptionHandler implements UncaughtExceptionHandler {
-
-			@Override
-			public void uncaughtException(Thread t, Throwable e) {
-				lastException = e;
-			}
-
-		}
-
-		public MyThread(FluxProcessor<String, String> processor, CyclicBarrier barrier, int n, int index) {
-			this.processor = processor.log("consuming."+index);
-			this.barrier = barrier;
-			this.n = n;
-			setUncaughtExceptionHandler(new MyUncaughtExceptionHandler());
-		}
-
-		@Override
-		public void run() {
-			try {
-				doRun();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		public void doRun() throws Exception {
-			AssertSubscriber<String> subscriber = AssertSubscriber.create(5);
-			processor.subscribe(subscriber);
-			barrier.await();
-
-			subscriber.request(3);
-			subscriber.request(4);
-			subscriber.request(1);
-
-			subscriber
-					.await()
-					.assertValueCount(n)
-					.assertComplete();
-		}
-
-		@Nullable
-		public Throwable getLastException() {
-			return lastException;
-		}
-
 	}
 
 	@Test
@@ -682,8 +650,8 @@ public class EmitterProcessorTest {
 		}
 
 		Flux.fromIterable(data)
-		    .log("publishing")
-		    .subscribe(processor);
+				.log("publishing")
+				.subscribe(processor);
 
 		CyclicBarrier barrier = new CyclicBarrier(N_THREADS);
 
@@ -716,26 +684,26 @@ public class EmitterProcessorTest {
 		}
 		EmitterProcessor<Integer> processor = EmitterProcessor.create();
 		processor.publishOn(schedulers[0])
-			 .share();
+				.share();
 		processor.publishOn(schedulers[1])
-				 .subscribe(i -> {
-						assertThat(Thread.currentThread().getName().contains("scheduler1")).isTrue();
-						latches[1].countDown();
-					});
+				.subscribe(i -> {
+					assertThat(Thread.currentThread().getName().contains("scheduler1")).isTrue();
+					latches[1].countDown();
+				});
 		for (int i = 0; i < count; i++)
 			processor.onNext(i);
 		processor.publishOn(schedulers[2])
-				 .map(i -> {
-						assertThat(Thread.currentThread().getName().contains("scheduler2")).isTrue();
-						latches[2].countDown();
-						return i;
-					})
-				 .publishOn(schedulers[3])
-				 .doOnNext(i -> {
-						assertThat(Thread.currentThread().getName().contains("scheduler3")).isTrue();
-						latches[3].countDown();
-					})
-				 .subscribe();
+				.map(i -> {
+					assertThat(Thread.currentThread().getName().contains("scheduler2")).isTrue();
+					latches[2].countDown();
+					return i;
+				})
+				.publishOn(schedulers[3])
+				.doOnNext(i -> {
+					assertThat(Thread.currentThread().getName().contains("scheduler3")).isTrue();
+					latches[3].countDown();
+				})
+				.subscribe();
 		for (int i = 0; i < count; i++)
 			processor.onNext(i);
 		processor.onComplete();
@@ -781,27 +749,6 @@ public class EmitterProcessorTest {
 
 		assertEquals(expectedBufferSize, processor.prefetch);
 		assertEquals(expectedAutoCancel, processor.autoCancel);
-	}
-
-	/**
-	 * Concurrent subtraction bound to 0 and Long.MAX_VALUE.
-	 * Any concurrent write will "happen" before this operation.
-	 *
-	 * @param sequence current atomic to update
-	 * @param toSub    delta to sub
-	 * @return value before subscription, 0 or Long.MAX_VALUE
-	 */
-	public static long getAndSub(AtomicLong sequence, long toSub) {
-		long r, u;
-		do {
-			r = sequence.get();
-			if (r == 0 || r == Long.MAX_VALUE) {
-				return r;
-			}
-			u = Operators.subOrZero(r, toSub);
-		} while (!sequence.compareAndSet(r, u));
-
-		return r;
 	}
 
 	@Test
@@ -887,11 +834,11 @@ public class EmitterProcessorTest {
 		final EmitterProcessor<Integer> processor = EmitterProcessor.create();
 
 		StepVerifier.create(processor)
-		            .then(() -> flux.subscribe(processor))
-		            .thenConsumeWhile(i -> i < 10)
-		            .expectNextCount(10)
-		            .thenCancel()
-		            .verify(Duration.ofSeconds(4));
+				.then(() -> flux.subscribe(processor))
+				.thenConsumeWhile(i -> i < 10)
+				.expectNextCount(10)
+				.thenCancel()
+				.verify(Duration.ofSeconds(4));
 	}
 
 	//see https://github.com/reactor/reactor-core/issues/1528
@@ -903,9 +850,9 @@ public class EmitterProcessorTest {
 		flux.subscribe(processor);
 
 		StepVerifier.create(processor)
-		            .expectNextCount(10)
-		            .expectComplete()
-		            .verify(Duration.ofSeconds(4));
+				.expectNextCount(10)
+				.expectComplete()
+				.verify(Duration.ofSeconds(4));
 	}
 
 	@Test
@@ -922,5 +869,63 @@ public class EmitterProcessorTest {
 
 		processor.remove(inner);
 		assertThat(processor.subscribers).as("post remove inner").isEmpty();
+	}
+
+	static class MyThread extends Thread {
+
+		private final Flux<String> processor;
+
+		private final CyclicBarrier barrier;
+
+		private final int n;
+
+		private volatile Throwable lastException;
+
+		public MyThread(FluxProcessor<String, String> processor, CyclicBarrier barrier, int n, int index) {
+			this.processor = processor.log("consuming." + index);
+			this.barrier = barrier;
+			this.n = n;
+			setUncaughtExceptionHandler(new MyUncaughtExceptionHandler());
+		}
+
+		@Override
+		public void run() {
+			try {
+				doRun();
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		public void doRun() throws Exception {
+			AssertSubscriber<String> subscriber = AssertSubscriber.create(5);
+			processor.subscribe(subscriber);
+			barrier.await();
+
+			subscriber.request(3);
+			subscriber.request(4);
+			subscriber.request(1);
+
+			subscriber
+					.await()
+					.assertValueCount(n)
+					.assertComplete();
+		}
+
+		@Nullable
+		public Throwable getLastException() {
+			return lastException;
+		}
+
+		class MyUncaughtExceptionHandler implements UncaughtExceptionHandler {
+
+			@Override
+			public void uncaughtException(Thread t, Throwable e) {
+				lastException = e;
+			}
+
+		}
+
 	}
 }

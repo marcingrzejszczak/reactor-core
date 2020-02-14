@@ -65,7 +65,7 @@ final class MonoReduceSeed<T, R> extends MonoFromFluxOperator<T, R>
 		return new ReduceSeedSubscriber<>(actual, accumulator, initialValue);
 	}
 
-	static final class ReduceSeedSubscriber<T, R> extends Operators.MonoSubscriber<T, R>  {
+	static final class ReduceSeedSubscriber<T, R> extends Operators.MonoSubscriber<T, R> {
 
 		final BiFunction<R, ? super T, R> accumulator;
 
@@ -128,7 +128,8 @@ final class MonoReduceSeed<T, R> extends MonoFromFluxOperator<T, R>
 					return;
 				}
 				value = accumulated;
-			} else {
+			}
+			else {
 				Operators.onDiscard(t, actual.currentContext());
 			}
 		}

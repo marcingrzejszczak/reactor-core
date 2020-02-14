@@ -30,19 +30,14 @@ import reactor.util.annotation.Nullable;
  *
  * @see <a href="https://github.com/reactor/reactive-streams-commons">Reactive-Streams-Commons</a>
  */
-final class MonoEmpty 
-extends Mono<Object>
-		implements Fuseable.ScalarCallable<Object>, SourceProducer<Object>  {
+final class MonoEmpty
+		extends Mono<Object>
+		implements Fuseable.ScalarCallable<Object>, SourceProducer<Object> {
 
 	static final Publisher<Object> INSTANCE = new MonoEmpty();
 
 	MonoEmpty() {
 		// deliberately no op
-	}
-
-	@Override
-	public void subscribe(CoreSubscriber<? super Object> actual) {
-		Operators.complete(actual);
 	}
 
 	/**
@@ -54,6 +49,11 @@ extends Mono<Object>
 	@SuppressWarnings("unchecked")
 	static <T> Mono<T> instance() {
 		return (Mono<T>) INSTANCE;
+	}
+
+	@Override
+	public void subscribe(CoreSubscriber<? super Object> actual) {
+		Operators.complete(actual);
 	}
 
 	@Override

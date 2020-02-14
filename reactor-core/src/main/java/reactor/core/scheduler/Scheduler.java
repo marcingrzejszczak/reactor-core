@@ -15,7 +15,6 @@
  */
 package reactor.core.scheduler;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -97,7 +96,7 @@ public interface Scheduler extends Disposable {
 	default long now(TimeUnit unit) {
 		return unit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 	}
-	
+
 	/**
 	 * Creates a worker of this Scheduler.
 	 * <p>

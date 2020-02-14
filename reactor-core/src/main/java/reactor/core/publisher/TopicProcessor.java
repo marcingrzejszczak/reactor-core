@@ -71,7 +71,173 @@ import reactor.util.concurrent.WaitStrategy;
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
+public final class TopicProcessor<E> extends EventLoopProcessor<E> {
+
+	final RingBuffer.Reader barrier;
+	final RingBuffer.Sequence minimum;
+
+	TopicProcessor(
+			@Nullable ThreadFactory threadFactory,
+			@Nullable ExecutorService executor,
+			ExecutorService requestTaskExecutor,
+			int bufferSize,
+			WaitStrategy waitStrategy,
+			boolean shared,
+			boolean autoCancel,
+			@Nullable final Supplier<E> signalSupplier) {
+		super(bufferSize, threadFactory, executor, requestTaskExecutor, autoCancel,
+				shared, () -> {
+					Slot<E> signal = new Slot<>();
+					if (signalSupplier != null) {
+						signal.value = signalSupplier.get();
+					}
+					return signal;
+				}, waitStrategy);
+
+		this.minimum = RingBuffer.newSequence(-1);
+		this.barrier = ringBuffer.newReader();
+	}
+
+	/**
+	 * Create a new {@link TopicProcessor} {@link Builder} with default properties.
+	 * @return new TopicProcessor builder
+	 */
+	public static <E> Builder<E> builder() {
+		return new Builder<>();
+	}
+
+	/**
+	 * Create a new TopicProcessor using {@link Queues#SMALL_BUFFER_SIZE} backlog size,
+	 * blockingWait Strategy and auto-cancel. <p> A new Cached ThreadExecutorPool will be
+	 * implicitly created.
+	 * @param <E> Type of processed signals
+	 * @return a fresh processor
+	 */
+	public static <E> TopicProcessor<E> create() {
+		return TopicProcessor.<E>builder().build();
+	}
+
+	/**
+	 * Create a new TopicProcessor using the provided backlog size, with a blockingWait Strategy
+	 * and auto-cancellation. <p> A new Cached ThreadExecutorPool will be implicitly created and will use the passed name to
+	 * qualify the created threads.
+	 * @param name Use a new Cached ExecutorService and assign this name to the created
+	 * threads
+	 * @param bufferSize A Backlog Size to mitigate slow subscribers
+	 * @param <E> Type of processed signals
+	 * @return the fresh TopicProcessor instance
+	 */
+	public static <E> TopicProcessor<E> create(String name, int bufferSize) {
+		return TopicProcessor.<E>builder().name(name).bufferSize(bufferSize).build();
+	}
+
+	/**
+	 * Create a new shared TopicProcessor using the passed backlog size, with a blockingWait
+	 * Strategy and auto-cancellation.
+	 * <p>
+	 * A Shared Processor authorizes concurrent onNext calls and is suited for multi-threaded
+	 * publisher that will fan-in data.
+	 * <p>
+	 * A new Cached ThreadExecutorPool will be implicitly created and will use the passed
+	 * name to qualify the created threads.
+	 * @param name Use a new Cached ExecutorService and assign this name to the created
+	 * threads
+	 * @param bufferSize A Backlog Size to mitigate slow subscribers
+	 * @param <E> Type of processed signals
+	 * @return a fresh processor
+	 */
+	public static <E> TopicProcessor<E> share(String name, int bufferSize) {
+		return TopicProcessor.<E>builder().share(true).name(name).bufferSize(bufferSize).build();
+	}
+
+	@Override
+	public void subscribe(final CoreSubscriber<? super E> actual) {
+		Objects.requireNonNull(actual, "subscribe");
+
+		if (!alive()) {
+			coldSource(ringBuffer, null, error, minimum).subscribe(actual);
+			return;
+		}
+
+		//create a unique eventProcessor for this subscriber
+		final RingBuffer.Sequence pendingRequest = RingBuffer.newSequence(0);
+		final TopicInner<E> signalProcessor =
+				new TopicInner<>(this, pendingRequest, actual);
+
+		//bind eventProcessor sequence to observe the ringBuffer
+
+		//if only active subscriber, replay missed data
+		if (incrementSubscribers()) {
+
+			signalProcessor.sequence.set(minimum.getAsLong());
+			ringBuffer.addGatingSequence(signalProcessor.sequence);
+			//set eventProcessor sequence to minimum index (replay)
+		}
+		else {
+			//otherwise only listen to new data
+			//set eventProcessor sequence to ringbuffer index
+			signalProcessor.sequence.set(ringBuffer.getCursor());
+			ringBuffer.addGatingSequence(signalProcessor.sequence);
+
+		}
+
+		try {
+			//start the subscriber thread
+			executor.execute(signalProcessor);
+
+		}
+		catch (Throwable t) {
+			ringBuffer.removeGatingSequence(signalProcessor.sequence);
+			decrementSubscribers();
+			if (!alive() && RejectedExecutionException.class.isAssignableFrom(t.getClass())) {
+				coldSource(ringBuffer, t, error, minimum).subscribe(actual);
+			}
+			else {
+				Operators.error(actual, t);
+			}
+		}
+	}
+
+	@Override
+	public Flux<E> drain() {
+		return coldSource(ringBuffer, null, error, minimum);
+	}
+
+	@Override
+	protected void doError(Throwable t) {
+		barrier.signal();
+		//ringBuffer.markAsTerminated();
+
+	}
+
+	@Override
+	protected void doComplete() {
+		barrier.signal();
+		//ringBuffer.markAsTerminated();
+	}
+
+	@Override
+	public long getPending() {
+		return ringBuffer.getPending();
+	}
+
+	@Override
+	protected void requestTask(Subscription s) {
+		minimum.set(ringBuffer.getCursor());
+		ringBuffer.addGatingSequence(minimum);
+		requestTaskExecutor.execute(
+				createRequestTask(s, this, minimum::set, () ->
+						SUBSCRIBER_COUNT.get(TopicProcessor.this) == 0 ?
+								minimum.getAsLong() :
+								ringBuffer.getMinimumGatingSequence(minimum)));
+	}
+
+	@Override
+	public void run() {
+		if (!alive() && SUBSCRIBER_COUNT.get(TopicProcessor.this) == 0) {
+			WaitStrategy.alert();
+		}
+	}
 
 	/**
 	 * {@link TopicProcessor} builder that can be used to create new
@@ -86,14 +252,14 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 	@Deprecated
 	public final static class Builder<T> {
 
-		String          name;
+		String name;
 		ExecutorService executor;
 		ExecutorService requestTaskExecutor;
-		int             bufferSize;
-		WaitStrategy    waitStrategy;
-		boolean         share;
-		boolean         autoCancel;
-		Supplier<T>     signalSupplier;
+		int bufferSize;
+		WaitStrategy waitStrategy;
+		boolean share;
+		boolean autoCancel;
+		Supplier<T> signalSupplier;
 
 		Builder() {
 			this.bufferSize = Queues.SMALL_BUFFER_SIZE;
@@ -125,9 +291,9 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 				throw new IllegalArgumentException("bufferSize must be a power of 2 : " + bufferSize);
 			}
 
-			if (bufferSize < 1){
+			if (bufferSize < 1) {
 				throw new IllegalArgumentException("bufferSize must be strictly positive, " +
-						"was: "+bufferSize);
+						"was: " + bufferSize);
 			}
 			this.bufferSize = bufferSize;
 			return this;
@@ -223,174 +389,6 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 	}
 
 	/**
-	 * Create a new {@link TopicProcessor} {@link Builder} with default properties.
-	 * @return new TopicProcessor builder
-	 */
-	public static <E> Builder<E> builder()  {
-		return new Builder<>();
-	}
-
-	/**
-	 * Create a new TopicProcessor using {@link Queues#SMALL_BUFFER_SIZE} backlog size,
-	 * blockingWait Strategy and auto-cancel. <p> A new Cached ThreadExecutorPool will be
-	 * implicitly created.
-	 * @param <E> Type of processed signals
-	 * @return a fresh processor
-	 */
-	public static <E> TopicProcessor<E> create() {
-		return TopicProcessor.<E>builder().build();
-	}
-
-	/**
-	 * Create a new TopicProcessor using the provided backlog size, with a blockingWait Strategy
-	 * and auto-cancellation. <p> A new Cached ThreadExecutorPool will be implicitly created and will use the passed name to
-	 * qualify the created threads.
-	 * @param name Use a new Cached ExecutorService and assign this name to the created
-	 * threads
-	 * @param bufferSize A Backlog Size to mitigate slow subscribers
-	 * @param <E> Type of processed signals
-	 * @return the fresh TopicProcessor instance
-	 */
-	public static <E> TopicProcessor<E> create(String name, int bufferSize) {
-		return TopicProcessor.<E>builder().name(name).bufferSize(bufferSize).build();
-	}
-
-	/**
-	 * Create a new shared TopicProcessor using the passed backlog size, with a blockingWait
-	 * Strategy and auto-cancellation.
-	 * <p>
-	 * A Shared Processor authorizes concurrent onNext calls and is suited for multi-threaded
-	 * publisher that will fan-in data.
-	 * <p>
-	 * A new Cached ThreadExecutorPool will be implicitly created and will use the passed
-	 * name to qualify the created threads.
-	 * @param name Use a new Cached ExecutorService and assign this name to the created
-	 * threads
-	 * @param bufferSize A Backlog Size to mitigate slow subscribers
-	 * @param <E> Type of processed signals
-	 * @return a fresh processor
-	 */
-	public static <E> TopicProcessor<E> share(String name, int bufferSize) {
-		return TopicProcessor.<E>builder().share(true).name(name).bufferSize(bufferSize).build();
-	}
-
-	final RingBuffer.Reader barrier;
-
-	final RingBuffer.Sequence minimum;
-
-	TopicProcessor(
-			@Nullable ThreadFactory threadFactory,
-			@Nullable ExecutorService executor,
-			ExecutorService requestTaskExecutor,
-			int bufferSize,
-			WaitStrategy waitStrategy,
-			boolean shared,
-			boolean autoCancel,
-			@Nullable final Supplier<E> signalSupplier) {
-		super(bufferSize, threadFactory, executor, requestTaskExecutor, autoCancel,
-				shared, () -> {
-			Slot<E> signal = new Slot<>();
-			if (signalSupplier != null) {
-				signal.value = signalSupplier.get();
-			}
-			return signal;
-		}, waitStrategy);
-
-		this.minimum = RingBuffer.newSequence(-1);
-		this.barrier = ringBuffer.newReader();
-	}
-
-	@Override
-	public void subscribe(final CoreSubscriber<? super E> actual) {
-		Objects.requireNonNull(actual, "subscribe");
-
-		if (!alive()) {
-			coldSource(ringBuffer, null, error, minimum).subscribe(actual);
-			return;
-		}
-
-		//create a unique eventProcessor for this subscriber
-		final RingBuffer.Sequence pendingRequest = RingBuffer.newSequence(0);
-		final TopicInner<E> signalProcessor =
-				new TopicInner<>(this, pendingRequest, actual);
-
-		//bind eventProcessor sequence to observe the ringBuffer
-
-		//if only active subscriber, replay missed data
-		if (incrementSubscribers()) {
-
-			signalProcessor.sequence.set(minimum.getAsLong());
-			ringBuffer.addGatingSequence(signalProcessor.sequence);
-			//set eventProcessor sequence to minimum index (replay)
-		}
-		else {
-			//otherwise only listen to new data
-			//set eventProcessor sequence to ringbuffer index
-			signalProcessor.sequence.set(ringBuffer.getCursor());
-			ringBuffer.addGatingSequence(signalProcessor.sequence);
-
-
-		}
-
-		try {
-			//start the subscriber thread
-			executor.execute(signalProcessor);
-
-		}
-		catch (Throwable t) {
-			ringBuffer.removeGatingSequence(signalProcessor.sequence);
-			decrementSubscribers();
-			if (!alive() && RejectedExecutionException.class.isAssignableFrom(t.getClass())){
-				coldSource(ringBuffer, t, error, minimum).subscribe(actual);
-			}
-			else{
-				Operators.error(actual, t);
-			}
-		}
-	}
-
-	@Override
-	public Flux<E> drain() {
-		return coldSource(ringBuffer, null, error, minimum);
-	}
-
-	@Override
-	protected void doError(Throwable t) {
-		barrier.signal();
-		//ringBuffer.markAsTerminated();
-
-	}
-
-	@Override
-	protected void doComplete() {
-		barrier.signal();
-		//ringBuffer.markAsTerminated();
-	}
-
-	@Override
-	public long getPending() {
-		return ringBuffer.getPending();
-	}
-
-	@Override
-	protected void requestTask(Subscription s) {
-		minimum.set(ringBuffer.getCursor());
-		ringBuffer.addGatingSequence(minimum);
-		requestTaskExecutor.execute(
-				createRequestTask(s, this, minimum::set, () ->
-								SUBSCRIBER_COUNT.get(TopicProcessor.this) == 0 ?
-								minimum.getAsLong() :
-						ringBuffer.getMinimumGatingSequence(minimum)));
-	}
-
-	@Override
-	public void run() {
-		if (!alive() && SUBSCRIBER_COUNT.get(TopicProcessor.this) == 0) {
-			WaitStrategy.alert();
-		}
-	}
-
-	/**
 	 * Disruptor BatchEventProcessor port that deals with pending demand. <p> Convenience
 	 * class for handling the batching semantics of consuming entries from a {@link
 	 * reactor.core.publisher .rb.disruptor .RingBuffer}. <p>
@@ -428,7 +426,7 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 		 * @param subscriber the output Subscriber instance
 		 */
 		TopicInner(TopicProcessor<T> processor,
-		                            RingBuffer.Sequence pendingRequest,
+				RingBuffer.Sequence pendingRequest,
 				CoreSubscriber<? super T> subscriber) {
 			this.processor = processor;
 			this.pendingRequest = pendingRequest;
@@ -447,15 +445,15 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 		public void run() {
 			try {
 				Thread.currentThread()
-				      .setContextClassLoader(processor.contextClassLoader);
+						.setContextClassLoader(processor.contextClassLoader);
 				subscriber.onSubscribe(this);
 
 				if (!EventLoopProcessor
 						.waitRequestOrTerminalEvent(pendingRequest, processor.barrier, running, sequence, waiter)) {
-					if(!running.get()){
+					if (!running.get()) {
 						return;
 					}
-					if(processor.terminated == SHUTDOWN) {
+					if (processor.terminated == SHUTDOWN) {
 						if (processor.ringBuffer.getAsLong() == -1L) {
 							if (processor.error != null) {
 								subscriber.onError(processor.error);
@@ -481,19 +479,19 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 						while (nextSequence <= availableSequence) {
 							event = processor.ringBuffer.get(nextSequence);
 
-								//if bounded and out of capacity
-								while (!unbounded && getAndSub(pendingRequest, 1L) ==
-												0) {
-									//Todo Use WaitStrategy?
-									if(!running.get() || processor.isTerminated()){
-										WaitStrategy.alert();
-									}
-									LockSupport.parkNanos(1L);
+							//if bounded and out of capacity
+							while (!unbounded && getAndSub(pendingRequest, 1L) ==
+									0) {
+								//Todo Use WaitStrategy?
+								if (!running.get() || processor.isTerminated()) {
+									WaitStrategy.alert();
 								}
+								LockSupport.parkNanos(1L);
+							}
 
-								//It's an unbounded subscriber or there is enough capacity to process the signal
-								subscriber.onNext(event.value);
-								nextSequence++;
+							//It's an unbounded subscriber or there is enough capacity to process the signal
+							subscriber.onNext(event.value);
+							nextSequence++;
 
 						}
 						sequence.set(availableSequence);
@@ -504,7 +502,7 @@ public final class TopicProcessor<E> extends EventLoopProcessor<E>  {
 						}
 					}
 					catch (Throwable ex) {
-						if(WaitStrategy.isAlert(ex) || Exceptions.isCancel(ex)) {
+						if (WaitStrategy.isAlert(ex) || Exceptions.isCancel(ex)) {
 
 							if (!running.get()) {
 								break;

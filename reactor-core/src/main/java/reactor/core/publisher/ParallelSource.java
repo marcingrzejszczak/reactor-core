@@ -39,11 +39,11 @@ import reactor.util.context.Context;
  */
 final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 	final Publisher<? extends T> source;
-	
+
 	final int parallelism;
-	
+
 	final int prefetch;
-	
+
 	final Supplier<Queue<T>> queueSupplier;
 
 	ParallelSource(Publisher<? extends T> source, int parallelism, int prefetch, Supplier<Queue<T>> queueSupplier) {
@@ -83,52 +83,38 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 		if (!validate(subscribers)) {
 			return;
 		}
-		
+
 		source.subscribe(new ParallelSourceMain<>(subscribers, prefetch, queueSupplier));
 	}
-	
+
 	static final class ParallelSourceMain<T> implements InnerConsumer<T> {
 
-		final CoreSubscriber<? super T>[] subscribers;
-		
-		final AtomicLongArray requests;
-
-		final long[] emissions;
-
-		final int prefetch;
-		
-		final int limit;
-
-		final Supplier<Queue<T>> queueSupplier;
-
-		Subscription s;
-		
-		Queue<T> queue;
-		
-		Throwable error;
-		
-		volatile boolean done;
-		
-		int index;
-		
-		volatile boolean cancelled;
-		
-		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ParallelSourceMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(ParallelSourceMain.class, "wip");
-		
-		/** 
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<ParallelSourceMain> SUBSCRIBER_COUNT =
+				AtomicIntegerFieldUpdater.newUpdater(ParallelSourceMain.class, "subscriberCount");
+		final CoreSubscriber<? super T>[] subscribers;
+		final AtomicLongArray requests;
+		final long[] emissions;
+		final int prefetch;
+		final int limit;
+		final Supplier<Queue<T>> queueSupplier;
+		Subscription s;
+		Queue<T> queue;
+		Throwable error;
+		volatile boolean done;
+		int index;
+		volatile boolean cancelled;
+		volatile int wip;
+		/**
 		 * Counts how many subscribers were setup to delay triggering the
 		 * drain of upstream until all of them have been setup.
 		 */
 		volatile int subscriberCount;
-		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<ParallelSourceMain> SUBSCRIBER_COUNT =
-				AtomicIntegerFieldUpdater.newUpdater(ParallelSourceMain.class, "subscriberCount");
-		
 		int produced;
-		
+
 		int sourceMode;
 
 		ParallelSourceMain(CoreSubscriber<? super T>[] subscribers, int prefetch,
@@ -172,9 +158,9 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 				if (s instanceof Fuseable.QueueSubscription) {
 					@SuppressWarnings("unchecked")
 					Fuseable.QueueSubscription<T> qs = (Fuseable.QueueSubscription<T>) s;
-					
+
 					int m = qs.requestFusion(Fuseable.ANY | Fuseable.THREAD_BARRIER);
-					
+
 					if (m == Fuseable.SYNC) {
 						sourceMode = m;
 						queue = qs;
@@ -182,30 +168,30 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 						setupSubscribers();
 						drain();
 						return;
-					} else
-					if (m == Fuseable.ASYNC) {
+					}
+					else if (m == Fuseable.ASYNC) {
 						sourceMode = m;
 						queue = qs;
-						
+
 						setupSubscribers();
-						
+
 						s.request(Operators.unboundedOrPrefetch(prefetch));
-						
+
 						return;
 					}
 				}
-				
+
 				queue = queueSupplier.get();
-				
+
 				setupSubscribers();
-				
+
 				s.request(Operators.unboundedOrPrefetch(prefetch));
 			}
 		}
-		
+
 		void setupSubscribers() {
 			int m = subscribers.length;
-			
+
 			for (int i = 0; i < m; i++) {
 				if (cancelled) {
 					return;
@@ -213,7 +199,7 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 				int j = i;
 
 				SUBSCRIBER_COUNT.lazySet(this, i + 1);
-				
+
 				subscribers[i].onSubscribe(new ParallelSourceInner<>(this, j, m));
 			}
 		}
@@ -246,27 +232,27 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 
 		@Override
 		public void onComplete() {
-			if(done){
+			if (done) {
 				return;
 			}
 			done = true;
 			drain();
 		}
-		
+
 		void cancel() {
 			if (!cancelled) {
 				cancelled = true;
 				this.s.cancel();
-				
+
 				if (WIP.getAndIncrement(this) == 0) {
 					queue.clear();
 				}
 			}
 		}
-		
+
 		void drainAsync() {
 			int missed = 1;
-			
+
 			Queue<T> q = queue;
 			CoreSubscriber<? super T>[] a = this.subscribers;
 			AtomicLongArray r = this.requests;
@@ -274,17 +260,17 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 			int n = e.length;
 			int idx = index;
 			int consumed = produced;
-			
-			for (;;) {
+
+			for (; ; ) {
 
 				int notReady = 0;
-				
-				for (;;) {
+
+				for (; ; ) {
 					if (cancelled) {
 						q.clear();
 						return;
 					}
-					
+
 					boolean d = done;
 					if (d) {
 						Throwable ex = error;
@@ -298,7 +284,7 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 					}
 
 					boolean empty = q.isEmpty();
-					
+
 					if (d && empty) {
 						for (Subscriber<? super T> s : a) {
 							s.onComplete();
@@ -309,51 +295,53 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 					if (empty) {
 						break;
 					}
-					
+
 					long ridx = r.get(idx);
 					long eidx = e[idx];
 					if (ridx != eidx) {
 
 						T v;
-						
+
 						try {
 							v = q.poll();
-						} catch (Throwable ex) {
+						}
+						catch (Throwable ex) {
 							ex = Operators.onOperatorError(s, ex, a[idx].currentContext());
 							for (Subscriber<? super T> s : a) {
 								s.onError(ex);
 							}
 							return;
 						}
-						
+
 						if (v == null) {
 							break;
 						}
-						
+
 						a[idx].onNext(v);
-						
+
 						e[idx] = eidx + 1;
-						
+
 						int c = ++consumed;
 						if (c == limit) {
 							consumed = 0;
 							s.request(c);
 						}
 						notReady = 0;
-					} else {
+					}
+					else {
 						notReady++;
 					}
-					
+
 					idx++;
 					if (idx == n) {
 						idx = 0;
 					}
-					
+
 					if (notReady == n) {
 						break;
 					}
 				}
-				
+
 				int w = wip;
 				if (w == missed) {
 					index = idx;
@@ -362,32 +350,33 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 					if (missed == 0) {
 						break;
 					}
-				} else {
+				}
+				else {
 					missed = w;
 				}
 			}
 		}
-		
+
 		void drainSync() {
 			int missed = 1;
-			
+
 			Queue<T> q = queue;
 			CoreSubscriber<? super T>[] a = this.subscribers;
 			AtomicLongArray r = this.requests;
 			long[] e = this.emissions;
 			int n = e.length;
 			int idx = index;
-			
-			for (;;) {
+
+			for (; ; ) {
 
 				int notReady = 0;
-				
-				for (;;) {
+
+				for (; ; ) {
 					if (cancelled) {
 						q.clear();
 						return;
 					}
-					
+
 					if (q.isEmpty()) {
 						for (Subscriber<? super T> s : a) {
 							s.onComplete();
@@ -400,43 +389,45 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 					if (ridx != eidx) {
 
 						T v;
-						
+
 						try {
 							v = q.poll();
-						} catch (Throwable ex) {
+						}
+						catch (Throwable ex) {
 							ex = Operators.onOperatorError(s, ex, a[idx].currentContext());
 							for (Subscriber<? super T> s : a) {
 								s.onError(ex);
 							}
 							return;
 						}
-						
+
 						if (v == null) {
 							for (Subscriber<? super T> s : a) {
 								s.onComplete();
 							}
 							return;
 						}
-						
+
 						a[idx].onNext(v);
-						
+
 						e[idx] = eidx + 1;
-						
+
 						notReady = 0;
-					} else {
+					}
+					else {
 						notReady++;
 					}
-					
+
 					idx++;
 					if (idx == n) {
 						idx = 0;
 					}
-					
+
 					if (notReady == n) {
 						break;
 					}
 				}
-				
+
 				int w = wip;
 				if (w == missed) {
 					index = idx;
@@ -444,20 +435,22 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 					if (missed == 0) {
 						break;
 					}
-				} else {
+				}
+				else {
 					missed = w;
 				}
 			}
 		}
-		
+
 		void drain() {
 			if (WIP.getAndIncrement(this) != 0) {
 				return;
 			}
-			
+
 			if (sourceMode == Fuseable.SYNC) {
 				drainSync();
-			} else {
+			}
+			else {
 				drainAsync();
 			}
 		}
@@ -492,7 +485,7 @@ final class ParallelSource<T> extends ParallelFlux<T> implements Scannable {
 			public void request(long n) {
 				if (Operators.validate(n)) {
 					AtomicLongArray ra = parent.requests;
-					for (;;) {
+					for (; ; ) {
 						long r = ra.get(index);
 						if (r == Long.MAX_VALUE) {
 							return;

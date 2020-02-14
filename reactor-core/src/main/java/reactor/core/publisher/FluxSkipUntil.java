@@ -49,7 +49,7 @@ final class FluxSkipUntil<T> extends InternalFluxOperator<T, T> {
 			implements ConditionalSubscriber<T>, InnerOperator<T, T> {
 
 		final CoreSubscriber<? super T> actual;
-		final Context                   ctx;
+		final Context ctx;
 
 		final Predicate<? super T> predicate;
 
@@ -80,7 +80,7 @@ final class FluxSkipUntil<T> extends InternalFluxOperator<T, T> {
 				return;
 			}
 
-			if (doneSkipping){
+			if (doneSkipping) {
 				actual.onNext(t);
 				return;
 			}
@@ -88,7 +88,8 @@ final class FluxSkipUntil<T> extends InternalFluxOperator<T, T> {
 
 			try {
 				b = predicate.test(t);
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				onError(Operators.onOperatorError(s, e, t, ctx));
 				return;
 			}
@@ -174,7 +175,7 @@ final class FluxSkipUntil<T> extends InternalFluxOperator<T, T> {
 		public void request(long n) {
 			s.request(n);
 		}
-		
+
 		@Override
 		public void cancel() {
 			s.cancel();

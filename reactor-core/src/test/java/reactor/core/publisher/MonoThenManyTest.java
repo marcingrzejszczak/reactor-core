@@ -28,7 +28,7 @@ public class MonoThenManyTest {
 	@Test
 	public void testThenManySameType() {
 		Flux<String> test = Mono.just("A")
-		                        .thenMany(Flux.just("C", "D"));
+				.thenMany(Flux.just("C", "D"));
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 		test.subscribe(ts);
@@ -39,8 +39,8 @@ public class MonoThenManyTest {
 	@Test
 	public void testThenManyFusion() {
 		Flux<Integer> test = Mono.just("A")
-		                         .thenMany(Flux.just("C", "D"))
-		                         .thenMany(Flux.just(1, 2));
+				.thenMany(Flux.just("C", "D"))
+				.thenMany(Flux.just(1, 2));
 
 		Assert.assertTrue(test instanceof FluxConcatArray);
 		FluxConcatArray<Integer> s = (FluxConcatArray<Integer>) test;
@@ -56,7 +56,7 @@ public class MonoThenManyTest {
 	@Test
 	public void testThenManyDifferentType() {
 		Flux<String> test = Mono.just(1)
-		                        .thenMany(Flux.just("C", "D"));
+				.thenMany(Flux.just("C", "D"));
 
 		AssertSubscriber<String> ts = AssertSubscriber.create();
 		test.subscribe(ts);

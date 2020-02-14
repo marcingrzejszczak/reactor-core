@@ -43,11 +43,11 @@ public class FluxFirstEmittingTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.first(Flux.range(1, 10), Flux.range(11, 10))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -55,11 +55,11 @@ public class FluxFirstEmittingTest {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create(5);
 
 		Flux.first(Flux.range(1, 10), Flux.range(11, 10))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5)
-		  .assertNotComplete()
-		  .assertNoError();
+				.assertNotComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -68,12 +68,12 @@ public class FluxFirstEmittingTest {
 
 		Flux.first(Flux.never(),
 				Flux.range(11, 10)
-				    .log())
-		    .subscribe(ts);
+						.log())
+				.subscribe(ts);
 
 		ts.assertValues(11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 
 	@Test
@@ -83,11 +83,11 @@ public class FluxFirstEmittingTest {
 		RuntimeException ex = new RuntimeException("forced failure");
 
 		Flux.first(Flux.never(), Flux.<Integer>error(ex))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(ex.getClass());
+				.assertNotComplete()
+				.assertError(ex.getClass());
 	}
 
 	@Test
@@ -95,11 +95,11 @@ public class FluxFirstEmittingTest {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.first((Publisher<Object>) null)
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -107,12 +107,12 @@ public class FluxFirstEmittingTest {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.first(Flux.never(), null, Flux.never())
-		    .subscribe
-		  (ts);
+				.subscribe
+						(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -120,11 +120,11 @@ public class FluxFirstEmittingTest {
 		AssertSubscriber<Object> ts = AssertSubscriber.create();
 
 		Flux.first(Arrays.asList((Publisher<Object>) null))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
 	@Test
@@ -134,40 +134,42 @@ public class FluxFirstEmittingTest {
 		Flux.first(Arrays.asList(Flux.never(),
 				(Publisher<Object>) null,
 				Flux.never()))
-		    .subscribe(ts);
+				.subscribe(ts);
 
 		ts.assertNoValues()
-		  .assertNotComplete()
-		  .assertError(NullPointerException.class);
+				.assertNotComplete()
+				.assertError(NullPointerException.class);
 	}
 
-    @Test
-    public void scanSubscriber() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxFirstEmitting.RaceCoordinator<String> parent = new FluxFirstEmitting.RaceCoordinator<>(1);
-        FluxFirstEmitting.FirstEmittingSubscriber<String> test = new FluxFirstEmitting.FirstEmittingSubscriber<>(actual, parent, 1);
-        Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
+	@Test
+	public void scanSubscriber() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxFirstEmitting.RaceCoordinator<String> parent = new FluxFirstEmitting.RaceCoordinator<>(1);
+		FluxFirstEmitting.FirstEmittingSubscriber<String> test = new FluxFirstEmitting.FirstEmittingSubscriber<>(actual, parent, 1);
+		Subscription sub = Operators.emptySubscription();
+		test.onSubscribe(sub);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        parent.cancelled = true;
-        assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		parent.cancelled = true;
+		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 
-    @Test
-    public void scanRaceCoordinator() {
-        CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxFirstEmitting.RaceCoordinator<String> parent = new FluxFirstEmitting.RaceCoordinator<>(1);
-        FluxFirstEmitting.FirstEmittingSubscriber<String> test = new FluxFirstEmitting.FirstEmittingSubscriber<>(actual, parent, 1);
-        Subscription sub = Operators.emptySubscription();
-        test.onSubscribe(sub);
+	@Test
+	public void scanRaceCoordinator() {
+		CoreSubscriber<String> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxFirstEmitting.RaceCoordinator<String> parent = new FluxFirstEmitting.RaceCoordinator<>(1);
+		FluxFirstEmitting.FirstEmittingSubscriber<String> test = new FluxFirstEmitting.FirstEmittingSubscriber<>(actual, parent, 1);
+		Subscription sub = Operators.emptySubscription();
+		test.onSubscribe(sub);
 
-        assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
-        assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        assertThat(parent.scan(Scannable.Attr.CANCELLED)).isFalse();
-        parent.cancelled = true;
-        assertThat(parent.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
+		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(parent.scan(Scannable.Attr.CANCELLED)).isFalse();
+		parent.cancelled = true;
+		assertThat(parent.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }

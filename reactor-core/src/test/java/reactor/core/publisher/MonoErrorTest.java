@@ -23,12 +23,12 @@ public class MonoErrorTest {
 	@Test
 	public void normal() {
 		StepVerifier.create(Mono.error(new Exception("test")))
-		            .verifyErrorMessage("test");
+				.verifyErrorMessage("test");
 	}
 
 	@Test(expected = Exception.class)
 	public void onMonoRejectedThrowOnBlock() {
 		Mono.error(new Exception("test"))
-		    .block();
+				.block();
 	}
 }

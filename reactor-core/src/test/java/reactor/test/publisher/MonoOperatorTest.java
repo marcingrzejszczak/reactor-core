@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,22 +37,101 @@ public abstract class MonoOperatorTest<I, O>
 	public final Scenario<I, O> scenario(Function<Mono<I>, ? extends Mono<O>> scenario) {
 		if (defaultEmpty) {
 			return Scenario.create(scenario)
-			                                .applyAllOptions(defaultScenario.duplicate()
-			                                                                .receiverEmpty());
+					.applyAllOptions(defaultScenario.duplicate()
+							.receiverEmpty());
 		}
 		return Scenario.create(scenario)
-		                                .applyAllOptions(defaultScenario);
+				.applyAllOptions(defaultScenario);
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_operatorError() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
+		return scenarios_operatorSuccess();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected final OperatorScenario<I, Mono<I>, O, Mono<O>> defaultScenarioOptions(
+			OperatorScenario<I, Mono<I>, O, Mono<O>> defaultOptions) {
+		MonoOperatorTest.Scenario<I, O>
+				s = new MonoOperatorTest.Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
+				.producer(1, i -> (I) "test")
+				.receive(1, i -> (O) "test")
+				.droppedError(new RuntimeException("dropped"))
+				.droppedItem((I) "dropped");
+		this.defaultScenario = s;
+		return defaultScenarioOptions(s);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected MonoOperatorTest.Scenario<I, O> defaultScenarioOptions(MonoOperatorTest.Scenario<I, O> defaultOptions) {
+		return defaultOptions;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected Mono<I> sourceScalar(OperatorScenario<I, Mono<I>, O, Mono<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return (Mono<I>) Mono.empty();
+		}
+		return Mono.just(scenario.producingMapper.apply(0));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected Mono<I> sourceCallable(OperatorScenario<I, Mono<I>, O, Mono<O>> scenario) {
+		if (scenario.producerCount() == 0) {
+			return (Mono<I>) Mono.fromRunnable(() -> {
+			});
+		}
+		return Mono.fromCallable(() -> scenario.producingMapper.apply(0));
+	}
+
+	@Override
+	protected Mono<I> withFluxSource(Flux<I> input) {
+		return Mono.fromDirect(input);
+	}
+
+	@Override
+	protected Mono<I> hide(Mono<I> input) {
+		return input.hide();
+	}
+
+	@Override
+	protected Mono<O> conditional(Mono<O> output) {
+		return output.filter(t -> true);
+	}
+
+	@Override
+	protected Mono<O> doOnSubscribe(Mono<O> output,
+			Consumer<? super Subscription> doOnSubscribe) {
+		return output.doOnSubscribe(doOnSubscribe);
 	}
 
 	static public final class Scenario<I, O>
 			extends OperatorScenario<I, Mono<I>, O, Mono<O>> {
 
-		static <I, O> Scenario<I, O> create(Function<Mono<I>, ? extends Mono<O>> scenario) {
-			return new Scenario<>(scenario, new Exception("scenario:"));
-		}
-
 		Scenario(@Nullable Function<Mono<I>, ? extends Mono<O>> scenario, @Nullable Exception stack) {
 			super(scenario, stack);
+		}
+
+		static <I, O> Scenario<I, O> create(Function<Mono<I>, ? extends Mono<O>> scenario) {
+			return new Scenario<>(scenario, new Exception("scenario:"));
 		}
 
 		@Override
@@ -183,83 +261,5 @@ public abstract class MonoOperatorTest<I, O>
 			super.applyAllOptions(source);
 			return this;
 		}
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorSuccess() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_operatorError() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_errorFromUpstreamFailure() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	protected List<Scenario<I, O>> scenarios_touchAndAssertState() {
-		return scenarios_operatorSuccess();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected final OperatorScenario<I, Mono<I>, O, Mono<O>> defaultScenarioOptions(
-			OperatorScenario<I, Mono<I>, O, Mono<O>> defaultOptions) {
-		MonoOperatorTest.Scenario<I, O>
-				s = new MonoOperatorTest.Scenario<I, O>(null, null).applyAllOptions(defaultOptions)
-				                                                   .producer(1, i -> (I) "test")
-				                                                   .receive(1, i -> (O)"test" )
-				                                                   .droppedError(new RuntimeException("dropped"))
-				                                                   .droppedItem((I)"dropped");
-		this.defaultScenario = s;
-		return defaultScenarioOptions(s);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected MonoOperatorTest.Scenario<I, O> defaultScenarioOptions(MonoOperatorTest.Scenario<I, O> defaultOptions) {
-		return defaultOptions;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected Mono<I> sourceScalar(OperatorScenario<I, Mono<I>, O, Mono<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return (Mono<I>)Mono.empty();
-		}
-		return Mono.just(scenario.producingMapper.apply(0));
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected Mono<I> sourceCallable(OperatorScenario<I, Mono<I>, O, Mono<O>> scenario) {
-		if(scenario.producerCount() == 0){
-			return (Mono<I>)Mono.fromRunnable(() -> {});
-		}
-		return Mono.fromCallable(() -> scenario.producingMapper.apply(0));
-	}
-
-	@Override
-	protected Mono<I> withFluxSource(Flux<I> input) {
-		return Mono.fromDirect(input);
-	}
-
-	@Override
-	protected Mono<I> hide(Mono<I> input) {
-		return input.hide();
-	}
-
-	@Override
-	protected Mono<O> conditional(Mono<O> output) {
-		return output.filter(t -> true);
-	}
-
-	@Override
-	protected Mono<O> doOnSubscribe(Mono<O> output,
-			Consumer<? super Subscription> doOnSubscribe) {
-		return output.doOnSubscribe(doOnSubscribe);
 	}
 }

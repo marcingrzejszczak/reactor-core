@@ -28,7 +28,6 @@ import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.Exceptions;
 import reactor.core.Fuseable;
-import reactor.core.Scannable;
 import reactor.util.annotation.Nullable;
 import reactor.util.concurrent.Queues;
 import reactor.util.context.Context;
@@ -89,6 +88,49 @@ public final class UnicastProcessor<T>
 		extends FluxProcessor<T, T>
 		implements Fuseable.QueueSubscription<T>, Fuseable, InnerOperator<T, T> {
 
+	@SuppressWarnings("rawtypes")
+	static final AtomicReferenceFieldUpdater<UnicastProcessor, Disposable> ON_TERMINATE =
+			AtomicReferenceFieldUpdater.newUpdater(UnicastProcessor.class, Disposable.class, "onTerminate");
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<UnicastProcessor> ONCE =
+			AtomicIntegerFieldUpdater.newUpdater(UnicastProcessor.class, "once");
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<UnicastProcessor> WIP =
+			AtomicIntegerFieldUpdater.newUpdater(UnicastProcessor.class, "wip");
+	@SuppressWarnings("rawtypes")
+	static final AtomicLongFieldUpdater<UnicastProcessor> REQUESTED =
+			AtomicLongFieldUpdater.newUpdater(UnicastProcessor.class, "requested");
+	final Queue<T> queue;
+	final Consumer<? super T> onOverflow;
+
+	volatile Disposable onTerminate;
+	volatile boolean done;
+	Throwable error;
+	volatile CoreSubscriber<? super T> actual;
+	volatile boolean cancelled;
+	volatile int once;
+	volatile int wip;
+	volatile long requested;
+	boolean outputFused;
+	public UnicastProcessor(Queue<T> queue) {
+		this.queue = Objects.requireNonNull(queue, "queue");
+		this.onTerminate = null;
+		this.onOverflow = null;
+	}
+
+	public UnicastProcessor(Queue<T> queue, Disposable onTerminate) {
+		this.queue = Objects.requireNonNull(queue, "queue");
+		this.onTerminate = Objects.requireNonNull(onTerminate, "onTerminate");
+		this.onOverflow = null;
+	}
+	public UnicastProcessor(Queue<T> queue,
+			Consumer<? super T> onOverflow,
+			Disposable onTerminate) {
+		this.queue = Objects.requireNonNull(queue, "queue");
+		this.onOverflow = Objects.requireNonNull(onOverflow, "onOverflow");
+		this.onTerminate = Objects.requireNonNull(onTerminate, "onTerminate");
+	}
+
 	/**
 	 * Create a new {@link UnicastProcessor} that will buffer on an internal queue in an
 	 * unbounded fashion.
@@ -143,58 +185,6 @@ public final class UnicastProcessor<T>
 		return new UnicastProcessor<>(queue, onOverflow, endcallback);
 	}
 
-	final Queue<T>            queue;
-	final Consumer<? super T> onOverflow;
-
-	volatile Disposable onTerminate;
-	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<UnicastProcessor, Disposable> ON_TERMINATE =
-			AtomicReferenceFieldUpdater.newUpdater(UnicastProcessor.class, Disposable.class, "onTerminate");
-
-	volatile boolean done;
-	Throwable error;
-
-	volatile CoreSubscriber<? super T> actual;
-
-	volatile boolean cancelled;
-
-	volatile int once;
-	@SuppressWarnings("rawtypes")
-	static final AtomicIntegerFieldUpdater<UnicastProcessor> ONCE =
-			AtomicIntegerFieldUpdater.newUpdater(UnicastProcessor.class, "once");
-
-	volatile int wip;
-	@SuppressWarnings("rawtypes")
-	static final AtomicIntegerFieldUpdater<UnicastProcessor> WIP =
-			AtomicIntegerFieldUpdater.newUpdater(UnicastProcessor.class, "wip");
-
-	volatile long requested;
-	@SuppressWarnings("rawtypes")
-	static final AtomicLongFieldUpdater<UnicastProcessor> REQUESTED =
-			AtomicLongFieldUpdater.newUpdater(UnicastProcessor.class, "requested");
-
-	boolean outputFused;
-
-	public UnicastProcessor(Queue<T> queue) {
-		this.queue = Objects.requireNonNull(queue, "queue");
-		this.onTerminate = null;
-		this.onOverflow = null;
-	}
-
-	public UnicastProcessor(Queue<T> queue, Disposable onTerminate) {
-		this.queue = Objects.requireNonNull(queue, "queue");
-		this.onTerminate = Objects.requireNonNull(onTerminate, "onTerminate");
-		this.onOverflow = null;
-	}
-
-	public UnicastProcessor(Queue<T> queue,
-			Consumer<? super T> onOverflow,
-			Disposable onTerminate) {
-		this.queue = Objects.requireNonNull(queue, "queue");
-		this.onOverflow = Objects.requireNonNull(onOverflow, "onOverflow");
-		this.onTerminate = Objects.requireNonNull(onTerminate, "onTerminate");
-	}
-
 	@Override
 	public int getBufferSize() {
 		return Queues.capacity(this.queue);
@@ -218,7 +208,7 @@ public final class UnicastProcessor<T>
 
 		final Queue<T> q = queue;
 
-		for (;;) {
+		for (; ; ) {
 
 			long r = requested;
 			long e = 0L;
@@ -264,7 +254,7 @@ public final class UnicastProcessor<T>
 
 		final Queue<T> q = queue;
 
-		for (;;) {
+		for (; ; ) {
 
 			if (cancelled) {
 				q.clear();
@@ -282,7 +272,8 @@ public final class UnicastProcessor<T>
 				Throwable ex = error;
 				if (ex != null) {
 					a.onError(ex);
-				} else {
+				}
+				else {
 					a.onComplete();
 				}
 				return;
@@ -302,13 +293,14 @@ public final class UnicastProcessor<T>
 
 		int missed = 1;
 
-		for (;;) {
+		for (; ; ) {
 			Subscriber<? super T> a = actual;
 			if (a != null) {
 
 				if (outputFused) {
 					drainFused(a);
-				} else {
+				}
+				else {
 					drainRegular(a);
 				}
 				return;
@@ -332,7 +324,8 @@ public final class UnicastProcessor<T>
 			actual = null;
 			if (e != null) {
 				a.onError(e);
-			} else {
+			}
+			else {
 				a.onComplete();
 			}
 			return true;
@@ -345,7 +338,8 @@ public final class UnicastProcessor<T>
 	public void onSubscribe(Subscription s) {
 		if (done || cancelled) {
 			s.cancel();
-		} else {
+		}
+		else {
 			s.request(Long.MAX_VALUE);
 		}
 	}
@@ -371,7 +365,7 @@ public final class UnicastProcessor<T>
 		if (!queue.offer(t)) {
 			Throwable ex = Operators.onOperatorError(null,
 					Exceptions.failWithOverflow(), t, currentContext());
-			if(onOverflow != null) {
+			if (onOverflow != null) {
 				try {
 					onOverflow.accept(t);
 				}
@@ -423,10 +417,12 @@ public final class UnicastProcessor<T>
 			this.actual = actual;
 			if (cancelled) {
 				this.actual = null;
-			} else {
+			}
+			else {
 				drain();
 			}
-		} else {
+		}
+		else {
 			Operators.error(actual, new IllegalStateException("UnicastProcessor " +
 					"allows only a single Subscriber"));
 		}

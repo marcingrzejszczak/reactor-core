@@ -57,7 +57,7 @@ final class FluxSubscribeOnCallable<T> extends Flux<T> implements Fuseable, Scan
 			parent.setMainFuture(f);
 		}
 		catch (RejectedExecutionException ree) {
-			if(parent.state != CallableSubscribeOnSubscription.HAS_CANCELLED) {
+			if (parent.state != CallableSubscribeOnSubscription.HAS_CANCELLED) {
 				actual.onError(Operators.onRejectedExecution(ree, actual.currentContext()));
 			}
 		}
@@ -73,45 +73,37 @@ final class FluxSubscribeOnCallable<T> extends Flux<T> implements Fuseable, Scan
 	static final class CallableSubscribeOnSubscription<T>
 			implements QueueSubscription<T>, InnerProducer<T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Callable<? extends T> callable;
-
-		final Scheduler scheduler;
-
-		volatile int state;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<CallableSubscribeOnSubscription> STATE =
 				AtomicIntegerFieldUpdater.newUpdater(CallableSubscribeOnSubscription.class,
 						"state");
-
-		T value;
-		static final int NO_REQUEST_HAS_VALUE  = 1;
-		static final int HAS_REQUEST_NO_VALUE  = 2;
+		static final int NO_REQUEST_HAS_VALUE = 1;
+		static final int HAS_REQUEST_NO_VALUE = 2;
 		static final int HAS_REQUEST_HAS_VALUE = 3;
-		static final int HAS_CANCELLED         = 4;
-
-		int fusionState;
-
-		static final int NO_VALUE  = 1;
+		static final int HAS_CANCELLED = 4;
+		static final int NO_VALUE = 1;
 		static final int HAS_VALUE = 2;
-		static final int COMPLETE  = 3;
-
-		volatile Disposable mainFuture;
+		static final int COMPLETE = 3;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<CallableSubscribeOnSubscription, Disposable>
 				MAIN_FUTURE = AtomicReferenceFieldUpdater.newUpdater(
 				CallableSubscribeOnSubscription.class,
 				Disposable.class,
 				"mainFuture");
-
-		volatile Disposable requestFuture;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<CallableSubscribeOnSubscription, Disposable>
 				REQUEST_FUTURE = AtomicReferenceFieldUpdater.newUpdater(
 				CallableSubscribeOnSubscription.class,
 				Disposable.class,
 				"requestFuture");
+		final CoreSubscriber<? super T> actual;
+		final Callable<? extends T> callable;
+		final Scheduler scheduler;
+		volatile int state;
+		T value;
+		int fusionState;
+		volatile Disposable mainFuture;
+		volatile Disposable requestFuture;
 
 		CallableSubscribeOnSubscription(CoreSubscriber<? super T> actual,
 				Callable<? extends T> callable,

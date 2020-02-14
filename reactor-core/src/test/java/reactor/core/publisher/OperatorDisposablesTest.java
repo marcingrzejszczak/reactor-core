@@ -31,24 +31,7 @@ public class OperatorDisposablesTest {
 
 	static final AtomicReferenceFieldUpdater<TestDisposable, Disposable> DISPOSABLE_UPDATER =
 			AtomicReferenceFieldUpdater.newUpdater(TestDisposable.class, Disposable.class, "disp");
-	
-	private static class TestDisposable implements Runnable {
-		volatile Disposable disp;
 
-		public TestDisposable() {
-		}
-
-		public TestDisposable(Disposable disp) {
-			this.disp = disp;
-		}
-
-		@Override
-		public void run() {
-			//NO-OP by default
-		}
-	}
-	
-	
 	@Test
 	public void singletonIsDisposed() {
 		assertThat(OperatorDisposables.DISPOSED.isDisposed()).isTrue();
@@ -60,11 +43,12 @@ public class OperatorDisposablesTest {
 	@Test
 	public void validationNull() {
 		Hooks.onErrorDropped(e -> assertThat(e).isInstanceOf(NullPointerException.class)
-		                                       .hasMessage("next is null"));
+				.hasMessage("next is null"));
 		try {
 			assertThat(OperatorDisposables.validate(null, null,
 					e -> Operators.onErrorDropped(e, Context.empty()))).isFalse();
-		} finally {
+		}
+		finally {
 			Hooks.resetOnErrorDropped();
 		}
 	}
@@ -156,5 +140,21 @@ public class OperatorDisposablesTest {
 		assertThat(OperatorDisposables.trySet(DISPOSABLE_UPDATER, r, d3)).isFalse();
 
 		assertThat(d3.isDisposed()).isTrue();
+	}
+
+	private static class TestDisposable implements Runnable {
+		volatile Disposable disp;
+
+		public TestDisposable() {
+		}
+
+		public TestDisposable(Disposable disp) {
+			this.disp = disp;
+		}
+
+		@Override
+		public void run() {
+			//NO-OP by default
+		}
 	}
 }

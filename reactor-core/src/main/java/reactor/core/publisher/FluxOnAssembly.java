@@ -30,6 +30,8 @@ import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
+interface AssemblyOp { }
+
 /**
  * Captures the current stacktrace when this publisher is created and
  * makes it available/visible for debugging purposes from
@@ -49,7 +51,7 @@ import reactor.util.function.Tuples;
  * @see <a href="https://github.com/reactor/reactive-streams-commons">https://github.com/reactor/reactive-streams-commons</a>
  */
 final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuseable,
-                                                                    AssemblyOp {
+		AssemblyOp {
 
 	final AssemblySnapshot snapshotStack;
 
@@ -59,6 +61,45 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 	FluxOnAssembly(Flux<? extends T> source, AssemblySnapshot snapshotStack) {
 		super(source);
 		this.snapshotStack = snapshotStack;
+	}
+
+	static void fillStacktraceHeader(StringBuilder sb, Class<?> sourceClass, @Nullable String description) {
+		sb.append("\nAssembly trace from producer [")
+				.append(sourceClass.getName())
+				.append("]");
+
+		if (description != null) {
+			sb.append(", described as [")
+					.append(description)
+					.append("]");
+		}
+		sb.append(" :\n");
+	}
+
+	@SuppressWarnings("unchecked")
+	static <T> CoreSubscriber<? super T> wrapSubscriber(CoreSubscriber<? super T> actual,
+			Flux<? extends T> source,
+			@Nullable AssemblySnapshot snapshotStack) {
+		if (snapshotStack != null) {
+			if (actual instanceof ConditionalSubscriber) {
+				ConditionalSubscriber<? super T> cs = (ConditionalSubscriber<? super T>) actual;
+				return new OnAssemblyConditionalSubscriber<>(cs, snapshotStack, source);
+			}
+			else {
+				return new OnAssemblySubscriber<>(actual, snapshotStack, source);
+			}
+		}
+		else {
+			return actual;
+		}
+	}
+
+	static int getParentOrThis(Scannable parent) {
+		return parent.parents()
+				.filter(s -> !(s instanceof AssemblyOp))
+				.findFirst()
+				.map(Object::hashCode)
+				.orElse(parent.hashCode());
 	}
 
 	@Override
@@ -78,37 +119,6 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 		return snapshotStack.operatorAssemblyInformation();
 	}
 
-	static void fillStacktraceHeader(StringBuilder sb, Class<?> sourceClass, @Nullable String description) {
-		sb.append("\nAssembly trace from producer [")
-		  .append(sourceClass.getName())
-		  .append("]");
-
-		if (description != null) {
-			sb.append(", described as [")
-			  .append(description)
-			  .append("]");
-		}
-		sb.append(" :\n");
-	}
-
-	@SuppressWarnings("unchecked")
-	static <T> CoreSubscriber<? super T> wrapSubscriber(CoreSubscriber<? super T> actual,
-														Flux<? extends T> source,
-														@Nullable AssemblySnapshot snapshotStack) {
-		if(snapshotStack != null) {
-			if (actual instanceof ConditionalSubscriber) {
-				ConditionalSubscriber<? super T> cs = (ConditionalSubscriber<? super T>) actual;
-				return new OnAssemblyConditionalSubscriber<>(cs, snapshotStack, source);
-			}
-			else {
-				return new OnAssemblySubscriber<>(actual, snapshotStack, source);
-			}
-		}
-		else {
-			return actual;
-		}
-	}
-
 	@Override
 	@SuppressWarnings("unchecked")
 	public CoreSubscriber<? super T> subscribeOrReturn(CoreSubscriber<? super T> actual) {
@@ -121,9 +131,9 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 	 */
 	static class AssemblySnapshot {
 
-		final boolean          checkpointed;
+		final boolean checkpointed;
 		@Nullable
-		final String           description;
+		final String description;
 		final Supplier<String> assemblyInformationSupplier;
 		String cached;
 
@@ -162,7 +172,7 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 		}
 
 		String toAssemblyInformation() {
-			if(cached == null) {
+			if (cached == null) {
 				cached = assemblyInformationSupplier.get();
 			}
 			return cached;
@@ -226,10 +236,9 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 	 */
 	static final class OnAssemblyException extends RuntimeException {
 
-		final List<Tuple4<Integer, String, String, Integer>> chainOrder = new LinkedList<>();
-
 		/** */
 		private static final long serialVersionUID = 5278398300974016773L;
+		final List<Tuple4<Integer, String, String, Integer>> chainOrder = new LinkedList<>();
 
 		OnAssemblyException(String message) {
 			super(message);
@@ -265,10 +274,10 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 				int n = chainOrder.size();
 				int j = n - 1;
 				Tuple4<Integer, String, String, Integer> tmp;
-				while(j >= 0){
+				while (j >= 0) {
 					tmp = chainOrder.get(j);
 					//noinspection ConstantConditions
-					if(tmp.getT1() == key){
+					if (tmp.getT1() == key) {
 						//noinspection ConstantConditions
 						i = tmp.getT4();
 						break;
@@ -277,10 +286,10 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 				}
 
 
-				for(;;){
+				for (; ; ) {
 					Tuple4<Integer, String, String, Integer> t = Tuples.of(parent.hashCode(), prefix, line, i);
 
-					if(!chainOrder.contains(t)){
+					if (!chainOrder.contains(t)) {
 						chainOrder.add(t);
 						break;
 					}
@@ -307,7 +316,7 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 
 				StringBuilder sb = new StringBuilder(super.getMessage())
 						.append("\nError has been observed at the following site(s):\n");
-				for(Tuple4<Integer, String, String, Integer> t : chainOrder) {
+				for (Tuple4<Integer, String, String, Integer> t : chainOrder) {
 					Integer indent = t.getT4();
 					String operator = t.getT2();
 					String message = t.getT3();
@@ -330,24 +339,16 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 		}
 	}
 
-	static int getParentOrThis(Scannable parent) {
-		return parent.parents()
-		             .filter(s -> !(s instanceof AssemblyOp))
-		             .findFirst()
-		             .map(Object::hashCode)
-		             .orElse(parent.hashCode());
-	}
-
 	static class OnAssemblySubscriber<T>
 			implements InnerOperator<T, T>, QueueSubscription<T> {
 
-		final AssemblySnapshot          snapshotStack;
-		final Publisher<?>              parent;
+		final AssemblySnapshot snapshotStack;
+		final Publisher<?> parent;
 		final CoreSubscriber<? super T> actual;
 
 		QueueSubscription<T> qs;
-		Subscription         s;
-		int                  fusionMode;
+		Subscription s;
+		int fusionMode;
 
 		OnAssemblySubscriber(CoreSubscriber<? super T> actual,
 				AssemblySnapshot snapshotStack, Publisher<?> parent) {
@@ -532,5 +533,3 @@ final class FluxOnAssembly<T> extends InternalFluxOperator<T, T> implements Fuse
 	}
 
 }
-
-interface AssemblyOp {}

@@ -63,8 +63,8 @@ public class TestLogger implements Logger {
 	}
 
 	@Nullable
-	private String format(@Nullable String from, @Nullable Object... arguments){
-		if(from != null) {
+	private String format(@Nullable String from, @Nullable Object... arguments) {
+		if (from != null) {
 			String computed = from;
 			if (arguments != null && arguments.length != 0) {
 				for (Object argument : arguments) {
@@ -90,6 +90,7 @@ public class TestLogger implements Logger {
 	public synchronized void trace(String format, Object... arguments) {
 		this.log.format("[TRACE] (%s) %s\n", Thread.currentThread().getName(), format(format, arguments));
 	}
+
 	@Override
 	public synchronized void trace(String msg, Throwable t) {
 		this.log.format("[TRACE] (%s) %s - %s\n", Thread.currentThread().getName(), msg, t);

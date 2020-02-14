@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -39,6 +38,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Stephane Maldini
  */
 public class VirtualTimeSchedulerTests {
+
+	@SuppressWarnings("unchecked")
+	private static Scheduler uncache(Scheduler potentialCached) {
+		if (potentialCached instanceof Supplier) {
+			return ((Supplier<Scheduler>) potentialCached).get();
+		}
+		return potentialCached;
+	}
 
 	@Test
 	public void cancelledAndEmptyConstantsAreNotSame() {
@@ -108,22 +115,21 @@ public class VirtualTimeSchedulerTests {
 
 		StepVerifier.withVirtualTime(() -> Mono.just("foo"),
 				() -> vts, Long.MAX_VALUE)
-	                .then(() -> assertThat(VirtualTimeScheduler.isFactoryEnabled()).isTrue())
-	                .then(() -> assertThat(VirtualTimeScheduler.get()).isSameAs(vts))
-	                .expectNext("foo")
-	                .verifyComplete();
+				.then(() -> assertThat(VirtualTimeScheduler.isFactoryEnabled()).isTrue())
+				.then(() -> assertThat(VirtualTimeScheduler.get()).isSameAs(vts))
+				.expectNext("foo")
+				.verifyComplete();
 
 		assertThat(VirtualTimeScheduler.isFactoryEnabled()).isFalse();
 
 		StepVerifier.withVirtualTime(() -> Mono.just("foo"))
-	                .then(() -> assertThat(VirtualTimeScheduler.isFactoryEnabled()).isTrue())
-	                .then(() -> assertThat(VirtualTimeScheduler.get()).isNotSameAs(vts))
-	                .expectNext("foo")
-	                .verifyComplete();
+				.then(() -> assertThat(VirtualTimeScheduler.isFactoryEnabled()).isTrue())
+				.then(() -> assertThat(VirtualTimeScheduler.get()).isNotSameAs(vts))
+				.expectNext("foo")
+				.verifyComplete();
 
 		assertThat(VirtualTimeScheduler.isFactoryEnabled()).isFalse();
 	}
-
 
 	@Test
 	public void captureNowInScheduledTask() {
@@ -207,7 +213,8 @@ public class VirtualTimeSchedulerTests {
 	public void racingAdvanceTimeOnFullQueue() {
 		VirtualTimeScheduler vts = VirtualTimeScheduler.create();
 		try {
-			vts.schedule(() -> {}, 10, TimeUnit.HOURS);
+			vts.schedule(() -> {
+			}, 10, TimeUnit.HOURS);
 			for (int i = 1; i <= 100; i++) {
 				reactor.test.util.RaceTestUtils.race(
 						() -> vts.advanceTimeBy(Duration.ofSeconds(10)),
@@ -288,13 +295,13 @@ public class VirtualTimeSchedulerTests {
 		}, 0, 5, TimeUnit.DAYS);
 
 		assertThat(vts.getScheduledTaskCount())
-			.as("initial delay task performed and scheduled for the first periodical task")
-			.isEqualTo(2);
+				.as("initial delay task performed and scheduled for the first periodical task")
+				.isEqualTo(2);
 
 		vts.advanceTimeBy(Duration.ofDays(5));
 		assertThat(vts.getScheduledTaskCount())
-			.as("scheduled for the second periodical task")
-			.isEqualTo(3);
+				.as("scheduled for the second periodical task")
+				.isEqualTo(3);
 	}
 
 	@Test
@@ -304,31 +311,23 @@ public class VirtualTimeSchedulerTests {
 		vts.schedulePeriodically(() -> {
 		}, 10, 5, TimeUnit.DAYS);
 		assertThat(vts.getScheduledTaskCount())
-			.as("scheduled for initial delay task")
-			.isEqualTo(1);
+				.as("scheduled for initial delay task")
+				.isEqualTo(1);
 
 		vts.advanceTimeBy(Duration.ofDays(1));
 		assertThat(vts.getScheduledTaskCount())
-			.as("Still on initial delay")
-			.isEqualTo(1);
+				.as("Still on initial delay")
+				.isEqualTo(1);
 
 		vts.advanceTimeBy(Duration.ofDays(10));
 		assertThat(vts.getScheduledTaskCount())
-			.as("first periodical task scheduled after initial one")
-			.isEqualTo(2);
+				.as("first periodical task scheduled after initial one")
+				.isEqualTo(2);
 
 		vts.advanceTimeBy(Duration.ofDays(5));
 		assertThat(vts.getScheduledTaskCount())
-			.as("second periodical task scheduled")
-			.isEqualTo(3);
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Scheduler uncache(Scheduler potentialCached) {
-		if (potentialCached instanceof Supplier) {
-			return ((Supplier<Scheduler>) potentialCached).get();
-		}
-		return potentialCached;
+				.as("second periodical task scheduled")
+				.isEqualTo(3);
 	}
 
 	@After

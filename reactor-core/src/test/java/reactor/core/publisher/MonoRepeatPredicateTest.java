@@ -27,7 +27,7 @@ public class MonoRepeatPredicateTest {
 	@Test(expected = NullPointerException.class)
 	public void predicateNull() {
 		Mono.never()
-		    .repeat(null);
+				.repeat(null);
 	}
 
 	@Test
@@ -35,35 +35,35 @@ public class MonoRepeatPredicateTest {
 		Mono<Integer> source = Mono.just(3);
 
 		assertThatIllegalArgumentException()
-		          .isThrownBy(() -> source.repeat(-1, () -> true))
-		          .withMessage("numRepeat >= 0 required");
+				.isThrownBy(() -> source.repeat(-1, () -> true))
+				.withMessage("numRepeat >= 0 required");
 	}
 
 	@Test
 	public void nZero() {
 		StepVerifier.create(Mono.just(3)
-		                        .repeat(0, () -> true))
-		            .expectNext(3)
-		            .verifyComplete();
+				.repeat(0, () -> true))
+				.expectNext(3)
+				.verifyComplete();
 	}
 
 	@Test
 	public void nOne() {
 		StepVerifier.create(Mono.just(3)
-		                        .repeat(1, () -> true))
-		            .expectNext(3)
-		            .expectNext(3)
-		            .verifyComplete();
+				.repeat(1, () -> true))
+				.expectNext(3)
+				.expectNext(3)
+				.verifyComplete();
 	}
 
 	@Test
 	public void nTwo() {
 		StepVerifier.create(Mono.just(3)
-		                        .repeat(2, () -> true))
-		            .expectNext(3)
-		            .expectNext(3)
-		            .expectNext(3)
-		            .verifyComplete();
+				.repeat(2, () -> true))
+				.expectNext(3)
+				.expectNext(3)
+				.expectNext(3)
+				.verifyComplete();
 	}
 
 }

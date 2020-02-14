@@ -29,7 +29,7 @@ public class MonoRepeatTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void timesInvalid() {
 		Mono.never()
-		    .repeat(-1);
+				.repeat(-1);
 	}
 
 	@Test
@@ -37,9 +37,9 @@ public class MonoRepeatTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(0))
-		            .expectNext(1)
-		            .verifyComplete();
+				.repeat(0))
+				.expectNext(1)
+				.verifyComplete();
 	}
 
 	@Test
@@ -47,9 +47,9 @@ public class MonoRepeatTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(1))
-		            .expectNext(1, 2)
-		            .verifyComplete();
+				.repeat(1))
+				.expectNext(1, 2)
+				.verifyComplete();
 	}
 
 	@Test
@@ -57,12 +57,12 @@ public class MonoRepeatTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(1), 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(3)
-		            .expectNext(1, 2)
-		            .verifyComplete();
+				.repeat(1), 0)
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(3)
+				.expectNext(1, 2)
+				.verifyComplete();
 	}
 
 	@Test
@@ -70,9 +70,9 @@ public class MonoRepeatTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(2))
-		            .expectNext(1, 2, 3)
-		            .verifyComplete();
+				.repeat(2))
+				.expectNext(1, 2, 3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -80,11 +80,11 @@ public class MonoRepeatTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(2)
-		                        .count())
-		            .expectNext(3L)
-		            .expectComplete()
-		            .verify();
+				.repeat(2)
+				.count())
+				.expectNext(3L)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -93,12 +93,12 @@ public class MonoRepeatTest {
 		AtomicBoolean bool = new AtomicBoolean(true);
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(2, bool::get))
-		            .expectNext(1, 2)
-		            .expectNext(3)
-		            .then(() -> bool.set(false))
-		            .expectComplete()
-		            .verify();
+				.repeat(2, bool::get))
+				.expectNext(1, 2)
+				.expectNext(3)
+				.then(() -> bool.set(false))
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
@@ -106,14 +106,14 @@ public class MonoRepeatTest {
 		AtomicInteger i = new AtomicInteger();
 
 		StepVerifier.create(Mono.fromCallable(i::incrementAndGet)
-		                        .repeat(2), 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofMillis(100))
-		            .thenRequest(2)
-		            .expectNext(1, 2)
-		            .thenRequest(3)
-		            .expectNext(3)
-		            .verifyComplete();
+				.repeat(2), 0)
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(100))
+				.thenRequest(2)
+				.expectNext(1, 2)
+				.thenRequest(3)
+				.expectNext(3)
+				.verifyComplete();
 	}
 
 	@Test
@@ -122,12 +122,12 @@ public class MonoRepeatTest {
 
 		AtomicInteger i = new AtomicInteger();
 		Mono.fromCallable(i::incrementAndGet)
-		    .repeat()
-		    .take(9)
-		    .subscribe(ts);
+				.repeat()
+				.take(9)
+				.subscribe(ts);
 
 		ts.assertValues(1, 2, 3, 4, 5, 6, 7, 8, 9)
-		  .assertComplete()
-		  .assertNoError();
+				.assertComplete()
+				.assertNoError();
 	}
 }

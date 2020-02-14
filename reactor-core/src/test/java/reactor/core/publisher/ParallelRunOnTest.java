@@ -48,13 +48,13 @@ public class ParallelRunOnTest {
 		Flux<Integer> source = Flux.range(1, 1_000);
 		for (int i = 1; i < 33; i++) {
 			Flux<Integer> result = ParallelFlux.from(source, i)
-			                                   .runOn(Schedulers.parallel())
-			                                   .filter(t -> true)
-			                                   .sequential();
+					.runOn(Schedulers.parallel())
+					.filter(t -> true)
+					.sequential();
 
 			StepVerifier.create(result)
-			            .expectNextCount(1_000)
-			            .verifyComplete();
+					.expectNextCount(1_000)
+					.verifyComplete();
 		}
 	}
 }

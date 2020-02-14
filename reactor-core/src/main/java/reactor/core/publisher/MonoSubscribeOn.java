@@ -73,31 +73,26 @@ final class MonoSubscribeOn<T> extends InternalMonoOperator<T, T> {
 	static final class SubscribeOnSubscriber<T>
 			implements InnerOperator<T, T>, Runnable {
 
-		final CoreSubscriber<? super T> actual;
-
-		final Publisher<? extends T> parent;
-
-		final Scheduler.Worker worker;
-
-		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SubscribeOnSubscriber, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(SubscribeOnSubscriber.class,
 						Subscription.class,
 						"s");
-
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SubscribeOnSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(SubscribeOnSubscriber.class,
 						"requested");
-
-		volatile Thread thread;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SubscribeOnSubscriber, Thread> THREAD =
 				AtomicReferenceFieldUpdater.newUpdater(SubscribeOnSubscriber.class,
 						Thread.class,
 						"thread");
+		final CoreSubscriber<? super T> actual;
+		final Publisher<? extends T> parent;
+		final Scheduler.Worker worker;
+		volatile Subscription s;
+		volatile long requested;
+		volatile Thread thread;
 
 		SubscribeOnSubscriber(Publisher<? extends T> parent,
 				CoreSubscriber<? super T> actual,
@@ -146,12 +141,12 @@ final class MonoSubscribeOn<T> extends InternalMonoOperator<T, T> {
 
 		@Override
 		public void onError(Throwable t) {
-			try{
+			try {
 				actual.onError(t);
 			}
 			finally {
 				worker.dispose();
-				THREAD.lazySet(this,null);
+				THREAD.lazySet(this, null);
 			}
 		}
 
@@ -159,7 +154,7 @@ final class MonoSubscribeOn<T> extends InternalMonoOperator<T, T> {
 		public void onComplete() {
 			actual.onComplete();
 			worker.dispose();
-			THREAD.lazySet(this,null);
+			THREAD.lazySet(this, null);
 		}
 
 		@Override

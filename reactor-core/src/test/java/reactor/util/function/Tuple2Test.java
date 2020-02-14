@@ -39,33 +39,34 @@ public class Tuple2Test {
 				.isThrownBy(() -> new Tuple2<>(1, null))
 				.withMessage("t2");
 	}
+
 	@Test
 	public void mapT1() {
 		Tuple2<String, Integer> base = Tuples.of("Foo", 200);
 
-		Tuple2<?,?> mapped = base.mapT1(String::length);
+		Tuple2<?, ?> mapped = base.mapT1(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(2)
-		                  .containsExactly(3, base.getT2());
+				.hasSize(2)
+				.containsExactly(3, base.getT2());
 	}
 
 	@Test
 	public void mapT2() {
 		Tuple2<Integer, String> base = Tuples.of(100, "Foo");
 
-		Tuple2<?,?> mapped = base.mapT2(String::length);
+		Tuple2<?, ?> mapped = base.mapT2(String::length);
 
 		assertThat(mapped).isNotSameAs(base)
-		                  .hasSize(2)
-		                  .containsExactly(base.getT1(), 3);
+				.hasSize(2)
+				.containsExactly(base.getT1(), 3);
 	}
 
 	@Test
 	public void mapT1Null() {
 		assertThatNullPointerException().isThrownBy(() ->
 				Tuples.of(1, 2)
-				      .mapT1(i -> null)
+						.mapT1(i -> null)
 		).withMessage("t1");
 	}
 
@@ -73,7 +74,7 @@ public class Tuple2Test {
 	public void mapT2Null() {
 		assertThatNullPointerException().isThrownBy(() ->
 				Tuples.of(1, 2)
-				      .mapT2(i -> null)
+						.mapT2(i -> null)
 		).withMessage("t2");
 	}
 
@@ -104,7 +105,7 @@ public class Tuple2Test {
 	@Test
 	public void equalityOfNullOrWrongClass() {
 		assertThat(full).isNotEqualTo(null)
-	                    .isNotEqualTo("foo");
+				.isNotEqualTo("foo");
 	}
 
 	@Test
@@ -112,7 +113,7 @@ public class Tuple2Test {
 		Tuple2<Integer, Integer> otherFull = new Tuple2<>(1, 2);
 
 		assertThat(full)
-		        .isEqualTo(otherFull);
+				.isEqualTo(otherFull);
 	}
 
 	@Test
@@ -120,7 +121,7 @@ public class Tuple2Test {
 		Tuple2<Integer, Integer> otherFull = new Tuple2<>(2, 1);
 
 		assertThat(full)
-		        .isNotEqualTo(otherFull);
+				.isNotEqualTo(otherFull);
 	}
 
 	@Test

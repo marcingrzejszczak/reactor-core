@@ -31,63 +31,63 @@ import reactor.core.Scannable;
  */
 final class SingleWorkerScheduler implements Scheduler, Executor, Scannable {
 
-    final Worker main;
-    
-    SingleWorkerScheduler(Scheduler actual) {
-        this.main = actual.createWorker();
-    }
+	final Worker main;
 
-    @Override
-    public void dispose() {
-        main.dispose();
-    }
+	SingleWorkerScheduler(Scheduler actual) {
+		this.main = actual.createWorker();
+	}
 
-    @Override
-    public Disposable schedule(Runnable task) {
-        return main.schedule(task);
-    }
+	@Override
+	public void dispose() {
+		main.dispose();
+	}
 
-    @Override
-    public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
-        return main.schedule(task, delay, unit);
-    }
+	@Override
+	public Disposable schedule(Runnable task) {
+		return main.schedule(task);
+	}
 
-    @Override
-    public Disposable schedulePeriodically(Runnable task, long initialDelay,
-            long period, TimeUnit unit) {
-        return main.schedulePeriodically(task, initialDelay, period, unit);
-    }
+	@Override
+	public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
+		return main.schedule(task, delay, unit);
+	}
 
-    @Override
-    public void execute(Runnable command) {
-        main.schedule(command);
-    }
-    
-    @Override
-    public Worker createWorker() {
-        return new ExecutorScheduler.ExecutorSchedulerWorker(this);
-    }
+	@Override
+	public Disposable schedulePeriodically(Runnable task, long initialDelay,
+			long period, TimeUnit unit) {
+		return main.schedulePeriodically(task, initialDelay, period, unit);
+	}
 
-    @Override
-    public boolean isDisposed() {
-        return main.isDisposed();
-    }
+	@Override
+	public void execute(Runnable command) {
+		main.schedule(command);
+	}
 
-    @Override
-    public String toString() {
-        Scannable mainScannable = Scannable.from(main);
-        if (mainScannable.isScanAvailable()) {
-            return Schedulers.SINGLE + "Worker(" + mainScannable.scanUnsafe(Attr.NAME) + ")";
-        }
-        return Schedulers.SINGLE + "Worker(" + main.toString() + ")";
-    }
+	@Override
+	public Worker createWorker() {
+		return new ExecutorScheduler.ExecutorSchedulerWorker(this);
+	}
 
-    @Override
-    public Object scanUnsafe(Attr key) {
-        if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
-        if (key == Attr.PARENT) return main;
-        if (key == Attr.NAME) return this.toString();
+	@Override
+	public boolean isDisposed() {
+		return main.isDisposed();
+	}
 
-        return Scannable.from(main).scanUnsafe(key);
-    }
+	@Override
+	public String toString() {
+		Scannable mainScannable = Scannable.from(main);
+		if (mainScannable.isScanAvailable()) {
+			return Schedulers.SINGLE + "Worker(" + mainScannable.scanUnsafe(Attr.NAME) + ")";
+		}
+		return Schedulers.SINGLE + "Worker(" + main.toString() + ")";
+	}
+
+	@Override
+	public Object scanUnsafe(Attr key) {
+		if (key == Attr.TERMINATED || key == Attr.CANCELLED) return isDisposed();
+		if (key == Attr.PARENT) return main;
+		if (key == Attr.NAME) return this.toString();
+
+		return Scannable.from(main).scanUnsafe(key);
+	}
 }

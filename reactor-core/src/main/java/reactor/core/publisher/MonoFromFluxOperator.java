@@ -32,7 +32,7 @@ import reactor.util.annotation.Nullable;
  * @param <O> produced type
  */
 abstract class MonoFromFluxOperator<I, O> extends Mono<O> implements Scannable,
-                                                                     OptimizableOperator<O, I> {
+		OptimizableOperator<O, I> {
 
 	protected final Flux<? extends I> source;
 

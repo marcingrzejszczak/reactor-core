@@ -35,7 +35,7 @@ import org.openjdk.jmh.annotations.State;
 @State(Scope.Benchmark)
 public class ShakespearePlaysScrabble {
 
-	public static final int[] letterScores             = {
+	public static final int[] letterScores = {
 			// a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p,  q, r, s, t, u, v, w, x, y,  z
 			1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3, 1, 1, 3, 10, 1, 1, 1, 1, 4, 4, 8, 4, 10};
 	public static final int[] scrabbleAvailableLetters = {
@@ -45,6 +45,26 @@ public class ShakespearePlaysScrabble {
 	public Set<String> scrabbleWords;
 	public Set<String> shakespeareWords;
 
+	static Set<String> read(String resourceName) {
+
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(ShakespearePlaysScrabble.class.getClassLoader()
+				.getResourceAsStream(
+						resourceName))))
+
+		) {
+			return br.lines()
+					.map(String::toLowerCase)
+					.collect(Collectors.toSet());
+		}
+		catch (Throwable e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	static <T> Iterable<T> iterableOf(Spliterator<T> spliterator) {
+		return () -> Spliterators.iterator(spliterator);
+	}
+
 	@Setup
 	public void init() {
 		scrabbleWords = read("ospd.txt.gz");
@@ -53,13 +73,13 @@ public class ShakespearePlaysScrabble {
 
 	interface LongWrapper {
 
+		LongWrapper zero = () -> 0;
+
 		long get();
 
 		default LongWrapper incAndSet() {
 			return () -> get() + 1L;
 		}
-
-		LongWrapper zero = () -> 0;
 	}
 
 	static class MutableLong {
@@ -74,25 +94,5 @@ public class ShakespearePlaysScrabble {
 			value++;
 			return this;
 		}
-	}
-
-	static Set<String> read(String resourceName) {
-
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(ShakespearePlaysScrabble.class.getClassLoader()
-		                                                                                                                    .getResourceAsStream(
-				                                                                                                                    resourceName))))
-
-		) {
-			return br.lines()
-			         .map(String::toLowerCase)
-			         .collect(Collectors.toSet());
-		}
-		catch (Throwable e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	static <T> Iterable<T> iterableOf(Spliterator<T> spliterator) {
-		return () -> Spliterators.iterator(spliterator);
 	}
 }

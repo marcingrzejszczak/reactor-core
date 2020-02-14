@@ -33,136 +33,136 @@ public class FluxSubscribeOnCallableTest {
 	@Test
 	public void error() {
 		StepVerifier.create(Flux.error(new RuntimeException("forced failure"))
-		                        .subscribeOn(Schedulers.single()))
-		            .verifyErrorMessage("forced failure");
+				.subscribeOn(Schedulers.single()))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void errorHide() {
 		StepVerifier.create(Flux.error(new RuntimeException("forced failure"))
-		                        .hide()
-		                        .subscribeOn(Schedulers.single()))
-		            .verifyErrorMessage("forced failure");
+				.hide()
+				.subscribeOn(Schedulers.single()))
+				.verifyErrorMessage("forced failure");
 	}
 
 	@Test
 	public void callableReturnsNull() {
 		StepVerifier.create(Mono.empty()
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()))
-		            .verifyComplete();
+				.flux()
+				.subscribeOn(Schedulers.single()))
+				.verifyComplete();
 	}
 
 	@Test
 	public void callableReturnsNull2() {
 		StepVerifier.create(Mono.fromCallable(() -> null)
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()), 0)
-		            .verifyComplete();
+				.flux()
+				.subscribeOn(Schedulers.single()), 0)
+				.verifyComplete();
 	}
 
 	@Test
 	public void callableReturnsNull3() {
 		StepVerifier.create(Mono.fromCallable(() -> null)
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()), 1)
-		            .verifyComplete();
+				.flux()
+				.subscribeOn(Schedulers.single()), 1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normal() {
 		StepVerifier.create(Mono.fromCallable(() -> 1)
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()))
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.flux()
+				.subscribeOn(Schedulers.single()))
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void normalBackpressured() {
 		StepVerifier.withVirtualTime(() -> Mono.fromCallable(() -> 1)
-		                                       .flux()
-		                                       .subscribeOn(Schedulers.single()), 0)
-		            .expectSubscription()
-		            .expectNoEvent(Duration.ofSeconds(1))
-		            .thenRequest(1)
-		            .thenAwait()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.flux()
+				.subscribeOn(Schedulers.single()), 0)
+				.expectSubscription()
+				.expectNoEvent(Duration.ofSeconds(1))
+				.thenRequest(1)
+				.thenAwait()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void callableReturnsNullFused() {
 		StepVerifier.create(Mono.empty()
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()))
-		            .expectFusion(Fuseable.ASYNC)
-		            .verifyComplete();
+				.flux()
+				.subscribeOn(Schedulers.single()))
+				.expectFusion(Fuseable.ASYNC)
+				.verifyComplete();
 	}
 
 	@Test
 	public void callableReturnsNullFused2() {
 		StepVerifier.create(Mono.fromCallable(() -> null)
-		                        .flux()
-		                        .subscribeOn(Schedulers.single())
+				.flux()
+				.subscribeOn(Schedulers.single())
 				.doOnNext(v -> System.out.println(v)), 1)
-		            .expectFusion(Fuseable.ASYNC)
-		            .thenRequest(1)
-		            .verifyComplete();
+				.expectFusion(Fuseable.ASYNC)
+				.thenRequest(1)
+				.verifyComplete();
 	}
 
 	@Test
 	public void callableReturnsNullFused3() {
 		StepVerifier.create(Mono.fromCallable(() -> null)
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()), 0)
-		            .expectFusion(Fuseable.ASYNC)
-		            .verifyComplete();
+				.flux()
+				.subscribeOn(Schedulers.single()), 0)
+				.expectFusion(Fuseable.ASYNC)
+				.verifyComplete();
 	}
 
 	@Test
 	public void normalFused() {
 		StepVerifier.create(Mono.fromCallable(() -> 1)
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()))
-		            .expectFusion(Fuseable.ASYNC)
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.flux()
+				.subscribeOn(Schedulers.single()))
+				.expectFusion(Fuseable.ASYNC)
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void normalBackpressuredFused() {
 		StepVerifier.withVirtualTime(() -> Mono.fromCallable(() -> 1)
-		                                       .flux()
-		                                       .subscribeOn(
-				Schedulers.single()), 0)
-		            .expectFusion(Fuseable.ASYNC)
-		            .thenAwait()
-		            .consumeSubscriptionWith(s -> {
-		            	assertThat(FluxSubscribeOnCallable
-					            .CallableSubscribeOnSubscription.class.cast(s)
-			            .size()).isEqualTo(1);
-		            })
-		            .thenRequest(1)
-		            .thenAwait()
-		            .expectNext(1)
-		            .expectComplete()
-		            .verify();
+				.flux()
+				.subscribeOn(
+						Schedulers.single()), 0)
+				.expectFusion(Fuseable.ASYNC)
+				.thenAwait()
+				.consumeSubscriptionWith(s -> {
+					assertThat(FluxSubscribeOnCallable
+							.CallableSubscribeOnSubscription.class.cast(s)
+							.size()).isEqualTo(1);
+				})
+				.thenRequest(1)
+				.thenAwait()
+				.expectNext(1)
+				.expectComplete()
+				.verify();
 	}
 
 	@Test
 	public void normalBackpressuredFusedCancelled() {
 		StepVerifier.withVirtualTime(() -> Mono.fromCallable(() -> 1)
-		                                       .flux()
-		                                       .subscribeOn(
-				Schedulers.single()), 0)
-		            .expectFusion(Fuseable.ASYNC)
-		            .thenAwait()
-		            .thenCancel()
-		            .verify();
+				.flux()
+				.subscribeOn(
+						Schedulers.single()), 0)
+				.expectFusion(Fuseable.ASYNC)
+				.thenAwait()
+				.thenCancel()
+				.verify();
 	}
 
 	@Test
@@ -170,11 +170,11 @@ public class FluxSubscribeOnCallableTest {
 		StepVerifier.create(Mono.fromCallable(() -> {
 			throw new IOException("forced failure");
 		})
-		                        .flux()
-		                        .subscribeOn(Schedulers.single()))
-		            .expectErrorMatches(e -> e instanceof IOException
-				            && e.getMessage().equals("forced failure"))
-		            .verify();
+				.flux()
+				.subscribeOn(Schedulers.single()))
+				.expectErrorMatches(e -> e instanceof IOException
+						&& e.getMessage().equals("forced failure"))
+				.verify();
 	}
 
 	@Test
@@ -185,18 +185,19 @@ public class FluxSubscribeOnCallableTest {
 	}
 
 	@Test
-    public void scanMainSubscriber() {
-        CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {}, null, null);
-        FluxSubscribeOnCallable.CallableSubscribeOnSubscription<Integer> test =
-        		new FluxSubscribeOnCallable.CallableSubscribeOnSubscription<Integer>(actual, () -> 1, Schedulers.single());
+	public void scanMainSubscriber() {
+		CoreSubscriber<Integer> actual = new LambdaSubscriber<>(null, e -> {
+		}, null, null);
+		FluxSubscribeOnCallable.CallableSubscribeOnSubscription<Integer> test =
+				new FluxSubscribeOnCallable.CallableSubscribeOnSubscription<Integer>(actual, () -> 1, Schedulers.single());
 
-        Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-        Assertions.assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
-        test.value = 1;
-        Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		Assertions.assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		Assertions.assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.single());
+		test.value = 1;
+		Assertions.assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
 
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-        test.cancel();
-        Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-    }
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		test.cancel();
+		Assertions.assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+	}
 }
