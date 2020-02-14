@@ -24,9 +24,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -35,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,11 +52,13 @@ import reactor.core.Disposables;
 import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.BoundedElasticScheduler.BoundedScheduledExecutorService;
 import reactor.core.scheduler.BoundedElasticScheduler.BoundedServices;
 import reactor.core.scheduler.BoundedElasticScheduler.BoundedState;
 import reactor.core.scheduler.Scheduler.Worker;
 import reactor.test.MockUtils;
+import reactor.test.StepVerifier;
 import reactor.test.util.RaceTestUtils;
 import reactor.util.Logger;
 import reactor.util.Loggers;
@@ -1052,7 +1057,7 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 	//gh-1992 smoke test
 	@Test
 	public void gh1992() {
-		final Scheduler scheduler = Schedulers.newBoundedElastic(1, Integer.MAX_VALUE, "test");
+		final Scheduler scheduler = afterTest.autoDispose(Schedulers.newBoundedElastic(1, Integer.MAX_VALUE, "test"));
 
 		final Mono<Integer> integerMono = Mono
 				.fromSupplier(ThrowingSupplier.sneaky(() -> {
@@ -1063,6 +1068,79 @@ public class BoundedElasticSchedulerTest extends AbstractSchedulerTest {
 				.subscribeOn(scheduler);
 
 		assertThat(integerMono.block(Duration.ofSeconds(1))).isEqualTo(1);
+	}
+
+	//gh-1973 smoke test
+	@Test
+	public void testGh1973() throws InterruptedException {
+		Scheduler scheduler = afterTest.autoDispose(Schedulers.newBoundedElastic(3, 100000, "subscriberElastic", 600, true));
+		LinkedList<MonoSink<String>> listeners = new LinkedList<>();
+		List<Disposable> scheduled = new LinkedList<>();
+
+		ExecutorService producer = startProducer(listeners);
+
+		Consumer<MonoSink<String>> addListener = sink -> {
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				LOGGER.trace("listener cancelled");
+			}
+			listeners.add(sink);
+			sink.onDispose(() -> listeners.remove(sink));
+		};
+
+		for (int i = 0; i < 50; i++) {
+			scheduled.add(
+					Mono.create(addListener)
+					    .subscribeOn(scheduler)
+					    .subscribe(LOGGER::info)
+			);
+		}
+
+		Thread.sleep(1000);
+		scheduled.forEach(Disposable::dispose);
+		Thread.sleep(1000);
+
+		Mono.<String>create(sink -> {
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				LOGGER.warn("last listener improperly cancelled");
+			}
+			listeners.add(sink);
+			sink.onDispose(() -> listeners.remove(sink));
+		})
+		    .subscribeOn(scheduler)
+		    .map(res -> res + " the end")
+		    .doOnNext(LOGGER::info)
+		    .as(StepVerifier::create)
+		    .assertNext(n -> assertThat(n).endsWith(" the end"))
+		    .expectComplete()
+		    .verify(Duration.ofSeconds(5));
+	}
+
+	private ExecutorService startProducer(LinkedList<MonoSink<String>> listeners) {
+		ExecutorService producer = Executors.newSingleThreadExecutor();
+		afterTest.autoDispose(producer::shutdownNow);
+
+		producer.submit(() -> {
+			int i = 0;
+			while (true) {
+				MonoSink<String> sink = listeners.poll();
+				if (sink != null) {
+					sink.success(Integer.toString(i++));
+				}
+
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					LOGGER.info("Producer stopping");
+					return;
+				}
+			}
+		});
+
+		return producer;
 	}
 
 	@Test
